@@ -1,0 +1,22 @@
+<body style="margin:0"><iframe id="f" src="../index.html" width="400" height="760" style="border:0"></iframe><pre id="out" style="position:absolute;left:410px;top:0">x</pre>
+<script>
+const MODE=location.hash.slice(1)||'test';
+f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEventListener('error',e=>errs.push(e.message+' @'+e.lineno));
+ const wait=ms=>new Promise(r=>setTimeout(r,ms));
+ const ev=(type,x,y)=>{ const tgt=d.querySelector('#board'); tgt.dispatchEvent(new w.PointerEvent(type,{bubbles:true,clientX:x,clientY:y,pointerId:1})); };
+ try{
+  w.eval('sound=false; music=false; localStorage.mina_tut=1; S=freshState(); S.char="rola"; S.fiscal=FISCAIS[0]; applyAndar(); S.mapa=gerarMapa(); startDay(PATHS.comum); for(const el of els.values()) el.remove(); els.clear(); S.tiles=[[0,0,1],[2,0,1],[1,2,2],[3,2,2],[0,3,3]].map(([x,y,t],i)=>({id:"q"+i,x,y,t})); render();');
+  const tr=id=>w.eval(`els.get("${id}").style.transform`).replace(/\s+/g,' ');
+  const r=d.querySelector('#board').getBoundingClientRect(), cx=r.x+r.width/2, cy=r.y+r.height/2;
+  const e0=w.eval('S.energy');
+  ev('pointerdown',cx,cy); ev('pointermove',cx+45,cy);
+  log.push('direita: brilham='+[...d.querySelectorAll('.tile.willmerge')].length+' q0='+tr('q0').slice(-60));
+  if(MODE==='shot'){ out.textContent='shot'; return; }
+  ev('pointermove',cx,cy-45); log.push('cima: brilham='+[...d.querySelectorAll('.tile.willmerge')].length+' q2='+tr('q2').slice(-60));
+  ev('pointermove',cx+3,cy+2); log.push('voltou ao centro: brilham='+[...d.querySelectorAll('.tile.willmerge')].length+' q0='+tr('q0').slice(-40));
+  ev('pointerup',cx+3,cy+2); await wait(50); log.push('soltou no centro: energia '+w.eval('S.energy')+' (antes '+e0+') peças '+w.eval('S.tiles.length'));
+  ev('pointerdown',cx,cy); ev('pointermove',cx+50,cy); ev('pointermove',cx+80,cy); ev('pointerup',cx+80,cy); await wait(200);
+  log.push('confirmou à direita: energia '+w.eval('S.energy')+' tiles '+w.eval('S.tiles.map(t=>t.t+"@"+t.x+","+t.y).join(" ")'));
+ }catch(e){errs.push('EXC '+e.message)}
+ out.textContent=JSON.stringify({log,errs},null,1);};
+</script></body>

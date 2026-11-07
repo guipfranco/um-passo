@@ -1,0 +1,22 @@
+<body style="margin:0"><iframe id="f" src="../index.html" width="400" height="900" style="border:0"></iframe><pre id="out" style="position:absolute;left:410px;top:0">x</pre>
+<script>
+const MODE=location.hash.slice(1)||'test';
+f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEventListener('error',e=>errs.push(e.message+' @'+e.lineno));w.addEventListener('unhandledrejection',e=>errs.push('rej '+e.reason));
+ const wait=ms=>new Promise(r=>setTimeout(r,ms)); const q=s=>d.querySelector(s);
+ const muda=(sel,v)=>{ const el=q(sel); el.value=JSON.stringify(v); el.dispatchEvent(new Event('change')); };
+ try{ w.eval('sound=false; music=false');
+  if(MODE==='menu'){ out.textContent='ok'; return; }
+  if(MODE==='pedras'){ w.eval(`hideOverlay(); S={...freshState(),lab:true,char:'rola'}; S.fiscal=FISCAIS[0]; applyAndar(); startDay({...PATHS.comum, w:4, h:4}); for(const el of els.values()) el.remove(); els.clear(); S.tiles=[...Array(16).keys()].map(i=>({id:'z'+i,x:i%4,y:i/4|0,t:i+1})); render();`); out.textContent='ok'; return; }
+  log.push('menu: 1º botão = '+q('.menuBtns button').textContent.trim().slice(0,12)+' | menu visível='+q('#scrMenu').classList.contains('on'));
+  q('#mLab').click(); await wait(80);
+  log.push('lab: seções='+[...d.querySelectorAll('details.sec summary')].map(x=>x.textContent).join(', ')+' | selects='+d.querySelectorAll('#panel select').length);
+  if(MODE==='painel'){ d.querySelectorAll('details.sec').forEach(x=>{ if(['tab','reg'].includes(x.dataset.sec)) x.open=true; }); out.textContent='ok'; return; }
+  muda('#selFase','avalanche'); log.push('fase: '+q('#selFase').value+' energia ligada='+w.eval('LAB.energia')+' spawns='+w.eval('LAB.cfg.spawns'));
+  muda('[data-item=lupa]',2); muda('[data-up=folego]',2); muda('[data-cfg=forma]','anel');
+  log.push('itens: '+w.eval('JSON.stringify(LAB.itens)')+' ups: '+w.eval('JSON.stringify(LAB.ups)')+' prévia='+!!q('.formaPrev svg'));
+  if(MODE==='itens'){ d.querySelector('details.sec[data-sec=itens]').open=true; d.querySelector('details.sec[data-sec=itens]').scrollIntoView(); out.textContent='ok'; return; }
+  q('#labGo').click(); await wait(100);
+  log.push('jogando: lupa nv='+w.eval('S.lv.lupa')+' energia='+w.eval('S.energy')+' chips='+d.querySelectorAll('#items .chip').length+' formato='+w.eval('S.forma?.id'));
+ }catch(e){errs.push('EXC '+e.message)}
+ out.textContent=JSON.stringify({log,errs},null,1);};
+</script></body>

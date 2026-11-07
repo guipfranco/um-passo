@@ -1,0 +1,61 @@
+<body style="margin:0"><iframe id="f" src="../index.html" width="400" height="900" style="border:0"></iframe><pre id="out" style="position:absolute;left:410px;top:0">x</pre>
+<script>
+const MODE=location.hash.slice(1)||'test';
+f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEventListener('error',e=>errs.push(e.message+' @'+e.lineno));w.addEventListener('unhandledrejection',e=>errs.push('rej '+e.reason));
+ const wait=ms=>new Promise(r=>setTimeout(r,ms)); const q=s=>d.querySelector(s);
+ try{ w.eval('sound=false; music=false; localStorage.removeItem("mina_formas")');
+  log.push('menu: '+[...d.querySelectorAll('.menuBtns button')].map(b=>b.textContent.trim().slice(0,16)).join(' | '));
+  q('#mCat').click(); await wait(80);
+  log.push('catálogo: '+[...d.querySelectorAll('#panel details.sec summary')].map(x=>x.textContent).join(', '));
+  log.push('cards: '+d.querySelectorAll('#panel .card').length+' svgs='+d.querySelectorAll('#panel svg').length);
+  if(MODE==='cat'){ d.querySelectorAll('#panel details.sec').forEach((x,i)=>{ if(i===1||i===2) x.open=true; }); out.textContent='ok'; return; }
+  if(MODE==='cat2'){ d.querySelectorAll('#panel details.sec').forEach((x,i)=>{ if(i===3||i===7) x.open=true; }); out.textContent='ok'; return; }
+  q('#btnOk').click(); await wait(50); log.push('voltou ao menu='+q('#scrMenu').classList.contains('on'));
+  q('#mEd').click(); await wait(80);
+  log.push('editor: seus='+d.querySelectorAll('[data-apaga]').length+' jogo='+d.querySelectorAll('[data-testa]').length);
+  if(MODE==='ed'){ out.textContent='ok'; return; }
+  // nível novo 5x6
+  q('#edW').value='5'; q('#edH').value='6'; q('#edNovo').click(); await wait(80);
+  log.push('novo: W='+w.eval('W')+' H='+w.eval('H')+' editando='+w.eval('S.editando')+' buracos='+w.eval('S.walls.filter(x=>x.v).length'));
+  // pinta casas: 5x5 de casa + 1 rocha
+  w.eval(`for(let y=0;y<5;y++) for(let x=0;x<5;x++) labPinta(x,y)`);
+  w.eval(`PINCEL.tipo='rocha'; PINCEL.t=3; labPinta(2,2)`);
+  w.eval(`LABNOME='Teste A'`); q('#labSalvaF').click(); await wait(30);
+  log.push('salvo: '+q('#ptDica').textContent+' | botões='+[...d.querySelectorAll('#labTools .pt')].slice(-3).map(b=>b.textContent).join(','));
+  const id1=w.eval('EDIT.id'); log.push('niveis='+w.eval('meusNiveis().length')+' regras='+w.eval('JSON.stringify(meusNiveis()[0].regras).slice(0,60)'));
+  // muda e salva de novo: deve sobrescrever
+  w.eval(`PINCEL.tipo='casa'; labPinta(0,5)`); q('#labSalvaF').click(); await wait(30);
+  log.push('sobrescreveu: niveis='+w.eval('meusNiveis().length')+' id igual='+(w.eval('meusNiveis()[0].id')===id1)+' mapa='+w.eval('meusNiveis()[0].mapa.join("/")')+' | '+q('#ptDica').textContent);
+  q('#labSalvaNovo').click(); await wait(30);
+  log.push('como novo: niveis='+w.eval('meusNiveis().length'));
+  // pausa > sair volta ao editor
+  w.eval(`pauseMenu()`); await wait(30); q('#pExit').click(); await wait(80);
+  log.push('saiu: lista do editor='+!!q('#edNovo')+' seus='+d.querySelectorAll('[data-apaga]').length);
+  // editar o primeiro
+  q(`[data-edita="${id1}"]`).click(); await wait(80);
+  log.push('editar: W='+w.eval('W')+' H='+w.eval('H')+' editando='+w.eval('S.editando')+' pecas='+w.eval('S.tiles.length')+' nome='+q('#labNome').value);
+  // testar a partir da lista
+  w.eval('editorLista()'); await wait(50);
+  q(`[data-testa="${id1}"]`).click(); await wait(80);
+  log.push('testar: forma='+w.eval('S.forma?.nome')+' editando='+w.eval('S.editando')+' fase='+w.eval('S.phase')+' tiles='+w.eval('S.tiles.length'));
+  // termina o dia e volta ao editor
+  q('#btnEnd').click(); q('#btnEnd').click(); await wait(1500); w.eval('S.skip=true'); await wait(3000);
+  q('#btnSell').click(); await wait(100);
+  log.push('após o dia: lista do editor='+!!q('#edNovo'));
+  // copiar e editar nível do jogo
+  q('[data-edita="cruz"]').click(); await wait(80);
+  log.push('cópia: nome='+q('#labNome').value+' botão='+q('#labSalvaF').textContent+' EDIT.id='+w.eval('EDIT.id'));
+  // importar
+  w.eval('editorLista()'); await wait(30); q('#edImport').click(); await wait(30);
+  q('#edTxt').value='lixo'; q('#edOk').click(); log.push('import ruim: '+q('#edMsg').textContent);
+  q('#edTxt').value=JSON.stringify({nome:'Importado',mapa:['..#','...','B..'],muretas:[],pecas:[[0,0,2]]}); q('#edOk').click(); await wait(30);
+  log.push('import bom: seus='+d.querySelectorAll('[data-apaga]').length);
+  // apagar
+  d.querySelector('[data-apaga]').click(); await wait(30); log.push('apagou: seus='+d.querySelectorAll('[data-apaga]').length);
+  // lab -> editor e lab -> catálogo
+  w.eval('labPainel()'); await wait(30); q('#labCat').click(); await wait(30); log.push('lab>catálogo='+!!q('#panel details.sec')); q('#btnOk').click(); await wait(30); log.push('voltou ao lab='+!!q('#labGo'));
+  q('#labEd').click(); await wait(30); log.push('lab>editor='+!!q('#edNovo'));
+  if(MODE==='fim'){ out.textContent='ok'; return; }
+ }catch(e){errs.push('EXC '+e.message+' '+e.stack?.split('\n')[1])}
+ out.textContent=JSON.stringify({log,errs},null,1);};
+</script></body>

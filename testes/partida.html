@@ -1,0 +1,31 @@
+<!-- tempo: 120000 -->
+<iframe id="f" src="../index.html?menu" width="400" height="820"></iframe><pre id="out">x</pre>
+<script>f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEventListener('error',e=>errs.push(e.message+' @'+e.lineno));w.addEventListener('unhandledrejection',e=>errs.push('rej '+e.reason));
+ const wait=ms=>new Promise(r=>setTimeout(r,ms));const q=s=>d.querySelector(s);const vis=s=>q(s)&&!q(s).classList.contains('hidden');
+ const coachTxt=()=>vis('#coach')?q('#coachText').textContent.slice(0,40):'-';
+ try{ w.eval('sound=false');
+  w.localStorage.mina_tut=1; q('#mNew').click(); await wait(100); [...d.querySelectorAll('[data-char]')][1].click(); await wait(100); log.push('personagem '+w.eval('S.char'));
+  for(let step=0;step<60;step++){
+   if(w.eval("S.week")>3) break; if(step<14) log.push("step "+step+" fase="+w.eval("S.phase")+" dia="+w.eval("S.day")+" tela="+[...d.querySelectorAll(".screen.on")].map(x=>x.id)+" ov="+w.eval("overlayOpen()")+" h2="+(q("#panel h2")?q("#panel h2").textContent:"")+" btns="+[...d.querySelectorAll("#panel button")].map(b=>b.id||b.dataset.node||b.dataset.pick||"?").join(","));
+   if(q('#scrGame').classList.contains('on') && w.eval('S.phase')==='mine' && !w.eval('overlayOpen()')){
+     for(let i=0;i<60&&w.eval("S.phase")==='mine';i++){let ok=false;for(const [dx,dy] of [[0,1],[-1,0],[1,0],[0,-1]])if(w.eval(`slide(S.tiles,${dx},${dy}).moved`)){w.eval(`move(${dx},${dy})`);ok=true;break;}if(!ok)break;}
+     if(w.eval("S.phase")==='mine'){ q('#btnEnd').click(); q('#btnEnd').click(); }
+     await wait(1500); w.eval('S.skip=true'); await wait(3500);
+     log.push(`s${w.eval('S.week')}d${w.eval('S.day')} ${w.eval('S.path.nome')} $${w.eval('S.dayTotal')}`);
+     q('#btnSell').click(); await wait(80); continue;
+   }
+   if(q('#btnOk') && w.eval('overlayOpen()')){ q('#btnOk').click(); await wait(50); continue; }
+   if(q('#btnGo')){ q('#btnGo').click(); await wait(80); continue; }
+   if(q('[data-pick]')){ q('[data-pick]').click(); await wait(80); continue; }
+   if(q('[data-up]:not([disabled])')){ const u=q('[data-up]:not([disabled])'); log.push('comprou '+u.dataset.up); u.click(); await wait(50); continue; }
+   if(q('[data-con]:not([disabled])')){ q('[data-con]:not([disabled])').click(); await wait(50); continue; }
+   if(q('[data-buy]:not([disabled])')){ q('[data-buy]:not([disabled])').click(); await wait(50); continue; }
+   if(q('#btnLeave')){ q('#btnLeave').click(); await wait(50); continue; }
+   if(q('#btnWeek')){ log.push('SEMANA: '+q('#panel h2').textContent); q('#btnWeek').click(); await wait(80); continue; }
+   if(q('#btnMenu')){ log.push('GAME OVER'); break; }
+   if(q('.mnode.opt')){ const n=[...d.querySelectorAll('.mnode.opt')]; if(step===8){ log.push('salvando e saindo: dia '+w.eval('S.day')); w.eval('showMenu()'); await wait(50); q('#mContinue').click(); await wait(100); log.push('continuou: dia '+w.eval('S.day')+' tela mapa '+q('#scrMap').classList.contains('on')); }
+     const m=[...d.querySelectorAll('.mnode.opt')]; m[step%m.length].click(); await wait(80); continue; }
+   await wait(200);
+  }
+ }catch(e){errs.push('EXC '+e.message+' '+e.stack)}
+ out.textContent=JSON.stringify({log,errs},null,1);};</script>

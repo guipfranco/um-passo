@@ -1,0 +1,40 @@
+<body style="margin:0"><iframe id="f" src="../index.html?lab" width="400" height="900" style="border:0"></iframe><pre id="out" style="position:absolute;left:410px;top:0">x</pre>
+<script>
+const MODE=location.hash.slice(1)||'test';
+f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEventListener('error',e=>errs.push(e.message+' @'+e.lineno));w.addEventListener('unhandledrejection',e=>errs.push('rej '+e.reason));
+ const wait=ms=>new Promise(r=>setTimeout(r,ms)); const q=s=>d.querySelector(s);
+ try{ w.eval('sound=false; music=false');
+  if(MODE==='ores'){ w.eval(`hideOverlay(); S={...freshState(),lab:true,char:'rola'}; S.fiscal=FISCAIS[0]; applyAndar(); startDay({...PATHS.comum}); for(const el of els.values()) el.remove(); els.clear();
+     S.tiles=[...Array(13).keys()].map(i=>({id:'z'+i,x:i%4,y:i/4|0,t:4})); render(); let k=1; roll=()=>k++; endDay();`); out.textContent='ok'; return; }
+  if(MODE==='pedia'){ w.eval('hideOverlay(); pedrapedia()'); d.querySelector('#panel').scrollTop=99999; out.textContent='ok'; return; }
+  const muda=(sel,v)=>{ const el=q(sel); el.value=JSON.stringify(v); el.dispatchEvent(new Event('change')); };
+  q('[data-cfgv=ferr][data-v="99"]').click(); muda('[data-cfg=rara]',0.5); muda('[data-cfg=forma]','pilares'); q('#labGo').click(); await wait(100);
+  log.push('barra: '+[...d.querySelectorAll('#ferrBar .fb')].map(b=>b.textContent.trim()).join(' | '));
+  const r=q('#board').getBoundingClientRect(), cel=q('.slot').getBoundingClientRect().width, n=w.eval('N'), gap=(r.width-n*cel)/(n+1);
+  const at=(x,y)=>[r.x+gap+x*(cel+gap)+cel/2, r.y+gap+y*(cel+gap)+cel/2];
+  const tap=(x,y)=>{ const [cx,cy]=at(x,y); for(const t of ['pointerdown','pointerup']) q('#board').dispatchEvent(new w.PointerEvent(t,{bubbles:true,clientX:cx,clientY:cy,pointerId:1})); };
+  const st=()=>`peças=${w.eval('S.tiles.length')} blocos=${w.eval('S.walls.filter(v=>!v.v).length')} buracos=${w.eval('S.walls.filter(v=>v.v).length')}`;
+  // desfazer
+  const antes=w.eval('JSON.stringify(S.tiles.map(t=>[t.x,t.y,t.t]))');
+  for(const [dx,dy] of [[0,1],[-1,0],[1,0],[0,-1]]) if(w.eval(`slide(S.tiles,${dx},${dy}).moved`)){ w.eval(`move(${dx},${dy})`); break; }
+  q('[data-ferr=desfazer]').click(); log.push('desfazer voltou igual: '+(antes===w.eval('JSON.stringify(S.tiles.map(t=>[t.x,t.y,t.t]))'))+' energia='+w.eval('S.energy'));
+  // picão num bloco (pilares tem bloco em 1,1)
+  q('[data-ferr=picao]').click(); tap(1,1); log.push('picão: '+st());
+  // dinamite numa pedrinha
+  const t0=w.eval('S.tiles[0]'); q('[data-ferr=dinamite]').click(); tap(t0.x,t0.y); log.push('dinamite: '+st());
+  log.push('antes luva: tiles='+w.eval('JSON.stringify(S.tiles.map(t=>[t.id,t.x,t.y]))')+' vazios='+w.eval('JSON.stringify(emptyCells().slice(0,3))')+' ativa='+w.eval('S.ferrAtiva'));
+  const t1=w.eval('S.tiles[0]'); const vazio=w.eval('emptyCells()[0]'); q('[data-ferr=luva]').click(); tap(t1.x,t1.y); log.push('sel='+w.eval('S.luvaSel')+' ativa='+w.eval('S.ferrAtiva')); tap(vazio.x,vazio.y);
+  log.push('depois luva: tiles='+w.eval('JSON.stringify(S.tiles.map(t=>[t.id,t.x,t.y]))')+' ativa='+w.eval('S.ferrAtiva'));
+  // escavar: põe um buraco pelo editor e cava
+  const vz=w.eval('emptyCells().at(-1)'); w.eval(`S.walls.push({x:${vz.x},y:${vz.y},v:true,id:"wz"}); render()`); log.push('buraco posto: '+st()); q('[data-ferr=escavar]').click(); tap(vz.x,vz.y); log.push('escavar: '+st());
+  // raras
+  log.push('antes dos arrastos: ativa='+w.eval('S.ferrAtiva')+' editando='+w.eval('S.editando')+' fase='+w.eval('S.phase')+' anyMove='+w.eval('anyMove()'));
+  for(let i=0;i<12;i++) for(const [dx,dy] of [[0,1],[-1,0],[1,0],[0,-1]]) if(w.eval(`slide(S.tiles,${dx},${dy}).moved`)){ w.eval(`move(${dx},${dy})`); break; }
+  log.push('raras no tabuleiro: '+w.eval('S.tiles.filter(t=>t.r).length')+' de '+w.eval('S.tiles.length'));
+  q('#btnEnd').click(); q('#btnEnd').click(); await wait(1500); w.eval('S.skip=true'); await wait(3000);
+  log.push('fim: total=$'+w.eval('S.dayTotal')+' achados='+w.eval('S.found.map(o=>ORES[o].n).join(",")'));
+  // loja do jogo vende ferramentas
+  q('#btnSell').click(); await wait(100); w.eval('S=freshState(); S.week=1; S.money=500; openShop(()=>{})'); log.push('loja ferramentas: '+d.querySelectorAll('[data-fer]').length);
+ }catch(e){errs.push('EXC '+e.message)}
+ out.textContent=JSON.stringify({log,errs},null,1);};
+</script></body>

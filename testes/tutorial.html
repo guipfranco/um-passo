@@ -1,0 +1,27 @@
+<body style="margin:0"><iframe id="f" src="../index.html?menu" width="400" height="700" style="border:0"></iframe><pre id="out" style="position:absolute;left:410px;top:0">x</pre>
+<script>
+const STOP = +(location.hash.slice(1)||99);
+f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEventListener('error',e=>errs.push(e.message+' @'+e.lineno));
+ const wait=ms=>new Promise(r=>setTimeout(r,ms));const q=s=>d.querySelector(s);
+ const txt=()=>q('#coach').classList.contains('hidden')?'-':q('#coachText').textContent.slice(0,45)+' | alvo='+(w.eval('coachTarget&&coachTarget.id||coachTarget&&coachTarget.className||coachTarget'))+' seta='+q('#coach').dataset.arrow;
+ let n=0; const step=async(fn)=>{ if(n>=STOP) throw 'stop'; await fn(); await wait(350); n++; log.push(n+': '+txt()); };
+ try{ w.eval('sound=false; music=false');
+  await step(()=>q('#mNew').click());
+  await step(async()=>{ w.eval('move(1,0)'); await wait(400); });
+  await step(()=>q('#coachOk').click());
+  await step(()=>q('#coachOk').click());
+  await step(async()=>{ for(let i=0;i<30&&w.eval('S.energy')>0;i++){ for(const [dx,dy] of [[0,1],[-1,0],[1,0],[0,-1]]) if(w.eval(`slide(S.tiles,${dx},${dy}).moved`)){w.eval(`move(${dx},${dy})`);break;} } });
+  await step(async()=>{ q('#btnEnd').click(); await wait(1500); w.eval('S.skip=true'); await wait(2500); });
+  await step(()=>q('#coachOk').click());
+  await step(()=>q('#btnSell').click());
+  await step(()=>q('[data-pick]').click());
+  await step(()=>{ const b=q('[data-con]:not([disabled])'); if(b) b.click(); });
+  await step(()=>q('#btnLeave').click());
+  await step(()=>q('#coachOk').click());
+  await step(()=>q('#coachOk').click());
+  await step(()=>q('#coachOk').click());
+  await step(()=>q('#coachOk').click());
+  log.push('fim tut='+w.eval('S.tut')+' flag='+w.localStorage.mina_tut);
+ }catch(e){ if(e!=='stop') errs.push('EXC '+e); }
+ out.textContent=JSON.stringify({log,errs},null,1);};
+</script></body>

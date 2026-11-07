@@ -1,0 +1,28 @@
+<!-- tempo: 60000 -->
+<body style="margin:0"><iframe id="f" src="../index.html" width="400" height="900" style="border:0"></iframe><pre id="out" style="position:absolute;left:410px;top:0">x</pre>
+<script>
+const MODE=location.hash.slice(1)||'test';
+f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEventListener('error',e=>errs.push(e.message+' @'+e.lineno));w.addEventListener('unhandledrejection',e=>errs.push('rej '+e.reason));
+ const wait=ms=>new Promise(r=>setTimeout(r,ms)); const q=s=>d.querySelector(s);
+ const dia=async()=>{ q('#labGo').click(); await wait(80); for(let i=0;i<45&&w.eval('S.phase')==='mine';i++){ let ok=false; for(const [dx,dy] of [[0,1],[-1,0],[1,0],[0,-1]]) if(w.eval(`slide(S.tiles,${dx},${dy}).moved`)){ w.eval(`move(${dx},${dy})`); ok=true; break; } if(!ok) break; }
+   if(w.eval('S.phase')==='mine'){ q('#btnEnd').click(); q('#btnEnd').click(); } await wait(1500); w.eval('S.skip=true'); await wait(3000); };
+ try{ w.eval('sound=false; music=false; localStorage.removeItem("mina_recordes")'); q('#mLab').click(); await wait(50);
+  log.push('painel antes: '+q('.recAtual').textContent);
+  await dia(); log.push('1º dia: $'+w.eval('S.dayTotal')+' | '+q('#recLine').textContent);
+  if(MODE==='fim'){ out.textContent='ok'; return; }
+  q('#btnSell').click(); await wait(100);
+  log.push('painel: '+q('.recAtual').textContent+' | lista='+d.querySelectorAll('.recs li').length);
+  // força um recorde baixo para o próximo dia bater
+  w.eval('const r=RECS(); r[chaveLab()].total=1; localStorage.mina_recordes=JSON.stringify(r)');
+  await dia(); log.push('2º dia: $'+w.eval('S.dayTotal')+' | '+q('#recLine').textContent+' | popup='+!!q('.popup'));
+  if(MODE==='bateu'){ out.textContent='ok'; return; }
+  q('#btnSell').click(); await wait(100);
+  // outra configuração tem recorde separado
+  q('#panel [data-char=passinho]').click(); log.push('passinho: '+q('.recAtual').textContent);
+  if(MODE==='painel'){ out.textContent='ok'; return; }
+  // mapa do jogo mostra recorde do caminho
+  w.eval('hideOverlay(); localStorage.mina_tut=1; S=freshState(); S.char="rola"; S.fiscal=FISCAIS[0]; applyAndar(); S.mapa=gerarMapa(); S.mapa.tipos[0][0]="comum"; const r=RECS(); r[chaveJogo("comum")]={total:321,arrastos:40,char:"rola",nome:"Túnel"}; localStorage.mina_recordes=JSON.stringify(r); morning(true); nodeInfo("1,0")');
+  log.push('mapa: '+(q('#panel .recAtual')?.textContent||'sem'));
+ }catch(e){errs.push('EXC '+e.message)}
+ out.textContent=JSON.stringify({log,errs},null,1);};
+</script></body>
