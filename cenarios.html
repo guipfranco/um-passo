@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Ptui! · rascunhos de cenário</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0}
+body{background:#2a211b;font-family:'Fredoka',system-ui,sans-serif;color:#5a4636;min-height:100vh}
+.switch{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);z-index:50;display:flex;gap:4px;background:#000c;padding:4px;border-radius:999px}
+.switch button{border:0;border-radius:999px;padding:8px 13px;font:600 14px 'Fredoka';background:transparent;color:#ccc;white-space:nowrap}
+.switch button.on{background:#fff;color:#000}
+.view{display:none;flex-direction:column;align-items:center;padding:12px 0 70px;gap:10px}
+.view.on{display:flex}
+.tit{color:#f6ecd9;text-align:center;max-width:370px;padding:0 12px}
+.tit b{font-size:21px;display:block}
+.tit span{font-size:14px;opacity:.8;line-height:1.3;display:block}
+.caixa{position:relative}
+.phone{position:absolute;left:0;top:0;width:390px;height:780px;border-radius:28px;overflow:hidden;transform-origin:top left;box-shadow:0 10px 40px #0009}
+.phone > svg{position:absolute;inset:0}
+.hud{position:absolute;left:10px;right:10px;top:12px;display:flex;gap:8px}
+.pill{flex:1;background:#f3e6cc;border-radius:16px;padding:6px 8px;display:flex;align-items:center;gap:7px;box-shadow:0 3px 0 #0003;min-width:0}
+.pill .ic{flex:none;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;box-shadow:0 2px 0 #0002}
+.pill b{display:block;font-size:22px;line-height:1;font-weight:700}
+.pill small{display:block;font-size:11px;color:#a08a74;line-height:1.1;white-space:nowrap}
+.top{position:absolute;left:10px;right:10px;top:70px;display:flex;align-items:center;gap:8px}
+.icon{width:38px;height:38px;border-radius:50%;background:#f3e6cc;box-shadow:0 3px 0 #0003;display:flex;align-items:center;justify-content:center;font-size:18px;color:#7a5a44;flex:none}
+.banner{flex:1;text-align:center;background:#f3e6cce6;border-radius:14px;padding:3px 6px;box-shadow:0 3px 0 #0002}
+.banner b{display:block;font-size:19px;color:#7a5a44;line-height:1.1}
+.banner span{font-size:13px;color:#a08a74}
+.btnEnd{position:absolute;left:50%;top:508px;transform:translateX(-50%);font:700 18px 'Fredoka';border-radius:999px;padding:11px 26px;color:#fff;background:#c0603f;box-shadow:0 5px 0 #92452b;white-space:nowrap}
+</style>
+</head>
+<body>
+<div id="views"></div>
+<div class="switch" id="sw"></div>
+<script src="src/svg.js"></script>
+<script>
+// ---------- geometria do tabuleiro (igual ao jogo num celular de 390 px) ----------
+const BX=26, BY=150, C=72, G=10, BW=4*C+5*G;
+const X = i => BX+G+i*(C+G), Y = j => BY+G+j*(C+G);
+// pedrinhas de exemplo: número = nível, T = torrão, W = parede (bloco)
+const LAYOUT = [[1,0,2,'W'],[0,3,0,1],[2,'T',5,0],[0,1,4,2]];
+
+function rng(s){ return ()=>(s=(s*16807)%2147483647)/2147483647; }
+const f1 = v => v.toFixed(1);
+function speck(r,x,y,w,h,n,cores,min,max,op=1){
+  let s=''; for(let i=0;i<n;i++){ const rx=min+r()*(max-min);
+    s+=`<ellipse cx="${f1(x+r()*w)}" cy="${f1(y+r()*h)}" rx="${f1(rx)}" ry="${f1(rx*(.55+r()*.45))}" fill="${cores[i%cores.length]}" opacity="${op}"/>`; }
+  return s;
+}
+function smooth(pts){
+  const m=(a,b)=>[(a[0]+b[0])/2,(a[1]+b[1])/2];
+  let d=`M${m(pts[pts.length-1],pts[0]).map(f1).join(' ')}`;
+  for(let i=0;i<pts.length;i++){ const p=pts[i], mm=m(p,pts[(i+1)%pts.length]); d+=` Q${f1(p[0])} ${f1(p[1])} ${f1(mm[0])} ${f1(mm[1])}`; }
+  return d+'Z';
+}
+function blobRect(x,y,w,h,r,amp,passo=18){
+  const pts=[], per=2*(w+h), n=Math.max(8,Math.round(per/passo));
+  for(let i=0;i<n;i++){ const t=i/n*per; let px,py,nx,ny;
+    if(t<w){px=x+t;py=y;nx=0;ny=-1;} else if(t<w+h){px=x+w;py=y+t-w;nx=1;ny=0;}
+    else if(t<2*w+h){px=x+w-(t-w-h);py=y+h;nx=0;ny=1;} else {px=x;py=y+h-(t-2*w-h);nx=-1;ny=0;}
+    const d=(r()-.5)*2*amp; pts.push([px+nx*d,py+ny*d]); }
+  return smooth(pts);
+}
+function blob(cx,cy,rx,ry,r,amp,n=10){
+  const pts=[]; for(let i=0;i<n;i++){ const a=i/n*Math.PI*2, k=1+(r()-.5)*2*amp; pts.push([cx+Math.cos(a)*rx*k, cy+Math.sin(a)*ry*k]); }
+  return smooth(pts);
+}
+const peca = (x,y,inner,s=C/100) => `<g transform="translate(${x} ${y}) scale(${s})">${inner}</g>`;
+function pecas(parede, ninho){
+  let s=''; LAYOUT.forEach((row,j)=>row.forEach((v,i)=>{ const x=X(i), y=Y(j);
+    if(ninho) s+=ninho(x,y,v);
+    if(v==='W') s+=parede(x,y);
+    else if(v==='T') s+=peca(x,y,torraoInner());
+    else if(v) s+=peca(x,y,pedraInner(v));
+  })); return s;
+}
+const ores = (lista,cx,cy,esp,s) => lista.map(([o,dx,dy])=>oreSvg(o,cx+dx*esp,cy+dy*esp,s)).join('');
+function tufo(x,y,k=1,cores=['#7fb35a','#93c56b','#6a9c48']){
+  let s=''; for(let i=0;i<7;i++){ const a=-Math.PI/2+(i-3)*.32, l=(10+((i*37)%7))*k;
+    s+=`<path d="M${f1(x+(i-3)*2.2*k)} ${y} q${f1(Math.cos(a)*l*.3)} ${f1(-l*.5)} ${f1(Math.cos(a)*l)} ${f1(Math.sin(a)*l)}" stroke="${cores[i%3]}" stroke-width="${f1(3*k)}" stroke-linecap="round" fill="none"/>`; }
+  return s;
+}
+
+// ================= A: ESCAVAÇÃO =================
+function cenaA(){
+  const r=rng(11); let s=`<defs>
+    <linearGradient id="aSomTopo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a3a1e" stop-opacity=".45"/><stop offset="1" stop-color="#5a3a1e" stop-opacity="0"/></linearGradient>
+    <linearGradient id="aSomEsq" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5a3a1e" stop-opacity=".3"/><stop offset="1" stop-color="#5a3a1e" stop-opacity="0"/></linearGradient>
+  </defs>`;
+  s+=`<rect width="390" height="780" fill="#d9b88d"/>`+speck(r,0,0,390,780,320,['#cba67a','#e6caa0','#c39c6f','#d0ad82'],1.2,4.5);
+  // pedrinhas soltas no chão
+  for(let i=0;i<26;i++){ const x=r()*390, y=r()*780; if(x>BX-20&&x<BX+BW+20&&y>BY-20&&y<BY+BW+20) continue;
+    s+=`<path d="${blob(x,y,3+r()*4,2.5+r()*3,r,.25,7)}" fill="${['#b8a089','#a8907a','#c8b39c'][i%3]}" stroke="#8a735e" stroke-width="1"/>`; }
+  // grama nas beiradas
+  for(const [x,y,k] of [[18,128,1.1],[372,132,1.2],[355,300,.9],[14,380,1],[30,560,1.2],[372,600,1.1],[60,760,1.3],[200,740,1],[340,770,1.2],[150,600,.8]]) s+=tufo(x,y,k);
+  // a cava
+  const px=BX-12, py=BY-12, pw=BW+24;
+  s+=`<path d="${blobRect(px-6,py-6,pw+12,pw+12,r,4,16)}" fill="#c69b6c"/>`;          // terra revolvida em volta
+  s+=`<path d="${blobRect(px,py,pw,pw,r,3,16)}" fill="#ad8157"/>`;                     // fundo da cava
+  s+=speck(r,px+6,py+6,pw-12,pw-12,120,['#9f744b','#b98c61','#a37a50'],1,3.5);
+  s+=`<rect x="${px+2}" y="${py+2}" width="${pw-4}" height="26" fill="url(#aSomTopo)" rx="8"/><rect x="${px+2}" y="${py+2}" width="20" height="${pw-4}" fill="url(#aSomEsq)" rx="8"/>`;
+  s+=`<path d="M${px+10} ${py+pw-1} H${px+pw-8} M${px+pw-1} ${py+12} V${py+pw-8}" stroke="#e3c79e" stroke-width="3" stroke-linecap="round" opacity=".8"/>`;
+  // barbantes entre estacas, marcando as casas
+  const linX=[], linY=[]; for(let k=0;k<=4;k++){ linX.push(BX+G/2+k*(C+G)); linY.push(BY+G/2+k*(C+G)); }
+  const y0=py-16, y1=py+pw+16, x0=px-16, x1=px+pw+16;
+  const corda=(xa,ya,xb,yb)=>`<line x1="${xa+1.5}" y1="${ya+2}" x2="${xb+1.5}" y2="${yb+2}" stroke="#3a250f" stroke-opacity=".18" stroke-width="2"/><line x1="${xa}" y1="${ya}" x2="${xb}" y2="${yb}" stroke="#fbf1de" stroke-width="1.8"/>`;
+  for(const v of linX) s+=corda(v,y0,v,y1);
+  for(const v of linY) s+=corda(x0,v,x1,v);
+  const estaca=(x,y)=>`<rect x="${x-5}" y="${y-5}" width="10" height="10" rx="2" fill="#8b5c33" stroke="#5e3b1d" stroke-width="1.5"/><rect x="${x-3}" y="${y-3}" width="6" height="6" rx="1" fill="#b98250"/>`;
+  for(const v of linX) s+=estaca(v,y0)+estaca(v,y1);
+  for(const v of linY) s+=estaca(x0,v)+estaca(x1,v);
+  // pedrinhas (parede = pedregulho)
+  s+=pecas((x,y)=>`<ellipse cx="${x+38}" cy="${y+64}" rx="30" ry="7" fill="#0003"/><path d="${blob(x+36,y+38,31,27,rng(5),.12,9)}" fill="#9a8a7c" stroke="#2e2219" stroke-width="2.4"/><path d="${blob(x+30,y+30,16,11,rng(9),.15,8)}" fill="#b4a596"/><path d="M${x+44} ${y+50} q8 -2 12 -10" stroke="#7d6d60" stroke-width="2.4" fill="none" stroke-linecap="round"/>`);
+  // balde com minério
+  s+=`<g transform="translate(66 640)"><ellipse cx="4" cy="8" rx="38" ry="34" fill="#0002"/><circle r="36" fill="#8d9eae" stroke="#5d6d7c" stroke-width="5"/><circle r="27" fill="#4e5b68"/>${ores([[3,-1,-.6],[4,.8,-.3],[2,-.3,.7],[5,.6,.7],[3,0,0]],0,0,12,1.1)}<path d="M-36 0 Q-46 -46 0 -48" stroke="#5d6d7c" stroke-width="3.5" fill="none" stroke-linecap="round"/></g>`;
+  // pá deitada
+  s+=`<g transform="translate(300 600) rotate(-35)"><rect x="-64" y="-5" width="96" height="10" rx="5" fill="#0002" transform="translate(4 5)"/><rect x="-70" y="-5" width="96" height="10" rx="5" fill="#b07a45" stroke="#7a4f28" stroke-width="2"/><rect x="-80" y="-9" width="16" height="18" rx="5" fill="#7a4f28"/><path d="M26 -16 h30 q16 0 16 16 q0 16 -16 16 h-30z" fill="#a9b3ba" stroke="#6b7680" stroke-width="2.5"/><path d="M34 -9 h18" stroke="#d6dde2" stroke-width="3" stroke-linecap="round"/></g>`;
+  // peneira
+  s+=`<g transform="translate(318 708)"><ellipse cx="4" cy="6" rx="42" ry="38" fill="#0002"/><circle r="38" fill="#a8713f" stroke="#7a4f28" stroke-width="3"/><circle r="30" fill="#6f5a45"/><g stroke="#c9b394" stroke-width="1" opacity=".7">${[...Array(11).keys()].map(i=>`<line x1="${-30+i*6}" y1="-30" x2="${-30+i*6}" y2="30"/><line x1="-30" y1="${-30+i*6}" x2="30" y2="${-30+i*6}"/>`).join('')}</g><circle r="30" fill="none" stroke="#a8713f" stroke-width="2"/>${ores([[4,-.6,-.2],[1,.5,.4]],0,0,16,1)}</g>`;
+  // escova
+  s+=`<g transform="translate(176 690) rotate(18)"><rect x="-30" y="-6" width="40" height="12" rx="6" fill="#c7884a" stroke="#7a4f28" stroke-width="2"/><rect x="10" y="-11" width="22" height="22" rx="4" fill="#e9d6a8" stroke="#a88f5e" stroke-width="2"/>${[...Array(5).keys()].map(i=>`<line x1="${13+i*4}" y1="-8" x2="${13+i*4}" y2="8" stroke="#bfa774" stroke-width="1.5"/>`).join('')}</g>`;
+  return s;
+}
+
+// ================= B: GALERIA =================
+function cenaB(){
+  const r=rng(23); let s=`<defs>
+    <radialGradient id="bLuz" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffd98a" stop-opacity=".55"/><stop offset="1" stop-color="#ffd98a" stop-opacity="0"/></radialGradient>
+    <radialGradient id="bVin" cx="50%" cy="41%" r="70%"><stop offset=".45" stop-color="#140a04" stop-opacity="0"/><stop offset="1" stop-color="#140a04" stop-opacity=".7"/></radialGradient>
+  </defs>`;
+  s+=`<rect width="390" height="780" fill="#4a3a2e"/>`;
+  // calçamento de pedra
+  for(let y=-10;y<800;y+=30) for(let x=-10+((y/30)%2)*15;x<400;x+=32){
+    s+=`<path d="${blob(x+(r()-.5)*6,y+(r()-.5)*6,14+r()*3,12+r()*3,r,.14,8)}" fill="${['#6d5848','#755f4e','#665141','#7a6452'][Math.floor(r()*4)]}" stroke="#3d2f25" stroke-width="1.5"/>`;
+  }
+  // trilho com carrinho
+  const ty=598;
+  s+=`<rect x="0" y="${ty-6}" width="390" height="44" fill="#3d2f25" opacity=".5"/>`;
+  for(let x=-6;x<400;x+=20) s+=`<rect x="${x}" y="${ty-4}" width="9" height="40" rx="2" fill="#7c5131" stroke="#4d321d" stroke-width="1.5"/>`;
+  s+=`<line x1="0" y1="${ty+5}" x2="390" y2="${ty+5}" stroke="#2b2420" stroke-width="5"/><line x1="0" y1="${ty+27}" x2="390" y2="${ty+27}" stroke="#2b2420" stroke-width="5"/><line x1="0" y1="${ty+4}" x2="390" y2="${ty+4}" stroke="#b4bdc4" stroke-width="3"/><line x1="0" y1="${ty+26}" x2="390" y2="${ty+26}" stroke="#b4bdc4" stroke-width="3"/>`;
+  s+=`<g transform="translate(250 ${ty+16})"><rect x="-54" y="-30" width="112" height="66" rx="10" fill="#0004"/><rect x="-58" y="-34" width="112" height="64" rx="10" fill="#6d4a30" stroke="#8d969d" stroke-width="5"/><rect x="-48" y="-24" width="92" height="44" rx="6" fill="#3b2a1e"/>${ores([[5,-2.4,-.5],[4,-1.2,.4],[6,0,-.5],[3,1.2,.4],[5,2.2,-.3],[2,-.3,.6]],-2,-2,16,1.1)}</g>`;
+  // plataforma de madeira em volta do tabuleiro
+  s+=`<rect x="${BX-16}" y="${BY-16}" width="${BW+32}" height="${BW+32}" rx="10" fill="#0005" transform="translate(4 6)"/>`;
+  s+=`<rect x="${BX-16}" y="${BY-16}" width="${BW+32}" height="${BW+32}" rx="10" fill="#8a5a35" stroke="#4f3320" stroke-width="2"/>`;
+  for(let k=0;k<6;k++) s+=`<line x1="${BX-16}" y1="${BY-16+k*(BW+32)/6}" x2="${BX+BW+16}" y2="${BY-16+k*(BW+32)/6}" stroke="#6e4527" stroke-width="1.5" opacity=".6"/>`;
+  s+=`<rect x="${BX}" y="${BY}" width="${BW}" height="${BW}" rx="6" fill="#33271f"/>`;
+  // lajotas
+  for(let j=0;j<4;j++) for(let i=0;i<4;i++){ const x=X(i), y=Y(j);
+    s+=`<path d="${blobRect(x+1,y+1,C-2,C-2,r,1.8,14)}" fill="#a48b72"/><path d="${blobRect(x+3,y+3,C-10,C-12,r,1.6,14)}" fill="#b59c82"/>`;
+    s+=speck(r,x+6,y+6,C-12,C-12,6,['#9b826a','#c2aa90'],1,2.5);
+  }
+  // esteios nos cantos
+  const poste=(x,y)=>`<rect x="${x-13}" y="${y-13}" width="26" height="26" rx="3" fill="#5e3b1f" stroke="#3a2412" stroke-width="2"/><rect x="${x-8}" y="${y-8}" width="16" height="16" rx="2" fill="#94603a"/><path d="M${x-5} ${y-2} h10 M${x-5} ${y+3} h10" stroke="#6e4527" stroke-width="1.5"/>`;
+  for(const [x,y] of [[BX-16,BY-16],[BX+BW+16,BY-16],[BX-16,BY+BW+16],[BX+BW+16,BY+BW+16]]) s+=poste(x,y);
+  // pedra (parede)
+  s+=pecas((x,y)=>`<ellipse cx="${x+38}" cy="${y+64}" rx="30" ry="7" fill="#0004"/><path d="${blob(x+36,y+37,32,28,rng(3),.13,8)}" fill="#7d6b5e" stroke="#2e2219" stroke-width="2.4"/><path d="${blob(x+29,y+29,15,10,rng(4),.2,7)}" fill="#998678"/>`);
+  // caixote e barril
+  s+=`<g transform="translate(52 700)"><rect x="-28" y="-26" width="58" height="58" rx="4" fill="#0004"/><rect x="-32" y="-30" width="58" height="58" rx="4" fill="#9a6a3c" stroke="#5e3b1f" stroke-width="2.5"/><path d="M-26 -24 L20 22 M20 -24 L-26 22" stroke="#7a4f28" stroke-width="7"/><rect x="-32" y="-30" width="58" height="58" rx="4" fill="none" stroke="#7a4f28" stroke-width="6"/></g>`;
+  s+=`<g transform="translate(340 710)"><circle cx="4" cy="5" r="30" fill="#0004"/><circle r="30" fill="#8a5a35" stroke="#4f3320" stroke-width="2.5"/><circle r="24" fill="none" stroke="#5d6d7c" stroke-width="3.5"/><circle r="12" fill="none" stroke="#5d6d7c" stroke-width="3"/><circle r="3" fill="#4f3320"/></g>`;
+  // lanternas
+  const lanterna=(x,y)=>`<circle cx="${x}" cy="${y}" r="110" fill="url(#bLuz)"/><rect x="${x-9}" y="${y-9}" width="18" height="18" rx="4" fill="#2e2219"/><circle cx="${x}" cy="${y}" r="5.5" fill="#ffe7a8"/>`;
+  s+=`<rect width="390" height="780" fill="url(#bVin)"/>`;
+  s+=lanterna(BX-16,BY+BW*0.45)+lanterna(BX+BW+16,BY+BW*0.2)+lanterna(140,740);
+  return s;
+}
+
+// ================= C: GRUTA =================
+function cenaC(){
+  const r=rng(41); let s=`<defs>
+    <radialGradient id="cBrilhoA" r="50%"><stop offset="0" stop-color="#8ff0ff" stop-opacity=".55"/><stop offset="1" stop-color="#8ff0ff" stop-opacity="0"/></radialGradient>
+    <radialGradient id="cBrilhoR" r="50%"><stop offset="0" stop-color="#ffb3e6" stop-opacity=".5"/><stop offset="1" stop-color="#ffb3e6" stop-opacity="0"/></radialGradient>
+    <linearGradient id="cRaio" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6d8" stop-opacity=".22"/><stop offset="1" stop-color="#fff6d8" stop-opacity="0"/></linearGradient>
+  </defs>`;
+  s+=`<rect width="390" height="780" fill="#3a3136"/>`;
+  // chão da câmara (areia)
+  s+=`<path d="${blobRect(4,118,382,620,r,10,26)}" fill="#bfa47e"/><path d="${blobRect(14,128,362,600,r,8,24)}" fill="#d3bc95"/>`;
+  s+=speck(r,20,135,350,580,220,['#c7ae86','#dec9a4','#bba077'],1,3.5);
+  // riacho
+  s+=`<path d="M-10 560 C60 540 90 600 70 660 S120 760 160 800 L-10 800Z" fill="#3d7f88"/><path d="M-10 568 C52 552 78 604 60 662 S106 760 146 800 L-10 800Z" fill="#5aa9b3"/>`;
+  s+=`<path d="M8 590 q14 -6 26 2 M30 650 q14 -6 24 2 M60 720 q14 -6 24 2 M24 700 q10 -4 18 1" stroke="#9fdde3" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
+  // musgo
+  for(const [x,y,k] of [[340,560,1],[60,180,.8],[300,700,1.1],[200,560,.7]]){ s+=`<path d="${blob(x,y,26*k,18*k,r,.25,9)}" fill="#7fae5a"/><path d="${blob(x-4,y-3,15*k,10*k,r,.3,8)}" fill="#97c46d"/>`+speck(r,x-18*k,y-10*k,36*k,20*k,6,['#6a9a48'],1.5,2.5); }
+  // borda de rocha da caverna
+  const pedras=[];
+  for(let x=-10;x<400;x+=34){ pedras.push([x,108+r()*14,28+r()*10]); pedras.push([x+12,748+r()*14,28+r()*12]); }
+  for(let y=110;y<770;y+=36){ pedras.push([-6+r()*10,y,26+r()*12]); pedras.push([396-r()*10,y,26+r()*12]); }
+  for(const [x,y,rr] of pedras){ s+=`<path d="${blob(x,y,rr,rr*.85,r,.18,9)}" fill="#4a4045" stroke="#2c2428" stroke-width="2"/><path d="${blob(x-rr*.25,y-rr*.25,rr*.5,rr*.4,r,.2,7)}" fill="#5c5156"/>`; }
+  s+=`<rect x="0" y="0" width="390" height="112" fill="#3a3136"/>`;
+  // cristais
+  const cristal=(x,y,k,cor,cl,brilho)=>{ let g=`<circle cx="${x}" cy="${y}" r="${44*k}" fill="url(#${brilho})"/>`;
+    for(const [a,l] of [[-.5,1],[0,1.3],[.55,.9],[-.15,.7]]){ const dx=Math.sin(a)*l*26*k, dy=-Math.cos(a)*l*26*k, w=6*k;
+      g+=`<path d="M${f1(x-w*Math.cos(a))} ${f1(y-w*Math.sin(a))} L${f1(x+dx-w*.6*Math.cos(a))} ${f1(y+dy-w*.6*Math.sin(a))} L${f1(x+dx*1.15)} ${f1(y+dy*1.15)} L${f1(x+dx+w*.6*Math.cos(a))} ${f1(y+dy+w*.6*Math.sin(a))} L${f1(x+w*Math.cos(a))} ${f1(y+w*Math.sin(a))}Z" fill="${cor}" stroke="#2e2219" stroke-width="2"/><path d="M${f1(x)} ${f1(y)} L${f1(x+dx)} ${f1(y+dy)}" stroke="${cl}" stroke-width="2" opacity=".8"/>`; }
+    return g; };
+  s+=cristal(28,150,1,'#7fe3ef','#d9fbff','cBrilhoA')+cristal(366,240,.9,'#f2a6d8','#ffe3f5','cBrilhoR')+cristal(350,560,1.1,'#7fe3ef','#d9fbff','cBrilhoA')+cristal(36,470,.8,'#f2a6d8','#ffe3f5','cBrilhoR')+cristal(250,760,1,'#7fe3ef','#d9fbff','cBrilhoA');
+  // cogumelos
+  const cog=(x,y,k)=>`<ellipse cx="${x+2}" cy="${y+3}" rx="${11*k}" ry="${9*k}" fill="#0003"/><circle cx="${x}" cy="${y}" r="${10*k}" fill="#e0604a" stroke="#2e2219" stroke-width="2"/><circle cx="${x-3*k}" cy="${y-3*k}" r="${2.4*k}" fill="#fff"/><circle cx="${x+4*k}" cy="${y+1*k}" r="${1.8*k}" fill="#fff"/><circle cx="${x-1*k}" cy="${y+4*k}" r="${1.5*k}" fill="#fff"/>`;
+  s+=cog(150,600,1)+cog(166,612,.7)+cog(318,128,.9)+cog(98,740,.8);
+  // raio de luz
+  s+=`<path d="M250 110 L330 110 L250 520 L120 520Z" fill="url(#cRaio)"/>`;
+  // ninhos (sem grade): cada pedrinha num côncavo da areia
+  s+=pecas((x,y)=>`<circle cx="${x+36}" cy="${y+40}" r="32" fill="#5f5258"/><circle cx="${x+36}" cy="${y+38}" r="23" fill="#726469"/><circle cx="${x+35}" cy="${y+36}" r="12" fill="#8a7c81"/><circle cx="${x+32}" cy="${y+32}" r="4" fill="#a3969b"/>`,
+    (x,y,v)=>`<ellipse cx="${x+36}" cy="${y+40}" rx="35" ry="31" fill="#bba07a"/><ellipse cx="${x+36}" cy="${y+42}" rx="30" ry="26" fill="#c9b08a"/><path d="M${x+10} ${y+30} q26 -20 52 0" stroke="#a88f6a" stroke-width="2" fill="none" opacity=".6"/>`);
+  return s;
+}
+
+// ================= D: BANCADA =================
+function cenaD(){
+  const r=rng(57); let s=`<defs>
+    <radialGradient id="dVela" r="50%"><stop offset="0" stop-color="#ffd27a" stop-opacity=".6"/><stop offset="1" stop-color="#ffd27a" stop-opacity="0"/></radialGradient>
+    <linearGradient id="dFeltro" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2c4f4b"/><stop offset=".35" stop-color="#3f6b66"/></linearGradient>
+  </defs>`;
+  // tábuas da mesa
+  const cores=['#a8743f','#b07b45','#9f6c39','#ab773f','#a36f3c','#b37e48','#a0703d'];
+  for(let k=0;k<7;k++){ const x=k*58-14; s+=`<rect x="${x}" y="0" width="58" height="780" fill="${cores[k]}"/><line x1="${x}" y1="0" x2="${x}" y2="780" stroke="#6e4524" stroke-width="2.5"/>`;
+    for(let g=0;g<5;g++){ const gx=x+8+r()*42, y0=r()*700; s+=`<path d="M${f1(gx)} ${f1(y0)} q${f1((r()-.5)*10)} 40 0 80 t0 80" stroke="#8a5a30" stroke-width="1.3" fill="none" opacity=".5"/>`; }
+    s+=`<ellipse cx="${x+29}" cy="${f1(100+r()*600)}" rx="5" ry="9" fill="none" stroke="#7a4f28" stroke-width="1.5" opacity=".5"/>`; }
+  // mapa embaixo da caixa
+  s+=`<g transform="translate(70 128) rotate(-8)"><rect x="-60" y="-50" width="150" height="120" fill="#0003" transform="translate(4 5)"/><rect x="-60" y="-50" width="150" height="120" fill="#efe0bd"/><path d="M-50 40 q30 -40 60 -10 t70 -40" stroke="#c0603f" stroke-width="2.5" stroke-dasharray="6 5" fill="none"/><path d="M-48 -20 q20 10 40 -6 M20 30 q20 -10 50 8 M-30 20 q10 -8 24 -2" stroke="#b9a77f" stroke-width="2" fill="none"/></g>`;
+  // vela
+  s+=`<circle cx="345" cy="120" r="120" fill="url(#dVela)"/><g transform="translate(345 120)"><circle r="20" fill="#0003" cx="3" cy="4"/><circle r="20" fill="#d7c9ad" stroke="#a7977a" stroke-width="2"/><circle r="15" fill="#f3ead8"/><circle r="4" fill="#ffcf5a"/><circle r="2" fill="#fff6d0"/></g>`;
+  // caixa de amostras
+  const ox=BX-18, oy=BY-18, ow=BW+36;
+  s+=`<rect x="${ox}" y="${oy}" width="${ow}" height="${ow}" rx="12" fill="#0005" transform="translate(6 8)"/>`;
+  s+=`<rect x="${ox}" y="${oy}" width="${ow}" height="${ow}" rx="12" fill="#6e4224" stroke="#45280f" stroke-width="2.5"/><rect x="${ox+6}" y="${oy+6}" width="${ow-12}" height="${ow-12}" rx="9" fill="#8f5a33"/>`;
+  s+=`<rect x="${BX}" y="${BY}" width="${BW}" height="${BW}" rx="4" fill="#b98550"/>`;
+  for(let j=0;j<4;j++) for(let i=0;i<4;i++){ const x=X(i), y=Y(j);
+    s+=`<rect x="${x}" y="${y}" width="${C}" height="${C}" rx="3" fill="url(#dFeltro)"/><rect x="${x}" y="${y}" width="${C}" height="${C}" rx="3" fill="none" stroke="#7a4f28" stroke-width="1.5"/>`;
+    s+=speck(r,x+4,y+10,C-8,C-14,10,['#4a7a74','#365e59'],.6,1.4); }
+  // etiquetas embaixo de algumas casas
+  for(const [i,j] of [[0,0],[2,2],[1,3]]) s+=`<rect x="${X(i)+16}" y="${Y(j)+C+1}" width="40" height="7" rx="1" fill="#f3ead8"/>`;
+  // parede = tampa de madeira
+  s+=pecas((x,y)=>`<rect x="${x+3}" y="${y+3}" width="${C-6}" height="${C-6}" rx="4" fill="#a0693a" stroke="#5e3b1f" stroke-width="2"/><path d="M${x+3} ${y+C/2-12} h${C-6} M${x+3} ${y+C/2+12} h${C-6}" stroke="#7a4f28" stroke-width="2"/><circle cx="${x+12}" cy="${y+12}" r="2.2" fill="#5e3b1f"/><circle cx="${x+C-12}" cy="${y+12}" r="2.2" fill="#5e3b1f"/><circle cx="${x+12}" cy="${y+C-12}" r="2.2" fill="#5e3b1f"/><circle cx="${x+C-12}" cy="${y+C-12}" r="2.2" fill="#5e3b1f"/>`);
+  // lupa
+  s+=`<g transform="translate(300 660) rotate(30)"><rect x="34" y="-8" width="62" height="16" rx="8" fill="#0003" transform="translate(4 6)"/><rect x="34" y="-8" width="62" height="16" rx="8" fill="#6d3f20" stroke="#3f230f" stroke-width="2"/><circle r="40" fill="#0003" cx="4" cy="6"/><circle r="40" fill="#cfe9f2" fill-opacity=".55" stroke="#c9a24a" stroke-width="8"/><path d="M-22 -18 q10 -12 26 -12" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" opacity=".8"/></g>`;
+  // moedas
+  const moeda=(x,y)=>`<circle cx="${x+2}" cy="${y+3}" r="11" fill="#0003"/><circle cx="${x}" cy="${y}" r="11" fill="#f2b33d" stroke="#b27f1d" stroke-width="2"/><circle cx="${x}" cy="${y}" r="6.5" fill="none" stroke="#c9952b" stroke-width="1.5"/>`;
+  s+=moeda(70,600)+moeda(92,610)+moeda(80,628)+moeda(190,700);
+  // caderno
+  s+=`<g transform="translate(110 712) rotate(-6)"><rect x="-58" y="-40" width="116" height="80" rx="4" fill="#0003" transform="translate(4 5)"/><rect x="-58" y="-40" width="116" height="80" rx="4" fill="#7a3b3b"/><rect x="-50" y="-34" width="104" height="68" rx="2" fill="#f6efe0"/>${[...Array(6).keys()].map(i=>`<line x1="-44" y1="${-22+i*9}" x2="46" y2="${-22+i*9}" stroke="#c9d6e0" stroke-width="1.2"/>`).join('')}<path d="M-40 -14 q8 -4 16 0 t16 0 M-40 -4 q6 -3 12 0" stroke="#5a4636" stroke-width="1.5" fill="none"/></g>`;
+  return s;
+}
+
+const VIEWS = [
+  {id:'A', nome:'Escavação', cena:cenaA, desc:'Um sítio de escavação visto de cima. As casas são marcadas por barbantes entre estacas. Em volta: balde com minério, pá, peneira e escova.'},
+  {id:'B', nome:'Galeria', cena:cenaB, desc:'Piso de pedra da mina, iluminado por lanternas, com trilho e carrinho. O tabuleiro é uma plataforma de madeira com lajotas.'},
+  {id:'C', nome:'Gruta', cena:cenaC, desc:'Uma câmara de gruta com cristais, musgo, cogumelos e um riacho. Sem grade: cada pedrinha fica num côncavo da areia.'},
+  {id:'D', nome:'Bancada', cena:cenaD, desc:'A mesa do minerador. O tabuleiro é uma caixa de amostras de minerais, com mapa, vela, lupa, moedas e caderno em volta.'},
+];
+const hud = `<div class="hud"><div class="pill"><span class="ic" style="background:#6aa84f">⚡</span><div><b>23</b><small>de 40</small></div></div><div class="pill"><span class="ic" style="background:#f2b33d">$</span><div><b>$86</b><small>dinheiro</small></div></div><div class="pill"><span class="ic" style="background:#c0603f">!</span><div><b>$150</b><small>cota em 3 dias</small></div></div></div>
+  <div class="top"><span class="icon">☰</span><div class="banner"><b>Andar 1 · dia 2</b><span>Túnel</span></div><span class="icon">♪</span></div>
+  <div class="btnEnd">Encerrar o dia</div>`;
+document.getElementById('views').innerHTML = VIEWS.map(v=>`<section class="view" id="v${v.id}"><div class="tit"><b>${v.id} · ${v.nome}</b><span>${v.desc}</span></div>
+  <div class="caixa"><div class="phone"><svg viewBox="0 0 390 780" width="390" height="780">${v.cena()}</svg>${hud}</div></div></section>`).join('');
+document.getElementById('sw').innerHTML = VIEWS.map(v=>`<button data-v="${v.id}">${v.id} ${v.nome}</button>`).join('');
+function mostra(id){ document.querySelectorAll('.view').forEach(e=>e.classList.toggle('on',e.id==='v'+id)); document.querySelectorAll('#sw button').forEach(b=>b.classList.toggle('on',b.dataset.v===id)); location.hash=id; }
+document.querySelectorAll('#sw button').forEach(b=>b.onclick=()=>mostra(b.dataset.v));
+function escala(){ const s=Math.min(1,(innerWidth-16)/390); document.querySelectorAll('.caixa').forEach(c=>{ c.style.width=390*s+'px'; c.style.height=780*s+'px'; c.firstChild.style.transform=`scale(${s})`; }); }
+addEventListener('resize',escala); escala();
+mostra((location.hash.slice(1)||'A').toUpperCase());
+</script>
+</body>
+</html>
