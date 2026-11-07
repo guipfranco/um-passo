@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Rascunhos de estilo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;700&family=Jersey+10&family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0}
+body{font-family:system-ui,sans-serif;background:#000;min-height:100vh}
+.switch{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);z-index:50;display:flex;gap:4px;background:#000c;padding:4px;border-radius:999px}
+.switch button{border:0;border-radius:999px;padding:7px 14px;font:600 13px system-ui;background:transparent;color:#bbb}
+.switch button.on{background:#fff;color:#000}
+.view{display:none;min-height:100vh;padding:14px 10px 70px;flex-direction:column;align-items:center;gap:14px;position:relative;overflow:hidden}
+.view.on{display:flex}
+.cap{font-size:12px;opacity:.7;text-align:center;max-width:360px}
+canvas{image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+
+/* ============ A: MINA PIXEL ============ */
+#A{font-family:'Pixelify Sans',monospace;color:#f3e2c0;background-color:#17110d;background-size:192px}
+#A .hudA{width:min(94vw,380px);display:flex;align-items:flex-end;justify-content:space-between}
+#A .lamp{display:flex;align-items:flex-end;gap:6px;position:relative}
+#A .lamp canvas{width:48px;height:64px;filter:drop-shadow(0 0 14px #ffb84d88)}
+#A .lamp .glow{position:absolute;left:-10px;top:4px;width:68px;height:68px;border-radius:50%;background:radial-gradient(#ffcf6a55,transparent 70%);animation:flick 1.6s infinite alternate}
+@keyframes flick{0%{opacity:.7;transform:scale(.95)}50%{opacity:1}100%{opacity:.8;transform:scale(1.05)}}
+#A .oil{display:flex;gap:2px;margin-bottom:6px}
+#A .oil i{width:7px;height:16px;background:#ffcf4a;box-shadow:inset -2px -2px 0 #c97f1e,0 0 0 2px #1a120c}
+#A .oil i.e{background:#3a2b1c;box-shadow:inset -2px -2px 0 #2a1f15,0 0 0 2px #1a120c}
+#A .plank{background:#7a4f2a;color:#fff1d0;padding:6px 12px 8px;font-size:18px;font-weight:700;box-shadow:inset 0 -4px 0 #5b3a1e,inset 0 3px 0 #9a6a3c,0 0 0 3px #1a120c,0 6px 0 #0008;position:relative;text-shadow:2px 2px 0 #3a2410}
+#A .plank::before,#A .plank::after{content:'';position:absolute;top:50%;width:4px;height:4px;background:#2a1a0c;margin-top:-2px}
+#A .plank::before{left:4px}#A .plank::after{right:4px}
+#A .pouch{display:flex;align-items:flex-end;gap:4px;font-size:24px;font-weight:700;text-shadow:2px 2px 0 #000}
+#A .pouch canvas{width:40px;height:40px}
+#A .frame{position:relative;padding:10px;background:#5b3a1e;box-shadow:inset 0 0 0 3px #7a4f2a,inset 0 0 0 6px #3a2410,0 0 0 3px #120c08,0 10px 0 #0009}
+#A .frame .nail{position:absolute;width:6px;height:6px;background:#b8a58a;box-shadow:2px 2px 0 #2a1a0c}
+#A .gridA{display:grid;grid-template-columns:repeat(4,min(20vw,80px));gap:6px;background:#0e0a07;padding:6px;box-shadow:inset 0 0 0 3px #000}
+#A .slot{aspect-ratio:1;background:#1c1510;box-shadow:inset 3px 3px 0 #0a0705,inset -2px -2px 0 #2a2018;position:relative;display:flex;align-items:center;justify-content:center}
+#A .slot canvas{width:96%;height:96%}
+#A .slot .lv{position:absolute;bottom:2px;right:4px;font-size:13px;font-weight:700;color:#fff3d0;text-shadow:1px 1px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000}
+#A .note{position:relative;margin-bottom:8px;background:#efe2c2;color:#3a2410;font-size:12px;line-height:1.15;padding:6px 7px 7px;transform:rotate(4deg);box-shadow:0 3px 0 #0007;width:84px;text-align:center}
+#A .note::before{content:'';position:absolute;top:-4px;left:50%;margin-left:-3px;width:6px;height:6px;background:#c0392b;box-shadow:1px 1px 0 #5a0f0a}
+#A .note b{font-size:16px;display:block}
+#A .bottomA{width:min(94vw,380px);display:flex;align-items:flex-end;justify-content:space-between}
+#A .cart{display:flex;flex-direction:column;align-items:center;font-size:12px;color:#bfa682}
+#A .cart canvas{width:84px;height:60px}
+#A .sign{background:#7a4f2a;color:#fff1d0;font:700 17px 'Pixelify Sans';border:0;padding:12px 16px;box-shadow:inset 0 -5px 0 #5b3a1e,inset 0 3px 0 #9a6a3c,0 0 0 3px #1a120c,0 6px 0 #0008;text-shadow:2px 2px 0 #3a2410}
+#A .rail{width:min(94vw,380px);height:8px;background:repeating-linear-gradient(90deg,#4a3420 0 10px,#2a1d12 10px 14px);box-shadow:0 -3px 0 #6c6c74,0 3px 0 #000}
+#A .cap{color:#bfa682}
+
+/* ============ B: BANCADA BALATRO ============ */
+#B{font-family:'Jersey 10',monospace;color:#fff;background:#0f2a2a}
+#B .swirl{position:absolute;inset:-50%;background:conic-gradient(from 0deg at 40% 45%,#123a36,#0d2424,#1b4a3e,#0b1f22,#123a36);animation:spin 40s linear infinite;filter:blur(30px);z-index:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+#B .crt{position:absolute;inset:0;pointer-events:none;z-index:20;background:repeating-linear-gradient(0deg,#0000 0 2px,#00000026 2px 4px),radial-gradient(ellipse at center,#0000 55%,#0000008a 100%)}
+#B > *:not(.swirl):not(.crt){position:relative;z-index:1}
+#B .hudB{width:min(94vw,380px);display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+#B .box{background:#1c2a2e;border-radius:8px;padding:4px;box-shadow:0 0 0 3px #0c1416,0 5px 0 #0c1416;text-align:center}
+#B .box small{display:block;font-size:17px;letter-spacing:1px;color:#c9d6d6;line-height:1}
+#B .box b{display:block;border-radius:6px;font-size:34px;line-height:1.05;font-weight:400;box-shadow:inset 0 -4px 0 #0004}
+#B .red b{background:#fe5f55}#B .gold b{background:#e0a92b}#B .blue b{background:#009dff}
+#B .banner{font-size:30px;letter-spacing:2px;text-align:center;line-height:.9;text-shadow:3px 3px 0 #0c1416}
+#B .banner span{display:block;font-size:20px;color:#9fe0c8;letter-spacing:1px}
+#B .gridB{display:grid;grid-template-columns:repeat(4,min(20vw,78px));gap:10px;padding:12px;background:#0c1416aa;border-radius:12px;box-shadow:0 0 0 3px #0c1416;animation:shakeB 2.6s infinite}
+@keyframes shakeB{0%,60%,100%{transform:none}62%{transform:translate(-6px,3px) rotate(-1deg)}64%{transform:translate(6px,-3px) rotate(1deg)}66%{transform:translate(-4px,2px)}68%{transform:none}}
+#B .t{aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 0 0 3px #0c1416,0 6px 0 #0c1416;font-size:15px;line-height:1;position:relative}
+#B .t.empty{background:#ffffff0a;box-shadow:inset 0 0 0 2px #ffffff14}
+#B .t .pp{display:flex;gap:3px;margin-top:4px}#B .t .pp i{width:7px;height:7px;background:#fff;border-radius:2px;box-shadow:0 2px 0 #0006}
+#B .rk{background:var(--rc);color:#fff;text-shadow:2px 2px 0 #0008}
+#B .ore{border-radius:50%;font-size:22px;color:#1a1a1a;text-shadow:none}
+#B .ore small{font-size:16px}
+#B .o0{background:#3c4648;color:#8b9a9c;border-radius:8px}
+#B .o1{background:radial-gradient(circle at 35% 30%,#ffb27a,#d4652a)}
+#B .o2{background:radial-gradient(circle at 35% 30%,#f2f5f8,#98a2ac)}
+#B .o3{background:radial-gradient(circle at 35% 30%,#fff,#c3ccd6);box-shadow:0 0 0 3px #0c1416,0 6px 0 #0c1416,0 0 18px #fff8}
+#B .o4{background:radial-gradient(circle at 35% 30%,#fff3a8,#f0b21c);box-shadow:0 0 0 3px #0c1416,0 6px 0 #0c1416,0 0 26px #ffcf3a}
+#B .cracking{animation:wob .18s infinite}
+@keyframes wob{0%{transform:rotate(-5deg) scale(1.05)}50%{transform:rotate(5deg) scale(1.08)}100%{transform:rotate(-5deg) scale(1.05)}}
+#B .pop{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) rotate(-7deg);font-size:64px;color:#ffcf3a;text-shadow:4px 4px 0 #0c1416,-2px -2px 0 #0c1416,2px -2px 0 #0c1416,-2px 2px 0 #0c1416;animation:popB 2.6s infinite;white-space:nowrap;pointer-events:none;text-align:center;line-height:.85;z-index:5}
+#B .pop small{display:block;font-size:34px;color:#fff}
+@keyframes popB{0%,58%{opacity:0;transform:translate(-50%,-50%) rotate(-7deg) scale(.3)}64%{opacity:1;transform:translate(-50%,-50%) rotate(-7deg) scale(1.15)}72%,90%{opacity:1;transform:translate(-50%,-50%) rotate(-7deg) scale(1)}100%{opacity:0;transform:translate(-50%,-60%) rotate(-7deg) scale(1)}}
+#B .stage{position:relative}
+#B .spark{position:absolute;width:8px;height:8px;background:#ffcf3a;box-shadow:0 0 0 2px #0c1416;z-index:4;pointer-events:none}
+#B .total{width:min(94vw,380px);display:flex;justify-content:space-between;align-items:center;background:#1c2a2e;border-radius:8px;padding:2px 14px;box-shadow:0 0 0 3px #0c1416,0 5px 0 #0c1416;font-size:26px}
+#B .total b{font-size:46px;color:#ffcf3a;font-weight:400}
+#B .btnB{font:400 30px 'Jersey 10';border:0;border-radius:8px;padding:4px 22px;color:#fff;background:#fe5f55;box-shadow:0 0 0 3px #0c1416,0 6px 0 #0c1416}
+#B .cap{color:#9fbcbc;font-family:system-ui;z-index:1}
+
+/* ============ C: PEDRINHAS ============ */
+#C{font-family:'Fredoka',system-ui;color:#5a4636;background:#f6ecd9}
+#C .hudC{width:min(94vw,380px);display:flex;align-items:center;justify-content:space-between}
+#C .stat{display:flex;align-items:center;gap:6px;font-size:24px;font-weight:700}
+#C .ico{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px}
+#C .ico.l{background:#ffd98a;box-shadow:0 0 0 3px #fff,0 0 14px #ffc94d}
+#C .ico.c{background:#f2b33d;color:#fff;font-weight:700;box-shadow:0 0 0 3px #fff}
+#C .cradle{display:flex;flex-direction:column;align-items:center;font-size:12px;font-weight:600;letter-spacing:.5px;color:#a08a74}
+#C .cradle .bed{width:64px;height:54px;border-radius:0 0 32px 32px;background:#ead9bb;box-shadow:inset 0 4px 0 #dcc6a0;display:flex;align-items:center;justify-content:center}
+#C .gridC{display:grid;grid-template-columns:repeat(4,min(20vw,80px));gap:10px;padding:14px;background:#e6d3b0;border-radius:30px;box-shadow:inset 0 4px 0 #d6bf98,0 6px 0 #d2b98e}
+#C .cell{aspect-ratio:1;border-radius:22px;background:#dcc7a2;box-shadow:inset 0 3px 0 #ccb48b;display:flex;align-items:center;justify-content:center}
+#C .peb{position:relative;width:var(--s);height:var(--s);background:var(--pc);border-radius:46% 54% 48% 52% / 55% 50% 50% 45%;box-shadow:inset -6px -8px 0 #0002,inset 5px 6px 0 #fff4,0 5px 0 #0002;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;animation:breathe 3s ease-in-out infinite}
+#C .peb:nth-child(odd){animation-delay:-1.3s}
+@keyframes breathe{50%{transform:scale(1.04,.97)}}
+#C .eyes{display:flex;gap:12px}
+#C .eye{width:7px;height:9px;border-radius:50%;background:#2e2219}
+#C .sleepy .eye{height:3px;border-radius:2px}
+#C .star .eye{width:auto;height:auto;background:none;color:#fff;font-size:14px;line-height:1;text-shadow:0 0 6px #fff}
+#C .mouth{width:10px;height:3px;border-radius:2px;background:#2e2219}
+#C .smile .mouth{width:14px;height:7px;background:none;border:3px solid #2e2219;border-top:0;border-radius:0 0 14px 14px}
+#C .o .mouth{width:7px;height:7px;border-radius:50%}
+#C .big .mouth{width:16px;height:9px;background:#2e2219;border:0;border-radius:0 0 16px 16px}
+#C .brow .eyes{position:relative}
+#C .brow .eye{box-shadow:0 -6px 0 -2px #2e2219}
+#C .crown{position:absolute;top:-12px;font-size:18px;color:#f2b33d;text-shadow:0 2px 0 #0002}
+#C .blush::before,#C .blush::after{content:'';position:absolute;top:52%;width:9px;height:5px;border-radius:50%;background:#ff8a7a88}
+#C .blush::before{left:16%}#C .blush::after{right:16%}
+#C .day{font-size:15px;font-weight:600;color:#a08a74}
+#C .day b{color:#c0603f}
+#C .btnC{font:700 18px 'Fredoka';border:0;border-radius:999px;padding:12px 26px;background:#c0603f;color:#fff;box-shadow:0 5px 0 #92452b}
+#C .cap{color:#a08a74}
+</style>
+</head>
+<body>
+
+<!-- ================= A ================= -->
+<section class="view on" id="A">
+  <div class="hudA">
+    <div class="lamp"><div class="glow"></div><canvas id="lampC" width="12" height="16"></canvas><div class="oil" id="oil"></div></div>
+    <div class="plank">DIA 3</div>
+    <div class="pouch"><canvas id="pouchC" width="12" height="12"></canvas>46</div>
+  </div>
+  <div class="frame">
+    <span class="nail" style="left:2px;top:2px"></span><span class="nail" style="right:2px;top:2px"></span>
+    <span class="nail" style="left:2px;bottom:2px"></span><span class="nail" style="right:2px;bottom:2px"></span>
+    <div class="gridA" id="gridA"></div>
+  </div>
+  <div class="bottomA">
+    <div class="cart"><canvas id="cartC" width="28" height="20"></canvas>próxima</div>
+    <div class="note">cota<b>$120</b>sexta-feira</div>
+    <button class="sign">ENCERRAR DIA</button>
+  </div>
+  <div class="rail"></div>
+  <p class="cap">A. Mina aconchegante em pixel art. A lamparina é a energia (os tracinhos de óleo), o saquinho é o dinheiro, o carrinho traz a próxima rocha, e a cota é um bilhete pregado na parede.</p>
+</section>
+
+<!-- ================= B ================= -->
+<section class="view" id="B">
+  <div class="swirl"></div><div class="crt"></div>
+  <div class="hudB">
+    <div class="box red"><small>COTA</small><b>$120</b></div>
+    <div class="box gold"><small>DINHEIRO</small><b>$46</b></div>
+    <div class="box blue"><small>ENERGIA</small><b>0</b></div>
+  </div>
+  <div class="banner">FIM DO DIA 3<span>quebrando as rochas...</span></div>
+  <div class="stage">
+    <div class="gridB" id="gridB"></div>
+    <div class="pop">OURO!<small>+$20</small></div>
+  </div>
+  <div class="total"><span>TOTAL DO DIA</span><b id="totB">$17</b></div>
+  <button class="btnB">QUEBRAR TUDO</button>
+  <p class="cap">B. Bancada estilo Balatro, no momento da revelação. Cor é o rótulo (vermelho = cota, dourado = dinheiro, azul = energia), números enormes, tela que treme quando sai algo raro, faíscas e contador subindo.</p>
+</section>
+
+<!-- ================= C ================= -->
+<section class="view" id="C">
+  <div class="hudC">
+    <div class="stat"><span class="ico l">🔥</span>27</div>
+    <div class="cradle">PRÓXIMA<div class="bed"><div class="peb sleepy" style="--s:34px;--pc:#d9c7a7"><div class="eyes"><i class="eye"></i><i class="eye"></i></div></div></div></div>
+    <div class="stat">46<span class="ico c">$</span></div>
+  </div>
+  <div class="gridC" id="gridC"></div>
+  <div class="day">dia 3 de 5 · cota de <b>$120</b> na sexta</div>
+  <button class="btnC">Ir dormir</button>
+  <p class="cap">C. Pedrinhas com personalidade, estilo Threes. Cada nível tem cor, tamanho e cara diferentes: o cascalho dorme, a pedra boceja, a rocha sorri, o geodo tem olhos de estrela, o cristalino ganha coroa. Quase sem HUD.</p>
+</section>
+
+<div class="switch">
+  <button data-v="A" class="on">A · Pixel</button>
+  <button data-v="B">B · Balatro</button>
+  <button data-v="C">C · Pedrinhas</button>
+</div>
+
+<script>
+// tabuleiro de exemplo (0 = vazio, 1..6 = nível da rocha)
+const BOARD=[5,4,3,2, 3,2,1,0, 1,0,0,2, 0,0,1,0];
+const NAMES=['','Cascalho','Pedra','Rocha','R. densa','Geodo','Cristalino'];
+
+// ---------- pixel helpers ----------
+function px(id,map,pal){const c=document.getElementById(id),x=c.getContext('2d');map.forEach((row,j)=>[...row].forEach((ch,i)=>{if(pal[ch]){x.fillStyle=pal[ch];x.fillRect(i,j,1,1);}}));}
+function rng(s){return()=>{s=(s*16807)%2147483647;return(s-1)/2147483646;};}
+const TP=[null,
+ {c:['#2a231d','#4f453c','#6e6255','#8a7d6e']},
+ {c:['#2c2824','#5c544b','#7f766b','#a0968a']},
+ {c:['#33261b','#6b5039','#937055','#b8936e']},
+ {c:['#1e1f2a','#41445a','#61657f','#8589a6']},
+ {c:['#241b2c','#4f3e5e','#715a84','#9479a8'],g:['#9a62e0','#c79cff','#f1e2ff']},
+ {c:['#18262f','#33505f','#4f7488','#7097ad'],g:['#2fb8e0','#7fe6ff','#e6fdff']},
+];
+function rock(t,seed,S=16){
+  const cv=document.createElement('canvas');cv.width=cv.height=S;const x=cv.getContext('2d');const r=rng(seed*131+t*7+3);
+  const R=4.6+t*0.5,cx=7.5,cy=8.2,m=[];
+  for(let j=0;j<S;j++){m[j]=[];for(let i=0;i<S;i++){const a=Math.atan2(j-cy,i-cx),d=Math.hypot(i-cx,(j-cy)*1.15);m[j][i]=d<R+Math.sin(a*3+seed)*.7+Math.sin(a*5+seed*2)*.45;}}
+  const P=TP[t].c;
+  for(let j=0;j<S;j++)for(let i=0;i<S;i++){if(!m[j][i])continue;
+    const edge=!(m[j-1]?.[i]&&m[j+1]?.[i]&&m[j][i-1]&&m[j][i+1]);
+    let col;
+    if(edge) col='#100b08';
+    else{const l=((cx-i)+(cy-j))/R+(r()-.5)*.6; col=l>.9?P[3]:l>.1?P[2]:l>-.7?P[1]:P[0];}
+    x.fillStyle=col;x.fillRect(i,j,1,1);
+  }
+  if(TP[t].g){const G=TP[t].g;for(let j=0;j<S;j++)for(let i=0;i<S;i++){const d=Math.hypot(i-cx-.5,(j-cy-.5)*1.2);if(m[j][i]&&d<R*.42){x.fillStyle=d<R*.18?'#120b18':((i+j)%2?G[1]:(r()<.3?G[2]:G[0]));x.fillRect(i,j,1,1);}}}
+  return cv;
+}
+
+// A: lamparina, saquinho, carrinho
+px('lampC',[
+"....kkkk....","...k....k...","...k....k...","..kkkkkkkk..","..kmmmmmmk..","..kgyyyygk..","..kgyoOygk..","..kgoOOogk..",
+"..kgyoOygk..","..kgyyoygk..","..kgyyyygk..","..kmmmmmmk..",".kkkkkkkkkk.",".kmMmmmmMmk.",".kkkkkkkkkk.","............"],
+{k:'#1a120c',m:'#9a7a3a',M:'#c9a24a',g:'#f8dc8a',y:'#ffd75e',o:'#ff9a2e',O:'#fff3c4'});
+px('pouchC',[
+"....kkkk....","...kyyyyk...","....kyyk....","...kbbbbk...","..kbbbbbbk..",".kbbbccbbbk.",".kbbcCCcbbk.",".kbbcCCcbbk.",
+".kbbbccbbbk.",".kbbbbbbbbk.","..kkkkkkkk..","............"],
+{k:'#1a120c',b:'#8a5a32',y:'#c9a24a',c:'#e0a92b',C:'#ffe08a'});
+(()=>{const c=document.getElementById('cartC'),x=c.getContext('2d');
+  const rk=rock(1,4);x.drawImage(rk,6,-2,16,16);
+  x.fillStyle='#1a120c';x.fillRect(2,8,24,9);x.fillStyle='#6c6c74';x.fillRect(3,9,22,7);x.fillStyle='#8d8d96';x.fillRect(3,9,22,2);
+  x.fillStyle='#4a4a52';for(let i=5;i<24;i+=5)x.fillRect(i,11,1,5);
+  x.fillStyle='#1a120c';x.fillRect(5,16,6,4);x.fillRect(17,16,6,4);x.fillStyle='#3a3a40';x.fillRect(6,17,4,2);x.fillRect(18,17,4,2);})();
+document.getElementById('oil').innerHTML=Array.from({length:8},(_,i)=>`<i class="${i<5?'':'e'}"></i>`).join('');
+(()=>{const g=document.getElementById('gridA');BOARD.forEach((t,k)=>{const s=document.createElement('div');s.className='slot';if(t){s.appendChild(rock(t,k+1));s.insertAdjacentHTML('beforeend',`<span class="lv">${'•'.repeat(t)}</span>`);}g.appendChild(s);});})();
+// parede da mina
+(()=>{const c=document.createElement('canvas');c.width=c.height=48;const x=c.getContext('2d');const r=rng(7);
+  x.fillStyle='#17110d';x.fillRect(0,0,48,48);
+  for(let n=0;n<14;n++){const cx=r()*48,cy=r()*48,R=3+r()*5;for(let j=-8;j<9;j++)for(let i=-8;i<9;i++){if(Math.hypot(i,j*1.2)<R){x.fillStyle=(i+j<-2)?'#2a211a':(i+j>3?'#120d0a':'#211913');x.fillRect((cx+i+48)%48|0,(cy+j+48)%48|0,1,1);}}}
+  document.getElementById('A').style.backgroundImage=`url(${c.toDataURL()})`;document.getElementById('A').style.imageRendering='pixelated';})();
+
+// B: tabuleiro na revelação
+(()=>{const g=document.getElementById('gridB');
+  const RC=['','#6b6259','#82786a','#9a7a58','#56597a','#7a5aa0','#2f8fb0'];
+  const REV={6:['o1','cobre','$1'],7:['o0','nada',''],8:['o1','cobre','$1'],12:['o0','nada',''],14:['o2','ferro','$3'],3:['o2','ferro','$3'],5:['o1','cobre','$1'],11:['o3','prata','$8'],2:['o4','OURO','$20']};
+  BOARD.forEach((t,k)=>{const d=document.createElement('div');
+    if(!t){d.className='t empty';}
+    else if(REV[k]){const [c,n,v]=REV[k];d.className='t ore '+c;d.innerHTML=`${n}<small>${v}</small>`;}
+    else{d.className='t rk'+(t===4?' cracking':'');d.style.setProperty('--rc',RC[t]);d.innerHTML=`${NAMES[t]}<span class="pp">${'<i></i>'.repeat(t)}</span>`;}
+    d.style.transform=`rotate(${(rng(k+9)()-.5)*5}deg)`;g.appendChild(d);});
+  // faíscas + contador
+  const stage=document.querySelector('#B .stage');
+  function burst(){const box=g.children[2].getBoundingClientRect(),sb=stage.getBoundingClientRect();
+    for(let i=0;i<16;i++){const s=document.createElement('i');s.className='spark';const a=Math.random()*6.28,d=40+Math.random()*80;
+      s.style.left=(box.left-sb.left+box.width/2)+'px';s.style.top=(box.top-sb.top+box.height/2)+'px';
+      s.animate([{transform:'translate(0,0) rotate(0)',opacity:1},{transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px) rotate(180deg)`,opacity:0}],{duration:700,easing:'cubic-bezier(.2,.8,.3,1)'});
+      stage.appendChild(s);setTimeout(()=>s.remove(),700);}
+    let v=17;const tot=document.getElementById('totB');const it=setInterval(()=>{v++;tot.textContent='$'+v;if(v>=37)clearInterval(it);},25);}
+  function loop(){document.getElementById('totB').textContent='$17';setTimeout(burst,1620);}
+  loop();setInterval(loop,2600);})();
+
+// C: pedrinhas
+(()=>{const g=document.getElementById('gridC');
+  const PC=['','#d9c7a7','#c9a07a','#c0754f','#7d8aa0','#9a77c9','#5ec4d6'];
+  const FACE=['','sleepy','o','smile blush','smile brow','star big blush','star big blush'];
+  BOARD.forEach((t,k)=>{const cell=document.createElement('div');cell.className='cell';
+    if(t){const s=52+t*4;cell.innerHTML=`<div class="peb ${FACE[t]}" style="--s:${s}%;--pc:${PC[t]}">${t===6?'<span class="crown">♛</span>':''}<div class="eyes"><i class="eye">${t>=5?'✦':''}</i><i class="eye">${t>=5?'✦':''}</i></div><i class="mouth"></i></div>`;}
+    g.appendChild(cell);});
+  document.querySelectorAll('#C .peb').forEach(p=>{p.style.width=p.style.height='';});
+  document.querySelectorAll('#C .cell .peb').forEach(p=>{const s=parseFloat(p.style.getPropertyValue('--s'));p.style.width=p.style.height=s+'%';});
+})();
+
+document.querySelectorAll('.switch button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.switch button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id===b.dataset.v));scrollTo(0,0);});
+</script>
+</body>
+</html>
