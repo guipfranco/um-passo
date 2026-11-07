@@ -156,6 +156,9 @@ details.sec[open] > summary::after{content:'−'}
 .secBody .card{background:#f6ecd9}
 b.sub{font-size:13px;color:#c48a1e;text-transform:uppercase;letter-spacing:.04em;margin-top:6px}
 .formaPrev{display:flex;justify-content:center}
+.btn.lab2{background:#6d93a8;box-shadow:0 5px 0 #4a6c7f;font-size:16px;padding:11px 10px}
+.acoes{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.edTxt{width:100%;border:2px solid #dcc6a0;border-radius:12px;font:12px monospace;padding:8px;box-sizing:border-box}
 .panel h3{font-size:15px;color:#a08a74;margin:6px 0 -4px;text-transform:uppercase;letter-spacing:.04em}
 .edge{position:absolute;z-index:4;background:#6b625a;border:2.5px solid #2e2219;border-radius:8px;box-shadow:0 3px 0 #0003}
 .edge.v{width:12px;height:calc(var(--cell) - 10px);left:calc((var(--ex) + 1)*(var(--cell) + var(--gap)) + var(--gap)/2 - 6px);top:calc(var(--ey)*(var(--cell) + var(--gap)) + var(--gap) + 5px)}
@@ -169,6 +172,7 @@ body = '''<div id="app">
     <p class="tagline">junte as pedrinhas e veja o que elas cospem</p>
     <div class="menuBtns">
       <button class="btn big lab" id="mLab">Laboratório<small>teste fases, formatos e itens</small></button>
+      <div class="labRow"><button class="btn lab2" id="mEd" style="flex:1">Editor de níveis</button><button class="btn lab2" id="mCat" style="flex:1">Catálogo</button></div>
       <button class="btn b big" id="mContinue">Continuar</button>
       <button class="btn big" id="mNew">Novo jogo</button>
       <button class="btn dim big" id="mTut">Como jogar</button>
@@ -293,6 +297,8 @@ addEventListener('pointerdown',()=>{ if(AC&&AC.state==='suspended') AC.resume();
 $('#mContinue').onclick=loadGame;
 $('#mCred').onclick=credits;
 $('#mLab').onclick=labPainel;
+$('#mEd').onclick=editorLista;
+$('#mCat').onclick=()=>catalogo(showMenu);
 $('#mNew').onclick=newGameClick;
 $('#mTut').onclick=()=>{
   if(localStorage.mina_save){

@@ -254,6 +254,9 @@ details.sec[open] > summary::after{content:'−'}
 .secBody .card{background:#f6ecd9}
 b.sub{font-size:13px;color:#c48a1e;text-transform:uppercase;letter-spacing:.04em;margin-top:6px}
 .formaPrev{display:flex;justify-content:center}
+.btn.lab2{background:#6d93a8;box-shadow:0 5px 0 #4a6c7f;font-size:16px;padding:11px 10px}
+.acoes{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.edTxt{width:100%;border:2px solid #dcc6a0;border-radius:12px;font:12px monospace;padding:8px;box-sizing:border-box}
 .panel h3{font-size:15px;color:#a08a74;margin:6px 0 -4px;text-transform:uppercase;letter-spacing:.04em}
 .edge{position:absolute;z-index:4;background:#6b625a;border:2.5px solid #2e2219;border-radius:8px;box-shadow:0 3px 0 #0003}
 .edge.v{width:12px;height:calc(var(--cell) - 10px);left:calc((var(--ex) + 1)*(var(--cell) + var(--gap)) + var(--gap)/2 - 6px);top:calc(var(--ey)*(var(--cell) + var(--gap)) + var(--gap) + 5px)}
@@ -268,6 +271,7 @@ b.sub{font-size:13px;color:#c48a1e;text-transform:uppercase;letter-spacing:.04em
     <p class="tagline">junte as pedrinhas e veja o que elas cospem</p>
     <div class="menuBtns">
       <button class="btn big lab" id="mLab">Laboratório<small>teste fases, formatos e itens</small></button>
+      <div class="labRow"><button class="btn lab2" id="mEd" style="flex:1">Editor de níveis</button><button class="btn lab2" id="mCat" style="flex:1">Catálogo</button></div>
       <button class="btn b big" id="mContinue">Continuar</button>
       <button class="btn big" id="mNew">Novo jogo</button>
       <button class="btn dim big" id="mTut">Como jogar</button>
@@ -1515,6 +1519,7 @@ const LAB_AJUSTES = [
   {k:'rara',    nome:'Pedrinha rara',        ops:[0,.02,.1,.5],        fmt:v=>Math.round(v*100)+'%'},
 ];
 function labPainel(){
+  VEIO_DO_EDITOR=false; EDIT=null;
   hideCoach(); show('scrMap'); trilha('menu');
   S = {...freshState(), lab:true, char:LAB.char, week:1};
   S.fiscal=FISCAIS[0]; applyAndar(); clearBoard(); render();
@@ -1569,6 +1574,7 @@ function labPainel(){
     ${recs?sec('recs','Recordes',`<ol class="labHist recs">${recs}</ol><button class="pt" id="labRecZera">apagar recordes</button>`):''}
     ${hist?sec('hist','Últimos resultados',`<ul class="labHist">${hist}</ul>`):''}
     <button class="btn dim" id="labReset">Voltar às regras da fase</button>
+    <div class="labRow"><button class="btn dim" id="labEd" style="flex:1">Editor de níveis</button><button class="btn dim" id="labCat" style="flex:1">Catálogo</button></div>
     <button class="btn dim" id="labMenu">Voltar ao menu</button>`);
   const redesenha = () => { labSalva(); const y=$('#panel').scrollTop; labPainel(); $('#panel').scrollTop=y; };
   $('#selFase').onchange=e=>{ LAB.fase=JSON.parse(e.target.value); LAB.cfg={...presetDe(LAB.fase), rara:g.rara, ferr:g.ferr}; redesenha(); };
@@ -1585,6 +1591,8 @@ function labPainel(){
   $('#labGo').onclick=labJoga;
   if($('#labRecZera')) $('#labRecZera').onclick=()=>{ localStorage.removeItem('mina_recordes'); redesenha(); };
   $('#labMenu').onclick=()=>{ hideOverlay(); showMenu(); };
+  $('#labEd').onclick=editorLista;
+  $('#labCat').onclick=()=>catalogo(labPainel);
 }
 function labJoga(){
   hideOverlay();
@@ -1604,7 +1612,7 @@ function labFim(){
   LAB.hist.push({fase:LAB.fase, energia:LAB.energia, char:LAB.char, cfg:{...LAB.cfg}, arrastos:S.moves||0, total:S.dayTotal});
   LAB.hist=LAB.hist.slice(-30); labSalva();
   labEditar(false);
-  labPainel();
+  if(VEIO_DO_EDITOR) editorLista(); else labPainel();
 }
 
 // ---------- editor do tabuleiro ----------
@@ -1647,7 +1655,8 @@ function labPaleta(){
       <button class="pt" id="labPecas">Sem pedrinhas</button>
       <button class="pt" id="labMaisE">+10 energia</button>
       <input class="ptNome" id="labNome" placeholder="nome do nível" value="${LABNOME}">
-      <button class="pt" id="labSalvaF">Salvar nível</button>
+      <button class="pt" id="labSalvaF">${EDIT?.id?'Salvar':'Salvar nível'}</button>
+      ${EDIT?.id?'<button class="pt" id="labSalvaNovo">Salvar como novo</button>':''}
       <button class="pt" id="labCopiaF">Copiar formato</button>
     </div>
     <p class="ptDica" id="ptDica">${PINCEL.tipo==='mureta'?'Toque perto da borda entre duas casas para pôr ou tirar a mureta.':'Toque nas casas para pintar.'}</p>`;
@@ -1662,9 +1671,14 @@ function labPaleta(){
   $('#labSalvaF').onclick=()=>{
     const f=formaAtual(); const minhas=JSON.parse(localStorage.mina_formas||'[]');
     if(!f){ $('#ptDica').textContent='Pinte pelo menos uma casa.'; return; }
-    f.id='meu'+Date.now(); f.nome=(LABNOME||'').trim()||'Meu nível '+(minhas.length+1); minhas.push(f); localStorage.mina_formas=JSON.stringify(minhas);
-    $('#ptDica').textContent=`Salvo como "${f.nome}". Ele aparece no laboratório e nas Cavernas do jogo.`;
+    f.nome=(LABNOME||'').trim()||'Meu nível '+(minhas.length+1); f.regras=regrasAtuais();
+    const i = EDIT?.id ? minhas.findIndex(x=>x.id===EDIT.id) : -1;
+    if(i>=0){ f.id=EDIT.id; minhas[i]=f; } else { f.id='meu'+Date.now(); minhas.push(f); if(EDIT) EDIT.id=f.id; }
+    localStorage.mina_formas=JSON.stringify(minhas);
+    labPaleta();
+    $('#ptDica').textContent = i>=0 ? `"${f.nome}" atualizado.` : `Salvo como "${f.nome}". Ele aparece no editor, no laboratório e nas Cavernas.`;
   };
+  if($('#labSalvaNovo')) $('#labSalvaNovo').onclick=()=>{ EDIT.id=null; $('#labSalvaF').click(); };
   $('#labCopiaF').onclick=()=>{
     const f=formaAtual(); if(f && LABNOME) f.nome=LABNOME; const txt=JSON.stringify(f);
     (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>{ $('#ptDica').textContent='Copiado! Pode colar e me mandar.'; }).catch(()=>{ $('#ptDica').textContent=txt; });
@@ -1725,6 +1739,107 @@ function labCelula(cx,cy){
   return inside(x,y) ? [x,y] : null;
 }
 
+// ===================== CATÁLOGO =====================
+// Tudo que existe no jogo, montado a partir dos próprios dados (nunca fica desatualizado).
+function catalogo(volta){
+  const sec=(t,html)=>`<details class="sec"><summary>${t}</summary><div class="secBody">${html}</div></details>`;
+  const card=(em,nome,desc,extra='')=>`<div class="card" style="cursor:default"><span class="em">${em}</span><div><b>${nome}</b><span>${desc}</span>${extra}</div></div>`;
+  const big = svg => svg.replace('class="ico"','class="ico big"');
+  const pedras=[...Array(14).keys()].map(i=>pedraCard(i+1)).join('') + pedraCard(0) + '<p class="ajuda">Acima do nível 14 a Galáxia ganha um planeta por nível e o valor do que ela cospe dobra.</p>';
+  const minerios=ORES.slice(1).map((o,i)=>card(big(icoOre(i+1)), noIco(o.n[0].toUpperCase()+o.n.slice(1)), `$${o.p}`)).join('') + '<p class="ajuda">Pedrinha rara (contorno dourado) cospe como 2 níveis acima.</p>';
+  const itens=ITEMS.map(i=>card(i.em,i.nome,[1,2,3].map(l=>`nível ${l}: ${lvDesc(i.id,l)}`).join('<br>'),`<span class="est" style="background:${EST_COR[i.est]}">${i.est}</span>`)).join('');
+  const melh=UPGRADES.map(u=>card(u.em,u.nome,u.desc(1)+(u.max?` Até o nível ${u.max}.`:' Sem limite de nível.'))).join('');
+  const ferr=FERRAMENTAS.map(f=>card(f.em,f.nome,f.desc)).join('');
+  const cons=CONSUMIVEIS.map(c=>card(c.em,noIco(c.nome),c.desc)).join('');
+  const caminhos=Object.entries(PATHS).map(([k,p])=>card(disc(k,null,'discSm'),p.nome,p.desc+(p.lab?' Só no laboratório.':p.from>1?` A partir do andar ${p.from}.`:''))).join('');
+  const fiscais=FISCAIS.map(f=>card(disc(f.id,COR_NO.fiscal,'discSm'),f.nome,f.desc)).join('');
+  const formas=formasTodas().map(f=>card(formaSvg(f,44),f.nome,`${fw(f)}x${fh(f)}${fw(f)>8||fh(f)>8?' · só no laboratório':''}`)).join('');
+  const chars=Object.entries(CHARS).map(([k,c])=>card(c.em,c.nome,c.desc)).join('');
+  const regras=`<ul>
+    <li>Duas pedrinhas iguais viram a do nível seguinte.</li>
+    <li>Cada arrasto gasta 1 de energia. Sem energia, só nasce torrão, que custa no fim do dia. A sobra fica guardada (até ${CFG.guardaMax}).</li>
+    <li>No fim do dia cada pedrinha cospe um minério; os itens somam e multiplicam.</li>
+    <li>A semana tem ${CFG.days} dias; no último o fiscal cobra a cota. Duas cotas perdidas seguidas encerram a partida.</li>
+    <li>Paredes ocupam casas; muretas ficam entre casas; buracos são casas que não existem.</li>
+  </ul>`;
+  showOverlay(`<div class="bigEm">📖</div><h2>Catálogo</h2><p class="ajuda" style="text-align:center">Tudo que existe no jogo.</p>
+    ${sec('Regras',regras)}${sec(`Pedrinhas (${14}+)`,pedras)}${sec(`Minérios (${ORES.length-1})`,minerios)}
+    ${sec(`Itens (${ITEMS.length})`,itens)}${sec(`Melhorias da loja (${UPGRADES.length})`,melh)}
+    ${sec(`Ferramentas (${FERRAMENTAS.length})`,ferr)}${sec(`Para o próximo dia (${CONSUMIVEIS.length})`,cons)}
+    ${sec(`Caminhos do mapa (${Object.keys(PATHS).length})`,caminhos)}${sec(`Fiscais (${FISCAIS.length})`,fiscais)}
+    ${sec(`Formatos de tabuleiro (${formasTodas().length})`,formas)}${sec('Personagens',chars)}
+    <button class="btn b" id="btnOk">Voltar</button>`);
+  $('#btnOk').onclick=()=>{ hideOverlay(); (volta||showMenu)(); };
+}
+
+// ===================== EDITOR DE NÍVEIS =====================
+// Lista dos níveis, criar, editar um existente, testar, copiar, apagar, importar e exportar.
+// Um nível é um formato (casas, buracos, blocos, muretas e pedrinhas iniciais) mais as regras com que foi salvo.
+let EDIT = null;          // nível em edição: {id, nome} (id null = ainda não salvo)
+let VEIO_DO_EDITOR = false;
+const meusNiveis = () => JSON.parse(localStorage.mina_formas||'[]');
+const salvaNiveis = l => localStorage.mina_formas = JSON.stringify(l);
+function regrasAtuais(){ const {forma,walls,edges,...cfg}=LAB.cfg; return {fase:LAB.fase, energia:LAB.energia, cfg}; }
+function editorLista(){
+  hideCoach(); EDIT=null; VEIO_DO_EDITOR=false; show('scrMap'); trilha('menu');
+  S = {...freshState(), lab:true, char:LAB.char, week:1}; S.fiscal=FISCAIS[0]; applyAndar(); clearBoard(); render();
+  $('#mapBody').innerHTML=''; $('#mapBody').style.height='0px'; setBanner('Editor de níveis','');
+  const minhas=meusNiveis();
+  const linha=(f,meu)=>`<div class="card" style="cursor:default"><span class="em">${formaSvg(f,48)}</span><div><b>${f.nome}</b><span>${fw(f)}x${fh(f)}${f.pecas?.length?` · ${f.pecas.length} pedrinhas`:''}${f.regras?` · ${PATHS[f.regras.fase]?.nome||''}, ${f.regras.energia?'com':'sem'} energia`:''}</span>
+    <div class="acoes"><button class="pt" data-testa="${f.id}">testar</button><button class="pt" data-edita="${f.id}">${meu?'editar':'copiar e editar'}</button>${meu?`<button class="pt" data-apaga="${f.id}">apagar</button>`:''}</div></div></div>`;
+  const op=(a,b,v)=>[...Array(b-a+1).keys()].map(i=>a+i).map(n=>`<option value="${n}" ${n===v?'selected':''}>${n}</option>`).join('');
+  showOverlay(`${disc('caverna',null,'bigDisc')}<h2>Editor de níveis</h2>
+    <p class="ajuda" style="text-align:center">Seus níveis entram no laboratório e nas Cavernas do jogo (os de até 8x8).</p>
+    <div class="campo"><div><b>Nível novo</b><small>largura x altura</small></div><select class="labSel" id="edW">${op(3,8,LAB.cfg.w)}</select><select class="labSel" id="edH">${[3,4,5,6,7,8,10,12,16,20].map(n=>`<option value="${n}" ${n===LAB.cfg.h?'selected':''}>${n}</option>`).join('')}</select></div>
+    <button class="btn g" id="edNovo">Criar nível vazio</button>
+    <button class="btn dim" id="edImport">Importar nível (colar texto)</button>
+    <h3>Seus níveis</h3><div class="cards">${minhas.map(f=>linha(f,true)).join('')||'<p class="ajuda">Nenhum ainda.</p>'}</div>
+    <h3>Níveis do jogo</h3><div class="cards">${FORMAS.map(f=>linha(f,false)).join('')}</div>
+    <button class="btn dim" id="edMenu">Voltar ao menu</button>`);
+  $('#edNovo').onclick=()=>{ LAB.cfg.w=+$('#edW').value; LAB.cfg.h=+$('#edH').value; LAB.cfg.forma=null; labSalva(); EDIT={id:null,nome:''}; LABNOME=''; VEIO_DO_EDITOR=true; labJoga(); labConstruir(); };
+  $('#edImport').onclick=editorImporta;
+  $('#edMenu').onclick=()=>{ hideOverlay(); showMenu(); };
+  document.querySelectorAll('[data-testa]').forEach(b=>b.onclick=()=>editorTesta(b.dataset.testa));
+  document.querySelectorAll('[data-edita]').forEach(b=>b.onclick=()=>editorEdita(b.dataset.edita));
+  document.querySelectorAll('[data-apaga]').forEach(b=>b.onclick=()=>{ salvaNiveis(meusNiveis().filter(f=>f.id!==b.dataset.apaga)); editorLista(); });
+}
+function editorAplicaRegras(f){
+  if(!f.regras) return;
+  LAB.fase=f.regras.fase in PATHS ? f.regras.fase : LAB.fase; LAB.energia=!!f.regras.energia;
+  LAB.cfg={...presetDe(LAB.fase), ...f.regras.cfg};
+}
+function editorTesta(id){
+  const f=acharForma(id); if(!f) return;
+  editorAplicaRegras(f); LAB.cfg.forma=id; LAB.cfg.walls=0; LAB.cfg.edges=0; labSalva();
+  VEIO_DO_EDITOR=true; EDIT=null; labJoga();
+}
+function editorEdita(id){
+  const f=acharForma(id); if(!f) return;
+  const meu = meusNiveis().some(x=>x.id===id);
+  editorAplicaRegras(f); LAB.cfg.forma=id; LAB.cfg.walls=0; LAB.cfg.edges=0; labSalva();
+  EDIT={id: meu?id:null, nome: meu?f.nome:f.nome+' (cópia)'}; LABNOME=EDIT.nome; VEIO_DO_EDITOR=true;
+  labJoga();
+  // só as pedrinhas do nível (sem as sorteadas)
+  for(const t of S.tiles){ els.get(t.id)?.remove(); els.delete(t.id); } S.tiles=[];
+  for(const [x,y,t,c,k] of (f.pecas||[])){ const tl={id:'t'+(nextId++),x,y,t}; if(c!=null) tl.c=c; if(k) tl.k=k; S.tiles.push(tl); }
+  PINCEL.tipo='casa'; labEditar(true);
+  setBanner('Editor', EDIT.nome);
+}
+function editorImporta(){
+  showOverlay(`<h2>Importar nível</h2><p class="ajuda">Cole o texto de um nível (do botão "Copiar formato").</p>
+    <textarea id="edTxt" class="edTxt" rows="7"></textarea><p class="ajuda" id="edMsg"></p>
+    <button class="btn b" id="edOk">Importar</button><button class="btn dim" id="edNo">Voltar</button>`);
+  $('#edNo').onclick=editorLista;
+  $('#edOk').onclick=()=>{
+    try{
+      const f=JSON.parse($('#edTxt').value);
+      if(!Array.isArray(f.mapa) || !f.mapa.length || f.mapa.some(r=>typeof r!=='string' || r.length!==f.mapa[0].length || /[^.#B]/.test(r))) throw 0;
+      f.id='meu'+Date.now(); f.nome=(f.nome||'Nível importado').slice(0,40); f.muretas=f.muretas||[]; f.pecas=f.pecas||[];
+      const l=meusNiveis(); l.push(f); salvaNiveis(l); editorLista();
+    }catch(e){ $('#edMsg').textContent='Texto inválido.'; }
+  };
+}
+
 // ===================== TUTORIAL =====================
 let coachBlock=false, coachTarget=null, coachTimer=null;
 // alvo: seletor ou elemento que o balão explica ('top' = sem alvo, no alto)
@@ -1782,7 +1897,7 @@ function pauseMenu(){
   $('#pPedras').onclick=()=>pedrapedia(pauseMenu);
   $('#pSound').onclick=()=>{ toggleSound(); hideOverlay(); pauseMenu(); };
   $('#pMusic').onclick=()=>{ toggleMusic(); hideOverlay(); pauseMenu(); };
-  $('#pExit').onclick=()=>{ hideOverlay(); if(S.lab) labPainel(); else showMenu(); };
+  $('#pExit').onclick=()=>{ hideOverlay(); if(VEIO_DO_EDITOR) editorLista(); else if(S.lab) labPainel(); else showMenu(); };
 }
 function quickRules(){
   showOverlay(`<h2>Regras rápidas</h2><ul>
@@ -2041,6 +2156,8 @@ addEventListener('pointerdown',()=>{ if(AC&&AC.state==='suspended') AC.resume();
 $('#mContinue').onclick=loadGame;
 $('#mCred').onclick=credits;
 $('#mLab').onclick=labPainel;
+$('#mEd').onclick=editorLista;
+$('#mCat').onclick=()=>catalogo(showMenu);
 $('#mNew').onclick=newGameClick;
 $('#mTut').onclick=()=>{
   if(localStorage.mina_save){
