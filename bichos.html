@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="theme-color" content="#f6ecd9">
+<title>Rascunhos de bichinhos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0}
+body{background:#f6ecd9;color:#5a4636;font-family:'Fredoka',system-ui;min-height:100vh}
+.view{display:none;flex-direction:column;align-items:center;gap:12px;padding:16px 10px 80px}
+.view.on{display:flex}
+h1{font-size:26px;font-weight:700;color:#7a5a44}
+.sub{font-size:14px;color:#a08a74;text-align:center;max-width:360px;line-height:1.35}
+.board{display:grid;grid-template-columns:repeat(4,min(21vw,84px));gap:8px;padding:12px;background:#e6d3b0;border-radius:26px;box-shadow:inset 0 4px 0 #d6bf98,0 6px 0 #d2b98e}
+.cell{aspect-ratio:1;border-radius:20px;background:#dcc7a2;box-shadow:inset 0 3px 0 #ccb48b;display:flex;align-items:center;justify-content:center;position:relative}
+.cell svg{width:100%;height:100%;overflow:visible}
+.cell .cost{position:absolute;bottom:-4px;right:-4px;background:#c0603f;color:#fff;font-size:12px;font-weight:700;border-radius:999px;padding:1px 6px;box-shadow:0 2px 0 #92452b}
+.anim svg{animation:breathe 3s ease-in-out infinite;transform-origin:50% 90%}
+.anim:nth-child(3n) svg{animation-delay:-1s}.anim:nth-child(3n+1) svg{animation-delay:-2s}
+@keyframes breathe{50%{transform:scale(1.04,.96)}}
+h2{font-size:18px;font-weight:600;color:#7a5a44;margin-top:6px}
+.ladder{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;max-width:390px}
+.step{width:58px;display:flex;flex-direction:column;align-items:center;font-size:11px;color:#a08a74;text-align:center;line-height:1.1}
+.step svg{width:58px;height:58px;overflow:visible}
+.reveal{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.pair{display:flex;align-items:center;gap:2px;background:#efe1c6;border-radius:16px;padding:6px 8px}
+.pair svg{width:64px;height:64px;overflow:visible}
+.pair .arr{font-size:18px;color:#c0603f;font-weight:700}
+.pair small{display:block;text-align:center;font-size:11px;color:#a08a74}
+.switch{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);z-index:50;display:flex;gap:3px;background:#5a4636;padding:4px;border-radius:999px;box-shadow:0 4px 0 #3a2c22}
+.switch button{border:0;border-radius:999px;padding:7px 11px;font:600 13px 'Fredoka';background:transparent;color:#f6ecd9;white-space:nowrap}
+.switch button.on{background:#f6ecd9;color:#5a4636}
+</style>
+<script>
+// Atualiza sozinho: se o navegador abriu uma cópia antiga (o GitHub Pages guarda por 10 min),
+// busca a versão nova, atualiza o cache e recarrega uma vez.
+(async()=>{try{
+  const u=location.pathname, k='upd:'+u;
+  const [velho,novo]=await Promise.all([fetch(u,{cache:'force-cache'}).then(r=>r.text()), fetch(u,{cache:'reload'}).then(r=>r.text())]);
+  if(velho!==novo && !sessionStorage[k]){ sessionStorage[k]=1; location.reload(); }
+  else sessionStorage.removeItem(k);
+}catch(e){}})();
+</script>
+</head>
+<body>
+
+<section class="view on" id="v0"></section>
+<section class="view" id="v1"></section>
+<section class="view" id="v2"></section>
+<section class="view" id="v3"></section>
+
+<div class="switch">
+  <button data-v="0" class="on">Pedrinhas</button>
+  <button data-v="1">Tatu-bola</button>
+  <button data-v="2">Ovos</button>
+  <button data-v="3">Gosminhas</button>
+</div>
+
+<script>
+// ================= paleta =================
+const TC = ['', '#e2cfa6','#d39b6a','#c0694a','#7d8aa0','#9a77c9','#5ec4d6']; // cor por nível
+const TD = ['', '#c9b48a','#b57f52','#9c5136','#5f6b80','#7a59a8','#3e9fb2']; // sombra
+const NOMES = ['', 'Cascalho','Pedra','Rocha','R. densa','Geodo','Cristalino'];
+const GEM = {cobre:'#e07b3c', ferro:'#b8c0c8', prata:'#eef2f6', ouro:'#f5c542', diamante:'#6fe3ff', nada:'#bfae94'};
+const INK = '#2e2219';
+const BOARD = [5,4,3,2, 3,2,1,0, 1,0,'T',2, 0,0,1,'T'];
+
+// ================= peças comuns =================
+function eyes(cx,cy,mood,s=1,gap=11){
+  const L=cx-gap*s, R=cx+gap*s;
+  if(mood==='sleep') return `<path d="M${L-4*s} ${cy} q${4*s} ${3*s} ${8*s} 0 M${R-4*s} ${cy} q${4*s} ${3*s} ${8*s} 0" stroke="${INK}" stroke-width="${2.6*s}" fill="none" stroke-linecap="round"/>`;
+  if(mood==='star') return [L,R].map(x=>`<path d="M${x} ${cy-6*s} l${1.8*s} ${4.2*s} ${4.2*s} ${1.8*s} -${4.2*s} ${1.8*s} -${1.8*s} ${4.2*s} -${1.8*s} -${4.2*s} -${4.2*s} -${1.8*s} ${4.2*s} -${1.8*s}z" fill="#fff" stroke="${INK}" stroke-width="${1.2*s}"/>`).join('');
+  if(mood==='grump') return `<circle cx="${L}" cy="${cy}" r="${2.6*s}" fill="${INK}"/><circle cx="${R}" cy="${cy}" r="${2.6*s}" fill="${INK}"/><path d="M${L-5*s} ${cy-7*s} l${8*s} ${3*s} M${R+5*s} ${cy-7*s} l-${8*s} ${3*s}" stroke="${INK}" stroke-width="${2.4*s}" stroke-linecap="round"/>`;
+  const b = mood==='proud' ? `<path d="M${L-4*s} ${cy-7*s} q${4*s} -${3*s} ${8*s} 0 M${R-4*s} ${cy-7*s} q${4*s} -${3*s} ${8*s} 0" stroke="${INK}" stroke-width="${2*s}" fill="none" stroke-linecap="round"/>` : '';
+  return `<ellipse cx="${L}" cy="${cy}" rx="${2.8*s}" ry="${3.6*s}" fill="${INK}"/><ellipse cx="${R}" cy="${cy}" rx="${2.8*s}" ry="${3.6*s}" fill="${INK}"/>${b}`;
+}
+function mouth(cx,cy,mood,s=1){
+  if(mood==='sleep') return `<path d="M${cx-3*s} ${cy} h${6*s}" stroke="${INK}" stroke-width="${2.4*s}" stroke-linecap="round"/>`;
+  if(mood==='o') return `<ellipse cx="${cx}" cy="${cy}" rx="${2.6*s}" ry="${3.2*s}" fill="${INK}"/>`;
+  if(mood==='grump') return `<path d="M${cx-5*s} ${cy+2*s} q${5*s} -${5*s} ${10*s} 0" stroke="${INK}" stroke-width="${2.4*s}" fill="none" stroke-linecap="round"/>`;
+  if(mood==='open') return `<path d="M${cx-7*s} ${cy-1*s} q${7*s} ${12*s} ${14*s} 0 z" fill="${INK}"/><path d="M${cx-3*s} ${cy+4*s} q${3*s} ${2*s} ${6*s} 0" fill="#e5737b"/>`;
+  const w = mood==='big' ? 7 : 5;
+  return `<path d="M${cx-w*s} ${cy} q${w*s} ${(mood==='big'?8:6)*s} ${2*w*s} 0" stroke="${INK}" stroke-width="${2.4*s}" fill="${mood==='big'?INK:'none'}" stroke-linecap="round"/>`;
+}
+const MOOD = ['', ['sleep','sleep'], ['dot','o'], ['dot','smile'], ['proud','smile'], ['star','big'], ['star','big']];
+const blush = (cx,cy,s=1,gap=17) => `<ellipse cx="${cx-gap*s}" cy="${cy}" rx="${4*s}" ry="${2.4*s}" fill="#ff8a7a" opacity=".55"/><ellipse cx="${cx+gap*s}" cy="${cy}" rx="${4*s}" ry="${2.4*s}" fill="#ff8a7a" opacity=".55"/>`;
+const crown = (cx,cy,s=1) => `<path d="M${cx-10*s} ${cy} l${3*s} -${10*s} ${4*s} ${6*s} ${3*s} -${9*s} ${3*s} ${9*s} ${4*s} -${6*s} ${3*s} ${10*s}z" fill="#f2b33d" stroke="${INK}" stroke-width="1.6"/>`;
+const sparkle = (x,y,r,c='#fff') => `<path d="M${x} ${y-r} Q${x} ${y} ${x+r} ${y} Q${x} ${y} ${x} ${y+r} Q${x} ${y} ${x-r} ${y} Q${x} ${y} ${x} ${y-r}z" fill="${c}"/>`;
+function gem(cx,cy,c,s=1){ return `<path d="M${cx-9*s} ${cy-3*s} l${4*s} -${6*s} h${10*s} l${4*s} ${6*s} l-${9*s} ${12*s}z" fill="${c}" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/><path d="M${cx-5*s} ${cy-9*s} l${2*s} ${6*s} M${cx+5*s} ${cy-9*s} l-${2*s} ${6*s} M${cx-9*s} ${cy-3*s} h${18*s}" stroke="${INK}" stroke-width="1" opacity=".5"/>${sparkle(cx+7*s,cy-11*s,4*s)}`; }
+const svg = (inner) => `<svg viewBox="0 0 100 100">${inner}</svg>`;
+
+// torrão de terra (igual em todos os estilos, para comparar)
+function torrao(){
+  return svg(`<path d="M18 70 Q14 48 30 40 Q36 26 52 30 Q66 22 76 36 Q90 42 86 62 Q88 80 66 82 Q50 88 34 82 Q16 82 18 70z" fill="#7a5a3c" stroke="${INK}" stroke-width="2.4"/>
+    <circle cx="34" cy="50" r="2" fill="#5e4329"/><circle cx="70" cy="70" r="2.4" fill="#5e4329"/><circle cx="62" cy="40" r="1.6" fill="#5e4329"/><circle cx="26" cy="72" r="1.8" fill="#5e4329"/>
+    <path d="M70 32 l5 -6 M76 38 l7 -2" stroke="#6b8f3a" stroke-width="2.4" stroke-linecap="round"/>
+    ${eyes(52,58,'grump',.9,10)}${mouth(52,70,'grump',.8)}`);
+}
+
+// ================= A: pedrinhas vivas =================
+function pedra(t, rev){
+  const r=22+t*3, cy=58, s=.8+t*.05;
+  const [em,mm] = MOOD[t];
+  let body = `<ellipse cx="50" cy="${cy+r*.85}" rx="${r*.8}" ry="5" fill="#0002"/>
+    <path d="M${50-r} ${cy} Q${50-r} ${cy-r*1.05} 50 ${cy-r} Q${50+r*1.05} ${cy-r*.95} ${50+r} ${cy+2} Q${50+r*.9} ${cy+r*.85} 50 ${cy+r*.85} Q${50-r*1.02} ${cy+r*.88} ${50-r} ${cy}z" fill="${TC[t]}" stroke="${INK}" stroke-width="2.4"/>
+    <path d="M${50-r*.8} ${cy+r*.3} Q50 ${cy+r*.95} ${50+r*.85} ${cy+r*.25} Q${50+r*.6} ${cy+r*.8} 50 ${cy+r*.8} Q${50-r*.75} ${cy+r*.8} ${50-r*.8} ${cy+r*.3}z" fill="${TD[t]}"/>
+    <ellipse cx="${50-r*.45}" cy="${cy-r*.55}" rx="${r*.22}" ry="${r*.12}" fill="#fff" opacity=".45" transform="rotate(-25 ${50-r*.45} ${cy-r*.55})"/>`;
+  if(t>=5) body += sparkle(50+r*.7,cy-r*.8,5) + sparkle(50-r*.9,cy-r*.2,3.5);
+  if(t>=6) body += crown(50,cy-r+2,1.1);
+  if(rev) return svg(body + eyes(50,cy-2,'star',s) + mouth(50,cy+9,'open',s*1.1) + gem(50,cy+10,GEM[rev],.9));
+  return svg(body + (t>=3?blush(50,cy+4,s):'') + eyes(50,cy-2,em,s) + mouth(50,cy+9,mm,s));
+}
+
+// ================= B: tatu-bola =================
+function tatu(t, rev){
+  const shell=TC[t], dark=TD[t], skin='#efcfa6';
+  if(rev){ // desenrolado, segurando a pedra
+    return svg(`<ellipse cx="50" cy="90" rx="34" ry="5" fill="#0002"/>
+      <path d="M14 78 Q14 44 46 42 Q76 42 80 72 Q80 80 72 80 H22 Q14 80 14 78z" fill="${shell}" stroke="${INK}" stroke-width="2.4"/>
+      ${[26,36,46,56,66].map(x=>`<path d="M${x} ${47+(x>40&&x<60?-3:0)} Q${x+2} 64 ${x} 80" stroke="${dark}" stroke-width="3" fill="none"/>`).join('')}
+      <path d="M72 74 Q86 70 92 60 Q96 70 88 78 Q80 82 72 80z" fill="${skin}" stroke="${INK}" stroke-width="2.2"/>
+      <path d="M80 66 l4 -12 l4 10z" fill="${skin}" stroke="${INK}" stroke-width="2"/>
+      <circle cx="84" cy="70" r="2.2" fill="${INK}"/>
+      <path d="M22 80 v6 M34 80 v6 M60 80 v6 M70 80 v6" stroke="${INK}" stroke-width="4" stroke-linecap="round"/>
+      <path d="M14 74 q-8 2 -10 8" stroke="${INK}" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      ${gem(62,30,GEM[rev],1.05)}
+      <path d="M74 56 Q72 44 64 40" stroke="${INK}" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+      ${blush(86,76,.6,0)}`);
+  }
+  const r=24+t*2.6, cx=50, cy=56;
+  const bands=[-.55,-.2,.15,.5].map(k=>`<path d="M${cx+r*k} ${cy-r*Math.sqrt(1-k*k)+1} Q${cx+r*k*1.25} ${cy} ${cx+r*k} ${cy+r*Math.sqrt(1-k*k)-1}" stroke="${dark}" stroke-width="${2.5+t*.2}" fill="none"/>`).join('');
+  const dots = t>=3 ? [-.38,-.02,.33].map(k=>`<circle cx="${cx+r*k}" cy="${cy-r*.35}" r="${1.4+t*.15}" fill="${dark}"/><circle cx="${cx+r*k}" cy="${cy+r*.3}" r="${1.4+t*.15}" fill="${dark}"/>`).join('') : '';
+  let s = `<ellipse cx="${cx}" cy="${cy+r+3}" rx="${r*.75}" ry="4.5" fill="#0002"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="${shell}" stroke="${INK}" stroke-width="2.4"/>${bands}${dots}
+    <ellipse cx="${cx-r*.45}" cy="${cy-r*.55}" rx="${r*.2}" ry="${r*.1}" fill="#fff" opacity=".45" transform="rotate(-30 ${cx-r*.45} ${cy-r*.55})"/>`;
+  // focinho e orelha espiando por baixo
+  const hx=cx-r*.55, hy=cy+r*.62;
+  s += `<path d="M${hx-8} ${hy+2} Q${hx-14} ${hy+10} ${hx-4} ${hy+11} Q${hx+8} ${hy+10} ${hx+8} ${hy+2}z" fill="${skin}" stroke="${INK}" stroke-width="2"/>`;
+  s += `<path d="M${hx+2} ${hy+1} l-2 -8 l7 5z" fill="${skin}" stroke="${INK}" stroke-width="1.8"/>`;
+  s += t<=1 ? `<path d="M${hx-6} ${hy+5} q2 2 4 0" stroke="${INK}" stroke-width="1.8" fill="none" stroke-linecap="round"/>`
+             : t>=5 ? sparkle(hx-4,hy+5,3.4,'#fff') : `<circle cx="${hx-4}" cy="${hy+5}" r="1.8" fill="${INK}"/>`;
+  if(t===1) s += `<text x="${cx+r*.4}" y="${cy-r*.6}" font-size="11" font-weight="700" fill="${INK}" font-family="Fredoka">z</text>`;
+  if(t>=4) s += sparkle(cx+r*.55,cy-r*.75,4.5);
+  if(t>=5){ s += `<circle cx="${cx}" cy="${cy}" r="${r-4}" fill="none" stroke="#fff" stroke-width="1.5" stroke-dasharray="3 6" opacity=".7"/>` + sparkle(cx-r*.85,cy-r*.3,3.5); }
+  if(t>=6) s += crown(cx+r*.2,cy-r+3,1);
+  return svg(s);
+}
+
+// ================= C: ovos de cristal =================
+function ovo(t, rev){
+  const k=.72+t*.05, cx=50, by=88;
+  const P=(x,y)=>`${cx+(x-50)*k} ${by-(88-y)*k}`;
+  const shape=`M${P(50,14)} C${P(74,14)} ${P(84,48)} ${P(84,62)} C${P(84,82)} ${P(70,90)} ${P(50,90)} C${P(30,90)} ${P(16,82)} ${P(16,62)} C${P(16,48)} ${P(26,14)} ${P(50,14)}Z`;
+  if(rev){
+    const c=GEM[rev];
+    return svg(`<ellipse cx="50" cy="92" rx="26" ry="4" fill="#0002"/>
+      <circle cx="50" cy="52" r="20" fill="${c}" stroke="${INK}" stroke-width="2.4"/>
+      <path d="M33 46 q-10 -2 -12 -10 q8 0 14 6z M67 46 q10 -2 12 -10 q-8 0 -14 6z" fill="${c}" stroke="${INK}" stroke-width="2"/>
+      ${eyes(50,50,'dot',.85,7)}${mouth(50,58,'smile',.7)}${blush(50,56,.6,14)}
+      <path d="M50 32 l-3 -8 l3 3 l3 -3z" fill="${INK}"/>
+      <path d="M24 66 l6 -6 l6 6 l6 -6 l6 6 l6 -6 l6 6 l6 -6 l6 6 v10 Q76 92 50 92 Q24 92 24 76z" fill="#f4ead6" stroke="${INK}" stroke-width="2.4" stroke-linejoin="round"/>
+      ${sparkle(76,30,5)}`);
+  }
+  let s = `<ellipse cx="50" cy="91" rx="${22*k}" ry="4" fill="#0002"/>
+    <path d="${shape}" fill="${t>=5?TC[t]:'#f4ead6'}" stroke="${INK}" stroke-width="2.4"/>`;
+  const spots = [[38,40],[60,32],[64,60],[34,66],[50,52],[44,78]].slice(0,2+t);
+  s += spots.map(([x,y],i)=>`<circle cx="${cx+(x-50)*k}" cy="${by-(88-y)*k}" r="${2.2+i%2}" fill="${TC[Math.max(1,t)]}" opacity="${t>=5?.0:.9}"/>`).join('');
+  if(t>=5) s += [[40,40],[60,56],[46,70]].map(([x,y])=>sparkle(cx+(x-50)*k,by-(88-y)*k,4)).join('');
+  s += `<ellipse cx="${cx-10*k}" cy="${by-56*k}" rx="${5*k}" ry="${9*k}" fill="#fff" opacity=".5" transform="rotate(20 ${cx-10*k} ${by-56*k})"/>`;
+  if(t>=3){ const cr=`M${P(26,58)} l${6*k} -${6*k} l${6*k} ${7*k} l${6*k} -${8*k} l${6*k} ${6*k} l${6*k} -${5*k}`; s += `<path d="${cr}" stroke="${t>=4?'#ffe9a8':INK}" stroke-width="${t>=4?5:2}" fill="none" stroke-linejoin="round"/>` + (t>=4?`<path d="${cr}" stroke="${INK}" stroke-width="1.6" fill="none" stroke-linejoin="round"/>`:''); }
+  if(t>=4) s += `<circle cx="${cx-5*k}" cy="${by-31*k}" r="2.2" fill="${INK}"/><circle cx="${cx+7*k}" cy="${by-31*k}" r="2.2" fill="${INK}"/>`;
+  if(t<=2) s += `<path d="M${cx-6} ${by-35*k} q3 2 6 0 M${cx+2} ${by-35*k} q3 2 6 0" stroke="${INK}" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="${t===1?1:0}"/>`;
+  if(t>=6) s += `<path d="M${P(40,16)} l-4 -14 l9 8z M${P(56,14)} l2 -16 l6 14z" fill="#bff4ff" stroke="${INK}" stroke-width="1.8"/>` + crown(cx,by-80*k,.9);
+  return svg(s);
+}
+
+// ================= D: gosminhas =================
+function gosma(t, rev){
+  const w=22+t*3.2, h=26+t*3, cx=50, by=86;
+  const c=TC[t], d=TD[t];
+  const body=`M${cx-w} ${by} Q${cx-w-4} ${by-h*.6} ${cx-w*.5} ${by-h} Q${cx-w*.15} ${by-h-8} ${cx} ${by-h-6} Q${cx+3} ${by-h-14} ${cx+6} ${by-h-6} Q${cx+w*.6} ${by-h-2} ${cx+w} ${by-h*.45} Q${cx+w+4} ${by-8} ${cx+w} ${by} Q${cx} ${by+5} ${cx-w} ${by}Z`;
+  const [em,mm]=MOOD[t];
+  let s = `<ellipse cx="${cx}" cy="${by+3}" rx="${w}" ry="4" fill="#0002"/>
+    <path d="${body}" fill="${c}" fill-opacity=".88" stroke="${INK}" stroke-width="2.4"/>
+    <path d="M${cx-w+4} ${by-4} Q${cx} ${by+1} ${cx+w-4} ${by-4}" stroke="${d}" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <ellipse cx="${cx-w*.5}" cy="${by-h*.7}" rx="${w*.18}" ry="${h*.1}" fill="#fff" opacity=".6" transform="rotate(-30 ${cx-w*.5} ${by-h*.7})"/>`;
+  if(rev){
+    s += eyes(cx,by-h*.45,'dot',.9) + `<ellipse cx="${cx}" cy="${by-h*.2}" rx="6" ry="5" fill="${INK}"/>`;
+    s += `<path d="M${cx+w+2} ${by-h*.35} l8 -3 M${cx+w+3} ${by-h*.2} l9 1" stroke="${INK}" stroke-width="2" stroke-linecap="round"/>` + gem(cx+w+16,by-h*.3,GEM[rev],.85);
+    return svg(s);
+  }
+  if(t>=3){ const g=['','','','#fff3c4','#fff3c4','#fffbe6','#ffffff'][t]; s += `<circle cx="${cx+w*.35}" cy="${by-h*.3}" r="${2+t}" fill="${g}" opacity=".9"/><circle cx="${cx+w*.35}" cy="${by-h*.3}" r="${5+t*1.8}" fill="${g}" opacity=".25"/>`; }
+  s += (t>=3?blush(cx,by-h*.32,.8,15):'') + eyes(cx,by-h*.5,em,.85) + mouth(cx,by-h*.3,mm,.8);
+  if(t>=5) s += sparkle(cx-w*.8,by-h*.95,4) + sparkle(cx+w*.9,by-h*.8,3);
+  if(t>=6) s += crown(cx-3,by-h-10,1);
+  return svg(s);
+}
+
+// ================= montar telas =================
+const STYLES = [
+  {fn:pedra, t:'Pedrinhas vivas', d:'A própria rocha é o bichinho. Cada nível muda cor, tamanho e humor: o cascalho dorme, a pedra se espanta, a rocha cora, o geodo tem olhos de estrela, o cristalino ganha coroa. No fim do dia ele abre a boca e entrega o minério.'},
+  {fn:tatu,  t:'Tatu-bola', d:'Enrolado, o tatu é a pedra: só aparecem o casco e o focinho. Casco mais bonito = tatu de nível maior (listras, pintas, brilho, coroa). No fim do dia ele desenrola e mostra o que guardou.'},
+  {fn:ovo,   t:'Ovos de cristal', d:'As rochas são ovos e fundir é chocar. O ovo racha, brilha pela rachadura e, nos níveis altos, já dá para ver olhinhos lá dentro. No fim do dia nasce um bichinho feito do minério.'},
+  {fn:gosma, t:'Gosminhas', d:'Geleias que engolem pedra. Quanto maior, mais translúcida, e a partir da Rocha dá para ver um brilho lá dentro (a pista do que vão render). No fim do dia ela cospe o minério.'},
+];
+STYLES.forEach((st,i)=>{
+  const v=document.getElementById('v'+i);
+  const cells = BOARD.map(t=> t===0 ? '<div class="cell"></div>'
+    : t==='T' ? `<div class="cell anim">${torrao()}<span class="cost">-$2</span></div>`
+    : `<div class="cell anim">${st.fn(t)}</div>`).join('');
+  const ladder = [1,2,3,4,5,6].map(t=>`<div class="step">${st.fn(t)}${NOMES[t]}</div>`).join('');
+  const rev = [[2,'cobre'],[4,'prata'],[6,'diamante']].map(([t,o])=>`<div class="pair"><div>${st.fn(t)}<small>${NOMES[t]}</small></div><span class="arr">→</span><div>${st.fn(t,o)}<small>${o}</small></div></div>`).join('');
+  v.innerHTML = `<h1>${st.t}</h1><p class="sub">${st.d}</p>
+    <div class="board">${cells}</div>
+    <p class="sub">O bloco marrom é o <b>torrão de terra</b>: só aparece quando a energia acaba.</p>
+    <h2>Os níveis</h2><div class="ladder">${ladder}</div>
+    <h2>No fim do dia</h2><div class="reveal">${rev}</div>`;
+});
+document.querySelectorAll('.switch button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.switch button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id==='v'+b.dataset.v)); scrollTo(0,0);
+});
+</script>
+</body>
+</html>
