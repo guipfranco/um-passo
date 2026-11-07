@@ -115,14 +115,16 @@ css_extra = r'''
 .chipOp.sel{background:#f2b33d;color:#4a3410;box-shadow:0 2px 0 #c48a1e}
 .labTools{display:flex;flex-direction:column;gap:8px;background:#efe1c6;border-radius:18px;padding:10px;box-shadow:0 3px 0 #dcc6a0}
 .labTools.hidden{display:none}
-.ptRow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.ptRow.niveis{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}
-.pt{border:0;border-radius:999px;padding:6px 12px;font:600 14px 'Fredoka';background:#f6ecd9;color:#7a5a44;cursor:pointer}
+.ptRow{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;align-items:center;scrollbar-width:none}
+.ptRow::-webkit-scrollbar{display:none}
+.ptRow>*{flex:none}
+.pt{border:0;border-radius:999px;padding:6px 12px;font:600 14px 'Fredoka';background:#f6ecd9;color:#7a5a44;cursor:pointer;white-space:nowrap}
 .pt.sel,.pb.sel{background:#f2b33d;color:#4a3410}
-.pb{flex:none;width:52px;border:0;border-radius:12px;background:#f6ecd9;padding:2px;display:flex;flex-direction:column;align-items:center;cursor:pointer;font:600 11px 'Fredoka';color:#7a5a44}
-.pb svg{width:44px;height:44px;overflow:visible}
+.pb{flex:none;width:42px;border:0;border-radius:12px;background:#f6ecd9;padding:2px;display:flex;flex-direction:column;align-items:center;cursor:pointer;font:600 11px 'Fredoka';color:#7a5a44}
+.pb svg{width:34px;height:34px;overflow:visible}
 .ptLbl{font-size:13px;font-weight:600;color:#a08a74}
-.ptDica{font-size:12px;color:#a08a74;margin:0}
+.ptDica{font-size:12px;color:#a08a74;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.editando .hud{display:none}
 .slot.void{background:#3a2c22 !important;box-shadow:inset 0 0 0 3px #2a1f18,inset 0 6px 10px #0006;border-radius:14px}
 .formaSvg{display:block;margin:0 auto}
 .ptNome{border:0;border-radius:999px;padding:6px 12px;font:600 14px 'Fredoka';background:#fff;color:#5a4636;width:150px}
@@ -159,6 +161,10 @@ b.sub{font-size:13px;color:#c48a1e;text-transform:uppercase;letter-spacing:.04em
 .btn.lab2{background:#6d93a8;box-shadow:0 5px 0 #4a6c7f;font-size:16px;padding:11px 10px}
 .acoes{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
 .edTxt{width:100%;border:2px solid #dcc6a0;border-radius:12px;font:12px monospace;padding:8px;box-sizing:border-box}
+#app{min-height:100dvh}
+.panel{max-height:100%}
+body.rola #scrGame{touch-action:pan-y}
+body.rola #stage{touch-action:none}
 .panel h3{font-size:15px;color:#a08a74;margin:6px 0 -4px;text-transform:uppercase;letter-spacing:.04em}
 .edge{position:absolute;z-index:4;background:#6b625a;border:2.5px solid #2e2219;border-radius:8px;box-shadow:0 3px 0 #0003}
 .edge.v{width:12px;height:calc(var(--cell) - 10px);left:calc((var(--ex) + 1)*(var(--cell) + var(--gap)) + var(--gap)/2 - 6px);top:calc(var(--ey)*(var(--cell) + var(--gap)) + var(--gap) + 5px)}
@@ -254,7 +260,10 @@ function previewDrag(dx,dy){
     el.style.transform=`${pos(t.x,t.y)} translate(calc(${ox}*(var(--cell) + var(--gap))), calc(${oy}*(var(--cell) + var(--gap))))`;
   }
 }
-addEventListener('pointerdown',e=>{ if(overlayOpen()||e.target.closest('button')||!$('#scrGame').classList.contains('on')) return; touch={x:e.clientX,y:e.clientY}; prev=null; });
+addEventListener('pointerdown',e=>{ if(overlayOpen()||e.target.closest('button')||!$('#scrGame').classList.contains('on')) return;
+  if(document.body.classList.contains('rola') && !e.target.closest('#stage')) return; // fora do tabuleiro, o dedo rola a página
+  touch={x:e.clientX,y:e.clientY}; prev=null; });
+addEventListener('pointercancel',()=>{ if(touch){ touch=null; clearPreview(true); } });
 addEventListener('pointermove',e=>{
   if(!touch || !S || S.phase!=='mine' || overlayOpen() || coachBlock || S.editando || S.ferrAtiva) return;
   previewDrag(e.clientX-touch.x, e.clientY-touch.y);

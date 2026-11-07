@@ -1,0 +1,58 @@
+<!-- tempo: 90000 -->
+<body style="margin:0"><pre id="out" style="position:absolute;left:0;top:0;z-index:9;background:#fff">x</pre>
+<script>
+// Nada pode ficar cortado: em cada tamanho de celular (altura já sem as barras do navegador) e em cada tela,
+// ou tudo cabe, ou a página rola. Painéis por cima (overlay) têm de caber inteiros e rolar por dentro.
+const TAMANHOS=[[360,560],[375,550],[390,664],[412,780]];
+const MODE=location.hash.slice(1)||'test';
+const abre=(wd,ht)=>new Promise(r=>{ const f=document.createElement('iframe'); f.width=wd; f.height=ht; f.style.border=0; f.src='../index.html'; f.onload=()=>r(f); document.body.appendChild(f); });
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+function corte(w,d){
+  const ih=w.innerHeight, iw=w.innerWidth, fora=[];
+  if(d.documentElement.scrollWidth>iw+1) fora.push('largura '+d.documentElement.scrollWidth+'>'+iw);
+  if(!d.querySelector('#overlay').classList.contains('hidden')){
+    const p=d.querySelector('#panel').getBoundingClientRect();
+    if(p.top<-1||p.bottom>ih+1) fora.push(`painel ${Math.round(p.top)}..${Math.round(p.bottom)} de ${ih}`);
+    return {fora, info:'painel'};
+  }
+  if(!d.querySelector('#scrGame').classList.contains('on')) return {fora, info:''};
+  // tela do jogo: o celular não rola com o dedo, a menos que a página esteja no modo "rola"
+  const fim=d.querySelector('#scrGame').getBoundingClientRect().bottom+w.scrollY+12, rola=d.body.classList.contains('rola');
+  if(fim>ih+1 && !rola) fora.push(`corta: conteúdo vai até ${Math.round(fim)} de ${ih}`);
+  if(w.eval('S.phase')==='mine' && !w.eval('S.editando')){ const b=d.querySelector('#board').getBoundingClientRect(); if(b.top<0||b.bottom>ih+1) fora.push(`tabuleiro fora da tela (${Math.round(b.top)}..${Math.round(b.bottom)})`); }
+  const v=d.querySelector('#btnSell'); if(w.eval('S.phase')!=='mine' && v.offsetParent && v.getBoundingClientRect().bottom>ih+1) fora.push('Vender fora da tela');
+  return {fora, info:`casa ${w.getComputedStyle(d.querySelector('#board')).getPropertyValue('--cell').trim()}${rola?', rola':''}`};
+}
+const TELAS={
+  menu: w=>w.eval('showMenu()'),
+  laboratorio: w=>w.eval('labPainel()'),
+  editorLista: w=>w.eval('editorLista()'),
+  catalogo: w=>w.eval('catalogo()'),
+  jogo: w=>w.eval(`hideOverlay(); localStorage.mina_tut=1; S=freshState(); S.char='rola'; S.fiscal=FISCAIS[0]; applyAndar(); S.lv={lupa:1,vaquinha:1,eco:2,musgo:1,coroa:1,adubo:1}; S.ferr={desfazer:2,picao:1,luva:1}; startDay({...PATHS.comum})`),
+  jogo5x5: w=>w.eval(`hideOverlay(); S=freshState(); S.char='rola'; S.fiscal=FISCAIS[0]; applyAndar(); startDay({...PATHS.salao})`),
+  labJogo: w=>w.eval(`LAB.cfg={...presetDe('comum'), ferr:99}; labJoga()`),
+  editar4x4: w=>w.eval(`LAB.cfg={...presetDe('comum'), ferr:99}; labJoga(); labEditar(true)`),
+  construir6x8: w=>w.eval(`LAB.cfg={...presetDe('comum'), w:6, h:8}; labJoga(); labConstruir()`),
+  construir8x8: w=>w.eval(`LAB.cfg={...presetDe('comum'), w:8, h:8}; labJoga(); labConstruir()`),
+  construir8x20: w=>w.eval(`LAB.cfg={...presetDe('comum'), w:8, h:20}; labJoga(); labConstruir()`),
+  revelar: async w=>{ w.eval(`LAB.cfg={...presetDe('comum')}; labJoga(); S.skip=true; endDay()`); await wait(5000); },
+  tutorial: async w=>{ w.eval(`hideOverlay(); localStorage.removeItem('mina_tut'); S=freshState(); S.char='rola'; S.fiscal=FISCAIS[0]; applyAndar(); S.tut=true; startDay({...PATHS.comum}, true)`); await wait(200); },
+};
+(async()=>{
+  const log=[], errs=[];
+  if(MODE.includes(':')){ // #tela:larg:alt só abre para olhar
+    const [t,wd,ht]=MODE.split(':'); const f=await abre(+wd,+ht); const w=f.contentWindow; w.eval('sound=false; music=false'); await TELAS[t](w); await wait(300); out.textContent=JSON.stringify(corte(w,f.contentDocument)); out.style.display='none'; return;
+  }
+  for(const [wd,ht] of TAMANHOS){
+    const f=await abre(wd,ht), w=f.contentWindow, d=f.contentDocument;
+    w.addEventListener('error',e=>errs.push(e.message+' @'+e.lineno));
+    w.eval('sound=false; music=false');
+    for(const [nome,vai] of Object.entries(TELAS)){
+      try{ await vai(w); await wait(300); const c=corte(w,d); if(c.fora.length) errs.push(`${wd}x${ht} ${nome}: ${c.fora.join('; ')} (${c.info})`); else log.push(`${wd}x${ht} ${nome}: ok ${c.info}`); }
+      catch(e){ errs.push(`${wd}x${ht} ${nome}: EXC ${e.message}`); }
+    }
+    f.remove();
+  }
+  out.textContent=JSON.stringify({log,errs},null,1);
+})();
+</script></body>

@@ -33,6 +33,42 @@ function setupBoard(w,h=w){
   for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const c=document.createElement('div'); c.className='slot'; c.dataset.x=x; c.dataset.y=y; c.style.transform=pos(x,y); if(S) c.style.background=andar().sl; board.prepend(c); }
 }
 setupBoard(4);
+
+// ===================== CABER NA TELA =====================
+// O tabuleiro fica do maior tamanho que deixa a tela do jogo inteira à vista. Se nem com a casa mínima couber
+// (tabuleiro muito alto, ou o editor aberto em tela pequena), a página passa a rolar: arrasta-se fora do tabuleiro.
+const CEL_MIN_JOGO=14, CEL_MIN_EDITOR=26;
+const vaoDe = c => Math.max(2,Math.round(c*.11));
+const ladoDe = (n,c) => n*c + (n+1)*vaoDe(c);
+const fimDoJogo = () => $('#scrGame').getBoundingClientRect().bottom + scrollY + 12;
+function encaixa(redimensiona=true){
+  document.body.classList.remove('rola');
+  document.body.classList.toggle('editando', !!S?.editando && $('#scrGame').classList.contains('on'));
+  if(!$('#scrGame').classList.contains('on')) return;
+  if(redimensiona){
+    const resto = fimDoJogo() - board.getBoundingClientRect().height;
+    const largMax = Math.min(innerWidth,440)-20, altMax = innerHeight - resto - 2;
+    const min = S?.editando ? CEL_MIN_EDITOR : CEL_MIN_JOGO;
+    let c = 84;
+    while(c>min && (ladoDe(W,c)>largMax || ladoDe(H,c)>altMax)) c--;
+    while(c>10 && ladoDe(W,c)>largMax) c--;
+    board.style.setProperty('--cell', c+'px'); board.style.setProperty('--gap', vaoDe(c)+'px');
+  }
+  document.body.classList.toggle('rola', fimDoJogo() > innerHeight+1);
+  if(!$('#coach').classList.contains('hidden')) placeCoach();
+}
+// no fim do dia o resultado ocupa mais que os botões do dia: se não couber, a página desce até ele
+function mostraFim(){
+  encaixa(false);
+  const sobra = Math.ceil(fimDoJogo() - innerHeight);
+  if(sobra > scrollY+1) scrollTo({top:sobra, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'});
+}
+let encaixeAgendado=false;
+function pedeEncaixe(redimensiona=true){
+  if(encaixeAgendado) return; encaixeAgendado=true;
+  requestAnimationFrame(()=>{ encaixeAgendado=false; encaixa(redimensiona && S?.phase==='mine'); });
+}
+addEventListener('resize', ()=>pedeEncaixe(S?.phase==='mine'));
 // cores: 0 roxa, 1 verde, 2 mista (junta com as duas)
 const corOk = (a,b) => a.c==null || b.c==null || a.c===b.c || a.c===2 || b.c===2;
 const corJunta = (o,t) => o.c===2 ? t.c : o.c;
@@ -332,7 +368,7 @@ function startDay(p, tutorial=false){
   $('#mineRow').style.display=''; $('#revealRow').style.display='none';
   $('#btnEnd').classList.remove('hot'); resetEnd();
   setBanner(`Andar ${S.week} · dia ${S.day}`, S.isFiscal ? S.fiscal.nome : p.nome + (forma?`: ${forma.nome}`:'') + (S.usedSaved?` (+${S.usedSaved}⚡)`:''));
-  render();
+  render(); encaixa();
   if(tutorial) coach('Arraste <b>para o lado</b> para juntar as iguais. ↔', null, null, '#board');
 }
 
@@ -594,7 +630,7 @@ async function endDay(){
   const sobra = Math.max(0,S.energy);
   if(!S.semEnergia) S.saved = S.tut ? 0 : Math.min(CFG.guardaMax, sobra);
   $('#mineRow').style.display='none'; $('#revealRow').style.display='flex';
-  $('#btnSkip').style.display=''; $('#btnSell').style.display='none';
+  $('#btnSkip').style.display=''; $('#btnSell').style.display='none'; requestAnimationFrame(mostraFim);
   $('#dayTotal').textContent='$0'; $('#dayTotal').classList.remove('neg'); showCalc(); $('#recLine').textContent='';
   setBanner(`Fim do dia ${S.day}`, S.saved ? `hora de cuspir! (+${S.saved}⚡ guardada)` : 'hora de cuspir!');
   render(); SFX.fimDia(); abaixar(true); await sleep(700);
@@ -679,6 +715,7 @@ async function endDay(){
   S.skip=true; countTo(S.dayTotal); S.skip=false;
   setBanner(`Fim do dia ${S.day}`, S.dayTotal>0 ? `rendeu ${fmt(S.dayTotal)}` : S.dayTotal<0 ? 'a terra deu prejuízo...' : 'dia fraco...');
   $('#btnSkip').style.display='none'; $('#btnFast').style.display='none'; $('#btnSell').style.display='';
+  mostraFim();
   $('#btnSell').textContent = S.dayTotal>=0 ? `Vender ${fmt(S.dayTotal)}` : `Pagar a limpeza (${fmt(S.dayTotal)})`;
   recordeFim();
   if(S.tut===5) coach('<b>Ptui!</b> Pedrinha cospe minério, torrão custa.', 'Legal!', ()=>{
@@ -926,7 +963,7 @@ function labJoga(){
   startDay(p);
   const rec=RECS()[chaveLab()];
   setBanner('Laboratório', `${base.nome} · ${LAB.energia?'com':'sem'} energia${rec?` · recorde $${rec.total}`:''}`);
-  labFerramentas();
+  labFerramentas(); pedeEncaixe();
 }
 function labFim(){
   LAB.hist.push({fase:LAB.fase, energia:LAB.energia, char:LAB.char, cfg:{...LAB.cfg}, arrastos:S.moves||0, total:S.dayTotal});
@@ -947,7 +984,7 @@ function labEditar(on){
   if(!on && S.phase==='mine' && !S.tiles.length){ addTile(); addTile(); }
   $('#btnEdit').textContent = on ? 'Pronto' : 'Editar';
   if(on) labPaleta();
-  render();
+  render(); encaixa();
 }
 function labPaleta(){
   const sel = (cond) => cond ? 'sel' : '';
@@ -979,7 +1016,7 @@ function labPaleta(){
       ${EDIT?.id?'<button class="pt" id="labSalvaNovo">Salvar como novo</button>':''}
       <button class="pt" id="labCopiaF">Copiar formato</button>
     </div>
-    <p class="ptDica" id="ptDica">${PINCEL.tipo==='mureta'?'Toque perto da borda entre duas casas para pôr ou tirar a mureta.':'Toque nas casas para pintar.'}</p>`;
+    <p class="ptDica" id="ptDica">${PINCEL.tipo==='mureta'?'Toque na borda entre duas casas.':'Toque nas casas para pintar.'}</p>`;
   document.querySelectorAll('[data-tipo]').forEach(b=>b.onclick=()=>{ PINCEL.tipo=b.dataset.tipo; labPaleta(); });
   document.querySelectorAll('.pb').forEach(b=>b.onclick=()=>{ PINCEL.t=+b.dataset.t; if(!['rocha','pick'].includes(PINCEL.tipo)) PINCEL.tipo='rocha'; labPaleta(); });
   document.querySelectorAll('[data-cor]').forEach(b=>b.onclick=()=>{ const v=b.dataset.cor; PINCEL.c = v==='null' ? null : +v; labPaleta(); });
@@ -996,12 +1033,14 @@ function labPaleta(){
     if(i>=0){ f.id=EDIT.id; minhas[i]=f; } else { f.id='meu'+Date.now(); minhas.push(f); if(EDIT) EDIT.id=f.id; }
     localStorage.mina_formas=JSON.stringify(minhas);
     labPaleta();
-    $('#ptDica').textContent = i>=0 ? `"${f.nome}" atualizado.` : `Salvo como "${f.nome}". Ele aparece no editor, no laboratório e nas Cavernas.`;
+    $('#ptDica').textContent = i>=0 ? `"${f.nome}" atualizado.` : `Salvo: "${f.nome}".`;
   };
   if($('#labSalvaNovo')) $('#labSalvaNovo').onclick=()=>{ EDIT.id=null; $('#labSalvaF').click(); };
   $('#labCopiaF').onclick=()=>{
     const f=formaAtual(); if(f && LABNOME) f.nome=LABNOME; const txt=JSON.stringify(f);
-    (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>{ $('#ptDica').textContent='Copiado! Pode colar e me mandar.'; }).catch(()=>{ $('#ptDica').textContent=txt; });
+    (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>{ $('#ptDica').textContent='Copiado!'; }).catch(()=>{
+      showOverlay(`<h2>Formato</h2><p class="ajuda">Copie o texto abaixo.</p><textarea class="edTxt" rows="7" readonly>${txt.replace(/</g,'&lt;')}</textarea><button class="btn b" id="btnOk">Fechar</button>`);
+      $('#btnOk').onclick=hideOverlay; });
   };
   $('#labMaisE').onclick=()=>{ if(S.semEnergia) return; S.energy+=10; S.energyMax=Math.max(S.energyMax,S.energy); render(); };
 }

@@ -213,14 +213,16 @@ body.lock{overflow:hidden}
 .chipOp.sel{background:#f2b33d;color:#4a3410;box-shadow:0 2px 0 #c48a1e}
 .labTools{display:flex;flex-direction:column;gap:8px;background:#efe1c6;border-radius:18px;padding:10px;box-shadow:0 3px 0 #dcc6a0}
 .labTools.hidden{display:none}
-.ptRow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.ptRow.niveis{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}
-.pt{border:0;border-radius:999px;padding:6px 12px;font:600 14px 'Fredoka';background:#f6ecd9;color:#7a5a44;cursor:pointer}
+.ptRow{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:6px;align-items:center;scrollbar-width:none}
+.ptRow::-webkit-scrollbar{display:none}
+.ptRow>*{flex:none}
+.pt{border:0;border-radius:999px;padding:6px 12px;font:600 14px 'Fredoka';background:#f6ecd9;color:#7a5a44;cursor:pointer;white-space:nowrap}
 .pt.sel,.pb.sel{background:#f2b33d;color:#4a3410}
-.pb{flex:none;width:52px;border:0;border-radius:12px;background:#f6ecd9;padding:2px;display:flex;flex-direction:column;align-items:center;cursor:pointer;font:600 11px 'Fredoka';color:#7a5a44}
-.pb svg{width:44px;height:44px;overflow:visible}
+.pb{flex:none;width:42px;border:0;border-radius:12px;background:#f6ecd9;padding:2px;display:flex;flex-direction:column;align-items:center;cursor:pointer;font:600 11px 'Fredoka';color:#7a5a44}
+.pb svg{width:34px;height:34px;overflow:visible}
 .ptLbl{font-size:13px;font-weight:600;color:#a08a74}
-.ptDica{font-size:12px;color:#a08a74;margin:0}
+.ptDica{font-size:12px;color:#a08a74;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.editando .hud{display:none}
 .slot.void{background:#3a2c22 !important;box-shadow:inset 0 0 0 3px #2a1f18,inset 0 6px 10px #0006;border-radius:14px}
 .formaSvg{display:block;margin:0 auto}
 .ptNome{border:0;border-radius:999px;padding:6px 12px;font:600 14px 'Fredoka';background:#fff;color:#5a4636;width:150px}
@@ -257,6 +259,10 @@ b.sub{font-size:13px;color:#c48a1e;text-transform:uppercase;letter-spacing:.04em
 .btn.lab2{background:#6d93a8;box-shadow:0 5px 0 #4a6c7f;font-size:16px;padding:11px 10px}
 .acoes{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
 .edTxt{width:100%;border:2px solid #dcc6a0;border-radius:12px;font:12px monospace;padding:8px;box-sizing:border-box}
+#app{min-height:100dvh}
+.panel{max-height:100%}
+body.rola #scrGame{touch-action:pan-y}
+body.rola #stage{touch-action:none}
 .panel h3{font-size:15px;color:#a08a74;margin:6px 0 -4px;text-transform:uppercase;letter-spacing:.04em}
 .edge{position:absolute;z-index:4;background:#6b625a;border:2.5px solid #2e2219;border-radius:8px;box-shadow:0 3px 0 #0003}
 .edge.v{width:12px;height:calc(var(--cell) - 10px);left:calc((var(--ex) + 1)*(var(--cell) + var(--gap)) + var(--gap)/2 - 6px);top:calc(var(--ey)*(var(--cell) + var(--gap)) + var(--gap) + 5px)}
@@ -713,6 +719,42 @@ function setupBoard(w,h=w){
   for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const c=document.createElement('div'); c.className='slot'; c.dataset.x=x; c.dataset.y=y; c.style.transform=pos(x,y); if(S) c.style.background=andar().sl; board.prepend(c); }
 }
 setupBoard(4);
+
+// ===================== CABER NA TELA =====================
+// O tabuleiro fica do maior tamanho que deixa a tela do jogo inteira à vista. Se nem com a casa mínima couber
+// (tabuleiro muito alto, ou o editor aberto em tela pequena), a página passa a rolar: arrasta-se fora do tabuleiro.
+const CEL_MIN_JOGO=14, CEL_MIN_EDITOR=26;
+const vaoDe = c => Math.max(2,Math.round(c*.11));
+const ladoDe = (n,c) => n*c + (n+1)*vaoDe(c);
+const fimDoJogo = () => $('#scrGame').getBoundingClientRect().bottom + scrollY + 12;
+function encaixa(redimensiona=true){
+  document.body.classList.remove('rola');
+  document.body.classList.toggle('editando', !!S?.editando && $('#scrGame').classList.contains('on'));
+  if(!$('#scrGame').classList.contains('on')) return;
+  if(redimensiona){
+    const resto = fimDoJogo() - board.getBoundingClientRect().height;
+    const largMax = Math.min(innerWidth,440)-20, altMax = innerHeight - resto - 2;
+    const min = S?.editando ? CEL_MIN_EDITOR : CEL_MIN_JOGO;
+    let c = 84;
+    while(c>min && (ladoDe(W,c)>largMax || ladoDe(H,c)>altMax)) c--;
+    while(c>10 && ladoDe(W,c)>largMax) c--;
+    board.style.setProperty('--cell', c+'px'); board.style.setProperty('--gap', vaoDe(c)+'px');
+  }
+  document.body.classList.toggle('rola', fimDoJogo() > innerHeight+1);
+  if(!$('#coach').classList.contains('hidden')) placeCoach();
+}
+// no fim do dia o resultado ocupa mais que os botões do dia: se não couber, a página desce até ele
+function mostraFim(){
+  encaixa(false);
+  const sobra = Math.ceil(fimDoJogo() - innerHeight);
+  if(sobra > scrollY+1) scrollTo({top:sobra, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'});
+}
+let encaixeAgendado=false;
+function pedeEncaixe(redimensiona=true){
+  if(encaixeAgendado) return; encaixeAgendado=true;
+  requestAnimationFrame(()=>{ encaixeAgendado=false; encaixa(redimensiona && S?.phase==='mine'); });
+}
+addEventListener('resize', ()=>pedeEncaixe(S?.phase==='mine'));
 // cores: 0 roxa, 1 verde, 2 mista (junta com as duas)
 const corOk = (a,b) => a.c==null || b.c==null || a.c===b.c || a.c===2 || b.c===2;
 const corJunta = (o,t) => o.c===2 ? t.c : o.c;
@@ -1012,7 +1054,7 @@ function startDay(p, tutorial=false){
   $('#mineRow').style.display=''; $('#revealRow').style.display='none';
   $('#btnEnd').classList.remove('hot'); resetEnd();
   setBanner(`Andar ${S.week} · dia ${S.day}`, S.isFiscal ? S.fiscal.nome : p.nome + (forma?`: ${forma.nome}`:'') + (S.usedSaved?` (+${S.usedSaved}⚡)`:''));
-  render();
+  render(); encaixa();
   if(tutorial) coach('Arraste <b>para o lado</b> para juntar as iguais. ↔', null, null, '#board');
 }
 
@@ -1274,7 +1316,7 @@ async function endDay(){
   const sobra = Math.max(0,S.energy);
   if(!S.semEnergia) S.saved = S.tut ? 0 : Math.min(CFG.guardaMax, sobra);
   $('#mineRow').style.display='none'; $('#revealRow').style.display='flex';
-  $('#btnSkip').style.display=''; $('#btnSell').style.display='none';
+  $('#btnSkip').style.display=''; $('#btnSell').style.display='none'; requestAnimationFrame(mostraFim);
   $('#dayTotal').textContent='$0'; $('#dayTotal').classList.remove('neg'); showCalc(); $('#recLine').textContent='';
   setBanner(`Fim do dia ${S.day}`, S.saved ? `hora de cuspir! (+${S.saved}⚡ guardada)` : 'hora de cuspir!');
   render(); SFX.fimDia(); abaixar(true); await sleep(700);
@@ -1359,6 +1401,7 @@ async function endDay(){
   S.skip=true; countTo(S.dayTotal); S.skip=false;
   setBanner(`Fim do dia ${S.day}`, S.dayTotal>0 ? `rendeu ${fmt(S.dayTotal)}` : S.dayTotal<0 ? 'a terra deu prejuízo...' : 'dia fraco...');
   $('#btnSkip').style.display='none'; $('#btnFast').style.display='none'; $('#btnSell').style.display='';
+  mostraFim();
   $('#btnSell').textContent = S.dayTotal>=0 ? `Vender ${fmt(S.dayTotal)}` : `Pagar a limpeza (${fmt(S.dayTotal)})`;
   recordeFim();
   if(S.tut===5) coach('<b>Ptui!</b> Pedrinha cospe minério, torrão custa.', 'Legal!', ()=>{
@@ -1606,7 +1649,7 @@ function labJoga(){
   startDay(p);
   const rec=RECS()[chaveLab()];
   setBanner('Laboratório', `${base.nome} · ${LAB.energia?'com':'sem'} energia${rec?` · recorde $${rec.total}`:''}`);
-  labFerramentas();
+  labFerramentas(); pedeEncaixe();
 }
 function labFim(){
   LAB.hist.push({fase:LAB.fase, energia:LAB.energia, char:LAB.char, cfg:{...LAB.cfg}, arrastos:S.moves||0, total:S.dayTotal});
@@ -1627,7 +1670,7 @@ function labEditar(on){
   if(!on && S.phase==='mine' && !S.tiles.length){ addTile(); addTile(); }
   $('#btnEdit').textContent = on ? 'Pronto' : 'Editar';
   if(on) labPaleta();
-  render();
+  render(); encaixa();
 }
 function labPaleta(){
   const sel = (cond) => cond ? 'sel' : '';
@@ -1659,7 +1702,7 @@ function labPaleta(){
       ${EDIT?.id?'<button class="pt" id="labSalvaNovo">Salvar como novo</button>':''}
       <button class="pt" id="labCopiaF">Copiar formato</button>
     </div>
-    <p class="ptDica" id="ptDica">${PINCEL.tipo==='mureta'?'Toque perto da borda entre duas casas para pôr ou tirar a mureta.':'Toque nas casas para pintar.'}</p>`;
+    <p class="ptDica" id="ptDica">${PINCEL.tipo==='mureta'?'Toque na borda entre duas casas.':'Toque nas casas para pintar.'}</p>`;
   document.querySelectorAll('[data-tipo]').forEach(b=>b.onclick=()=>{ PINCEL.tipo=b.dataset.tipo; labPaleta(); });
   document.querySelectorAll('.pb').forEach(b=>b.onclick=()=>{ PINCEL.t=+b.dataset.t; if(!['rocha','pick'].includes(PINCEL.tipo)) PINCEL.tipo='rocha'; labPaleta(); });
   document.querySelectorAll('[data-cor]').forEach(b=>b.onclick=()=>{ const v=b.dataset.cor; PINCEL.c = v==='null' ? null : +v; labPaleta(); });
@@ -1676,12 +1719,14 @@ function labPaleta(){
     if(i>=0){ f.id=EDIT.id; minhas[i]=f; } else { f.id='meu'+Date.now(); minhas.push(f); if(EDIT) EDIT.id=f.id; }
     localStorage.mina_formas=JSON.stringify(minhas);
     labPaleta();
-    $('#ptDica').textContent = i>=0 ? `"${f.nome}" atualizado.` : `Salvo como "${f.nome}". Ele aparece no editor, no laboratório e nas Cavernas.`;
+    $('#ptDica').textContent = i>=0 ? `"${f.nome}" atualizado.` : `Salvo: "${f.nome}".`;
   };
   if($('#labSalvaNovo')) $('#labSalvaNovo').onclick=()=>{ EDIT.id=null; $('#labSalvaF').click(); };
   $('#labCopiaF').onclick=()=>{
     const f=formaAtual(); if(f && LABNOME) f.nome=LABNOME; const txt=JSON.stringify(f);
-    (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>{ $('#ptDica').textContent='Copiado! Pode colar e me mandar.'; }).catch(()=>{ $('#ptDica').textContent=txt; });
+    (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>{ $('#ptDica').textContent='Copiado!'; }).catch(()=>{
+      showOverlay(`<h2>Formato</h2><p class="ajuda">Copie o texto abaixo.</p><textarea class="edTxt" rows="7" readonly>${txt.replace(/</g,'&lt;')}</textarea><button class="btn b" id="btnOk">Fechar</button>`);
+      $('#btnOk').onclick=hideOverlay; });
   };
   $('#labMaisE').onclick=()=>{ if(S.semEnergia) return; S.energy+=10; S.energyMax=Math.max(S.energyMax,S.energy); render(); };
 }
@@ -2113,7 +2158,10 @@ function previewDrag(dx,dy){
     el.style.transform=`${pos(t.x,t.y)} translate(calc(${ox}*(var(--cell) + var(--gap))), calc(${oy}*(var(--cell) + var(--gap))))`;
   }
 }
-addEventListener('pointerdown',e=>{ if(overlayOpen()||e.target.closest('button')||!$('#scrGame').classList.contains('on')) return; touch={x:e.clientX,y:e.clientY}; prev=null; });
+addEventListener('pointerdown',e=>{ if(overlayOpen()||e.target.closest('button')||!$('#scrGame').classList.contains('on')) return;
+  if(document.body.classList.contains('rola') && !e.target.closest('#stage')) return; // fora do tabuleiro, o dedo rola a página
+  touch={x:e.clientX,y:e.clientY}; prev=null; });
+addEventListener('pointercancel',()=>{ if(touch){ touch=null; clearPreview(true); } });
 addEventListener('pointermove',e=>{
   if(!touch || !S || S.phase!=='mine' || overlayOpen() || coachBlock || S.editando || S.ferrAtiva) return;
   previewDrag(e.clientX-touch.x, e.clientY-touch.y);
