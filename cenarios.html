@@ -108,10 +108,10 @@ function cenaA(){
   // barbantes entre estacas, marcando as casas
   const linX=[], linY=[]; for(let k=0;k<=4;k++){ linX.push(BX+G/2+k*(C+G)); linY.push(BY+G/2+k*(C+G)); }
   const y0=py-16, y1=py+pw+16, x0=px-16, x1=px+pw+16;
-  const corda=(xa,ya,xb,yb)=>`<line x1="${xa+1.5}" y1="${ya+2}" x2="${xb+1.5}" y2="${yb+2}" stroke="#3a250f" stroke-opacity=".18" stroke-width="2"/><line x1="${xa}" y1="${ya}" x2="${xb}" y2="${yb}" stroke="#fbf1de" stroke-width="1.8"/>`;
+  const corda=(xa,ya,xb,yb)=>`<line x1="${xa+1}" y1="${ya+1.5}" x2="${xb+1}" y2="${yb+1.5}" stroke="#3a250f" stroke-opacity=".08" stroke-width="1.4"/><line x1="${xa}" y1="${ya}" x2="${xb}" y2="${yb}" stroke="#f3e2c2" stroke-opacity=".38" stroke-width="1.1"/>`;
   for(const v of linX) s+=corda(v,y0,v,y1);
   for(const v of linY) s+=corda(x0,v,x1,v);
-  const estaca=(x,y)=>`<rect x="${x-5}" y="${y-5}" width="10" height="10" rx="2" fill="#8b5c33" stroke="#5e3b1d" stroke-width="1.5"/><rect x="${x-3}" y="${y-3}" width="6" height="6" rx="1" fill="#b98250"/>`;
+  const estaca=(x,y)=>`<rect x="${x-3.5}" y="${y-3.5}" width="7" height="7" rx="1.5" fill="#9a6a3e" stroke="#6e4826" stroke-width="1"/>`;
   for(const v of linX) s+=estaca(v,y0)+estaca(v,y1);
   for(const v of linY) s+=estaca(x0,v)+estaca(x1,v);
   // pedrinhas (parede = pedregulho)
@@ -144,19 +144,12 @@ function cenaB(){
   for(let x=-6;x<400;x+=20) s+=`<rect x="${x}" y="${ty-4}" width="9" height="40" rx="2" fill="#7c5131" stroke="#4d321d" stroke-width="1.5"/>`;
   s+=`<line x1="0" y1="${ty+5}" x2="390" y2="${ty+5}" stroke="#2b2420" stroke-width="5"/><line x1="0" y1="${ty+27}" x2="390" y2="${ty+27}" stroke="#2b2420" stroke-width="5"/><line x1="0" y1="${ty+4}" x2="390" y2="${ty+4}" stroke="#b4bdc4" stroke-width="3"/><line x1="0" y1="${ty+26}" x2="390" y2="${ty+26}" stroke="#b4bdc4" stroke-width="3"/>`;
   s+=`<g transform="translate(250 ${ty+16})"><rect x="-54" y="-30" width="112" height="66" rx="10" fill="#0004"/><rect x="-58" y="-34" width="112" height="64" rx="10" fill="#6d4a30" stroke="#8d969d" stroke-width="5"/><rect x="-48" y="-24" width="92" height="44" rx="6" fill="#3b2a1e"/>${ores([[5,-2.4,-.5],[4,-1.2,.4],[6,0,-.5],[3,1.2,.4],[5,2.2,-.3],[2,-.3,.6]],-2,-2,16,1.1)}</g>`;
-  // plataforma de madeira em volta do tabuleiro
-  s+=`<rect x="${BX-16}" y="${BY-16}" width="${BW+32}" height="${BW+32}" rx="10" fill="#0005" transform="translate(4 6)"/>`;
-  s+=`<rect x="${BX-16}" y="${BY-16}" width="${BW+32}" height="${BW+32}" rx="10" fill="#8a5a35" stroke="#4f3320" stroke-width="2"/>`;
-  for(let k=0;k<6;k++) s+=`<line x1="${BX-16}" y1="${BY-16+k*(BW+32)/6}" x2="${BX+BW+16}" y2="${BY-16+k*(BW+32)/6}" stroke="#6e4527" stroke-width="1.5" opacity=".6"/>`;
-  s+=`<rect x="${BX}" y="${BY}" width="${BW}" height="${BW}" rx="6" fill="#33271f"/>`;
-  // lajotas
+  // área do jogo: o mesmo piso, com lajotas um pouco maiores e mais claras
+  s+=`<path d="${blobRect(BX-4,BY-4,BW+8,BW+8,r,3,20)}" fill="#4a3a2e"/>`;
   for(let j=0;j<4;j++) for(let i=0;i<4;i++){ const x=X(i), y=Y(j);
-    s+=`<path d="${blobRect(x+1,y+1,C-2,C-2,r,1.8,14)}" fill="#a48b72"/><path d="${blobRect(x+3,y+3,C-10,C-12,r,1.6,14)}" fill="#b59c82"/>`;
-    s+=speck(r,x+6,y+6,C-12,C-12,6,['#9b826a','#c2aa90'],1,2.5);
+    s+=`<path d="${blobRect(x-2,y-2,C+4,C+4,r,2.2,14)}" fill="${['#7a6552','#7f6956','#76614f'][(i+j)%3]}" stroke="#3d2f25" stroke-width="1.5"/>`;
+    s+=speck(r,x+6,y+6,C-12,C-12,5,['#6f5b49','#8a7461'],1,2.5);
   }
-  // esteios nos cantos
-  const poste=(x,y)=>`<rect x="${x-13}" y="${y-13}" width="26" height="26" rx="3" fill="#5e3b1f" stroke="#3a2412" stroke-width="2"/><rect x="${x-8}" y="${y-8}" width="16" height="16" rx="2" fill="#94603a"/><path d="M${x-5} ${y-2} h10 M${x-5} ${y+3} h10" stroke="#6e4527" stroke-width="1.5"/>`;
-  for(const [x,y] of [[BX-16,BY-16],[BX+BW+16,BY-16],[BX-16,BY+BW+16],[BX+BW+16,BY+BW+16]]) s+=poste(x,y);
   // pedra (parede)
   s+=pecas((x,y)=>`<ellipse cx="${x+38}" cy="${y+64}" rx="30" ry="7" fill="#0004"/><path d="${blob(x+36,y+37,32,28,rng(3),.13,8)}" fill="#7d6b5e" stroke="#2e2219" stroke-width="2.4"/><path d="${blob(x+29,y+29,15,10,rng(4),.2,7)}" fill="#998678"/>`);
   // caixote e barril
@@ -165,7 +158,8 @@ function cenaB(){
   // lanternas
   const lanterna=(x,y)=>`<circle cx="${x}" cy="${y}" r="110" fill="url(#bLuz)"/><rect x="${x-9}" y="${y-9}" width="18" height="18" rx="4" fill="#2e2219"/><circle cx="${x}" cy="${y}" r="5.5" fill="#ffe7a8"/>`;
   s+=`<rect width="390" height="780" fill="url(#bVin)"/>`;
-  s+=lanterna(BX-16,BY+BW*0.45)+lanterna(BX+BW+16,BY+BW*0.2)+lanterna(140,740);
+  s+=`<ellipse cx="${BX+BW/2}" cy="${BY+BW/2}" rx="${BW*.62}" ry="${BW*.6}" fill="url(#bLuz)" opacity=".55"/>`;
+  s+=lanterna(BX-14,BY+BW*0.45)+lanterna(BX+BW+14,BY+BW*0.15)+lanterna(140,740);
   return s;
 }
 
@@ -204,7 +198,7 @@ function cenaC(){
   s+=`<path d="M250 110 L330 110 L250 520 L120 520Z" fill="url(#cRaio)"/>`;
   // ninhos (sem grade): cada pedrinha num côncavo da areia
   s+=pecas((x,y)=>`<circle cx="${x+36}" cy="${y+40}" r="32" fill="#5f5258"/><circle cx="${x+36}" cy="${y+38}" r="23" fill="#726469"/><circle cx="${x+35}" cy="${y+36}" r="12" fill="#8a7c81"/><circle cx="${x+32}" cy="${y+32}" r="4" fill="#a3969b"/>`,
-    (x,y,v)=>`<ellipse cx="${x+36}" cy="${y+40}" rx="35" ry="31" fill="#bba07a"/><ellipse cx="${x+36}" cy="${y+42}" rx="30" ry="26" fill="#c9b08a"/><path d="M${x+10} ${y+30} q26 -20 52 0" stroke="#a88f6a" stroke-width="2" fill="none" opacity=".6"/>`);
+    (x,y,v)=>`<ellipse cx="${x+36}" cy="${y+38}" rx="33" ry="29" fill="#b39672" opacity=".28"/><path d="M${x+12} ${y+52} q24 14 48 0" stroke="#efe0c2" stroke-width="3" fill="none" opacity=".35" stroke-linecap="round"/>`);
   return s;
 }
 
@@ -212,7 +206,7 @@ function cenaC(){
 function cenaD(){
   const r=rng(57); let s=`<defs>
     <radialGradient id="dVela" r="50%"><stop offset="0" stop-color="#ffd27a" stop-opacity=".6"/><stop offset="1" stop-color="#ffd27a" stop-opacity="0"/></radialGradient>
-    <linearGradient id="dFeltro" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2c4f4b"/><stop offset=".35" stop-color="#3f6b66"/></linearGradient>
+    <linearGradient id="dFeltro" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8c6844"/><stop offset=".3" stop-color="#9c7750"/></linearGradient>
   </defs>`;
   // tábuas da mesa
   const cores=['#a8743f','#b07b45','#9f6c39','#ab773f','#a36f3c','#b37e48','#a0703d'];
@@ -227,12 +221,12 @@ function cenaD(){
   const ox=BX-18, oy=BY-18, ow=BW+36;
   s+=`<rect x="${ox}" y="${oy}" width="${ow}" height="${ow}" rx="12" fill="#0005" transform="translate(6 8)"/>`;
   s+=`<rect x="${ox}" y="${oy}" width="${ow}" height="${ow}" rx="12" fill="#6e4224" stroke="#45280f" stroke-width="2.5"/><rect x="${ox+6}" y="${oy+6}" width="${ow-12}" height="${ow-12}" rx="9" fill="#8f5a33"/>`;
-  s+=`<rect x="${BX}" y="${BY}" width="${BW}" height="${BW}" rx="4" fill="#b98550"/>`;
+  s+=`<rect x="${BX}" y="${BY}" width="${BW}" height="${BW}" rx="4" fill="#a87b4b"/>`;
   for(let j=0;j<4;j++) for(let i=0;i<4;i++){ const x=X(i), y=Y(j);
-    s+=`<rect x="${x}" y="${y}" width="${C}" height="${C}" rx="3" fill="url(#dFeltro)"/><rect x="${x}" y="${y}" width="${C}" height="${C}" rx="3" fill="none" stroke="#7a4f28" stroke-width="1.5"/>`;
-    s+=speck(r,x+4,y+10,C-8,C-14,10,['#4a7a74','#365e59'],.6,1.4); }
+    s+=`<rect x="${x}" y="${y}" width="${C}" height="${C}" rx="3" fill="url(#dFeltro)"/>`;
+    s+=speck(r,x+4,y+10,C-8,C-14,10,['#a58058','#93704b'],.6,1.4); }
   // etiquetas embaixo de algumas casas
-  for(const [i,j] of [[0,0],[2,2],[1,3]]) s+=`<rect x="${X(i)+16}" y="${Y(j)+C+1}" width="40" height="7" rx="1" fill="#f3ead8"/>`;
+  for(const [i,j] of [[0,0],[2,2],[1,3]]) s+=`<rect x="${X(i)+20}" y="${Y(j)+C+2}" width="32" height="5" rx="1" fill="#efe2c8" opacity=".7"/>`;
   // parede = tampa de madeira
   s+=pecas((x,y)=>`<rect x="${x+3}" y="${y+3}" width="${C-6}" height="${C-6}" rx="4" fill="#a0693a" stroke="#5e3b1f" stroke-width="2"/><path d="M${x+3} ${y+C/2-12} h${C-6} M${x+3} ${y+C/2+12} h${C-6}" stroke="#7a4f28" stroke-width="2"/><circle cx="${x+12}" cy="${y+12}" r="2.2" fill="#5e3b1f"/><circle cx="${x+C-12}" cy="${y+12}" r="2.2" fill="#5e3b1f"/><circle cx="${x+12}" cy="${y+C-12}" r="2.2" fill="#5e3b1f"/><circle cx="${x+C-12}" cy="${y+C-12}" r="2.2" fill="#5e3b1f"/>`);
   // lupa
@@ -246,10 +240,10 @@ function cenaD(){
 }
 
 const VIEWS = [
-  {id:'A', nome:'Escavação', cena:cenaA, desc:'Um sítio de escavação visto de cima. As casas são marcadas por barbantes entre estacas. Em volta: balde com minério, pá, peneira e escova.'},
-  {id:'B', nome:'Galeria', cena:cenaB, desc:'Piso de pedra da mina, iluminado por lanternas, com trilho e carrinho. O tabuleiro é uma plataforma de madeira com lajotas.'},
-  {id:'C', nome:'Gruta', cena:cenaC, desc:'Uma câmara de gruta com cristais, musgo, cogumelos e um riacho. Sem grade: cada pedrinha fica num côncavo da areia.'},
-  {id:'D', nome:'Bancada', cena:cenaD, desc:'A mesa do minerador. O tabuleiro é uma caixa de amostras de minerais, com mapa, vela, lupa, moedas e caderno em volta.'},
+  {id:'A', nome:'Escavação', cena:cenaA, desc:'Um sítio de escavação visto de cima. As casas são marcadas só por barbantes finos entre estacas. Em volta: balde com minério, pá, peneira e escova.'},
+  {id:'B', nome:'Galeria', cena:cenaB, desc:'Piso de pedra da mina, iluminado por lanternas, com trilho e carrinho. As casas são lajotas do próprio piso, e a luz marca a área do jogo.'},
+  {id:'C', nome:'Gruta', cena:cenaC, desc:'Uma câmara de gruta com cristais, musgo, cogumelos e um riacho. Sem grade: as casas são só leves afundados na areia.'},
+  {id:'D', nome:'Bancada', cena:cenaD, desc:'A mesa do minerador. O tabuleiro é uma caixa de amostras forrada de feltro marrom, com mapa, vela, lupa, moedas e caderno em volta.'},
 ];
 const hud = `<div class="hud"><div class="pill"><span class="ic" style="background:#6aa84f">⚡</span><div><b>23</b><small>de 40</small></div></div><div class="pill"><span class="ic" style="background:#f2b33d">$</span><div><b>$86</b><small>dinheiro</small></div></div><div class="pill"><span class="ic" style="background:#c0603f">!</span><div><b>$150</b><small>cota em 3 dias</small></div></div></div>
   <div class="top"><span class="icon">☰</span><div class="banner"><b>Andar 1 · dia 2</b><span>Túnel</span></div><span class="icon">♪</span></div>
