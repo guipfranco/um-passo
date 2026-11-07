@@ -4,7 +4,7 @@ Puzzle de celular: você é um número num tabuleiro pequeno. Cada swipe move o 
 
 ## Regras do nível teste (v0.2)
 
-- Tabuleiro 5x5, você começa como **1**, no centro.
+- Tabuleiro 4x4, você começa como **1**. Você é dourado; inimigos são tons de vermelho (mais escuro = mais forte).
 - **Arrastar move tudo uma casa** naquela direção, como no Threes. Quem está mais à frente anda primeiro, então uma fila inteira desliza junta se tiver espaço na ponta.
 - Quando você e um monstro se encostam (você anda nele, ou ele anda em você):
 
@@ -30,7 +30,6 @@ Puzzle de celular: você é um número num tabuleiro pequeno. Cada swipe move o 
 
 - Os menores devem sumir ou só bloquear?
 - Monstros devem se fundir entre si, como no Threes?
-- 4x4 (mais apertado) ou 5x5?
 
 ## Ideias guardadas para depois
 

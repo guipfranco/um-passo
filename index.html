@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#15121c">
 <title>Um Passo (nível teste)</title>
 <style>
-:root{--n:5;--cell:min(calc(94vw / var(--n) - 2vw),84px);--gap:min(1.6vw,8px)}
+:root{--n:4;--cell:min(calc(94vw / var(--n) - 2vw),100px);--gap:min(1.6vw,8px)}
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%;background:#15121c;color:#eee;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none;overscroll-behavior:none}
 #app{display:flex;flex-direction:column;align-items:center;gap:12px;padding:14px 8px}
@@ -21,10 +21,10 @@ html,body{margin:0;min-height:100%;background:#15121c;color:#eee;font-family:sys
 .tile{position:absolute;left:0;top:0;width:var(--cell);height:var(--cell);transition:transform .13s ease-out}
 .face{position:relative;width:100%;height:100%;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:calc(var(--cell)*var(--fs,.44));background:var(--c,#555);color:#fff;text-shadow:0 2px 0 #0004;box-shadow:0 4px 0 #0005}
 .face.low{opacity:.45;filter:saturate(.5)}
-.face.eq{box-shadow:0 4px 0 #0005,0 0 0 3px #ffffffdd}
-.face.high::after{content:'▲';position:absolute;top:2px;right:7px;font-size:calc(var(--cell)*.17);color:#ff4d6d;text-shadow:none}
-.face.player{background:#fff3d6;color:#2a1f2f;text-shadow:none;box-shadow:0 4px 0 #0005,0 0 0 4px #ffcf4a}
-.face.player::before{content:'★';position:absolute;top:1px;font-size:calc(var(--cell)*.16);color:#d49a00}
+.face.eq{box-shadow:0 4px 0 #0005,0 0 0 4px #ffd43b}
+.face.high::after{content:'▲';position:absolute;top:2px;right:7px;font-size:calc(var(--cell)*.17);color:#fff;text-shadow:none}
+.face.player{background:#ffd43b;color:#2a1f2f;text-shadow:none;box-shadow:0 4px 0 #0005,0 0 22px #ffd43bcc}
+.face.player::before{content:'★';position:absolute;top:1px;font-size:calc(var(--cell)*.16);color:#8a5a00}
 .spawn{animation:spawn .18s ease-out}
 @keyframes spawn{from{transform:scale(0)}to{transform:scale(1)}}
 .pop{animation:pop .22s ease-out}
@@ -65,16 +65,17 @@ button:active{transform:scale(.97)}
 <script>
 // ================== CONFIG ==================
 const CFG = {
-  N: 5,          // tamanho do tabuleiro
+  N: 4,          // tamanho do tabuleiro
   goal: 64,      // valor para vencer o nível
   start: 1,      // seu valor inicial
-  initial: 7,    // monstros no começo
+  initial: 5,    // monstros no começo
   // o que nasce, em relação ao seu valor v: [valor, peso]
   spawnTable: v => [[v/4,1],[v/2,3],[v,4],[v*2,2],[v*4,1]],
 };
 
-const COLORS=['#5aa9e6','#3fb8af','#7cc36b','#e0b43a','#ed8a63','#e85d75','#c86cd8','#8a6ce0','#5b7be0','#2c9fc9','#d9534f','#8e44ad'];
-const color = v => COLORS[Math.round(Math.log2(v)) % COLORS.length];
+// inimigos: tons de vermelho, do claro (fraco) ao escuro (forte)
+const COLORS=['#ff8a80','#ff6b6b','#f04848','#d93636','#c22a2a','#a81f1f','#8c1717','#701010'];
+const color = v => COLORS[Math.min(Math.round(Math.log2(v)), COLORS.length-1)];
 
 // ================== ESTADO ==================
 const N = CFG.N;
@@ -249,8 +250,8 @@ function showRules(){
   showOverlay(`<h2>Um Passo (nível teste)</h2>
   <ul>
     <li>Arraste (ou use setas / WASD): <b>tudo no tabuleiro anda uma casa</b> para aquele lado, se tiver espaço.</li>
-    <li>Você é a peça clara com ★.</li>
-    <li>Encostou num <b>igual</b> (contorno branco): ele some e <b>você dobra</b>.</li>
+    <li>Você é a peça <b>dourada</b> com ★. Os inimigos são <b>vermelhos</b>: quanto mais escuro, mais forte.</li>
+    <li>Encostou num <b>igual</b> (contorno dourado): ele some e <b>você dobra</b>.</li>
     <li>Encostou num <b>menor</b> (apagado): ele some.</li>
     <li>Um <b>maior</b> (▲) bloqueia o caminho.</li>
     <li>A cada jogada entra uma peça nova pela borda oposta (veja "Próximo").</li>
