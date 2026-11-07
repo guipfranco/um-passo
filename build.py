@@ -162,6 +162,16 @@ details.sec[open] > summary::after{content:'−'}
 .card .regraPic em{font-style:normal;font-size:12px;color:#a08a74;line-height:1.2}
 body.semHud .hud{display:none}
 #quIc.ok{background:#6aa84f}
+#quIc.fig{background:#f6ecd9;box-shadow:inset 0 0 0 2px #e2cfae}
+#quIc svg{width:30px;height:30px;overflow:visible}
+.figM{display:flex;flex-direction:column;align-items:center;gap:4px;margin:4px 0 6px}
+.figM .alvo{display:flex;align-items:center;gap:4px}
+.figM .alvo b{font-size:30px;color:#7a5a44;line-height:1}
+.figM .alvo span{font-size:15px;color:#a08a74}
+.figM .fG{width:76px;height:76px;overflow:visible}
+.figM .receita{display:flex;align-items:center;gap:3px;background:#f6ecd9;border-radius:999px;padding:2px 12px}
+.figM .receita svg{width:34px;height:34px;overflow:visible}
+.figM .receita i{font-style:normal;font-weight:700;font-size:16px;color:#a08a74}
 .mTrilha{position:relative;display:flex;flex-direction:column;gap:2px;padding:6px 10px 14px}
 .mCaminho{position:absolute;left:0;top:0;pointer-events:none}
 .mCaminho polyline{fill:none;stroke:#7a5a4450;stroke-width:5;stroke-dasharray:1 11;stroke-linecap:round;stroke-linejoin:round}

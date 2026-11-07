@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Ptui! · rascunhos de pontuação do Clássico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0}
+body{background:#2a211b;font-family:'Fredoka',system-ui,sans-serif;color:#5a4636;min-height:100vh}
+.switch{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);z-index:50;display:flex;gap:4px;background:#000c;padding:4px;border-radius:999px}
+.switch button{border:0;border-radius:999px;padding:8px 13px;font:600 14px 'Fredoka';background:transparent;color:#ccc;white-space:nowrap}
+.switch button.on{background:#fff;color:#000}
+.view{display:none;flex-direction:column;align-items:center;padding:12px 0 70px;gap:10px}
+.view.on{display:flex}
+.tit{color:#f6ecd9;text-align:center;max-width:370px;padding:0 12px}
+.tit b{font-size:21px;display:block}
+.tit span{font-size:14px;opacity:.85;line-height:1.3;display:block}
+.caixa{position:relative}
+.phone{position:absolute;left:0;top:0;width:390px;height:780px;border-radius:28px;overflow:hidden;transform-origin:top left;box-shadow:0 10px 40px #0009}
+.phone > svg{position:absolute;inset:0}
+.hud{position:absolute;left:10px;right:10px;top:12px;display:flex;gap:8px}
+.pill{flex:1;background:#f3e6cc;border-radius:16px;padding:6px 8px;display:flex;align-items:center;gap:7px;box-shadow:0 3px 0 #0003;min-width:0}
+.pill .ic{flex:none;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;box-shadow:0 2px 0 #0002}
+.pill .ic svg{width:30px;height:30px;overflow:visible}
+.pill b{display:block;font-size:22px;line-height:1;font-weight:700}
+.pill small{display:block;font-size:11px;color:#a08a74;line-height:1.1;white-space:nowrap}
+.medidor{position:relative;height:6px;background:#e2cfae;border-radius:3px;margin-top:4px;width:64px}
+.medidor i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:#f2b33d}
+.medidor span{position:absolute;top:-6px;font-size:10px;color:#c48a1e;transform:translateX(-50%)}
+.top{position:absolute;left:10px;right:10px;top:70px;display:flex;align-items:center;gap:8px}
+.icon{width:38px;height:38px;border-radius:50%;background:#f3e6cc;box-shadow:0 3px 0 #0003;display:flex;align-items:center;justify-content:center;font-size:18px;color:#7a5a44;flex:none}
+.banner{flex:1;text-align:center;background:#f3e6cce6;border-radius:14px;padding:3px 6px;box-shadow:0 3px 0 #0002}
+.banner b{display:block;font-size:19px;color:#7a5a44;line-height:1.1}
+.banner span{font-size:13px;color:#a08a74}
+.btnEnd{position:absolute;left:50%;top:508px;transform:translateX(-50%);font:700 18px 'Fredoka';border-radius:999px;padding:11px 26px;color:#fff;background:#c0603f;box-shadow:0 5px 0 #92452b;white-space:nowrap}
+.tabela{position:absolute;left:14px;right:14px;top:580px;background:#f3e6cce6;border-radius:16px;padding:8px 10px;box-shadow:0 3px 0 #0003;display:flex;flex-wrap:wrap;gap:4px 10px;justify-content:center}
+.tabela div{display:flex;align-items:center;gap:2px;font-weight:700;font-size:14px;color:#7a5a44}
+.tabela svg{width:26px;height:26px;overflow:visible}
+.tabela p{flex-basis:100%;text-align:center;font-size:12px;color:#a08a74}
+</style>
+</head>
+<body>
+<div id="views"></div>
+<div class="switch" id="sw"></div>
+<script src="src/svg.js"></script>
+<script>
+const BX=26, BY=150, C=72, G=10, BW=4*C+5*G;
+const X = i => BX+G+i*(C+G), Y = j => BY+G+j*(C+G);
+const LAYOUT = [[1,0,2,0],[0,3,0,1],[2,1,4,0],[0,1,3,2]];
+const VAL = t => 2**t;   // como no 2048: Cascalho 2, Pedra 4, Rocha 8, Rocha densa 16...
+const NOMES = ['','Cascalho','Pedra','Rocha','Rocha densa','Geodo','Cristalino','Geodo real','Pedra lunar','Âmbar','Esmeralda viva','Rubi real'];
+
+function rng(s){ return ()=>(s=(s*16807)%2147483647)/2147483647; }
+const f1 = v => v.toFixed(1);
+function speck(r,x,y,w,h,n,cores,min,max,op=1){ let s=''; for(let i=0;i<n;i++){ const rx=min+r()*(max-min);
+  s+=`<ellipse cx="${f1(x+r()*w)}" cy="${f1(y+r()*h)}" rx="${f1(rx)}" ry="${f1(rx*(.55+r()*.45))}" fill="${cores[i%cores.length]}" opacity="${op}"/>`; } return s; }
+function smooth(pts){ const m=(a,b)=>[(a[0]+b[0])/2,(a[1]+b[1])/2]; let d=`M${m(pts[pts.length-1],pts[0]).map(f1).join(' ')}`;
+  for(let i=0;i<pts.length;i++){ const p=pts[i], mm=m(p,pts[(i+1)%pts.length]); d+=` Q${f1(p[0])} ${f1(p[1])} ${f1(mm[0])} ${f1(mm[1])}`; } return d+'Z'; }
+function blobRect(x,y,w,h,r,amp,passo=18){ const pts=[], per=2*(w+h), n=Math.max(8,Math.round(per/passo));
+  for(let i=0;i<n;i++){ const t=i/n*per; let px,py,nx,ny;
+    if(t<w){px=x+t;py=y;nx=0;ny=-1;} else if(t<w+h){px=x+w;py=y+t-w;nx=1;ny=0;} else if(t<2*w+h){px=x+w-(t-w-h);py=y+h;nx=0;ny=1;} else {px=x;py=y+h-(t-2*w-h);nx=-1;ny=0;}
+    const d=(r()-.5)*2*amp; pts.push([px+nx*d,py+ny*d]); } return smooth(pts); }
+function blob(cx,cy,rx,ry,r,amp,n=10){ const pts=[]; for(let i=0;i<n;i++){ const a=i/n*Math.PI*2, k=1+(r()-.5)*2*amp; pts.push([cx+Math.cos(a)*rx*k, cy+Math.sin(a)*ry*k]); } return smooth(pts); }
+
+// cenário da gruta (o mesmo dos rascunhos de cenário, sem enfeites)
+function gruta(estilo){
+  const r=rng(41); let s=`<defs><linearGradient id="raio${estilo}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6d8" stop-opacity=".22"/><stop offset="1" stop-color="#fff6d8" stop-opacity="0"/></linearGradient></defs>`;
+  s+=`<rect width="390" height="780" fill="#3a3136"/>`;
+  const chao=blobRect(14,128,362,600,r,8,24);
+  s+=`<clipPath id="chao${estilo}"><path d="${chao}"/></clipPath><filter id="borra${estilo}" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="14"/></filter>`;
+  s+=`<path d="${chao}" fill="#d3bc95"/>`+speck(r,20,135,350,580,220,['#c7ae86','#dec9a4','#bba077'],1,3.5);
+  s+=`<g clip-path="url(#chao${estilo})"><path d="${chao}" fill="none" stroke="#2c2428" stroke-width="70" filter="url(#borra${estilo})" opacity=".85"/></g>`;
+  s+=`<path d="M250 110 L330 110 L250 520 L120 520Z" fill="url(#raio${estilo})"/>`;
+  // bases irregulares
+  for(let j=0;j<4;j++) for(let i=0;i<4;i++){ const x=X(i), y=Y(j);
+    s+=`<path d="${blob(x+36+(r()-.5)*4,y+38+(r()-.5)*4,31+r()*4,27+r()*4,r,.17,8)}" fill="#b39672" opacity=".3"/><path d="M${x+12} ${y+52} q24 14 48 0" stroke="#efe0c2" stroke-width="3" fill="none" opacity=".35" stroke-linecap="round"/>`; }
+  // pedrinhas e números
+  LAYOUT.forEach((row,j)=>row.forEach((t,i)=>{ if(!t) return; const x=X(i), y=Y(j), v=VAL(t);
+    if(estilo==='C'){ s+=`<g transform="translate(${x} ${y}) scale(.72)">${pedraInner(t)}</g>`; return; }
+    s+=`<g transform="translate(${x+5} ${y-3}) scale(.62)">${pedraInner(t)}</g>`;
+    if(estilo==='A') s+=`<rect x="${x+36-15}" y="${y+55}" width="30" height="16" rx="8" fill="#5a4636" opacity=".85"/><text x="${x+36}" y="${y+67}" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="12" fill="#fff">${v}</text>`;
+    if(estilo==='B') s+=`<text x="${x+36}" y="${y+70}" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="15" fill="#f1e3c6" opacity=".9">${v}</text><text x="${x+36}" y="${y+69}" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="15" fill="#9c7f5e">${v}</text>`;
+  }));
+  // pontos subindo de uma junção
+  const px=X(2)+36, py=Y(2)+6;
+  s+=`<text x="${px+1}" y="${py+1}" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="22" fill="#5a4636" opacity=".35">+16</text><text x="${px}" y="${py}" text-anchor="middle" font-family="Fredoka" font-weight="700" font-size="22" fill="#fff6d0" stroke="#c48a1e" stroke-width="1">+16</text>`;
+  return s;
+}
+
+const ico = inner => `<svg viewBox="0 0 100 100">${inner}</svg>`;
+const hud = estilo => `<div class="hud">
+    <div class="pill"><span class="ic" style="background:#6aa84f">⚡</span><div><b>12</b><small>de 20 arrastos</small></div></div>
+    <div class="pill"><span class="ic" style="background:#f2b33d">★</span><div><b>136</b><div class="medidor"><i style="width:57%"></i><span style="left:42%">★</span><span style="left:70%">★</span><span style="left:96%">★</span></div></div></div>
+    <div class="pill"><span class="ic" style="background:#f6ecd9;box-shadow:inset 0 0 0 2px #e2cfae">${ico(pedraInner(3))}</span><div><b>1/3</b><small>Rochas</small></div></div>
+  </div>
+  <div class="top"><span class="icon">☰</span><div class="banner"><b>Fase 2: Três de uma vez</b><span>Forme 3 Rochas</span></div><span class="icon">♪</span></div>
+  <div class="btnEnd">Terminar</div>
+  ${estilo==='C'?`<div class="tabela">${[1,2,3,4,5,6].map(t=>`<div>${ico(pedraInner(t))}${VAL(t)}</div>`).join('')}<p>quanto vale cada pedrinha (fica em Pedrinhas, no menu da pausa)</p></div>`:''}`;
+
+const VIEWS = [
+  {id:'A', nome:'Etiqueta', desc:'Cada pedrinha tem uma etiqueta com o valor dela, como no 2048. Juntar duas soma o valor da nova aos pontos.'},
+  {id:'B', nome:'Gravado no chão', desc:'O valor fica gravado na areia, embaixo da pedrinha, no mesmo tom do chão. Mais discreto e parte do cenário.'},
+  {id:'C', nome:'Só no placar', desc:'Sem número nas pedrinhas: o tamanho e o jeito delas mostram o nível. Os pontos aparecem ao juntar (+16) e no placar.'},
+];
+document.getElementById('views').innerHTML = VIEWS.map(v=>`<section class="view" id="v${v.id}"><div class="tit"><b>${v.id} · ${v.nome}</b><span>${v.desc}</span></div>
+  <div class="caixa"><div class="phone"><svg viewBox="0 0 390 780" width="390" height="780">${gruta(v.id)}</svg>${hud(v.id)}</div></div></section>`).join('');
+document.getElementById('sw').innerHTML = VIEWS.map(v=>`<button data-v="${v.id}">${v.id} ${v.nome}</button>`).join('');
+function mostra(id){ document.querySelectorAll('.view').forEach(e=>e.classList.toggle('on',e.id==='v'+id)); document.querySelectorAll('#sw button').forEach(b=>b.classList.toggle('on',b.dataset.v===id)); location.hash=id; }
+document.querySelectorAll('#sw button').forEach(b=>b.onclick=()=>mostra(b.dataset.v));
+function escala(){ const s=Math.min(1,(innerWidth-16)/390); document.querySelectorAll('.caixa').forEach(c=>{ c.style.width=390*s+'px'; c.style.height=780*s+'px'; c.firstChild.style.transform=`scale(${s})`; }); }
+addEventListener('resize',escala); escala();
+mostra((location.hash.slice(1)||'A').toUpperCase());
+</script>
+</body>
+</html>

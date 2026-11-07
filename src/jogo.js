@@ -1142,6 +1142,26 @@ function progresso(o){
   if(o.extraia) return {at:S.extra||0, alvo:o.extraia, rot:'extraído', din:true};
   if(o.arrastos) return {at:S.moves||0, alvo:o.arrastos, rot:'arrastos'};
 }
+const figSvg = (inner,cls='') => `<svg class="${cls}" viewBox="0 0 100 100">${inner}</svg>`;
+const pedraCor = (t,c) => pedraInner(t, c!=null ? {cor:c} : {});
+function figuraMissao(o){
+  const rec = (a,b,c) => `<div class="receita">${figSvg(a)}<i>+</i>${figSvg(b)}<i>=</i>${figSvg(c)}</div>`;
+  if(o.forme || o.cor!=null){ const t=o.forme||o.t, c=o.cor;
+    return `<div class="figM"><div class="alvo">${figSvg(pedraCor(t,c),'fG')}<b>×${o.n}</b></div>${rec(pedraCor(t-1,c),pedraCor(t-1,c),pedraCor(t,c))}</div>`; }
+  if(o.quebre){ const t=Math.max(1,o.quebre);
+    return `<div class="figM"><div class="alvo">${figSvg(pedraInner(t),'fG')}<b>×${o.n}</b></div>${rec(pedraInner(t),pickInner(t),oreSvg(4,50,52,2.6))}</div>`; }
+  if(o.extraia) return `<div class="figM"><div class="alvo">${figSvg(oreSvg(5,50,52,2.6),'fG')}<b>$${o.extraia}</b></div>${rec(pedraInner(2),pickInner(2),oreSvg(3,50,52,2.6))}</div>`;
+  if(o.total) return `<div class="figM"><div class="alvo">${figSvg(oreSvg(5,50,52,2.6),'fG')}<b>$${o.total}</b></div></div>`;
+  if(o.arrastos) return `<div class="figM"><div class="alvo"><b>${o.arrastos}</b><span>arrastos</span></div></div>`;
+  return '';
+}
+// ícone pequeno da missão, no painel de cima
+function iconeMissao(o){
+  if(o.forme || o.cor!=null) return figSvg(pedraCor(o.forme||o.t, o.cor));
+  if(o.quebre) return figSvg(pickInner(Math.max(1,o.quebre)));
+  if(o.extraia || o.total) return figSvg(oreSvg(5,50,52,2.6));
+  return '';
+}
 const cumpriu = o => { const p=progresso(o); return p.at!=null && p.at>=p.alvo; };
 const estrelasPor = (m,total) => 1 + (total>=m.estrelas[0]) + (total>=m.estrelas[1]);
 // conta o que a missão pede, a cada arrasto
@@ -1162,7 +1182,9 @@ function hudMissao(){
   $('#hMoneyLbl').textContent = fim ? 'rendeu' : pic ? 'extraído' : 'para ★★★';
   $('#hQuota').textContent = p.din ? (p.at==null ? '$'+p.alvo : `$${Math.min(p.at,p.alvo)}/${p.alvo}`) : `${Math.min(p.at,p.alvo)}/${p.alvo}`;
   $('#hQuotaDay').textContent = p.rot;
-  $('#quIc').textContent = ok ? '✓' : '★'; $('#quIc').classList.toggle('ok', ok);
+  const ic = ok ? '' : iconeMissao(m.obj);
+  if(ic) $('#quIc').innerHTML = ic; else $('#quIc').textContent = ok ? '✓' : '★';
+  $('#quIc').classList.toggle('ok', ok); $('#quIc').classList.toggle('fig', !!ic);
 }
 function regrasTxt(m){
   const fase=faseDe(m), fm=m.forma?acharForma(m.forma):null, n=PATHS[fase].n;
@@ -1198,7 +1220,7 @@ function missaoInfo(n){
   if(fase!=='comum' || n===1) explica.push(PATHS[fase].como||PATHS[fase].desc);
   if(charDe(m)==='passinho') explica.push(COMO_CHAR.passinho);
   showOverlay(`${fm?formaSvg(fm,110):disc(fase,null,'bigDisc')}<h2>Fase ${n}</h2><p class="andarNome">${m.nome}</p>
-    <div class="objetivo"><small>missão</small>${objetivoTxt(m.obj)}</div>
+    <div class="objetivo"><small>missão</small>${figuraMissao(m.obj)}${objetivoTxt(m.obj)}</div>
     <p class="ajuda">${regrasTxt(m)}</p>
     ${explica.map(t=>`<p class="ajuda">${t}</p>`).join('')}
     ${fase==='picareta'?regraPicareta():''}
@@ -1467,7 +1489,7 @@ function render(){
   $('#hEnergy').textContent=S.phase==='map' ? (S.saved+S.bonus?'+'+(S.saved+S.bonus):'·') : S.semEnergia ? '∞' : S.energy;
   $('#hEnergyMax').textContent=S.phase==='map' ? (S.saved+S.bonus?'guardada':'energia') : S.semEnergia ? 'até travar' : S.energy>0?`de ${S.energyMax}`:'exausta!';
   $('#enIc').classList.toggle('zero',S.phase==='mine'&&S.energy<=0);
-  $('#hMoneyLbl').textContent='dinheiro'; $('#quIc').textContent='!'; $('#quIc').classList.remove('ok');
+  $('#hMoneyLbl').textContent='dinheiro'; $('#quIc').textContent='!'; $('#quIc').classList.remove('ok','fig');
   if(S.missao) hudMissao();
   renderItems(); ferrBar();
 }
