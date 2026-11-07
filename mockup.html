@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="theme-color" content="#1a1410">
+<title>Mina (mockup de interface)</title>
+<style>
+:root{--cell:min(19vw,82px);--gap:min(1.8vw,8px)}
+*{box-sizing:border-box}
+body{margin:0;background:#1a1410;color:#f1e6d6;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.tabs{position:sticky;top:0;z-index:5;display:flex;gap:4px;padding:8px;background:#120d0a;border-bottom:1px solid #3a2c22;overflow-x:auto}
+.tabs button{flex:1;white-space:nowrap;font:inherit;font-size:13px;color:#cdb9a0;background:#2a1f18;border:0;border-radius:8px;padding:8px 10px}
+.tabs button.on{background:#e8a94a;color:#2a1a0c;font-weight:700}
+.screen{display:none;flex-direction:column;align-items:center;gap:12px;padding:14px 10px 30px;max-width:420px;margin:0 auto}
+.screen.on{display:flex}
+.note{width:100%;font-size:12px;color:#a8927a;background:#231a14;border:1px dashed #4a3829;border-radius:10px;padding:8px 10px;line-height:1.4}
+.note b{color:#e8a94a}
+
+/* topo */
+.top{width:100%;display:flex;gap:6px}
+.chip{flex:1;background:#2a1f18;border-radius:10px;padding:6px 8px;text-align:center}
+.chip small{display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#a8927a}
+.chip b{font-size:17px}
+.energy{width:100%;background:#2a1f18;border-radius:12px;padding:8px 10px}
+.energy .lbl{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
+.ebar{height:14px;background:#120d0a;border-radius:7px;overflow:hidden}
+.ebar i{display:block;height:100%;width:67%;background:linear-gradient(90deg,#5fbf5f,#b6d94a);border-radius:7px}
+
+/* tabuleiro */
+.board{position:relative;display:grid;grid-template-columns:repeat(4,var(--cell));gap:var(--gap);padding:var(--gap);background:#2b211a;border-radius:16px;box-shadow:inset 0 0 0 2px #3d2f24,0 10px 30px #0008}
+.cell{width:var(--cell);height:var(--cell);border-radius:12px;background:#221a14}
+.rock{position:relative;width:var(--cell);height:var(--cell);border-radius:14px 18px 12px 16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  background:radial-gradient(circle at 30% 25%,#ffffff22 0 18%,transparent 19%),radial-gradient(circle at 70% 70%,#00000033 0 22%,transparent 23%),var(--rc);
+  box-shadow:inset 0 -5px 0 #0004,inset 0 3px 0 #ffffff1a,0 4px 0 #0006}
+.rock .nm{font-size:calc(var(--cell)*.15);font-weight:700;text-shadow:0 1px 0 #0008}
+.pips{display:flex;gap:3px}
+.pips i{width:calc(var(--cell)*.08);height:calc(var(--cell)*.08);border-radius:50%;background:#f1e6d6;box-shadow:0 1px 0 #0006}
+.r1{--rc:#6b6259}.r2{--rc:#82786a}.r3{--rc:#8f7a63}.r4{--rc:#5d5b6e}
+.r5{--rc:radial-gradient(circle at 50% 55%,#b48ce0 0 20%,#5a4a6e 21%)}
+.r6{--rc:radial-gradient(circle at 50% 55%,#8ff0ff 0 24%,#3f5f78 25%);box-shadow:inset 0 -5px 0 #0004,0 4px 0 #0006,0 0 18px #6fe3ff88}
+.vein::after{content:'✦';position:absolute;top:3px;right:7px;color:#ffd75e;font-size:calc(var(--cell)*.2);text-shadow:0 0 6px #ffd75e}
+.lupa{outline:3px solid #6fe3ff;outline-offset:-3px}
+.lupa .peek{position:absolute;bottom:-8px;font-size:10px;background:#6fe3ff;color:#0d2a33;border-radius:6px;padding:1px 5px;font-weight:700}
+
+.bottom{width:100%;display:flex;gap:8px;align-items:stretch}
+.next{background:#2a1f18;border-radius:12px;padding:6px 10px;display:flex;align-items:center;gap:8px;font-size:13px;color:#a8927a}
+.next .rock{--cell:38px;border-radius:9px}
+.next .rock .nm{display:none}
+.btn{flex:1;font:inherit;font-weight:700;border:0;border-radius:12px;padding:12px;background:#3a2c22;color:#f1e6d6}
+.btn.gold{background:#e8a94a;color:#2a1a0c}
+.tools{width:100%;display:flex;gap:6px}
+.tool{flex:1;background:#2a1f18;border-radius:10px;padding:8px 4px;text-align:center;font-size:12px;color:#cdb9a0}
+.tool b{display:block;font-size:18px}
+
+/* revelação */
+.title{font-size:22px;font-weight:800;text-align:center}
+.sub{font-size:14px;color:#a8927a;text-align:center;margin-top:-6px}
+.ore{width:var(--cell);height:var(--cell);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:calc(var(--cell)*.14);font-weight:800;color:#1a1410;box-shadow:0 4px 0 #0006}
+.o0{background:#3a332d;color:#8a7f72;border-radius:14px}
+.o1{background:radial-gradient(circle at 35% 30%,#ffb27a,#c4612a)}
+.o2{background:radial-gradient(circle at 35% 30%,#e6ebf0,#8a939c)}
+.o3{background:radial-gradient(circle at 35% 30%,#ffffff,#b9c2cc);box-shadow:0 4px 0 #0006,0 0 12px #ffffff88}
+.o4{background:radial-gradient(circle at 35% 30%,#fff0a0,#e0a91e);box-shadow:0 4px 0 #0006,0 0 22px #ffcf3acc;transform:scale(1.08)}
+.o5{background:radial-gradient(circle at 35% 30%,#e6fbff,#3fbfe0);box-shadow:0 0 26px #6fe3ff}
+.ore small{font-size:calc(var(--cell)*.13)}
+.cracking{animation:shake .25s infinite}
+@keyframes shake{25%{transform:rotate(-4deg)}75%{transform:rotate(4deg)}}
+.big{width:100%;background:radial-gradient(circle at 50% 0%,#ffcf3a33,transparent 70%),#2a1f18;border-radius:14px;padding:12px;text-align:center}
+.big .ore{margin:0 auto 6px;--cell:90px}
+.big b{font-size:18px;color:#ffcf3a}
+.total{width:100%;display:flex;justify-content:space-between;align-items:center;background:#2a1f18;border-radius:12px;padding:10px 14px;font-size:15px}
+.total b{font-size:22px;color:#ffcf3a}
+
+/* venda */
+.list{width:100%;background:#2a1f18;border-radius:14px;padding:6px 12px}
+.li{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #3a2c22;font-size:15px}
+.li:last-child{border:0}
+.li .ore{--cell:34px;flex:none}
+.li .q{color:#a8927a;margin-left:auto}
+.li .v{width:60px;text-align:right;font-weight:700}
+
+/* loja */
+.item{width:100%;display:flex;gap:12px;align-items:center;background:#2a1f18;border-radius:14px;padding:10px 12px}
+.item .ic{width:46px;height:46px;border-radius:12px;background:#3a2c22;display:flex;align-items:center;justify-content:center;font-size:24px;flex:none}
+.item .tx{flex:1;font-size:13px;color:#cdb9a0}
+.item .tx b{display:block;font-size:15px;color:#f1e6d6}
+.price{font-weight:800;color:#ffcf3a;background:#3a2c22;border-radius:10px;padding:8px 10px;white-space:nowrap}
+.item.off{opacity:.45}
+
+/* semana */
+.week{width:100%;display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.day{background:#2a1f18;border-radius:10px;padding:8px 4px;text-align:center;font-size:12px;color:#a8927a}
+.day b{display:block;font-size:15px;color:#f1e6d6}
+.day.done{background:#2f3a24}
+.day.now{outline:2px solid #e8a94a}
+.quota{width:100%;background:#2a1f18;border-radius:14px;padding:12px}
+.qbar{height:18px;background:#120d0a;border-radius:9px;overflow:hidden;margin:8px 0 4px}
+.qbar i{display:block;height:100%;width:38%;background:linear-gradient(90deg,#e8a94a,#ffcf3a)}
+.rules{width:100%;display:flex;gap:8px}
+.rules div{flex:1;background:#2a1f18;border-radius:12px;padding:10px;font-size:13px;color:#cdb9a0;line-height:1.4}
+.rules b{display:block;font-size:14px;margin-bottom:4px}
+</style>
+</head>
+<body>
+<div class="tabs">
+  <button data-s="mina" class="on">1. Mina</button>
+  <button data-s="revela">2. Revelação</button>
+  <button data-s="venda">3. Venda</button>
+  <button data-s="loja">4. Loja</button>
+  <button data-s="semana">5. Semana</button>
+</div>
+
+<!-- 1. MINA -->
+<section class="screen on" id="mina">
+  <div class="top">
+    <div class="chip"><small>Dia</small><b>3 de 5</b></div>
+    <div class="chip"><small>Dinheiro</small><b>$ 46</b></div>
+    <div class="chip"><small>Cota</small><b>$ 120</b></div>
+  </div>
+  <div class="energy">
+    <div class="lbl"><span>⚡ Energia</span><span><b>27</b> / 40 arrastos</span></div>
+    <div class="ebar"><i></i></div>
+  </div>
+  <div class="board">
+    <div class="rock r5"><span class="nm">Geodo</span><span class="pips"><i></i><i></i><i></i><i></i><i></i></span></div>
+    <div class="rock r4"><span class="nm">R. densa</span><span class="pips"><i></i><i></i><i></i><i></i></span></div>
+    <div class="rock r3 vein"><span class="nm">Rocha</span><span class="pips"><i></i><i></i><i></i></span></div>
+    <div class="rock r2"><span class="nm">Pedra</span><span class="pips"><i></i><i></i></span></div>
+    <div class="rock r3"><span class="nm">Rocha</span><span class="pips"><i></i><i></i><i></i></span></div>
+    <div class="rock r2 lupa"><span class="nm">Pedra</span><span class="pips"><i></i><i></i></span><span class="peek">ferro</span></div>
+    <div class="rock r1"><span class="nm">Cascalho</span><span class="pips"><i></i></span></div>
+    <div class="cell"></div>
+    <div class="rock r1"><span class="nm">Cascalho</span><span class="pips"><i></i></span></div>
+    <div class="cell"></div>
+    <div class="cell"></div>
+    <div class="rock r2"><span class="nm">Pedra</span><span class="pips"><i></i><i></i></span></div>
+    <div class="cell"></div><div class="cell"></div><div class="rock r1"><span class="nm">Cascalho</span><span class="pips"><i></i></span></div><div class="cell"></div>
+  </div>
+  <div class="tools">
+    <div class="tool"><b>🔍</b>Lupa (1)</div>
+    <div class="tool"><b>🧨</b>Dinamite (0)</div>
+    <div class="tool"><b>🍞</b>Pão (+5⚡)</div>
+  </div>
+  <div class="bottom">
+    <div class="next">Próxima <div class="rock r1"></div></div>
+    <button class="btn">Encerrar o dia</button>
+  </div>
+  <div class="note"><b>Tela principal.</b> Topo: dia, dinheiro e cota da semana. Barra de energia grande e verde, que esvazia a cada arrasto (estilo Stardew). As rochas não têm número: o nível aparece pelas <b>bolinhas</b>, pelo nome e pela cor, e só iguais se fundem. O <b>✦</b> marca uma rocha com veio (chance melhor). O contorno azul é uma rocha espiada com a Lupa. Embaixo: ferramentas compradas na loja, a próxima rocha e o botão de encerrar o dia mais cedo.</div>
+</section>
+
+<!-- 2. REVELAÇÃO -->
+<section class="screen" id="revela">
+  <div class="title">Fim do dia 3</div>
+  <div class="sub">Toque para quebrar · da menor para a maior</div>
+  <div class="board">
+    <div class="ore o0">nada</div>
+    <div class="ore o1">cobre<small>$1</small></div>
+    <div class="ore o0">nada</div>
+    <div class="ore o1">cobre<small>$1</small></div>
+    <div class="ore o2">ferro<small>$3</small></div>
+    <div class="ore o1">cobre<small>$1</small></div>
+    <div class="ore o2">ferro<small>$3</small></div>
+    <div class="cell"></div>
+    <div class="ore o3">prata<small>$8</small></div>
+    <div class="cell"></div><div class="cell"></div>
+    <div class="ore o4">OURO<small>$20</small></div>
+    <div class="rock r5 cracking"><span class="nm">Geodo</span><span class="pips"><i></i><i></i><i></i><i></i><i></i></span></div>
+    <div class="cell"></div><div class="cell"></div><div class="cell"></div>
+  </div>
+  <div class="big">
+    <div class="ore o4">OURO</div>
+    <b>Ouro! +$20</b>
+    <div style="font-size:12px;color:#a8927a">saiu da Rocha densa · 5% de chance</div>
+  </div>
+  <div class="total"><span>Total do dia</span><b>$ 37</b></div>
+  <div class="bottom"><button class="btn">Pular</button><button class="btn gold">Quebrar o Geodo</button></div>
+  <div class="note"><b>A loot box.</b> O tabuleiro do fim do dia fica na tela, e cada rocha treme e quebra, da menor para a maior, para guardar o suspense do Geodo para o fim. Cada minério tem cor de raridade: cinza (nada), laranja (cobre), cinza-claro (ferro), branco brilhante (prata), dourado (ouro), azul (diamante). Quando sai algo raro, um destaque grande mostra o achado e a chance que ele tinha. O total vai somando embaixo.</div>
+</section>
+
+<!-- 3. VENDA -->
+<section class="screen" id="venda">
+  <div class="title">Venda do dia 3</div>
+  <div class="list">
+    <div class="li"><div class="ore o4">ouro</div>Ouro<span class="q">1 × $20</span><span class="v">$ 20</span></div>
+    <div class="li"><div class="ore o3">prata</div>Prata<span class="q">1 × $8</span><span class="v">$ 8</span></div>
+    <div class="li"><div class="ore o2">ferro</div>Ferro<span class="q">2 × $3</span><span class="v">$ 6</span></div>
+    <div class="li"><div class="ore o1">cobre</div>Cobre<span class="q">3 × $1</span><span class="v">$ 3</span></div>
+    <div class="li"><div class="ore o0">nada</div>Nada<span class="q">2</span><span class="v">$ 0</span></div>
+  </div>
+  <div class="total"><span>$ 46 + $ 37</span><b>$ 83</b></div>
+  <div class="bottom"><button class="btn gold">Ir para a loja</button></div>
+  <div class="note"><b>Resumo rápido.</b> Agrupa o que saiu, do mais raro para o mais comum, e mostra o dinheiro antes e depois. Uma tela curta, só para fechar a conta do dia.</div>
+</section>
+
+<!-- 4. LOJA -->
+<section class="screen" id="loja">
+  <div class="top">
+    <div class="chip"><small>Dinheiro</small><b>$ 83</b></div>
+    <div class="chip"><small>Falta p/ cota</small><b>$ 37</b></div>
+  </div>
+  <div class="item"><div class="ic">🔍</div><div class="tx"><b>Lupa</b>Revela o minério de 1 rocha por dia.</div><span class="price">$ 15</span></div>
+  <div class="item"><div class="ic">⚒️</div><div class="tx"><b>Martelo de geólogo</b>Melhora a chance de todas as rochas.</div><span class="price">$ 40</span></div>
+  <div class="item"><div class="ic">⛏️</div><div class="tx"><b>Picareta melhor</b>1 em cada 4 rochas já nasce como Pedra.</div><span class="price">$ 35</span></div>
+  <div class="item"><div class="ic">⚡</div><div class="tx"><b>Fôlego</b>+5 de energia por dia, para sempre.</div><span class="price">$ 25</span></div>
+  <div class="item"><div class="ic">🍞</div><div class="tx"><b>Pão</b>Consumível: +5 de energia num dia.</div><span class="price">$ 6</span></div>
+  <div class="item off"><div class="ic">🎒</div><div class="tx"><b>Mochila 5x5</b>Tabuleiro maior. Libera na semana 2.</div><span class="price">$ 150</span></div>
+  <div class="bottom"><button class="btn gold">Dormir (próximo dia)</button></div>
+  <div class="note"><b>Loja entre os dias.</b> O "falta para a cota" fica sempre visível, criando o dilema: gastar agora para minerar melhor, ou guardar para pagar a cota. Itens permanentes e consumíveis misturados; itens grandes aparecem bloqueados para dar objetivo futuro.</div>
+</section>
+
+<!-- 5. SEMANA -->
+<section class="screen" id="semana">
+  <div class="title">Semana 1</div>
+  <div class="week">
+    <div class="day done"><b>Seg</b>$ 18</div>
+    <div class="day done"><b>Ter</b>$ 28</div>
+    <div class="day now"><b>Qua</b>hoje</div>
+    <div class="day"><b>Qui</b>&nbsp;</div>
+    <div class="day"><b>Sex</b>cota</div>
+  </div>
+  <div class="quota">
+    <div style="display:flex;justify-content:space-between"><b>Cota da semana</b><span>$ 46 / $ 120</span></div>
+    <div class="qbar"><i></i></div>
+    <div style="font-size:12px;color:#a8927a">Cobrada no fim de sexta. O dinheiro guardado conta.</div>
+  </div>
+  <div class="rules">
+    <div><b style="color:#9fd86b">Pagou</b>Ganha um Geodo de presente e libera o próximo andar da mina.</div>
+    <div><b style="color:#ff8a7a">Não pagou</b>Perde o dinheiro guardado e repete a semana. Suas melhorias continuam.</div>
+  </div>
+  <div class="note"><b>O meio-termo.</b> A cota dá motivo para arriscar nas fusões, mas falhar não apaga o progresso: só custa o dinheiro e repete a semana. Essa tela aparece no começo de cada dia (ou num toque no "Cota" do topo).</div>
+</section>
+
+<script>
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===b.dataset.s));
+  scrollTo(0,0);
+});
+</script>
+</body>
+</html>
