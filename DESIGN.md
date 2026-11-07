@@ -7,7 +7,7 @@ Puzzle de mineração com cara de Balatro. Você funde rochas no estilo 2048 dur
 ### O dia
 - Tabuleiro **4x4**, regra do 2048: tudo desliza até bater, duas rochas iguais viram a rocha do nível seguinte.
 - Níveis: Cascalho, Pedra, Rocha, Rocha densa, Geodo, Cristalino, Geodo real.
-- **40 de energia**, cada arrasto gasta 1. O dia acaba quando a energia zera, quando o tabuleiro trava, ou no botão "Encerrar dia".
+- **40 de energia**, cada arrasto gasta 1. Quando a energia zera, o dia continua, mas **toda peça nova é um torrão de terra**: não se funde com nada e custa $2 no fim do dia. O dia acaba no botão "Encerrar o dia" ou quando o tabuleiro trava.
 - Nasce Cascalho (90%) ou Pedra (10%). A próxima rocha fica visível.
 
 ### Fim do dia: a revelação
@@ -48,7 +48,9 @@ Regra de equilíbrio: em média uma rocha vale mais que duas do nível de baixo,
 O dilema da semana 1: a cota de $60 deixa folga para uma melhoria, não para todas. O bot que compra tudo sem pensar não paga a cota.
 
 ## Estilo visual
-Balatro: fundo girando, efeito de tela antiga (CRT), fonte pixelada grande, **cor como rótulo** (vermelho = cota, dourado = dinheiro, azul = energia), números enormes e muito "juice" na revelação. Os rascunhos dos três estilos considerados estão em `rascunhos.html`.
+**Pedrinhas vivas** (estilo Threes): cada nível é uma pedrinha com cor, tamanho e humor próprios; pedrinhas iguais lado a lado se olham. No fim do dia cada uma incha as bochechas e cospe o minério (ou um torrão, se não tinha nada). Rascunhos em `bichos.html`.
+
+Versão anterior, Balatro: fundo girando, efeito de tela antiga (CRT), fonte pixelada grande, **cor como rótulo** (vermelho = cota, dourado = dinheiro, azul = energia), números enormes e muito "juice" na revelação. Os rascunhos dos três estilos considerados estão em `rascunhos.html`.
 
 ## Ideias para depois
 - **Lupa**: espia o minério de uma rocha durante o dia.

@@ -3,86 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#0f2a2a">
+<meta name="theme-color" content="#f6ecd9">
 <title>Mina (protótipo)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Jersey+10&display=swap" rel="stylesheet">
-<style>
-:root{--cell:min(20vw,80px);--gap:min(2.4vw,10px);--ink:#0c1416}
-*{box-sizing:border-box;margin:0}
-html,body{min-height:100%;background:#0f2a2a;color:#fff;font-family:'Jersey 10',monospace;touch-action:none;user-select:none;-webkit-user-select:none;overscroll-behavior:none;overflow:hidden}
-.swirl{position:fixed;inset:-50%;background:conic-gradient(from 0deg at 40% 45%,#123a36,#0d2424,#1b4a3e,#0b1f22,#123a36);animation:spin 40s linear infinite;z-index:0}
-@keyframes spin{to{transform:rotate(360deg)}}
-.crt{position:fixed;inset:0;pointer-events:none;z-index:40;background:repeating-linear-gradient(0deg,#0000 0 2px,#00000022 2px 4px),radial-gradient(ellipse at center,#0000 55%,#00000080 100%)}
-#app{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:12px;padding:12px 8px;min-height:100vh}
-.wide{width:min(94vw,380px)}
-.hud{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-.box{background:#1c2a2e;border-radius:8px;padding:4px;box-shadow:0 0 0 3px var(--ink),0 5px 0 var(--ink);text-align:center}
-.box small{display:block;font-size:17px;letter-spacing:1px;color:#c9d6d6;line-height:1}
-.box b{display:block;border-radius:6px;font-size:32px;line-height:1.05;font-weight:400;box-shadow:inset 0 -4px 0 #0004;transition:background .2s}
-.box em{display:block;font-style:normal;font-size:15px;color:#9fbcbc;line-height:1.1}
-.red b{background:#fe5f55}.gold b{background:#e0a92b}.blue b{background:#009dff}
-.blue.low b{background:#fe5f55;animation:blink .8s infinite}
-@keyframes blink{50%{filter:brightness(1.3)}}
-.banner{font-size:28px;letter-spacing:2px;text-align:center;line-height:.95;text-shadow:3px 3px 0 var(--ink)}
-.banner span{display:block;font-size:19px;color:#9fe0c8;letter-spacing:1px;min-height:19px}
-.stage{position:relative}
-#board{position:relative;width:calc(4*var(--cell) + 5*var(--gap));height:calc(4*var(--cell) + 5*var(--gap));background:#0c1416aa;border-radius:12px;box-shadow:0 0 0 3px var(--ink)}
-.slot{position:absolute;left:0;top:0;width:var(--cell);height:var(--cell);border-radius:8px;background:#ffffff0a;box-shadow:inset 0 0 0 2px #ffffff12}
-.tile{position:absolute;left:0;top:0;width:var(--cell);height:var(--cell);transition:transform .11s ease-out}
-.face{width:100%;height:100%;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;font-size:calc(var(--cell)*.2);box-shadow:0 0 0 3px var(--ink),0 6px 0 var(--ink);background:var(--rc);color:#fff;text-shadow:2px 2px 0 #0008;rotate:var(--rot,0deg)}
-.face .pp{display:flex;gap:3px;margin-top:5px;flex-wrap:wrap;justify-content:center;max-width:80%}
-.face .pp i{width:calc(var(--cell)*.09);height:calc(var(--cell)*.09);background:#fff;border-radius:2px;box-shadow:0 2px 0 #0006}
-.face.ore{border-radius:50%;color:#1a1a1a;text-shadow:none;font-size:calc(var(--cell)*.27)}
-.face.ore small{font-size:calc(var(--cell)*.2)}
-.o0{background:#3c4648 !important;color:#8b9a9c !important;border-radius:8px !important}
-.o1{background:radial-gradient(circle at 35% 30%,#ffb27a,#d4652a) !important}
-.o2{background:radial-gradient(circle at 35% 30%,#f2f5f8,#98a2ac) !important}
-.o3{background:radial-gradient(circle at 35% 30%,#fff,#c3ccd6) !important;box-shadow:0 0 0 3px var(--ink),0 6px 0 var(--ink),0 0 18px #fff8 !important}
-.o4{background:radial-gradient(circle at 35% 30%,#fff3a8,#f0b21c) !important;box-shadow:0 0 0 3px var(--ink),0 6px 0 var(--ink),0 0 26px #ffcf3a !important}
-.o5{background:radial-gradient(circle at 35% 30%,#effdff,#33c3ec) !important;box-shadow:0 0 0 3px var(--ink),0 6px 0 var(--ink),0 0 30px #6fe3ff !important}
-.spawn{animation:spawn .16s ease-out}
-@keyframes spawn{from{scale:0}to{scale:1}}
-.pop{animation:pop .2s ease-out}
-@keyframes pop{0%{scale:1}50%{scale:1.2}100%{scale:1}}
-.wob{animation:wob .16s infinite}
-@keyframes wob{0%{transform:rotate(-6deg) scale(1.06)}50%{transform:rotate(6deg) scale(1.1)}100%{transform:rotate(-6deg) scale(1.06)}}
-.crack{animation:crack .3s ease-out}
-@keyframes crack{0%{scale:1.35}100%{scale:1}}
-.shake1{animation:sh1 .2s}.shake2{animation:sh2 .3s}.shake3{animation:sh3 .5s}
-@keyframes sh1{25%{transform:translate(-3px,1px)}75%{transform:translate(3px,-1px)}}
-@keyframes sh2{20%{transform:translate(-6px,3px)}40%{transform:translate(6px,-3px)}60%{transform:translate(-4px,2px)}80%{transform:translate(3px,-1px)}}
-@keyframes sh3{10%{transform:translate(-9px,4px) rotate(-1.5deg)}30%{transform:translate(9px,-4px) rotate(1.5deg)}50%{transform:translate(-7px,3px) rotate(-1deg)}70%{transform:translate(5px,-2px)}90%{transform:translate(-2px,1px)}}
-.popup{position:absolute;left:50%;top:44%;z-index:5;pointer-events:none;text-align:center;white-space:nowrap;font-size:64px;line-height:.85;color:var(--pc,#ffcf3a);text-shadow:4px 4px 0 var(--ink),-2px -2px 0 var(--ink),2px -2px 0 var(--ink),-2px 2px 0 var(--ink);animation:popup 1s forwards}
-.popup small{display:block;font-size:34px;color:#fff}
-@keyframes popup{0%{opacity:0;transform:translate(-50%,-50%) rotate(-7deg) scale(.3)}15%{opacity:1;transform:translate(-50%,-50%) rotate(-7deg) scale(1.15)}30%,75%{opacity:1;transform:translate(-50%,-50%) rotate(-7deg) scale(1)}100%{opacity:0;transform:translate(-50%,-65%) rotate(-7deg)}}
-.spark{position:absolute;width:8px;height:8px;box-shadow:0 0 0 2px var(--ink);z-index:4;pointer-events:none}
-.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.next{display:flex;align-items:center;gap:8px;font-size:20px;color:#c9d6d6}
-.next .mini{width:44px;height:44px;border-radius:6px;background:var(--rc);box-shadow:0 0 0 3px var(--ink),0 4px 0 var(--ink);display:flex;align-items:center;justify-content:center;gap:2px}
-.next .mini i{width:5px;height:5px;background:#fff;border-radius:1px}
-.total{display:flex;justify-content:space-between;align-items:center;background:#1c2a2e;border-radius:8px;padding:2px 14px;box-shadow:0 0 0 3px var(--ink),0 5px 0 var(--ink);font-size:24px}
-.total b{font-size:44px;color:#ffcf3a;font-weight:400}
-.btn{font:400 28px 'Jersey 10';letter-spacing:1px;border:0;border-radius:8px;padding:4px 20px;color:#fff;background:#fe5f55;box-shadow:0 0 0 3px var(--ink),0 6px 0 var(--ink);cursor:pointer}
-.btn:active{transform:translateY(3px);box-shadow:0 0 0 3px var(--ink),0 3px 0 var(--ink)}
-.btn.g{background:#e0a92b}.btn.b{background:#009dff}.btn.dim{background:#3c4648}
-.btn:disabled{opacity:.4}
-.icon{flex:none;font:400 22px 'Jersey 10';background:#1c2a2e;color:#c9d6d6;border:0;border-radius:6px;width:34px;height:34px;box-shadow:0 0 0 3px var(--ink)}
-#overlay{position:fixed;inset:0;z-index:35;background:#06100fd8;display:flex;align-items:center;justify-content:center;padding:14px}
-#overlay.hidden{display:none}
-.panel{width:min(94vw,380px);max-height:92vh;overflow:auto;background:#1c2a2e;border-radius:10px;padding:14px;box-shadow:0 0 0 3px var(--ink),0 8px 0 var(--ink);display:flex;flex-direction:column;gap:10px}
-.panel h2{font-weight:400;font-size:40px;text-align:center;line-height:.9;text-shadow:3px 3px 0 var(--ink)}
-.panel p{font-size:21px;color:#c9d6d6;text-align:center;line-height:1.05}
-.panel ul{font-size:20px;color:#c9d6d6;line-height:1.1;padding-left:18px;display:flex;flex-direction:column;gap:6px}
-.panel ul b{color:#fff;font-weight:400}
-.item{display:flex;align-items:center;gap:10px;background:#0c1416;border-radius:8px;padding:8px 10px}
-.item .tx{flex:1;font-size:18px;color:#9fbcbc;line-height:1}
-.item .tx b{display:block;font-weight:400;font-size:24px;color:#fff}
-.item .btn{font-size:24px;padding:2px 12px;white-space:nowrap}
-.sum{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
-.sum span{font-size:19px;background:#0c1416;border-radius:6px;padding:2px 8px;color:#c9d6d6}
-</style>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
 <script>
 // Atualiza sozinho: se o navegador abriu uma cópia antiga (o GitHub Pages guarda por 10 min),
 // busca a versão nova, atualiza o cache e recarrega uma vez.
@@ -93,71 +18,185 @@ html,body{min-height:100%;background:#0f2a2a;color:#fff;font-family:'Jersey 10',
   else sessionStorage.removeItem(k);
 }catch(e){}})();
 </script>
+<style>
+:root{--cell:min(20vw,84px);--gap:min(2.4vw,10px);--ink:#2e2219}
+*{box-sizing:border-box;margin:0}
+html,body{min-height:100%;background:#f6ecd9;color:#5a4636;font-family:'Fredoka',system-ui,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none;overscroll-behavior:none;overflow:hidden}
+#app{display:flex;flex-direction:column;align-items:center;gap:12px;padding:12px 8px;min-height:100vh}
+.wide{width:min(94vw,380px)}
+.hud{display:flex;gap:8px}
+.pill{flex:1;background:#efe1c6;border-radius:16px;padding:6px 8px;display:flex;align-items:center;gap:7px;box-shadow:0 3px 0 #dcc6a0;min-width:0}
+.pill .ic{flex:none;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;box-shadow:0 2px 0 #0002}
+.pill b{display:block;font-size:22px;line-height:1;font-weight:700}
+.pill small{display:block;font-size:11px;color:#a08a74;line-height:1.1;white-space:nowrap}
+.ic.en{background:#7cc36b}.ic.en.zero{background:#c0603f;animation:blink .8s infinite}
+.ic.co{background:#f2b33d}.ic.qu{background:#c0603f}
+@keyframes blink{50%{filter:brightness(1.25)}}
+.top{display:flex;align-items:center;gap:8px}
+.banner{flex:1;text-align:center;font-weight:700;font-size:20px;color:#7a5a44;line-height:1.1}
+.banner span{display:block;font-size:14px;color:#a08a74;font-weight:500;min-height:17px}
+.icon{flex:none;width:34px;height:34px;border-radius:50%;border:0;background:#efe1c6;color:#7a5a44;font:700 17px 'Fredoka';box-shadow:0 3px 0 #dcc6a0}
+.stage{position:relative}
+#board{position:relative;width:calc(4*var(--cell) + 5*var(--gap));height:calc(4*var(--cell) + 5*var(--gap));background:#e6d3b0;border-radius:26px;box-shadow:inset 0 4px 0 #d6bf98,0 6px 0 #d2b98e}
+.slot{position:absolute;left:0;top:0;width:var(--cell);height:var(--cell);border-radius:20px;background:#dcc7a2;box-shadow:inset 0 3px 0 #ccb48b}
+.tile{position:absolute;left:0;top:0;width:var(--cell);height:var(--cell);transition:transform .11s ease-out}
+.face{width:100%;height:100%}
+.face svg{width:100%;height:100%;overflow:visible;display:block}
+.face.idle svg{animation:breathe 3s ease-in-out infinite;transform-origin:50% 90%}
+.tile:nth-child(3n) .face.idle svg{animation-delay:-1s}.tile:nth-child(3n+1) .face.idle svg{animation-delay:-2s}
+@keyframes breathe{50%{transform:scale(1.04,.96)}}
+.spawn{animation:spawn .18s ease-out}
+@keyframes spawn{from{scale:0}to{scale:1}}
+.pop{animation:pop .22s ease-out}
+@keyframes pop{0%{scale:1}50%{scale:1.22}100%{scale:1}}
+.wob{animation:wob .14s infinite}
+@keyframes wob{0%{rotate:-6deg;scale:1.04}50%{rotate:6deg;scale:1.1}100%{rotate:-6deg;scale:1.04}}
+.spat{animation:spat .5s cubic-bezier(.2,.9,.3,1.3) both;transform-box:fill-box;transform-origin:center}
+@keyframes spat{0%{transform:translate(-22px,16px) scale(.15)}55%{transform:translate(4px,-16px) scale(1.15)}100%{transform:none}}
+.crumble{animation:crumble .45s forwards}
+@keyframes crumble{to{scale:.3;opacity:0;translate:0 12px}}
+.price{position:absolute;bottom:-5px;right:-5px;font-weight:700;font-size:13px;border-radius:999px;padding:1px 7px;color:#fff;background:#6aa84f;box-shadow:0 2px 0 #0003;animation:spawn .2s ease-out;z-index:3}
+.price.neg{background:#c0603f}.price.zero{background:#bfae94}
+.shake1{animation:sh1 .2s}.shake2{animation:sh2 .3s}.shake3{animation:sh3 .5s}
+@keyframes sh1{25%{transform:translate(-3px,1px)}75%{transform:translate(3px,-1px)}}
+@keyframes sh2{20%{transform:translate(-6px,3px)}40%{transform:translate(6px,-3px)}60%{transform:translate(-4px,2px)}80%{transform:translate(3px,-1px)}}
+@keyframes sh3{10%{transform:translate(-9px,4px) rotate(-1.5deg)}30%{transform:translate(9px,-4px) rotate(1.5deg)}50%{transform:translate(-7px,3px) rotate(-1deg)}70%{transform:translate(5px,-2px)}90%{transform:translate(-2px,1px)}}
+.popup{position:absolute;left:50%;top:44%;z-index:5;pointer-events:none;text-align:center;white-space:nowrap;font-weight:700;font-size:50px;line-height:.9;color:var(--pc,#f5c542);-webkit-text-stroke:2px var(--ink);text-shadow:0 4px 0 var(--ink);animation:popup 1s forwards}
+.popup small{display:block;font-size:28px;color:#fff}
+@keyframes popup{0%{opacity:0;transform:translate(-50%,-50%) rotate(-7deg) scale(.3)}15%{opacity:1;transform:translate(-50%,-50%) rotate(-7deg) scale(1.15)}30%,75%{opacity:1;transform:translate(-50%,-50%) rotate(-7deg) scale(1)}100%{opacity:0;transform:translate(-50%,-65%) rotate(-7deg)}}
+.spark{position:absolute;width:9px;height:9px;border-radius:2px;box-shadow:0 0 0 2px var(--ink);z-index:4;pointer-events:none}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.next{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#a08a74}
+.cradle{width:58px;height:52px;border-radius:0 0 30px 30px;background:#ead9bb;box-shadow:inset 0 4px 0 #dcc6a0;display:flex;align-items:center;justify-content:center}
+.cradle svg{width:46px;height:46px;overflow:visible}
+.total{display:flex;justify-content:space-between;align-items:center;background:#efe1c6;border-radius:16px;padding:6px 14px;box-shadow:0 3px 0 #dcc6a0;font-weight:600}
+.total b{font-size:32px;font-weight:700;color:#c48a1e}
+.total b.neg{color:#c0603f}
+.btn{font:700 18px 'Fredoka';border:0;border-radius:999px;padding:11px 22px;color:#fff;background:#c0603f;box-shadow:0 5px 0 #92452b;cursor:pointer;white-space:nowrap}
+.btn:active{transform:translateY(3px);box-shadow:0 2px 0 #92452b}
+.btn.g{background:#f2b33d;box-shadow:0 5px 0 #c48a1e;color:#4a3410}
+.btn.dim{background:#d8c4a0;box-shadow:0 5px 0 #bfa97f;color:#7a5a44}
+.btn.b{background:#6aa84f;box-shadow:0 5px 0 #4a7f35}
+.btn.hot{animation:blink .8s infinite}
+.btn:disabled{opacity:.4}
+#overlay{position:fixed;inset:0;z-index:35;background:#5a463688;display:flex;align-items:center;justify-content:center;padding:14px}
+#overlay.hidden{display:none}
+.panel{width:min(94vw,380px);max-height:92vh;overflow:auto;background:#f6ecd9;border-radius:24px;padding:16px;box-shadow:0 6px 0 #d2b98e;display:flex;flex-direction:column;gap:10px}
+.panel h2{font-weight:700;font-size:28px;text-align:center;color:#7a5a44;line-height:1}
+.panel p{font-size:15px;color:#7a5a44;text-align:center;line-height:1.3}
+.panel ul{font-size:15px;color:#7a5a44;line-height:1.3;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.item{display:flex;align-items:center;gap:10px;background:#efe1c6;border-radius:16px;padding:8px 10px}
+.item .tx{flex:1;font-size:13px;color:#a08a74;line-height:1.2}
+.item .tx b{display:block;font-size:17px;color:#5a4636}
+.item .btn{font-size:16px;padding:8px 14px}
+.sum{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.sum span{font-size:13px;font-weight:600;background:#efe1c6;border-radius:999px;padding:3px 10px;color:#7a5a44}
+</style>
 </head>
 <body>
-<div class="swirl"></div>
 <div id="app">
   <div class="hud wide">
-    <div class="box red"><small>COTA</small><b id="hQuota"></b><em id="hQuotaDay"></em></div>
-    <div class="box gold"><small>DINHEIRO</small><b id="hMoney"></b><em>&nbsp;</em></div>
-    <div class="box blue" id="hEnergyBox"><small>ENERGIA</small><b id="hEnergy"></b><em id="hEnergyMax"></em></div>
+    <div class="pill"><span class="ic en" id="enIc">⚡</span><div><b id="hEnergy"></b><small id="hEnergyMax"></small></div></div>
+    <div class="pill"><span class="ic co">$</span><div><b id="hMoney"></b><small>dinheiro</small></div></div>
+    <div class="pill"><span class="ic qu">!</span><div><b id="hQuota"></b><small id="hQuotaDay"></small></div></div>
   </div>
-  <div class="row wide"><button class="icon" id="btnHelp">?</button><div class="banner" style="flex:1"><div id="bTitle"></div><span id="bSub"></span></div><button class="icon" id="btnSound">♪</button></div>
+  <div class="top wide"><button class="icon" id="btnHelp">?</button><div class="banner"><div id="bTitle"></div><span id="bSub"></span></div><button class="icon" id="btnSound">♪</button></div>
   <div class="stage" id="stage"><div id="board"></div></div>
   <div class="row wide" id="mineRow">
-    <div class="next">PRÓXIMA <div class="mini" id="nextMini"></div></div>
-    <button class="btn" id="btnEnd">ENCERRAR DIA</button>
+    <div class="next">próxima<div class="cradle" id="nextMini"></div></div>
+    <button class="btn" id="btnEnd">Encerrar o dia</button>
   </div>
   <div class="wide" id="revealRow" style="display:none;flex-direction:column;gap:12px">
-    <div class="total"><span>TOTAL DO DIA</span><b id="dayTotal">$0</b></div>
-    <div class="row"><button class="btn dim" id="btnSkip" style="flex:1">PULAR</button><button class="btn g" id="btnSell" style="flex:2;display:none">VENDER</button></div>
+    <div class="total"><span>Total do dia</span><b id="dayTotal">$0</b></div>
+    <div class="row"><button class="btn dim" id="btnSkip" style="flex:1">Pular</button><button class="btn g" id="btnSell" style="flex:2;display:none">Vender</button></div>
   </div>
 </div>
-<div class="crt"></div>
 <div id="overlay" class="hidden"><div class="panel" id="panel"></div></div>
 
 <script>
 // ===================== CONFIG =====================
 const N = 4;
 const CFG = {
-  energy: 40,                 // arrastos por dia
-  days: 5,                    // dias por semana
+  energy: 40,                 // arrastos com energia; depois disso só nasce torrão
+  torraoCusto: 2,             // cada torrão no tabuleiro no fim do dia custa isso
+  days: 5,
   quota: w => [60, 110, 180, 270, 400][w-1] ?? Math.round(400*Math.pow(1.5,w-5)/10)*10,
-  pedraChance: 0.10,          // chance base de nascer Pedra em vez de Cascalho
+  pedraChance: 0.10,
 };
-// rochas por nível (2048: dois iguais viram o próximo)
-const ROCKS = [null,
-  {n:'Cascalho',    c:'#5e5650'},
-  {n:'Pedra',       c:'#6f8291'},
-  {n:'Rocha',       c:'#9a7a58'},
-  {n:'Rocha densa', c:'#56597a'},
-  {n:'Geodo',       c:'#7a5aa0'},
-  {n:'Cristalino',  c:'#2f8fb0'},
-  {n:'Geodo real',  c:'#b0306a'},
+const ROCKS = [
+  {n:'Torrão'},
+  {n:'Cascalho'}, {n:'Pedra'}, {n:'Rocha'}, {n:'Rocha densa'}, {n:'Geodo'}, {n:'Cristalino'}, {n:'Geodo real'},
 ];
 const ORES = [
-  {n:'nada',     p:0,  cls:'o0'},
-  {n:'cobre',    p:1,  cls:'o1'},
-  {n:'ferro',    p:3,  cls:'o2'},
-  {n:'prata',    p:8,  cls:'o3', cor:'#ffffff'},
-  {n:'ouro',     p:20, cls:'o4', cor:'#ffcf3a'},
-  {n:'diamante', p:60, cls:'o5', cor:'#6fe3ff'},
+  {n:'nada',     p:0},
+  {n:'cobre',    p:1,  c:'#e07b3c'},
+  {n:'ferro',    p:3,  c:'#b8c0c8'},
+  {n:'prata',    p:8,  c:'#eef2f6'},
+  {n:'ouro',     p:20, c:'#f5c542'},
+  {n:'diamante', p:60, c:'#6fe3ff'},
 ];
-// chance (%) de cada minério [nada, cobre, ferro, prata, ouro, diamante] por nível de rocha
-const DROPS = {
-  1:[70,30],
-  2:[40,45,15],
-  3:[15,45,35,5],
-  4:[0,25,45,25,5],
-  5:[0,0,30,45,22,3],
-  6:[0,0,0,40,45,15],
-  7:[0,0,0,10,50,40],
-};
+const DROPS = {1:[70,30],2:[40,45,15],3:[15,45,35,5],4:[0,25,45,25,5],5:[0,0,30,45,22,3],6:[0,0,0,40,45,15],7:[0,0,0,10,50,40]};
 const SHOP = [
   {id:'folego',   nome:'Fôlego',   desc:'+5 de energia por dia, para sempre.', preco:l=>[25,40,60,90][l], max:4},
   {id:'picareta', nome:'Picareta', desc:'Nasce Pedra (nível 2) com mais frequência: +25% por nível.', preco:l=>[35,70][l], max:2},
-  {id:'martelo',  nome:'Martelo',  desc:'Cada rocha sorteia o minério duas vezes e fica com o melhor.', preco:()=>60, max:1},
+  {id:'martelo',  nome:'Martelo',  desc:'Cada pedrinha sorteia duas vezes e cospe a melhor.', preco:()=>60, max:1},
 ];
+
+// ===================== DESENHO DAS PEDRINHAS (SVG) =====================
+const TC = ['#7a5a3c','#e2cfa6','#d39b6a','#c0694a','#7d8aa0','#9a77c9','#5ec4d6','#e06a9a'];
+const TD = ['#5e4329','#c9b48a','#b57f52','#9c5136','#5f6b80','#7a59a8','#3e9fb2','#b84a78'];
+const INK = '#2e2219';
+const MOOD = ['', ['sleep','sleep'], ['dot','o'], ['dot','smile'], ['proud','smile'], ['star','big'], ['star','big'], ['star','big']];
+function eyes(cx,cy,mood,s=1,gap=11,lx=0,ly=0){
+  const L=cx-gap*s+lx, R=cx+gap*s+lx; cy+=ly;
+  if(mood==='sleep') return `<path d="M${L-4*s} ${cy} q${4*s} ${3*s} ${8*s} 0 M${R-4*s} ${cy} q${4*s} ${3*s} ${8*s} 0" stroke="${INK}" stroke-width="${2.6*s}" fill="none" stroke-linecap="round"/>`;
+  if(mood==='star') return [L,R].map(x=>`<path d="M${x} ${cy-6*s} l${1.8*s} ${4.2*s} ${4.2*s} ${1.8*s} -${4.2*s} ${1.8*s} -${1.8*s} ${4.2*s} -${1.8*s} -${4.2*s} -${4.2*s} -${1.8*s} ${4.2*s} -${1.8*s}z" fill="#fff" stroke="${INK}" stroke-width="${1.2*s}"/>`).join('');
+  if(mood==='grump') return `<circle cx="${L}" cy="${cy}" r="${2.6*s}" fill="${INK}"/><circle cx="${R}" cy="${cy}" r="${2.6*s}" fill="${INK}"/><path d="M${L-5*s} ${cy-7*s} l${8*s} ${3*s} M${R+5*s} ${cy-7*s} l-${8*s} ${3*s}" stroke="${INK}" stroke-width="${2.4*s}" stroke-linecap="round"/>`;
+  if(mood==='squeeze') return `<path d="M${L-4*s} ${cy-3*s} l${7*s} ${3*s} l-${7*s} ${3*s} M${R+4*s} ${cy-3*s} l-${7*s} ${3*s} l${7*s} ${3*s}" stroke="${INK}" stroke-width="${2.4*s}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+  if(mood==='happy') return `<path d="M${L-4*s} ${cy+1*s} q${4*s} -${6*s} ${8*s} 0 M${R-4*s} ${cy+1*s} q${4*s} -${6*s} ${8*s} 0" stroke="${INK}" stroke-width="${2.6*s}" fill="none" stroke-linecap="round"/>`;
+  const b = mood==='proud' ? `<path d="M${L-4*s} ${cy-7*s} q${4*s} -${3*s} ${8*s} 0 M${R-4*s} ${cy-7*s} q${4*s} -${3*s} ${8*s} 0" stroke="${INK}" stroke-width="${2*s}" fill="none" stroke-linecap="round"/>` : '';
+  return `<ellipse cx="${L}" cy="${cy}" rx="${2.8*s}" ry="${3.6*s}" fill="${INK}"/><ellipse cx="${R}" cy="${cy}" rx="${2.8*s}" ry="${3.6*s}" fill="${INK}"/>${b}`;
+}
+function mouth(cx,cy,mood,s=1){
+  if(mood==='sleep') return `<path d="M${cx-3*s} ${cy} h${6*s}" stroke="${INK}" stroke-width="${2.4*s}" stroke-linecap="round"/>`;
+  if(mood==='o') return `<ellipse cx="${cx}" cy="${cy}" rx="${2.6*s}" ry="${3.2*s}" fill="${INK}"/>`;
+  if(mood==='grump') return `<path d="M${cx-5*s} ${cy+2*s} q${5*s} -${5*s} ${10*s} 0" stroke="${INK}" stroke-width="${2.4*s}" fill="none" stroke-linecap="round"/>`;
+  if(mood==='puff') return `<path d="M${cx-4*s} ${cy} q${4*s} -${2*s} ${8*s} 0" stroke="${INK}" stroke-width="${2.4*s}" fill="none" stroke-linecap="round"/>`;
+  if(mood==='open') return `<ellipse cx="${cx}" cy="${cy+2*s}" rx="${6*s}" ry="${5*s}" fill="${INK}"/><path d="M${cx-3*s} ${cy+5*s} q${3*s} ${2*s} ${6*s} 0" fill="#e5737b"/>`;
+  if(mood==='wavy') return `<path d="M${cx-6*s} ${cy} q${1.5*s} -${2.5*s} ${3*s} 0 t${3*s} 0 t${3*s} 0 t${3*s} 0" stroke="${INK}" stroke-width="${2.2*s}" fill="none" stroke-linecap="round"/>`;
+  const w = mood==='big' ? 7 : 5;
+  return `<path d="M${cx-w*s} ${cy} q${w*s} ${(mood==='big'?8:6)*s} ${2*w*s} 0" stroke="${INK}" stroke-width="${2.4*s}" fill="${mood==='big'?INK:'none'}" stroke-linecap="round"/>`;
+}
+const blush = (cx,cy,s=1,gap=17,big=false) => `<ellipse cx="${cx-gap*s}" cy="${cy}" rx="${(big?6:4)*s}" ry="${(big?4:2.4)*s}" fill="#ff8a7a" opacity="${big?.75:.55}"/><ellipse cx="${cx+gap*s}" cy="${cy}" rx="${(big?6:4)*s}" ry="${(big?4:2.4)*s}" fill="#ff8a7a" opacity="${big?.75:.55}"/>`;
+const crown = (cx,cy,s=1) => `<path d="M${cx-10*s} ${cy} l${3*s} -${10*s} ${4*s} ${6*s} ${3*s} -${9*s} ${3*s} ${9*s} ${4*s} -${6*s} ${3*s} ${10*s}z" fill="#f2b33d" stroke="${INK}" stroke-width="1.6"/>`;
+const sparkle = (x,y,r,c='#fff') => `<path d="M${x} ${y-r} Q${x} ${y} ${x+r} ${y} Q${x} ${y} ${x} ${y+r} Q${x} ${y} ${x-r} ${y} Q${x} ${y} ${x} ${y-r}z" fill="${c}"/>`;
+const sweat = (x,y) => `<path d="M${x} ${y} q-4 7 0 9 q4 -2 0 -9z" fill="#9fd4f0" stroke="${INK}" stroke-width="1.4"/>`;
+function gemSvg(cx,cy,c,s=1){ return `<path d="M${cx-9*s} ${cy-3*s} l${4*s} -${6*s} h${10*s} l${4*s} ${6*s} l-${9*s} ${12*s}z" fill="${c}" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/><path d="M${cx-5*s} ${cy-9*s} l${2*s} ${6*s} M${cx+5*s} ${cy-9*s} l-${2*s} ${6*s} M${cx-9*s} ${cy-3*s} h${18*s}" stroke="${INK}" stroke-width="1" opacity=".5"/>${sparkle(cx+7*s,cy-11*s,4*s)}`; }
+function clodSvg(cx,cy,s=1){ return `<path d="M${cx-9*s} ${cy+3*s} q-2 -8 5 -10 q4 -6 10 -2 q7 1 5 9 q1 7 -8 7 q-10 1 -12 -4z" fill="#7a5a3c" stroke="${INK}" stroke-width="1.8"/><circle cx="${cx-2*s}" cy="${cy-2*s}" r="${1.2*s}" fill="#5e4329"/><circle cx="${cx+4*s}" cy="${cy+3*s}" r="${1.4*s}" fill="#5e4329"/>`; }
+function torraoInner(){
+  return `<path d="M18 70 Q14 48 30 40 Q36 26 52 30 Q66 22 76 36 Q90 42 86 62 Q88 80 66 82 Q50 88 34 82 Q16 82 18 70z" fill="#7a5a3c" stroke="${INK}" stroke-width="2.4"/>
+    <circle cx="34" cy="50" r="2" fill="#5e4329"/><circle cx="70" cy="70" r="2.4" fill="#5e4329"/><circle cx="62" cy="40" r="1.6" fill="#5e4329"/><circle cx="26" cy="72" r="1.8" fill="#5e4329"/>
+    <path d="M70 32 l5 -6 M76 38 l7 -2" stroke="#6b8f3a" stroke-width="2.4" stroke-linecap="round"/>
+    ${eyes(52,58,'grump',.9,10)}${mouth(52,70,'grump',.8)}`;
+}
+// opt: {face:[olhos,boca], look:[dx,dy], blushBig, sweat}
+function pedraInner(t, opt={}){
+  const r=22+Math.min(t,7)*3, cy=58, s=.8+t*.05;
+  const [em,mm] = opt.face || MOOD[Math.min(t,7)];
+  const [lx,ly] = opt.look || [0,0];
+  let b = `<ellipse cx="50" cy="${cy+r*.85}" rx="${r*.8}" ry="5" fill="#0002"/>
+    <path d="M${50-r} ${cy} Q${50-r} ${cy-r*1.05} 50 ${cy-r} Q${50+r*1.05} ${cy-r*.95} ${50+r} ${cy+2} Q${50+r*.9} ${cy+r*.85} 50 ${cy+r*.85} Q${50-r*1.02} ${cy+r*.88} ${50-r} ${cy}z" fill="${TC[t]}" stroke="${INK}" stroke-width="2.4"/>
+    <path d="M${50-r*.8} ${cy+r*.3} Q50 ${cy+r*.95} ${50+r*.85} ${cy+r*.25} Q${50+r*.6} ${cy+r*.8} 50 ${cy+r*.8} Q${50-r*.75} ${cy+r*.8} ${50-r*.8} ${cy+r*.3}z" fill="${TD[t]}"/>
+    <ellipse cx="${50-r*.45}" cy="${cy-r*.55}" rx="${r*.22}" ry="${r*.12}" fill="#fff" opacity=".45" transform="rotate(-25 ${50-r*.45} ${cy-r*.55})"/>`;
+  if(t>=5) b += sparkle(50+r*.7,cy-r*.8,5) + sparkle(50-r*.9,cy-r*.2,3.5);
+  if(t>=6) b += crown(50,cy-r+2,1.1);
+  if(opt.blushBig) b += blush(50,cy+5,s,15,true);
+  else if(t>=3) b += blush(50,cy+4,s);
+  b += eyes(50,cy-2,em,s,11,lx*2.5,ly*2.5) + mouth(50+lx*1.5,cy+9+ly*1.5,mm,s);
+  if(opt.sweat) b += sweat(50+r*.75,cy-r*.6);
+  return b;
+}
+const svgOf = inner => `<svg viewBox="0 0 100 100">${inner}</svg>`;
 
 // ===================== ESTADO =====================
 const $ = s => document.querySelector(s);
@@ -170,6 +209,7 @@ const inside = (x,y) => x>=0 && y>=0 && x<N && y<N;
 const pos = (x,y) => `translate(calc(${x}*(var(--cell) + var(--gap)) + var(--gap)), calc(${y}*(var(--cell) + var(--gap)) + var(--gap)))`;
 const overlayOpen = () => !$('#overlay').classList.contains('hidden');
 const maxEnergy = () => CFG.energy + 5*S.upg.folego;
+const sleep = ms => new Promise(r=>setTimeout(r, S.skip ? 0 : ms));
 
 for(let y=0;y<N;y++) for(let x=0;x<N;x++){ const c=document.createElement('div'); c.className='slot'; c.style.transform=pos(x,y); board.appendChild(c); }
 
@@ -180,35 +220,34 @@ function newGame(){
 
 function startDay(){
   for(const el of els.values()) el.remove(); els.clear();
-  S.tiles = []; S.energy = maxEnergy(); S.phase = 'mine'; S.next = rollSpawn();
+  S.tiles=[]; S.energy=maxEnergy(); S.phase='mine'; S.next=rollSpawn();
   if(S.gift){ addTile(5); S.gift=false; }
   addTile(); addTile();
   $('#mineRow').style.display=''; $('#revealRow').style.display='none';
-  setBanner(`SEMANA ${S.week} · DIA ${S.day}/${CFG.days}`, S.day===1 ? 'funda as rochas antes de cansar' : '');
+  $('#btnEnd').classList.remove('hot');
+  setBanner(`Semana ${S.week} · dia ${S.day} de ${CFG.days}`, S.day===1 ? 'junte pedrinhas iguais' : '');
   render();
 }
 
 function rollSpawn(){ return Math.random() < CFG.pedraChance + 0.25*S.upg.picareta ? 2 : 1; }
-
-function emptyCells(){
-  const out=[];
-  for(let y=0;y<N;y++) for(let x=0;x<N;x++) if(!S.tiles.some(t=>t.x===x&&t.y===y)) out.push({x,y});
-  return out;
-}
+function emptyCells(){ const out=[]; for(let y=0;y<N;y++) for(let x=0;x<N;x++) if(!S.tiles.some(t=>t.x===x&&t.y===y)) out.push({x,y}); return out; }
 function addTile(t){
-  const free = emptyCells(); if(!free.length) return;
-  const c = pick(free);
-  if(t===undefined){ t = S.next; S.next = rollSpawn(); }
-  S.tiles.push({id:'t'+(nextId++), x:c.x, y:c.y, t, rot:(Math.random()-.5)*5});
+  const free=emptyCells(); if(!free.length) return;
+  const c=pick(free);
+  if(t===undefined){
+    if(S.energy<=0) t=0;                       // cansado: só torrão
+    else { t=S.next; S.next=rollSpawn(); }
+  }
+  S.tiles.push({id:'t'+(nextId++), x:c.x, y:c.y, t});
 }
 
 // ===================== 2048 =====================
 function slide(tiles,dx,dy){
-  const ts = tiles.map(t=>({...t, m:false}));
-  const grid = Array.from({length:N},()=>Array(N).fill(null));
+  const ts=tiles.map(t=>({...t,m:false}));
+  const grid=Array.from({length:N},()=>Array(N).fill(null));
   for(const t of ts) grid[t.y][t.x]=t;
   const idx=[...Array(N).keys()];
-  const xs = dx===1 ? [...idx].reverse() : idx, ys = dy===1 ? [...idx].reverse() : idx;
+  const xs=dx===1?[...idx].reverse():idx, ys=dy===1?[...idx].reverse():idx;
   let moved=false; const merges=[], gone=[];
   for(const y of ys) for(const x of xs){
     const t=grid[y][x]; if(!t) continue;
@@ -217,7 +256,7 @@ function slide(tiles,dx,dy){
       const nx=cx+dx, ny=cy+dy; if(!inside(nx,ny)) break;
       const o=grid[ny][nx];
       if(!o){ grid[cy][cx]=null; grid[ny][nx]=t; cx=nx; cy=ny; continue; }
-      if(!o.m && o.t===t.t){ grid[cy][cx]=null; o.t++; o.m=true; t.x=nx; t.y=ny; gone.push(t); merges.push(o); merged=true; }
+      if(!o.m && o.t===t.t && t.t>0){ grid[cy][cx]=null; o.t++; o.m=true; t.x=nx; t.y=ny; gone.push(t); merges.push(o); merged=true; }
       break;
     }
     if(merged){ moved=true; continue; }
@@ -229,155 +268,168 @@ const anyMove = () => [[0,1],[0,-1],[1,0],[-1,0]].some(([dx,dy])=>slide(S.tiles,
 
 function move(dx,dy){
   if(S.phase!=='mine' || overlayOpen()) return;
-  const r = slide(S.tiles,dx,dy);
+  const r=slide(S.tiles,dx,dy);
   if(!r.moved) return;
   for(const g of r.gone){ const el=els.get(g.id); els.delete(g.id); if(el){ el.style.zIndex=0; el.style.transform=pos(g.x,g.y); setTimeout(()=>el.remove(),120); } }
-  S.tiles = r.tiles; S.energy--;
+  S.tiles=r.tiles;
+  const wasTired = S.energy<=0;
+  if(S.energy>0) S.energy--;
   addTile();
   render();
   SFX.arrastar();
-  const tops = r.merges.map(o=>o.t).sort((a,b)=>b-a);
+  const tops=r.merges.map(o=>o.t).sort((a,b)=>b-a);
   if(tops.length){ SFX.fundir(tops[0]); if(tops.length>1) setTimeout(()=>SFX.fundir(tops[1]),45); }
-  if(S.energy>0 && S.energy<=5) SFX.cansado();
+  if(S.energy<=0) SFX.torraoCai(); else if(S.energy<=5) SFX.cansado();
   for(const o of r.merges) anim(o.id,'pop');
-  if(r.merges.some(o=>o.t>=4)) setBanner(null, `${ROCKS[Math.max(...r.merges.map(o=>o.t))].n}!`);
-  if(S.energy<=0){ setBanner(null,'você está exausto'); return setTimeout(endDay,400); }
-  if(!anyMove()){ setBanner(null,'sem espaço para cavar'); return setTimeout(endDay,400); }
+  if(!wasTired && S.energy<=0){
+    setBanner(null,`Exausta! Agora só vem torrão (-$${CFG.torraoCusto} cada)`);
+    $('#btnEnd').classList.add('hot');
+  } else if(tops.length && tops[0]>=4) setBanner(null,`${ROCKS[Math.min(tops[0],7)].n}!`);
+  if(!anyMove()){ setBanner(null,'não cabe mais nada'); setTimeout(endDay,450); }
 }
 
-// ===================== FIM DO DIA: REVELAÇÃO =====================
-const sleep = ms => new Promise(r=>setTimeout(r, S.skip ? 0 : ms));
+// ===================== FIM DO DIA: AS PEDRINHAS CUSPEM =====================
 function roll(t){
-  const once = () => { const tb=DROPS[Math.min(t,7)]; let r=Math.random()*100; for(let i=0;i<tb.length;i++){ if((r-=tb[i])<0) return i; } return 0; };
+  const once=()=>{ const tb=DROPS[Math.min(t,7)]; let r=Math.random()*100; for(let i=0;i<tb.length;i++){ if((r-=tb[i])<0) return i; } return 0; };
   return S.upg.martelo ? Math.max(once(),once()) : once();
 }
+function tag(t, text, cls){ const el=els.get(t.id); if(!el) return; const p=document.createElement('span'); p.className='price '+cls; p.textContent=text; el.appendChild(p); }
 
 async function endDay(){
   if(S.phase!=='mine') return;
-  S.phase='reveal'; S.skip=false; S.dayTotal=0; S.found=[];
+  S.phase='reveal'; S.skip=false; S.dayTotal=0; S.shown=0; S.found=[]; S.clods=0;
   $('#mineRow').style.display='none'; $('#revealRow').style.display='flex';
   $('#btnSkip').style.display=''; $('#btnSell').style.display='none';
-  $('#dayTotal').textContent='$0';
-  setBanner(`FIM DO DIA ${S.day}`, 'quebrando as rochas...');
+  $('#dayTotal').textContent='$0'; $('#dayTotal').classList.remove('neg');
+  setBanner(`Fim do dia ${S.day}`, 'hora de cuspir!');
   render(); SFX.fimDia(); await sleep(700);
-  const order = [...S.tiles].sort((a,b)=>a.t-b.t);
-  let i=0;
+
+  // primeiro a terra (a má notícia), depois as pedrinhas da menor para a maior
+  const order=[...S.tiles].sort((a,b)=>a.t-b.t);
   for(const t of order){
-    const face = els.get(t.id)?.firstChild; if(!face) continue;
-    face.classList.add('wob');
-    await sleep(t.t>=5 ? 900 : t.t>=3 ? 450 : 220);
-    face.classList.remove('wob');
-    const o = roll(t.t); t.ore=o; S.found.push(o);
-    const ore = ORES[o];
-    face.className = 'face ore crack ' + ore.cls;
-    face.innerHTML = o ? `${ore.n}<small>$${ore.p}</small>` : 'nada';
-    countTo(S.dayTotal += ore.p);
-    if(!S.skip){
-      SFX.quebrar(); if(o>=1 && o<=2) SFX.comum(o);
-      if(o>=3){
-        shake(o-2); sparks(t, ore.cor);
-        popup(ore.n.toUpperCase()+'!', '+$'+ore.p, ore.cor);
-        SFX.raro(o);
-        await sleep(o>=4 ? 1000 : 650);
-      } else await sleep(140);
+    const face=els.get(t.id)?.firstChild; if(!face) continue;
+    face.classList.remove('idle');
+    if(t.t===0){
+      face.classList.add('wob'); await sleep(200);
+      face.classList.remove('wob'); face.classList.add('crumble');
+      SFX.esfarelar(); S.clods++; S.dayTotal-=CFG.torraoCusto; countTo(S.dayTotal);
+      tag(t,`-$${CFG.torraoCusto}`,'neg'); await sleep(220);
+      continue;
     }
-    i++;
+    // bochechas cheias...
+    face.innerHTML=svgOf(pedraInner(t.t,{face:['squeeze','puff'],blushBig:true}));
+    face.classList.add('wob');
+    await sleep(t.t>=5?850:t.t>=3?420:240);
+    face.classList.remove('wob');
+    // ...e PTUI!
+    const o=roll(t.t); t.ore=o; S.found.push(o);
+    const ore=ORES[o];
+    const body=`<g transform="translate(36 66) scale(.72) translate(-50 -58)">${pedraInner(t.t,o?{face:['happy','open']}:{face:['dot','wavy'],sweat:true})}</g>`;
+    const spat=`<g class="spat">${o?gemSvg(70,34,ore.c,1.25):clodSvg(70,36,1.15)}</g>`;
+    face.innerHTML=svgOf(body+spat);
+    SFX.cuspe();
+    S.dayTotal+=ore.p; countTo(S.dayTotal);
+    tag(t, o?`$${ore.p}`:'nada', o?'':'zero');
+    if(!S.skip){
+      if(o>=1 && o<=2) SFX.comum(o);
+      if(o>=3){
+        shake(o-2); sparks(t, ore.c); popup(ore.n.toUpperCase()+'!', '+$'+ore.p, ore.c); SFX.raro(o);
+        await sleep(o>=4?1000:650);
+      } else await sleep(160);
+    }
   }
-  $('#dayTotal').textContent = '$'+S.dayTotal;
-  setBanner(`FIM DO DIA ${S.day}`, S.dayTotal ? `rendeu $${S.dayTotal}` : 'dia fraco...');
+  $('#dayTotal').textContent=fmt(S.dayTotal); $('#dayTotal').classList.toggle('neg',S.dayTotal<0);
+  setBanner(`Fim do dia ${S.day}`, S.dayTotal>0 ? `rendeu ${fmt(S.dayTotal)}` : S.dayTotal<0 ? 'a terra deu prejuízo...' : 'dia fraco...');
   $('#btnSkip').style.display='none'; $('#btnSell').style.display='';
-  $('#btnSell').textContent = `VENDER $${S.dayTotal}`;
+  $('#btnSell').textContent = S.dayTotal>=0 ? `Vender ${fmt(S.dayTotal)}` : `Pagar a limpeza (${fmt(S.dayTotal)})`;
 }
+const fmt = v => (v<0?'-$':'$')+Math.abs(v);
 
 function sell(){
-  S.money += S.dayTotal; render();
-  SFX.venda();
+  S.money=Math.max(0,S.money+S.dayTotal); render();
+  if(S.dayTotal>0) SFX.venda(); else SFX.esfarelar();
   showShop();
 }
 
 // ===================== LOJA E SEMANA =====================
 function showShop(){
-  const counts = S.found.reduce((a,o)=>(a[o]=(a[o]||0)+1,a),{});
-  const sum = Object.keys(counts).sort((a,b)=>b-a).map(o=>`<span>${counts[o]}× ${ORES[o].n}</span>`).join('');
-  const lastDay = S.day===CFG.days;
-  const html = `<h2>LOJA</h2>
+  const counts=S.found.reduce((a,o)=>(a[o]=(a[o]||0)+1,a),{});
+  const sum=Object.keys(counts).sort((a,b)=>b-a).map(o=>`<span>${counts[o]}× ${ORES[o].n}</span>`).join('') + (S.clods?`<span>${S.clods}× torrão</span>`:'');
+  const lastDay=S.day===CFG.days;
+  showOverlay(`<h2>Lojinha</h2>
     <div class="sum">${sum||'<span>nada hoje</span>'}</div>
-    <p>Dinheiro: <b style="color:#ffcf3a">$${S.money}</b> · cota da semana: <b style="color:#fe5f55">$${CFG.quota(S.week)}</b></p>
+    <p>Dinheiro: <b style="color:#c48a1e">$${S.money}</b> · cota da semana: <b style="color:#c0603f">$${CFG.quota(S.week)}</b></p>
     ${SHOP.map(it=>{const l=S.upg[it.id], max=l>=it.max, pr=max?0:it.preco(l);
       return `<div class="item"><div class="tx"><b>${it.nome}${l?` (nível ${l})`:''}</b>${it.desc}</div>
-      <button class="btn g" data-buy="${it.id}" ${max||S.money<pr?'disabled':''}>${max?'MÁX':'$'+pr}</button></div>`;}).join('')}
-    <button class="btn b" id="btnSleep">${lastDay?'FIM DA SEMANA':'DORMIR'}</button>`;
-  showOverlay(html);
+      <button class="btn g" data-buy="${it.id}" ${max||S.money<pr?'disabled':''}>${max?'máx':'$'+pr}</button></div>`;}).join('')}
+    <button class="btn b" id="btnSleep">${lastDay?'Fim da semana':'Dormir'}</button>`);
   document.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>{
     const it=SHOP.find(x=>x.id===b.dataset.buy), pr=it.preco(S.upg[it.id]);
     if(S.money<pr) return;
     S.money-=pr; S.upg[it.id]++; SFX.comprar(); render(); showShop();
   });
-  $('#btnSleep').onclick = () => { hideOverlay(); if(lastDay) weekEnd(); else { S.day++; startDay(); } };
+  $('#btnSleep').onclick=()=>{ hideOverlay(); if(lastDay) weekEnd(); else { S.day++; startDay(); } };
 }
 
 function weekEnd(){
-  const q = CFG.quota(S.week), paid = S.money >= q;
+  const q=CFG.quota(S.week), paid=S.money>=q;
   let html;
   if(paid){
-    S.money -= q;
-    html = `<h2 style="color:#9fe0c8">COTA PAGA!</h2><p>Você pagou $${q} e sobrou $${S.money}.</p>
-      <p>Presente: a próxima semana começa com um <b style="color:#c79cff">Geodo</b> no tabuleiro.</p>
-      <p>Cota da semana ${S.week+1}: <b style="color:#fe5f55">$${CFG.quota(S.week+1)}</b></p>`;
-    S.week++; S.gift = true;
-    SFX.pagou();
+    S.money-=q;
+    html=`<h2 style="color:#6aa84f">Cota paga!</h2><p>Você pagou $${q} e sobrou $${S.money}.</p>
+      <p>Presente: a próxima semana começa com um <b style="color:#7a59a8">Geodo</b>.</p>
+      <p>Cota da semana ${S.week+1}: <b style="color:#c0603f">$${CFG.quota(S.week+1)}</b></p>`;
+    S.week++; S.gift=true; SFX.pagou();
   } else {
-    html = `<h2 style="color:#fe5f55">NÃO DEU</h2><p>Faltaram $${q-S.money} para a cota de $${q}.</p>
-      <p>Você perde o dinheiro guardado e repete a semana ${S.week}. Suas melhorias continuam.</p>`;
-    S.money = 0;
-    SFX.naoDeu();
+    html=`<h2 style="color:#c0603f">Não deu...</h2><p>Faltaram $${q-S.money} para a cota de $${q}.</p>
+      <p>Você perde o dinheiro guardado e repete a semana ${S.week}. As melhorias continuam.</p>`;
+    S.money=0; SFX.naoDeu();
   }
-  S.day = 1;
-  showOverlay(html + `<button class="btn b" id="btnWeek">COMEÇAR SEMANA ${S.week}</button>`);
-  $('#btnWeek').onclick = () => { hideOverlay(); startDay(); };
+  S.day=1;
+  showOverlay(html+`<button class="btn b" id="btnWeek">Começar a semana ${S.week}</button>`);
+  $('#btnWeek').onclick=()=>{ hideOverlay(); startDay(); };
 }
 
-// ===================== DESENHO =====================
+// ===================== TELA =====================
+function lookOf(t){
+  if(t.t===0) return [0,0];
+  for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]) if(S.tiles.some(o=>o.x===t.x+dx&&o.y===t.y+dy&&o.t===t.t)) return [dx,dy];
+  return [0,0];
+}
 function render(){
   for(const t of S.tiles){
-    let el = els.get(t.id);
+    let el=els.get(t.id);
     if(!el){
       el=document.createElement('div'); el.className='tile';
-      el.innerHTML='<div class="face spawn"></div>';
+      el.innerHTML='<div class="face idle spawn"></div>';
       el.style.transition='none'; el.style.transform=pos(t.x,t.y);
       board.appendChild(el); els.set(t.id,el);
       void el.offsetWidth; el.style.transition='';
-      el.firstChild.addEventListener('animationend', e=>{ if(e.target===el.firstChild) el.firstChild.classList.remove(e.animationName); });
+      el.firstChild.addEventListener('animationend',e=>{ if(e.target===el.firstChild && e.animationName!=='crumble') el.firstChild.classList.remove(e.animationName); });
     }
-    el.style.transform = pos(t.x,t.y);
-    const f = el.firstChild;
-    if(S.phase==='mine' || t.ore===undefined){
-      f.style.setProperty('--rc', ROCKS[Math.min(t.t,7)].c);
-      f.style.setProperty('--rot', t.rot+'deg');
-      f.innerHTML = `${ROCKS[Math.min(t.t,7)].n}<span class="pp">${'<i></i>'.repeat(t.t)}</span>`;
+    el.style.transform=pos(t.x,t.y);
+    if(S.phase==='mine'){
+      const look=lookOf(t), key=t.t+':'+look;
+      if(el.dataset.key!==key){ el.dataset.key=key; el.firstChild.innerHTML=svgOf(t.t===0?torraoInner():pedraInner(t.t,{look})); }
     }
   }
   const q=CFG.quota(S.week);
-  $('#hQuota').textContent = '$'+q;
-  $('#hQuotaDay').textContent = S.day===CFG.days ? 'hoje!' : `em ${CFG.days-S.day+1} dias`;
-  $('#hMoney').textContent = '$'+S.money;
-  $('#hEnergy').textContent = S.energy;
-  $('#hEnergyMax').textContent = 'de '+maxEnergy();
-  $('#hEnergyBox').classList.toggle('low', S.phase==='mine' && S.energy<=5);
-  const nx = ROCKS[S.next];
-  $('#nextMini').style.setProperty('--rc', nx.c);
-  $('#nextMini').innerHTML = '<i></i>'.repeat(S.next);
+  $('#hQuota').textContent='$'+q;
+  $('#hQuotaDay').textContent=S.day===CFG.days?'cota hoje!':`cota em ${CFG.days-S.day+1} dias`;
+  $('#hMoney').textContent='$'+S.money;
+  $('#hEnergy').textContent=S.energy;
+  $('#hEnergyMax').textContent=S.energy>0?`de ${maxEnergy()}`:'exausta!';
+  $('#enIc').classList.toggle('zero',S.phase==='mine'&&S.energy<=0);
+  const nt=S.energy<=1?0:S.next;
+  $('#nextMini').innerHTML=svgOf(nt===0?torraoInner():pedraInner(nt));
 }
 
-function setBanner(title, sub){ if(title!==null) $('#bTitle').textContent=title; $('#bSub').textContent=sub||''; }
+function setBanner(title,sub){ if(title!==null) $('#bTitle').textContent=title; $('#bSub').textContent=sub||''; }
 function anim(id,name){ const el=els.get(id); if(!el) return; const f=el.firstChild; f.classList.remove(name); void f.offsetWidth; f.classList.add(name); }
 function shake(level){ const c='shake'+Math.min(level,3); stage.classList.remove('shake1','shake2','shake3'); void stage.offsetWidth; stage.classList.add(c); }
-function popup(big, small, cor){
-  const p=document.createElement('div'); p.className='popup'; p.style.setProperty('--pc',cor);
-  p.innerHTML=`${big}<small>${small}</small>`; stage.appendChild(p); setTimeout(()=>p.remove(),1000);
-}
-function sparks(t, cor){
-  const cx = `calc(${t.x}*(var(--cell) + var(--gap)) + var(--gap) + var(--cell)/2)`, cy = `calc(${t.y}*(var(--cell) + var(--gap)) + var(--gap) + var(--cell)/2)`;
+function popup(big,small,cor){ const p=document.createElement('div'); p.className='popup'; p.style.setProperty('--pc',cor); p.innerHTML=`${big}<small>${small}</small>`; stage.appendChild(p); setTimeout(()=>p.remove(),1000); }
+function sparks(t,cor){
+  const cx=`calc(${t.x}*(var(--cell) + var(--gap)) + var(--gap) + var(--cell)*.7)`, cy=`calc(${t.y}*(var(--cell) + var(--gap)) + var(--gap) + var(--cell)*.35)`;
   for(let i=0;i<18;i++){
     const s=document.createElement('i'); s.className='spark'; s.style.background=cor; s.style.left=cx; s.style.top=cy;
     const a=Math.random()*6.28, d=40+Math.random()*90;
@@ -387,10 +439,12 @@ function sparks(t, cor){
 }
 let countTimer=null;
 function countTo(v){
-  const el=$('#dayTotal'); let cur=+el.textContent.slice(1)||0;
-  clearInterval(countTimer);
-  if(S.skip){ el.textContent='$'+v; return; }
-  countTimer=setInterval(()=>{ cur+=Math.max(1,Math.ceil((v-cur)/6)); if(cur>=v){cur=v; clearInterval(countTimer);} el.textContent='$'+cur; },30);
+  const el=$('#dayTotal'); clearInterval(countTimer);
+  el.classList.toggle('neg',v<0);
+  let cur=S.shown??0; S.shown=v;
+  if(S.skip){ el.textContent=fmt(v); return; }
+  const dir=v>=cur?1:-1;
+  countTimer=setInterval(()=>{ const step=Math.max(1,Math.ceil(Math.abs(v-cur)/6)); cur+=dir*step; if(dir>0?cur>=v:cur<=v){ cur=v; clearInterval(countTimer); } el.textContent=fmt(cur); },30);
 }
 
 // ===================== SOM =====================
@@ -426,20 +480,20 @@ function bell({f=880,t=0,d=1,v=.1,ratio=3.5,idx=2}={}){
 }
 const ESCALA=[0,2,4,7,9,12,14,16,19];
 const SFX = {
-  // arrasto: um "fwip" curto e baixinho, com leve variação para não cansar
   arrastar(){ const f=900+Math.random()*400; noise({f,to:f*2,d:.07,v:.045,q:.9}); },
-  // fusão: o tom sobe na escala e o timbre enriquece a cada nível
   fundir(l){
     const f=392*Math.pow(2,ESCALA[Math.min(l,9)-1]/12);
-    tone({f,d:.22,v:.17}); tone({f:f*2,d:.1,v:.05,type:'triangle'}); tone({f:f*4,d:.035,v:.04});   // marimba
-    if(l>=3) tone({f:f*.5,d:.25,v:.08});                                                         // corpo
-    if(l>=4) bell({f:f*2,t:.02,d:.7,v:.06,idx:1.6});                                             // sino
-    if(l>=5) [1.25,1.5,2].forEach((m,i)=>bell({f:f*2*m,t:.08+i*.06,d:.5,v:.045,idx:1.2}));        // brilho
+    tone({f,d:.22,v:.17}); tone({f:f*2,d:.1,v:.05,type:'triangle'}); tone({f:f*4,d:.035,v:.04});
+    if(l>=3) tone({f:f*.5,d:.25,v:.08});
+    if(l>=4) bell({f:f*2,t:.02,d:.7,v:.06,idx:1.6});
+    if(l>=5) [1.25,1.5,2].forEach((m,i)=>bell({f:f*2*m,t:.08+i*.06,d:.5,v:.045,idx:1.2}));
     if(l>=6){ tone({f:f*.25,to:f*.5,a:.05,d:.5,v:.1}); [1,1.5,2,3].forEach((m,i)=>bell({f:f*4*m,t:.25+i*.05,d:.6,v:.03,idx:.8})); }
   },
   cansado(){ tone({f:70,to:50,d:.12,v:.28}); tone({f:65,to:45,t:.18,d:.14,v:.22}); },
+  torraoCai(){ tone({f:110,to:60,t:.05,d:.12,v:.22}); noise({t:.05,f:400,d:.1,v:.08,type:'lowpass'}); },
+  esfarelar(){ for(let i=0;i<6;i++) noise({t:Math.random()*.12,f:500+Math.random()*900,d:.05,v:.08,type:'lowpass'}); tone({f:90,to:50,d:.12,v:.12}); },
   fimDia(){ [1568,1319,1175,1047,880,784].forEach((f,i)=>bell({f,t:i*.14,d:.7,v:.06,ratio:5,idx:.8})); },
-  quebrar(){ noise({f:3000,d:.05,v:.18,type:'highpass'}); tone({f:140,to:45,d:.16,v:.22}); noise({t:.02,f:800,d:.12,v:.07,type:'lowpass'}); },
+  cuspe(){ tone({f:300,to:900,d:.07,v:.14,type:'triangle'}); noise({f:2500,to:5000,d:.06,v:.06,q:2}); tone({f:520,to:180,t:.1,d:.06,v:.07}); },
   comum(o){ const b=o===1?988:1175; tone({f:b,t:.05,d:.06,v:.06,type:'square',lp:4000}); tone({f:b*1.335,t:.11,d:.18,v:.06,type:'square',lp:4000}); },
   raro(o){ const l=o-2, n=5+l*4; for(let i=0;i<n;i++) bell({f:1047*Math.pow(2,ESCALA[(n-i)%9]/12),t:.05+i*.055,d:.6,v:.05,idx:1.2}); tone({f:131*Math.pow(2,l/3),to:262*Math.pow(2,l/3),t:.05,d:.35,v:.1}); },
   venda(){ for(let i=0;i<10;i++){ const t=i*.06+Math.random()*.03; tone({f:1975+Math.random()*300,t,d:.05,v:.045,type:'square',lp:5000}); noise({t,f:7000,d:.03,v:.025,type:'highpass'}); } },
@@ -452,14 +506,13 @@ const SFX = {
 function showOverlay(html){ $('#panel').innerHTML=html; $('#overlay').classList.remove('hidden'); }
 function hideOverlay(){ $('#overlay').classList.add('hidden'); }
 function showHelp(){
-  showOverlay(`<h2>A MINA</h2><ul>
-    <li><b>Arraste</b>: as rochas deslizam até bater. Duas iguais se fundem numa rocha melhor (Cascalho, Pedra, Rocha, Rocha densa, Geodo...).</li>
-    <li>Cada arrasto gasta <b>1 de energia</b>. Sem energia, o dia acaba.</li>
-    <li>No <b>fim do dia</b> as rochas quebram e revelam o minério. Rocha melhor tem mais chance de minério bom.</li>
-    <li>Venda, compre melhorias e durma.</li>
-    <li>No fim do dia ${CFG.days}, paga a <b>cota</b>. Pagou: ganha um Geodo. Não pagou: perde o dinheiro e repete a semana, mas mantém as melhorias.</li>
-  </ul><button class="btn b" id="ok">BORA</button>`);
-  $('#ok').onclick=()=>{ localStorage.mina_seen=1; hideOverlay(); };
+  showOverlay(`<h2>A mina das pedrinhas</h2><ul>
+    <li><b>Arraste</b>: as pedrinhas deslizam até bater. Duas iguais viram uma pedrinha maior.</li>
+    <li>Cada arrasto gasta 1 de energia. <b>Sem energia, toda peça nova é um torrão de terra</b>: não junta com nada e custa $${CFG.torraoCusto} no fim do dia.</li>
+    <li>Encerre o dia quando quiser. No fim, cada pedrinha <b>cospe</b> o que tem dentro. Pedrinha maior, achado melhor.</li>
+    <li>Venda, compre melhorias e durma. No dia ${CFG.days} paga a <b>cota</b>. Não pagou? Perde o dinheiro e repete a semana, mas as melhorias ficam.</li>
+  </ul><button class="btn b" id="ok">Bora</button>`);
+  $('#ok').onclick=()=>{ localStorage.mina_seen2=1; hideOverlay(); };
 }
 
 // ===================== ENTRADA =====================
@@ -472,15 +525,15 @@ addEventListener('pointerup',e=>{
   if(Math.max(Math.abs(dx),Math.abs(dy))<22) return;
   if(Math.abs(dx)>Math.abs(dy)) move(Math.sign(dx),0); else move(0,Math.sign(dy));
 });
-$('#btnEnd').onclick = endDay;
-$('#btnSkip').onclick = () => { S.skip = true; };
-$('#btnSell').onclick = sell;
-$('#btnHelp').onclick = showHelp;
-$('#btnSound').onclick = () => { sound=!sound; localStorage.mina_sound=sound?'1':'0'; $('#btnSound').style.opacity=sound?1:.4; };
-$('#btnSound').style.opacity = sound?1:.4;
+$('#btnEnd').onclick=endDay;
+$('#btnSkip').onclick=()=>{ S.skip=true; };
+$('#btnSell').onclick=sell;
+$('#btnHelp').onclick=showHelp;
+$('#btnSound').onclick=()=>{ sound=!sound; localStorage.mina_sound=sound?'1':'0'; $('#btnSound').style.opacity=sound?1:.4; };
+$('#btnSound').style.opacity=sound?1:.4;
 
 newGame();
-if(!localStorage.mina_seen) showHelp();
+if(!localStorage.mina_seen2) showHelp();
 </script>
 </body>
 </html>
