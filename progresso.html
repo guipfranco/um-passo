@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Ptui! · rascunhos de progresso da missão</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0}
+body{background:#2a211b;font-family:'Fredoka',system-ui,sans-serif;color:#5a4636;min-height:100vh}
+.switch{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);z-index:50;display:flex;gap:3px;background:#000c;padding:4px;border-radius:999px;max-width:98vw;overflow-x:auto}
+.switch button{border:0;border-radius:999px;padding:8px 11px;font:600 13px 'Fredoka';background:transparent;color:#ccc;white-space:nowrap}
+.switch button.on{background:#fff;color:#000}
+.view{display:none;flex-direction:column;align-items:center;padding:12px 0 70px;gap:10px}
+.view.on{display:flex}
+.tit{color:#f6ecd9;text-align:center;max-width:370px;padding:0 12px}
+.tit b{font-size:21px;display:block}
+.tit span{font-size:14px;opacity:.85;line-height:1.3;display:block}
+.caixa{position:relative}
+.phone{position:absolute;left:0;top:0;width:390px;height:780px;border-radius:28px;overflow:hidden;transform-origin:top left;box-shadow:0 10px 40px #0009}
+.phone > svg{position:absolute;inset:0}
+.hud{position:absolute;left:10px;right:10px;top:12px;display:flex;gap:8px}
+.pill{flex:1;background:#f3e6cc;border-radius:16px;padding:6px 8px;display:flex;align-items:center;gap:7px;box-shadow:0 3px 0 #0003;min-width:0}
+.pill .ic{flex:none;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;box-shadow:0 2px 0 #0002}
+.pill .ic.fig{background:#f6ecd9;box-shadow:inset 0 0 0 2px #e2cfae}
+.pill .ic svg{width:30px;height:30px;overflow:visible}
+.pill b{display:block;font-size:22px;line-height:1;font-weight:700}
+.pill small{display:block;font-size:11px;color:#a08a74;line-height:1.1;white-space:nowrap}
+.top{position:absolute;left:10px;right:10px;top:70px;display:flex;align-items:center;gap:8px}
+.icon{width:38px;height:38px;border-radius:50%;background:#f3e6cc;box-shadow:0 3px 0 #0003;display:flex;align-items:center;justify-content:center;font-size:18px;color:#7a5a44;flex:none}
+.banner{flex:1;text-align:center;background:#f3e6cce6;border-radius:14px;padding:3px 6px;box-shadow:0 3px 0 #0002}
+.banner b{display:block;font-size:19px;color:#7a5a44;line-height:1.1}
+.banner span{font-size:13px;color:#a08a74}
+.btnEnd{position:absolute;left:50%;top:508px;transform:translateX(-50%);font:700 18px 'Fredoka';border-radius:999px;padding:11px 26px;color:#fff;background:#c0603f;box-shadow:0 5px 0 #92452b;white-space:nowrap}
+.estr i{font-style:normal;color:#d9c7a6;transition:color .3s,transform .3s;display:inline-block}
+.estr i.on{color:#f2b33d;text-shadow:0 1px 0 #c48a1e}
+.estr i.cai{animation:cai .7s ease-in}
+@keyframes cai{30%{transform:translateY(-6px) rotate(-15deg)}100%{transform:translateY(0)}}
+/* B: barra da missão */
+.barraM{position:absolute;left:16px;right:16px;top:116px;height:26px;background:#f3e6cce6;border-radius:13px;box-shadow:0 3px 0 #0002;display:flex;align-items:center;padding:0 4px 0 10px;gap:8px}
+.barraM .trilho{flex:1;height:10px;background:#e2cfae;border-radius:5px;position:relative;overflow:hidden}
+.barraM .trilho i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(#e0806a,#c0694a);border-radius:5px;transition:width .35s}
+.barraM .trilho s{position:absolute;top:0;bottom:0;width:2px;background:#f3e6cc}
+.barraM svg{width:30px;height:30px;overflow:visible;margin-top:-6px}
+.barraM b{font-size:14px;color:#7a5a44;min-width:28px}
+/* C/D: silhuetas */
+.silh{position:absolute;left:0;right:0;top:112px;display:flex;justify-content:center;gap:6px}
+.silh span{width:40px;height:40px;border-radius:50%;background:#f3e6cccc;box-shadow:0 2px 0 #0002;display:flex;align-items:center;justify-content:center}
+.silh svg{width:36px;height:36px;overflow:visible;filter:grayscale(1) brightness(1.25);opacity:.35;transition:all .3s}
+.silh span.ok svg{filter:none;opacity:1;animation:pop .45s}
+@keyframes pop{40%{transform:scale(1.35)}}
+/* D: arrastos com estrelas */
+.arr{flex:1;min-width:0}
+.arr .linha{display:flex;align-items:baseline;justify-content:space-between}
+.arr .tr{position:relative;height:8px;background:#e2cfae;border-radius:4px;margin-top:6px}
+.arr .tr i{position:absolute;left:0;top:0;bottom:0;background:#6aa84f;border-radius:4px;transition:width .35s}
+.arr .tr span{position:absolute;top:-9px;transform:translateX(-50%);font-size:15px;line-height:1}
+/* E: carrinho */
+.carro{position:absolute;left:50%;top:580px;transform:translateX(-50%);width:210px;height:86px}
+.carro .caixa2{position:absolute;inset:14px 0 10px;background:#7a5136;border-radius:12px;box-shadow:inset 0 0 0 5px #8d969d,0 5px 0 #0004;display:flex;align-items:center;justify-content:center;gap:4px}
+.carro .caixa2 span{width:50px;height:50px;border-radius:50%;background:#4a3324;display:flex;align-items:center;justify-content:center}
+.carro .caixa2 svg{width:48px;height:48px;overflow:visible;opacity:0;transform:translateY(-40px);transition:all .45s cubic-bezier(.4,1.6,.6,1)}
+.carro .caixa2 span.ok svg{opacity:1;transform:none}
+.carro .roda{position:absolute;bottom:0;width:22px;height:22px;border-radius:50%;background:#3a2c22;box-shadow:inset 0 0 0 5px #6b7680}
+.cumpriu{position:absolute;left:50%;top:300px;transform:translate(-50%,-50%) scale(0);background:#fff8e6;border-radius:18px;padding:10px 18px;box-shadow:0 6px 0 #0003;text-align:center;transition:transform .3s cubic-bezier(.4,1.6,.6,1);z-index:5}
+.cumpriu.on{transform:translate(-50%,-50%) scale(1)}
+.cumpriu b{display:block;font-size:22px;color:#6aa84f}
+.cumpriu .estr{font-size:34px}
+</style>
+</head>
+<body>
+<div id="views"></div>
+<div class="switch" id="sw"></div>
+<script src="src/svg.js"></script>
+<script>
+const BX=26, BY=150, C=72, G=10, BW=4*C+5*G;
+const X = i => BX+G+i*(C+G), Y = j => BY+G+j*(C+G);
+const LAYOUT = [[1,0,2,0],[0,3,0,1],[2,1,4,0],[0,1,3,2]];
+function rng(s){ return ()=>(s=(s*16807)%2147483647)/2147483647; }
+const f1 = v => v.toFixed(1);
+function speck(r,x,y,w,h,n,cores,min,max){ let s=''; for(let i=0;i<n;i++){ const rx=min+r()*(max-min); s+=`<ellipse cx="${f1(x+r()*w)}" cy="${f1(y+r()*h)}" rx="${f1(rx)}" ry="${f1(rx*(.55+r()*.45))}" fill="${cores[i%cores.length]}"/>`; } return s; }
+function smooth(pts){ const m=(a,b)=>[(a[0]+b[0])/2,(a[1]+b[1])/2]; let d=`M${m(pts[pts.length-1],pts[0]).map(f1).join(' ')}`; for(let i=0;i<pts.length;i++){ const p=pts[i], mm=m(p,pts[(i+1)%pts.length]); d+=` Q${f1(p[0])} ${f1(p[1])} ${f1(mm[0])} ${f1(mm[1])}`; } return d+'Z'; }
+function blobRect(x,y,w,h,r,amp,passo=18){ const pts=[], per=2*(w+h), n=Math.max(8,Math.round(per/passo)); for(let i=0;i<n;i++){ const t=i/n*per; let px,py,nx,ny; if(t<w){px=x+t;py=y;nx=0;ny=-1;} else if(t<w+h){px=x+w;py=y+t-w;nx=1;ny=0;} else if(t<2*w+h){px=x+w-(t-w-h);py=y+h;nx=0;ny=1;} else {px=x;py=y+h-(t-2*w-h);nx=-1;ny=0;} const d=(r()-.5)*2*amp; pts.push([px+nx*d,py+ny*d]); } return smooth(pts); }
+function blob(cx,cy,rx,ry,r,amp,n=10){ const pts=[]; for(let i=0;i<n;i++){ const a=i/n*Math.PI*2, k=1+(r()-.5)*2*amp; pts.push([cx+Math.cos(a)*rx*k, cy+Math.sin(a)*ry*k]); } return smooth(pts); }
+function gruta(id){
+  const r=rng(41); let s=`<rect width="390" height="780" fill="#3a3136"/>`;
+  const chao=blobRect(14,128,362,600,r,8,24);
+  s+=`<clipPath id="ch${id}"><path d="${chao}"/></clipPath><filter id="bo${id}" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="14"/></filter>`;
+  s+=`<path d="${chao}" fill="#d3bc95"/>`+speck(r,20,135,350,580,220,['#c7ae86','#dec9a4','#bba077'],1,3.5);
+  s+=`<g clip-path="url(#ch${id})"><path d="${chao}" fill="none" stroke="#2c2428" stroke-width="70" filter="url(#bo${id})" opacity=".85"/></g>`;
+  for(let j=0;j<4;j++) for(let i=0;i<4;i++){ const x=X(i), y=Y(j); s+=`<path d="${blob(x+36+(r()-.5)*4,y+38+(r()-.5)*4,31+r()*4,27+r()*4,r,.17,8)}" fill="#b39672" opacity=".3"/>`; }
+  LAYOUT.forEach((row,j)=>row.forEach((t,i)=>{ if(t) s+=`<g transform="translate(${X(i)} ${Y(j)}) scale(.72)">${pedraInner(t)}</g>`; }));
+  return s;
+}
+const ico = inner => `<svg viewBox="0 0 100 100">${inner}</svg>`;
+const ROCHA = ico(pedraInner(3));
+const estr = (n,cls='estr') => `<span class="${cls}">${[1,2,3].map(i=>`<i class="${i<=n?'on':''}">★</i>`).join('')}</span>`;
+// exemplo: Forme 3 Rochas em 20 arrastos; ★★★ terminando com 8 ou mais sobrando, ★★ com 4 ou mais
+const TOTAL=20, ALVO=3, LIM3=8, LIM2=4;
+const estrelasAgora = rest => rest>=LIM3 ? 3 : rest>=LIM2 ? 2 : 1;
+const perdeEm = rest => rest>=LIM3 ? rest-LIM3+1 : rest>=LIM2 ? rest-LIM2+1 : null;
+const topo = `<div class="top"><span class="icon">☰</span><div class="banner"><b>Fase 2: Três de uma vez</b><span>Forme 3 Rochas</span></div><span class="icon">♪</span></div><div class="btnEnd">Terminar</div><div class="cumpriu"><b>Missão cumprida!</b><span class="estr fim"></span></div>`;
+
+const VIEWS = [
+  {id:'A', nome:'Contador', desc:'Só números: arrastos que sobram, quantas Rochas faltam e as estrelas que você ainda leva, com quantos arrastos faltam para perder a próxima.',
+    html:`<div class="hud"><div class="pill"><span class="ic" style="background:#6aa84f">⚡</span><div><b class="vArr"></b><small>arrastos</small></div></div>
+      <div class="pill"><span class="ic fig">${ROCHA}</span><div><b class="vMis"></b><small>Rochas</small></div></div>
+      <div class="pill"><div><b class="vEst" style="font-size:20px"></b><small class="vPerde"></small></div></div></div>`},
+  {id:'B', nome:'Barra', desc:'Uma barra de progresso da missão, dividida em partes, com a Rocha na ponta. Os arrastos e as estrelas ficam no painel de cima.',
+    html:`<div class="hud"><div class="pill"><span class="ic" style="background:#6aa84f">⚡</span><div><b class="vArr"></b><small>arrastos</small></div></div>
+      <div class="pill"><div><b class="vEst" style="font-size:20px"></b><small class="vPerde"></small></div></div></div>
+      <div class="barraM"><b class="vMis"></b><div class="trilho"><i class="vBar"></i><s style="left:33.3%"></s><s style="left:66.6%"></s></div>${ROCHA}</div>`},
+  {id:'C', nome:'Silhuetas', desc:'Uma silhueta para cada Rocha que falta. Quando você forma uma, ela ganha cor com um pulinho. Dá para ver sem ler nada.',
+    html:`<div class="hud"><div class="pill"><span class="ic" style="background:#6aa84f">⚡</span><div><b class="vArr"></b><small>arrastos</small></div></div>
+      <div class="pill"><div><b class="vEst" style="font-size:20px"></b><small class="vPerde"></small></div></div></div>
+      <div class="silh">${[0,1,2].map(()=>`<span>${ROCHA}</span>`).join('')}</div>`},
+  {id:'D', nome:'Silhuetas + estrelas', desc:'Minha recomendação. Silhuetas para a missão e, nos arrastos, uma barra que encolhe com as 3 estrelas marcadas: quando a barra passa de uma, ela cai.',
+    html:`<div class="hud"><div class="pill" style="flex:1.6"><span class="ic" style="background:#6aa84f">⚡</span><div class="arr"><div class="linha"><b class="vArr"></b><small>arrastos</small></div>
+      <div class="tr"><i class="vTr"></i><span class="m3" style="left:${LIM3/TOTAL*100}%">★</span><span class="m2" style="left:${LIM2/TOTAL*100}%">★</span><span class="m1" style="left:2%">★</span></div></div></div></div>
+      <div class="silh">${[0,1,2].map(()=>`<span>${ROCHA}</span>`).join('')}</div>`},
+  {id:'E', nome:'Carrinho', desc:'A missão vira parte do cenário: cada Rocha formada pula para dentro de um carrinho embaixo do tabuleiro. Os arrastos e as estrelas ficam em cima.',
+    html:`<div class="hud"><div class="pill"><span class="ic" style="background:#6aa84f">⚡</span><div><b class="vArr"></b><small>arrastos</small></div></div>
+      <div class="pill"><div><b class="vEst" style="font-size:20px"></b><small class="vPerde"></small></div></div></div>
+      <div class="carro"><div class="caixa2">${[0,1,2].map(()=>`<span>${ROCHA}</span>`).join('')}</div><div class="roda" style="left:30px"></div><div class="roda" style="right:30px"></div></div>`},
+];
+document.getElementById('views').innerHTML = VIEWS.map(v=>`<section class="view" id="v${v.id}"><div class="tit"><b>${v.id} · ${v.nome}</b><span>${v.desc}</span></div>
+  <div class="caixa"><div class="phone" id="p${v.id}"><svg viewBox="0 0 390 780" width="390" height="780">${gruta(v.id)}</svg>${v.html}${topo}</div></div></section>`).join('');
+document.getElementById('sw').innerHTML = VIEWS.map(v=>`<button data-v="${v.id}">${v.id} ${v.nome}</button>`).join('');
+
+// animação: a cada passo gasta 1 arrasto; forma uma Rocha nos arrastos 4, 9 e 14 (termina com 6 sobrando: ★★)
+let st={rest:TOTAL, feitas:0, est:3};
+function desenha(){
+  for(const p of document.querySelectorAll('.phone')){
+    const q=s=>p.querySelectorAll(s);
+    q('.vArr').forEach(e=>e.textContent=st.rest);
+    q('.vMis').forEach(e=>e.textContent=`${st.feitas}/${ALVO}`);
+    q('.vBar').forEach(e=>e.style.width=st.feitas/ALVO*100+'%');
+    q('.vTr').forEach(e=>{ e.style.width=st.rest/TOTAL*100+'%'; e.style.background = st.rest>=LIM3?'#6aa84f':st.rest>=LIM2?'#f2b33d':'#c0603f'; });
+    q('.tr .m3').forEach(e=>e.className='m3 '+(st.rest>=LIM3?'':'off')); q('.tr .m2').forEach(e=>e.className='m2 '+(st.rest>=LIM2?'':'off'));
+    q('.tr span').forEach(e=>{ const off=e.classList.contains('off'); e.style.color=off?'#d9c7a6':'#f2b33d'; e.style.textShadow=off?'none':'0 1px 0 #c48a1e'; });
+    q('.vEst').forEach(e=>e.innerHTML=estr(st.est));
+    q('.vPerde').forEach(e=>{ const n=perdeEm(st.rest); e.textContent = st.feitas>=ALVO ? 'missão cumprida' : n ? `perde ★ em ${n}` : 'última estrela'; });
+    q('.silh span, .caixa2 span').forEach((e,i)=>e.classList.toggle('ok', i<st.feitas));
+    q('.cumpriu').forEach(e=>{ e.classList.toggle('on', st.feitas>=ALVO); e.querySelector('.fim').innerHTML=estr(st.est).replace(/<span class="estr">|<\/span>/g,''); });
+  }
+}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function anima(){
+  while(true){
+    st={rest:TOTAL, feitas:0, est:3}; desenha(); await sleep(900);
+    for(let usados=1; usados<=TOTAL && st.feitas<ALVO; usados++){
+      st.rest=TOTAL-usados; const novo=estrelasAgora(st.rest);
+      if(novo<st.est){ st.est=novo; desenha(); document.querySelectorAll('.vEst i:not(.on)').forEach(e=>{ e.classList.remove('cai'); void e.offsetWidth; e.classList.add('cai'); }); }
+      if([4,9,14].includes(usados)) st.feitas++;
+      desenha(); await sleep(420);
+    }
+    await sleep(2600);
+  }
+}
+function mostra(id){ document.querySelectorAll('.view').forEach(e=>e.classList.toggle('on',e.id==='v'+id)); document.querySelectorAll('#sw button').forEach(b=>b.classList.toggle('on',b.dataset.v===id)); location.hash=id; }
+document.querySelectorAll('#sw button').forEach(b=>b.onclick=()=>mostra(b.dataset.v));
+function escala(){ const s=Math.min(1,(innerWidth-16)/390); document.querySelectorAll('.caixa').forEach(c=>{ c.style.width=390*s+'px'; c.style.height=780*s+'px'; c.firstChild.style.transform=`scale(${s})`; }); }
+addEventListener('resize',escala); escala();
+mostra((location.hash.slice(1)||'D').toUpperCase());
+if(/parado/.test(location.search)){ st={rest:11, feitas:2, est:2}; desenha(); } else anima();
+</script>
+</body>
+</html>

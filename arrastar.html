@@ -33,7 +33,7 @@ body{background:#2a211b;font-family:'Fredoka',system-ui,sans-serif;color:#f6ecd9
 // p = quanto do arrasto já foi feito (0 a 1); prev = prévia do jogo (r.merges: onde nasce a nova; r.gone: a que some).
 const P = `const d=Math.max(Math.abs(dx),Math.abs(dy)), p=Math.max(0,Math.min(1,(d-PV_MIN)/(cellPx()*.9)));`;
 const VS = [
-  {id:'atual', nome:'Atual', desc:'O anel amarelo em volta das duas pedrinhas.', css:'', js:''},
+  {id:'atual', nome:'No jogo', desc:'Como está no jogo agora (Encosto).', css:'', js:''},
   {id:'A', nome:'Encosto', desc:'As duas se espicham uma na direção da outra, como quem vai dar um abraço. Nada em volta delas.',
     css:`.tile.willmerge::before{display:none !important}`,
     js:`efeito=(dx,dy)=>{ if(!prev) return; ${P} const h=prev.dir[0]!==0;

@@ -200,7 +200,6 @@ body.lock{overflow:hidden}
 .dl{position:absolute;left:6px;font-size:11px;font-weight:700;color:#a08a74;transform:translateY(-50%);z-index:0}
 .linkBtn{border:0;background:none;color:#a08a74;font:600 13px 'Fredoka';text-decoration:underline;cursor:pointer}
 .panel a{color:#c0603f}
-.tile.willmerge::before{content:'';position:absolute;inset:6px;border-radius:50%;box-shadow:0 0 0 3px #ffd98a,0 0 16px 4px #ffd98acc;pointer-events:none;z-index:2}
 .labRow{display:flex;gap:8px}
 .labRow .card{justify-content:center;text-align:center}
 .card.labOp.sel{background:#fff3cf;box-shadow:0 4px 0 #c48a1e,0 0 0 3px #f2b33d}
@@ -2417,7 +2416,7 @@ let touch=null, prev=null;
 const PV_MIN=10, CONFIRMA=22;
 const cellPx = () => board.querySelector('.slot')?.getBoundingClientRect().width || 80;
 function clearPreview(voltar){
-  document.querySelectorAll('.tile.willmerge').forEach(el=>el.classList.remove('willmerge'));
+  document.querySelectorAll('.tile.willmerge').forEach(el=>{ el.classList.remove('willmerge'); el.firstChild.style.transform=''; });
   if(S && S.tiles) for(const t of S.tiles){ const el=els.get(t.id); if(!el) continue; el.style.transition=''; if(voltar) el.style.transform=pos(t.x,t.y); }
   prev=null;
 }
@@ -2443,6 +2442,10 @@ function previewDrag(dx,dy){
     el.style.transition='none';
     el.style.transform=`${pos(t.x,t.y)} translate(calc(${ox}*(var(--cell) + var(--gap))), calc(${oy}*(var(--cell) + var(--gap))))`;
   }
+  // encosto: quanto mais arrasta, mais as duas se espicham na direção do arrasto
+  const h=prev.dir[0]!==0;
+  for(const o of [...prev.r.merges,...prev.r.gone]){ const f=els.get(o.id)?.firstChild; if(!f) continue;
+    f.style.transformOrigin='50% 75%'; f.style.transform = h ? `scale(${1+.16*p},${1-.1*p})` : `scale(${1-.1*p},${1+.16*p})`; }
 }
 addEventListener('pointerdown',e=>{ if(overlayOpen()||e.target.closest('button')||!$('#scrGame').classList.contains('on')) return;
   if(document.body.classList.contains('rola') && !e.target.closest('#stage')) return; // fora do tabuleiro, o dedo rola a página
