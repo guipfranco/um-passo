@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#f6ecd9">
-<title>Mina (protótipo)</title>
+<title>Mina das Pedrinhas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
@@ -112,29 +112,96 @@ html,body{min-height:100%;background:#f6ecd9;color:#5a4636;font-family:'Fredoka'
 .card:disabled{opacity:.45}
 .novo{font-size:13px;font-weight:700;color:#fff;background:#6aa84f;border-radius:999px;padding:3px 10px;align-self:center}
 .tile.line::after{content:'';position:absolute;inset:-3px;border-radius:22px;border:3px solid #6aa84f;pointer-events:none}
+
+#app{display:flex;flex-direction:column;align-items:center;gap:12px;padding:12px 8px;min-height:100vh}
+#shell{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%}
+#shell.hidden{display:none}
+.screen{display:none;flex-direction:column;align-items:center;gap:12px;width:100%;animation:fadein .25s}
+.screen.on{display:flex}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}}
+#scrMenu{min-height:92vh;justify-content:center;gap:14px}
+.logo{display:flex;align-items:flex-end;justify-content:center;height:130px}
+.logo svg{overflow:visible;animation:breathe 3s ease-in-out infinite;transform-origin:50% 90%}
+.logo svg:nth-child(2){animation-delay:-1s}.logo svg:nth-child(3){animation-delay:-2s}.logo svg:nth-child(4){animation-delay:-.5s}
+.title{font-size:46px;line-height:.92;text-align:center;color:#7a5a44;text-shadow:0 4px 0 #d2b98e;font-weight:700}
+.tagline{color:#a08a74;font-size:15px;text-align:center}
+.menuBtns{display:flex;flex-direction:column;gap:14px;width:min(80vw,300px);margin-top:8px}
+.btn.big{font-size:20px;padding:14px 22px}
+.btn small{display:block;font-size:12px;font-weight:500;opacity:.85}
+.menuFoot{display:flex;align-items:center;gap:10px;color:#a08a74;font-size:14px;margin-top:6px}
+.mapBody{display:flex;flex-direction:column;gap:4px;position:relative;padding:12px 0 16px;background:var(--andar,#e6d3b0);border-radius:26px;box-shadow:inset 0 4px 0 #0001,0 6px 0 #d2b98e}
+.mapBody::before{content:'';position:absolute;left:50%;top:36px;bottom:36px;border-left:4px dashed #7a5a4440;transform:translateX(-2px)}
+.mrow{position:relative;display:flex;align-items:center;padding:6px 8px;min-height:92px}
+.dlabel{position:absolute;left:12px;top:6px;font-size:12px;font-weight:700;color:#a08a74}
+.nodes{flex:1;display:flex;justify-content:center;gap:12px;z-index:1}
+.node{width:80px;display:flex;flex-direction:column;align-items:center;gap:4px;border:0;background:none;font-family:'Fredoka';padding:0;color:#5a4636;cursor:pointer}
+.node .ne{width:58px;height:58px;border-radius:50%;background:#f6ecd9;box-shadow:0 4px 0 #d2b98e;display:flex;align-items:center;justify-content:center;font-size:28px}
+.node small{font-size:11px;font-weight:600;line-height:1.1;text-align:center}
+.node.today .ne{background:#fff8e8;box-shadow:0 4px 0 #c48a1e,0 0 0 4px #f2b33d;animation:pulse 1.4s infinite}
+@keyframes pulse{50%{box-shadow:0 4px 0 #c48a1e,0 0 0 9px #f2b33d55}}
+.node.past .ne{background:#d8c4a0}
+.node.fut{cursor:default}
+.node.fut .ne{background:#00000012;box-shadow:none;color:#a08a74;font-size:20px;width:44px;height:44px}
+.node.fiscal .ne{width:68px;height:68px;font-size:34px;background:#f3d0c4;box-shadow:0 4px 0 #c0603f}
+.node.fiscal.today .ne{box-shadow:0 4px 0 #c0603f,0 0 0 4px #c0603f}
+.node.fiscal.fut .ne{width:68px;height:68px;opacity:.7}
+.mrow.done{opacity:.7}
+.andarNome{font-size:22px;font-weight:700;color:#c48a1e;margin-top:-6px}
+.bigEm{font-size:50px;text-align:center;line-height:1}
+.statsBox{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.statsBox div{background:#efe1c6;border-radius:14px;padding:8px;text-align:center}
+.statsBox b{display:block;font-size:20px}.statsBox span{font-size:12px;color:#a08a74}
+.panel > .btn{width:100%}
+#coach{position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:60;width:min(94vw,380px);background:#5a4636;color:#fff;border-radius:18px;padding:10px 12px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 0 #3a2c22;animation:fadein .25s}
+#coach.hidden{display:none}
+#coach p{font-size:15px;line-height:1.3;margin:0}
+#coach b{color:#ffd98a}
+#coach .btn{margin-top:8px;padding:7px 18px;font-size:15px}
+#coach .cav{flex:none;width:54px;height:54px}
+#coach .cav svg{width:100%;height:100%;overflow:visible}
 </style>
 </head>
 <body>
 <div id="app">
-  <div class="hud wide">
-    <div class="pill"><span class="ic en" id="enIc">⚡</span><div><b id="hEnergy"></b><small id="hEnergyMax"></small></div></div>
-    <div class="pill"><span class="ic co">$</span><div><b id="hMoney"></b><small>dinheiro</small></div></div>
-    <div class="pill"><span class="ic qu">!</span><div><b id="hQuota"></b><small id="hQuotaDay"></small></div></div>
+  <section id="scrMenu" class="screen on">
+    <div class="logo" id="logo"></div>
+    <h1 class="title">Mina das<br>Pedrinhas</h1>
+    <p class="tagline">junte, canse e veja o que elas cospem</p>
+    <div class="menuBtns">
+      <button class="btn b big" id="mContinue">Continuar</button>
+      <button class="btn big" id="mNew">Novo jogo</button>
+      <button class="btn dim big" id="mTut">Como jogar</button>
+    </div>
+    <div class="menuFoot"><span id="mBest"></span><button class="icon sndBtn" id="mSound">♪</button></div>
+  </section>
+
+  <div id="shell" class="hidden">
+    <div class="hud wide">
+      <div class="pill"><span class="ic en" id="enIc">⚡</span><div><b id="hEnergy"></b><small id="hEnergyMax"></small></div></div>
+      <div class="pill"><span class="ic co">$</span><div><b id="hMoney"></b><small>dinheiro</small></div></div>
+      <div class="pill"><span class="ic qu">!</span><div><b id="hQuota"></b><small id="hQuotaDay"></small></div></div>
+    </div>
+    <div class="top wide"><button class="icon" id="btnPause">☰</button><div class="banner"><div id="bTitle"></div><span id="bSub"></span></div><button class="icon sndBtn" id="btnSound">♪</button></div>
+    <div class="items wide" id="items"></div>
   </div>
-  <div class="top wide"><button class="icon" id="btnHelp">?</button><div class="banner"><div id="bTitle"></div><span id="bSub"></span></div><button class="icon" id="btnSound">♪</button></div>
-  <div class="stage" id="stage"><div id="board"></div></div>
-  <div class="items wide" id="items"></div>
-  <div class="row wide" id="mineRow">
-    <div class="next">próxima<div class="cradle" id="nextMini"></div></div>
-    <button class="btn" id="btnEnd">Encerrar o dia</button>
-  </div>
-  <div class="wide" id="revealRow" style="display:none;flex-direction:column;gap:12px">
-    <div class="total"><span>Total do dia</span><b id="dayTotal">$0</b></div>
-    <div class="calc" id="calc"></div>
-    <div class="row"><button class="btn dim" id="btnSkip" style="flex:1">Pular</button><button class="btn g" id="btnSell" style="flex:2;display:none">Vender</button></div>
-  </div>
+
+  <section id="scrMap" class="screen"><div class="mapBody wide" id="mapBody"></div></section>
+
+  <section id="scrGame" class="screen">
+    <div class="stage" id="stage"><div id="board"></div></div>
+    <div class="row wide" id="mineRow">
+      <div class="next">próxima<div class="cradle" id="nextMini"></div></div>
+      <button class="btn" id="btnEnd">Encerrar o dia</button>
+    </div>
+    <div class="wide" id="revealRow" style="display:none;flex-direction:column;gap:12px">
+      <div class="total"><span>Total do dia</span><b id="dayTotal">$0</b></div>
+      <div class="calc" id="calc"></div>
+      <div class="row"><button class="btn dim" id="btnSkip" style="flex:1">Pular</button><button class="btn g" id="btnSell" style="flex:2;display:none">Vender</button></div>
+    </div>
+  </section>
 </div>
 <div id="overlay" class="hidden"><div class="panel" id="panel"></div></div>
+<div id="coach" class="hidden"><div class="cav" id="coachAv"></div><div><p id="coachText"></p><button class="btn b" id="coachOk">Ok</button></div></div>
 
 <script>
 // ===================== CONFIG =====================
@@ -171,7 +238,7 @@ function lvDesc(id,L){
     cascalheira:[`+$${L} por andar para cada Cascalho no tabuleiro no fim do dia.`],
     pedreira: [`+$${2*L} por andar para cada Pedra no tabuleiro no fim do dia.`],
     rochedo:  [`Rocha e Rocha densa cospem ×${1+L}.`],
-    regua:    [`Fileiras de pedrinhas iguais valem +×${String(.25*L).replace('.',',')} a mais cada.`],
+    regua:    [`Liga as fileiras: 3 pedrinhas iguais seguidas numa linha ou coluna dão +×${String(.25*L).replace('.',',')} no fim do dia; 4 dão +×${String(.5*L).replace('.',',')}.`],
   }[id];
   return D[Math.min(L,D.length)-1];
 }
@@ -294,7 +361,7 @@ const svgOf = inner => `<svg viewBox="0 0 100 100">${inner}</svg>`;
 const $ = s => document.querySelector(s);
 const board = $('#board'), stage = $('#stage');
 const els = new Map();
-let S, nextId = 1, sound = localStorage.mina_sound !== '0';
+let S = null, nextId = 1, sound = localStorage.mina_sound !== '0';
 const rnd = n => Math.floor(Math.random()*n);
 const pick = a => a[rnd(a.length)];
 const shuffle = a => a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
@@ -313,69 +380,141 @@ const tileAt = (x,y) => S.tiles.find(t=>t.x===x&&t.y===y);
 
 for(let y=0;y<N;y++) for(let x=0;x<N;x++){ const c=document.createElement('div'); c.className='slot'; c.style.transform=pos(x,y); board.appendChild(c); }
 
-// ===================== PARTIDA, SEMANA E MAPA =====================
-function newGame(){
-  S = {week:1, day:1, money:0, lv:{}, coroa:0, saved:0, bonus:0, gift:false, tiles:[], walls:[], phase:'map', energy:0, energyMax:0, char:null};
-  chooseChar();
+// ===================== TELAS =====================
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', s.id===id));
+  $('#shell').classList.toggle('hidden', id==='scrMenu');
+  scrollTo(0,0);
 }
+
+function freshState(){
+  return {week:1, day:1, money:0, lv:{}, coroa:0, saved:0, bonus:0, gift:false, tiles:[], walls:[], phase:'map',
+          energy:0, energyMax:0, char:null, hist:{}, todayOpts:null, fails:0, tut:null,
+          stats:{days:0, best:0, maxT:0}};
+}
+
+// ===================== MENU =====================
+function showMenu(){
+  hideCoach(); hideOverlay(); show('scrMenu');
+  const sv = localStorage.mina_save ? JSON.parse(localStorage.mina_save) : null;
+  $('#mContinue').style.display = sv ? '' : 'none';
+  if(sv) $('#mContinue').innerHTML = `Continuar<small>andar ${sv.week} · dia ${sv.day} · $${sv.money}</small>`;
+  const best = +(localStorage.mina_best||0);
+  $('#mBest').textContent = best ? `Recorde: andar ${best} (${ANDARES[(best-1)%ANDARES.length].n})` : '';
+  $('#mNew').innerHTML = localStorage.mina_tut ? 'Novo jogo' : 'Novo jogo<small>começa com o tutorial</small>';
+}
+function newGameClick(){
+  const go = () => { if(!localStorage.mina_tut) startTutorial(); else { S=freshState(); chooseChar(); } };
+  if(localStorage.mina_save){
+    showOverlay(`<h2>Começar de novo?</h2><p>A partida salva será perdida.</p><button class="btn" id="btnYes">Começar de novo</button><button class="btn dim" id="btnNo">Voltar</button>`);
+    $('#btnYes').onclick=()=>{ hideOverlay(); localStorage.removeItem('mina_save'); go(); };
+    $('#btnNo').onclick=hideOverlay;
+  } else go();
+}
+function saveGame(){ if(S && !S.tut){ const {tiles,walls,...rest}=S; localStorage.mina_save=JSON.stringify({...rest,tiles:[],walls:[]}); } }
+function loadGame(){ S=JSON.parse(localStorage.mina_save); applyAndar(); morning(true); }
 
 const CHARS = {
   rola:     {em:'🌀', nome:'Rola',     desc:'Arrastou, tudo desliza até bater, como no 2048.'},
   passinho: {em:'👣', nome:'Passinho', desc:'Arrastou, tudo anda só uma casa, e a pedrinha nova entra pela borda de trás, como no Threes.'},
 };
 function chooseChar(){
-  $('#mineRow').style.display='none'; $('#revealRow').style.display='none'; render(); setBanner('A mina das pedrinhas','');
+  show('scrMenu');
   showOverlay(`<h2>Quem vai minerar?</h2><p>Cada um mexe as pedrinhas de um jeito.</p>
-    <div class="cards">${Object.entries(CHARS).map(([k,c])=>`<button class="card" data-char="${k}"><span class="em">${c.em}</span><div><b>${c.nome}</b><span>${c.desc}</span></div></button>`).join('')}</div>`);
+    <div class="cards">${Object.entries(CHARS).map(([k,c])=>`<button class="card" data-char="${k}"><span class="em">${c.em}</span><div><b>${c.nome}</b><span>${c.desc}</span></div></button>`).join('')}</div>
+    <button class="btn dim" id="btnNo">Voltar</button>`);
   document.querySelectorAll('[data-char]').forEach(b=>b.onclick=()=>{ S.char=b.dataset.char; hideOverlay(); startWeek(); });
+  $('#btnNo').onclick=()=>{ hideOverlay(); showMenu(); };
 }
 
-function startWeek(){
-  S.day = 1;
-  S.fiscal = FISCAIS[(S.week-1)%FISCAIS.length];
+// ===================== SEMANA E MAPA =====================
+function applyAndar(){
   const a = andar();
   board.style.background = a.bd;
   document.querySelectorAll('.slot').forEach(s=>s.style.background=a.sl);
+  document.body.style.setProperty('--andar', a.bd);
+}
+function startWeek(){
+  S.day = 1; S.hist = {}; S.todayOpts = null;
+  S.fiscal = FISCAIS[(S.week-1)%FISCAIS.length];
+  applyAndar();
   morning();
 }
-
 function clearBoard(){ for(const el of els.values()) el.remove(); els.clear(); S.tiles=[]; S.walls=[]; }
 
-function morning(){
+function morning(resume=false){
   clearBoard(); S.phase='map'; S.isFiscal=false;
-  $('#mineRow').style.display='none'; $('#revealRow').style.display='none';
-  setBanner(`Andar ${S.week}: ${andar().n}`, `dia ${S.day} de ${CFG.days}`);
-  render();
-  if(S.day===CFG.days){
-    const f=S.fiscal;
-    showOverlay(`<h2>Dia do fiscal</h2>
-      <p>Hoje é dia de cota: <b style="color:#c0603f">$${CFG.quota(S.week)}</b>. Você tem <b style="color:#c48a1e">$${S.money}</b>.</p>
-      <div class="cards"><div class="card" style="cursor:default"><span class="em">${f.em}</span><div><b>${f.nome}</b><span>${f.desc}</span></div></div></div>
-      <button class="btn" id="btnFiscal">Encarar o fiscal</button>`);
-    $('#btnFiscal').onclick=()=>{ hideOverlay(); S.isFiscal=true; startDay(PATHS.comum); };
+  if(!resume || !S.todayOpts){
+    if(S.day<CFG.days){ const avail=Object.keys(PATHS).filter(k=>PATHS[k].from<=S.week && k!=='comum'); S.todayOpts=['comum',...shuffle(avail).slice(0,2)]; }
+    else S.todayOpts=['fiscal'];
+  }
+  show('scrMap');
+  setBanner(`Andar ${S.week}: ${andar().n}`, S.day===CFG.days ? 'dia do fiscal!' : `dia ${S.day} de ${CFG.days} · escolha o caminho`);
+  render(); renderMap();
+  if(S.tut===6){
+    S.tut=7;
+    coach('Toda manhã você escolhe <b>por onde cavar</b> no mapa: cada caminho muda o dia. No <b>dia 5</b>, o fiscal cobra a cota (lá em cima). Pague para descer ao próximo andar!', 'Bora!', ()=>{ S.tut=null; localStorage.mina_tut=1; saveGame(); });
     return;
   }
-  const avail = Object.keys(PATHS).filter(k=>PATHS[k].from<=S.week && k!=='comum');
-  const opts = ['comum', ...shuffle(avail).slice(0,2)];
-  const novos = S.day===1 ? Object.keys(PATHS).filter(k=>PATHS[k].from===S.week && S.week>1) : [];
-  const fis = S.fiscal;
-  showOverlay(`<h2>${S.day===1?`Andar ${S.week}: ${andar().n}`:`Dia ${S.day}`}</h2>
-    ${S.day===1?`<p>Cota da semana: <b style="color:#c0603f">$${CFG.quota(S.week)}</b> no dia ${CFG.days}. O fiscal desta semana: ${fis.em} <b>${fis.nome.replace('Fiscal ','')}</b> (${fis.desc.toLowerCase()})</p>`:''}
+  saveGame();
+  if(S.day===1 && !resume) weekIntro();
+}
+
+function weekIntro(){
+  const f=S.fiscal, novos=Object.keys(PATHS).filter(k=>PATHS[k].from===S.week && S.week>1);
+  showOverlay(`<h2>Andar ${S.week}</h2><p class="andarNome">${andar().n}</p>
+    <p>Cota da semana: <b style="color:#c0603f">$${CFG.quota(S.week)}</b>, cobrada no dia ${CFG.days}.</p>
+    <div class="cards"><div class="card" style="cursor:default"><span class="em">${f.em}</span><div><b>${f.nome}</b><span>${f.desc}</span></div></div></div>
     ${novos.length?`<span class="novo">Caminho novo: ${novos.map(k=>PATHS[k].nome).join(', ')}</span>`:''}
-    <p>Por onde cavar hoje?</p>
-    <div class="cards">${opts.map(k=>{const p=PATHS[k];return `<button class="card" data-path="${k}"><span class="em">${p.em}</span><div><b>${p.nome}</b><span>${p.desc}</span></div></button>`;}).join('')}</div>`);
-  document.querySelectorAll('[data-path]').forEach(b=>b.onclick=()=>choosePath(b.dataset.path));
+    <button class="btn b" id="btnOk">Ver o mapa</button>`);
+  $('#btnOk').onclick=hideOverlay;
+}
+
+function renderMap(){
+  const rows=[];
+  for(let d=CFG.days; d>=1; d--){
+    let nodes='';
+    if(d===CFG.days){
+      nodes=`<button class="node fiscal ${d===S.day?'today':'fut'}" data-node="fiscal" ${d===S.day?'':'disabled'}><span class="ne">${S.fiscal.em}</span><small>Fiscal</small></button>`;
+    } else if(d<S.day){
+      const p=PATHS[S.hist[d]]; nodes = p ? `<div class="node past"><span class="ne">${p.em}</span><small>${p.nome}</small></div>` : '';
+    } else if(d===S.day){
+      nodes=S.todayOpts.map(k=>`<button class="node today" data-node="${k}"><span class="ne">${PATHS[k].em}</span><small>${PATHS[k].nome}</small></button>`).join('');
+    } else nodes='<div class="node fut"><span class="ne">?</span></div>'.repeat(3);
+    rows.push(`<div class="mrow ${d===S.day?'cur':''} ${d<S.day?'done':''}"><div class="dlabel">dia ${d}</div><div class="nodes">${nodes}</div></div>`);
+  }
+  $('#mapBody').innerHTML=rows.join('');
+  document.querySelectorAll('[data-node]').forEach(b=>b.onclick=()=>nodeInfo(b.dataset.node));
+  setTimeout(()=>$('.mrow.cur')?.scrollIntoView({block:'center',behavior:'smooth'}),50);
+}
+
+function nodeInfo(k){
+  if(S.tut || overlayOpen()) return;
+  if(k==='fiscal'){
+    const f=S.fiscal, q=CFG.quota(S.week);
+    showOverlay(`<h2>Dia do fiscal</h2>
+      <p>Cota: <b style="color:#c0603f">$${q}</b>. Você tem <b style="color:#c48a1e">$${S.money}</b>${S.money>=q?' (já dá!)':`, faltam $${q-S.money}`}.</p>
+      <div class="cards"><div class="card" style="cursor:default"><span class="em">${f.em}</span><div><b>${f.nome}</b><span>${f.desc}</span></div></div></div>
+      <button class="btn" id="btnGo">Encarar o fiscal</button><button class="btn dim" id="btnNo">Voltar</button>`);
+    $('#btnGo').onclick=()=>{ hideOverlay(); S.isFiscal=true; startDay(PATHS.comum); };
+  } else {
+    const p=PATHS[k];
+    showOverlay(`<div class="bigEm">${p.em}</div><h2>${p.nome}</h2><p>${p.desc}</p>
+      <button class="btn b" id="btnGo">${p.mine?'Cavar aqui':'Entrar'}</button><button class="btn dim" id="btnNo">Voltar</button>`);
+    $('#btnGo').onclick=()=>{ hideOverlay(); choosePath(k); };
+  }
+  $('#btnNo').onclick=hideOverlay;
 }
 
 function choosePath(k){
-  hideOverlay(); const p=PATHS[k]; S.path=p;
+  const p=PATHS[k]; S.path=p; S.hist[S.day]=k;
   if(p.mine) return startDay(p);
   if(k==='mercador') return showMerchant();
-  if(k==='fogueira'){ S.bonus+=20; SFX.comprar(); toast('🔥 Você descansou: +20 de energia no próximo dia de mina.', nextDay); }
+  if(k==='fogueira'){ S.bonus+=20; SFX.comprar(); toast('🔥 Você descansou na fogueira: +20 de energia no próximo dia de mina.', nextDay); }
 }
 
 function nextDay(){
-  S.day++;
+  S.day++; S.todayOpts=null;
   if(S.day>CFG.days) return weekEnd();
   morning();
 }
@@ -386,22 +525,27 @@ function toast(text, then){
 }
 
 // ===================== DIA DE MINA =====================
-function startDay(p){
-  clearBoard();
+function startDay(p, tutorial=false){
+  clearBoard(); show('scrGame');
   S.path=p; S.phase='mine'; S.tired=0; S.next=rollSpawn();
   const base = fiscalHoje('apressado') ? 25 : CFG.energy + (p.energy||0);
-  S.energy = base + 8*lvl('folego') + S.saved + S.bonus;
-  S.energyMax = S.energy; S.usedSaved = S.saved+S.bonus; S.saved=0; S.bonus=0;
+  S.energy = tutorial ? 10 : base + 8*lvl('folego') + S.saved + S.bonus;
+  S.energyMax = S.energy; S.usedSaved = tutorial ? 0 : S.saved+S.bonus; S.saved=0; S.bonus=0;
   if(p.narrow){ for(let y=0;y<N;y++) S.walls.push({x:3,y}); for(let x=0;x<3;x++) S.walls.push({x,y:3}); }
   if(p.walls){ const cells=shuffle([...Array(16).keys()].map(i=>({x:i%4,y:i/4|0}))); S.walls.push(...cells.slice(0,p.walls)); }
   S.walls.forEach((w,i)=>w.id='w'+i);
-  for(let i=0;i<(p.clods||0);i++) addTile(0);
-  if(S.gift){ addTile(5); S.gift=false; }
-  addTile(); addTile();
+  if(tutorial){
+    S.tiles.push({id:'t'+(nextId++),x:0,y:1,t:1},{id:'t'+(nextId++),x:3,y:1,t:1}); S.next=1;
+  } else {
+    for(let i=0;i<(p.clods||0);i++) addTile(0);
+    if(S.gift){ addTile(5); S.gift=false; }
+    addTile(); addTile();
+  }
   $('#mineRow').style.display=''; $('#revealRow').style.display='none';
   $('#btnEnd').classList.remove('hot'); resetEnd();
   setBanner(`Andar ${S.week} · dia ${S.day}`, S.isFiscal ? `${S.fiscal.em} ${S.fiscal.nome}` : p.nome + (S.usedSaved?` (+${S.usedSaved} de energia guardada)`:''));
   render();
+  if(tutorial) coach('Arraste o dedo <b>para o lado</b> para juntar as duas pedrinhas iguais. ↔');
 }
 
 function rollSpawn(){ return Math.random() < CFG.pedraChance + .25*lvl('picareta') + (S.path?.pedra||0) ? 2 : 1; }
@@ -417,7 +561,7 @@ function addTile(t, dir){
   S.tiles.push({id:'t'+(nextId++), x:c.x, y:c.y, t});
 }
 
-// ===================== 2048 (com paredes) =====================
+// ===================== MOVIMENTO (2048 ou Threes, com paredes) =====================
 function slideOne(tiles,dx,dy){
   const ts=tiles.map(t=>({...t,m:false}));
   const grid=Array.from({length:N},()=>Array(N).fill(null));
@@ -462,7 +606,8 @@ function slide(tiles,dx,dy){
 const anyMove = () => DIRS.some(([dx,dy])=>slide(S.tiles,dx,dy).moved);
 
 function move(dx,dy){
-  if(S.phase!=='mine' || overlayOpen()) return;
+  if(!S || S.phase!=='mine' || overlayOpen() || coachBlock || !$('#scrGame').classList.contains('on')) return;
+  if(S.tut===1 && dy!==0){ coach('Para o <b>lado</b>! Arraste para a esquerda ou para a direita. ↔'); return; }
   const r=slide(S.tiles,dx,dy);
   if(!r.moved) return;
   for(const g of r.gone){ const el=els.get(g.id); els.delete(g.id); if(el){ el.style.zIndex=0; el.style.transform=pos(g.x,g.y); setTimeout(()=>el.remove(),120); } }
@@ -473,7 +618,7 @@ function move(dx,dy){
   render();
   SFX.arrastar();
   const tops=r.merges.map(o=>o.t).sort((a,b)=>b-a);
-  if(tops.length){ SFX.fundir(tops[0]); if(tops.length>1) setTimeout(()=>SFX.fundir(tops[1]),45); }
+  if(tops.length){ SFX.fundir(tops[0]); if(tops.length>1) setTimeout(()=>SFX.fundir(tops[1]),45); S.stats.maxT=Math.max(S.stats.maxT,tops[0]); }
   if(S.energy<=0) SFX.torraoCai(); else if(S.energy<=5) SFX.cansado();
   for(const o of r.merges) anim(o.id,'pop');
   if(has('coroa')){ const n=r.merges.filter(o=>o.t>=5).length; if(n){ const g=n*CORO[lvl('coroa')]; S.coroa+=g; renderItems(); fire('coroa','+×'+String(+g.toFixed(2)).replace('.',','),true); } }
@@ -481,6 +626,15 @@ function move(dx,dy){
     setBanner(null,`Exausta! Agora só vem torrão`);
     $('#btnEnd').classList.add('hot');
   } else if(tops.length && tops[0]>=4) setBanner(null,`${ROCKS[Math.min(tops[0],7)].n}!`);
+  // tutorial
+  if(S.tut===1 && tops.length){
+    S.tut=2;
+    coach('Juntou! Duas pedrinhas iguais viram <b>uma maior</b>: Cascalho, Pedra, Rocha, Geodo... Quanto maior a pedrinha, melhor o que ela guarda dentro.', 'Entendi', ()=>{
+      S.tut=3; coach('Cada arrasto gasta <b>1 de energia</b> ⚡ (lá em cima). Continue juntando pedrinhas até a energia acabar.');
+    });
+  } else if(S.tut===3 && S.energy<=0){
+    S.tut=4; coach('Acabou a energia! Agora só nasce <b>torrão</b> 😠: ele não junta com nada e custa dinheiro no fim do dia. Toque em <b>Encerrar o dia</b>.');
+  }
   if(!anyMove()){ setBanner(null,'não cabe mais nada'); setTimeout(endDay,450); }
 }
 
@@ -494,7 +648,7 @@ const adjWall = t => DIRS.some(([dx,dy])=>wallAt(t.x+dx,t.y+dy));
 const adjBig = t => DIRS.some(([dx,dy])=>{ const o=tileAt(t.x+dx,t.y+dy); return o && o.t>=3; });
 const fmtMult = m => '×'+(Math.round(m*100)/100).toString().replace('.',',');
 
-// fileiras: 3 ou mais pedrinhas iguais seguidas numa linha ou coluna
+// fileiras (só com a Régua): 3 ou mais pedrinhas iguais seguidas numa linha ou coluna
 function fileiras(){
   const out=[], T=(x,y)=>{ const t=tileAt(x,y); return t&&t.t>0?t:null; };
   for(const horiz of [true,false]) for(let a=0;a<N;a++){
@@ -516,9 +670,10 @@ function showCalc(){
 
 async function endDay(){
   if(S.phase!=='mine') return;
+  if(S.tut===4 || S.tut===3){ S.tut=5; hideCoach(); }
   S.phase='reveal'; S.skip=false; S.gain=0; S.cost=0; S.mult=1; S.shown=0; S.found=[]; S.clods=0;
   const sobra = Math.max(0,S.energy);
-  S.saved = Math.min(CFG.guardaMax, sobra);
+  S.saved = S.tut ? 0 : Math.min(CFG.guardaMax, sobra);
   $('#mineRow').style.display='none'; $('#revealRow').style.display='flex';
   $('#btnSkip').style.display=''; $('#btnSell').style.display='none';
   $('#dayTotal').textContent='$0'; $('#dayTotal').classList.remove('neg'); showCalc();
@@ -579,14 +734,14 @@ async function endDay(){
   for(const [id,v] of bonus){ await sleep(380); S.gain+=v; fire(id,'+$'+v); showCalc(); countTo(Math.round(S.gain*S.mult)-S.cost); }
   // multiplicadores
   if(!fiscalHoje('paoduro')){
-    for(const ln of fileiras()){
+    if(has('regua')) for(const ln of fileiras()){
       await sleep(350);
-      const g=(ln.length>=4?.5:.25)+.25*lvl('regua');
+      const g=(ln.length>=4?.5:.25)*lvl('regua');
       S.mult+=g;
       ln.forEach(t=>els.get(t.id)?.classList.add('line'));
       popup(`Fileira de ${ROCKS[ln[0].t].n}!`, '+'+fmtMult(g), '#6aa84f');
-      if(has('regua')) fire('regua','+'+fmtMult(.25*lvl('regua')),true);
-      SFX.raro(3); showCalc(); countTo(Math.round(S.gain*S.mult)-S.cost);
+      fire('regua','+'+fmtMult(g),true);
+      showCalc(); countTo(Math.round(S.gain*S.mult)-S.cost);
       await sleep(650);
     }
     const mults=[];
@@ -599,14 +754,16 @@ async function endDay(){
   setBanner(`Fim do dia ${S.day}`, S.dayTotal>0 ? `rendeu ${fmt(S.dayTotal)}` : S.dayTotal<0 ? 'a terra deu prejuízo...' : 'dia fraco...');
   $('#btnSkip').style.display='none'; $('#btnSell').style.display='';
   $('#btnSell').textContent = S.dayTotal>=0 ? `Vender ${fmt(S.dayTotal)}` : `Pagar a limpeza (${fmt(S.dayTotal)})`;
+  if(S.tut===5) coach('Cada pedrinha <b>cospe</b> o que tinha dentro: cobre, ferro, prata, ouro, diamante. Pedrinha maior, achado melhor. Toque em <b>Vender</b>.');
 }
 const fmt = v => (v<0?'-$':'$')+Math.abs(v);
 
 function sell(){
-  S.money=Math.max(0,S.money+S.dayTotal); render();
+  S.money=Math.max(0,S.money+S.dayTotal); S.stats.days++; S.stats.best=Math.max(S.stats.best,S.dayTotal); render();
   if(S.dayTotal>0) SFX.venda(); else SFX.esfarelar();
   if(S.isFiscal) return weekEnd();
-  itemPick(S.path.picks||3, nextDay, 'Escolha um item');
+  if(S.tut===5){ S.tut=6; coach('Depois de minerar você leva <b>um item</b>. Itens fazem as pedrinhas renderem muito mais. Escolha um!'); }
+  itemPick(S.path.picks||3, ()=>{ if(S.tut===6) hideCoach(); nextDay(); }, 'Escolha um item');
 }
 
 // ===================== ITENS =====================
@@ -618,22 +775,22 @@ function itemPick(n, then, title){
   const pool = shuffle(ITEMS.filter(i=>lvl(i.id)<CFG.maxNivel)).slice(0,n);
   if(!pool.length){ return then(); }
   showOverlay(`<h2>${title}</h2><div class="cards">${pool.map(i=>`<button class="card" data-pick="${i.id}">${itemCard(i,'',lvl(i.id)+1)}</button>`).join('')}</div>
-    <button class="btn dim" id="btnPass">Pular (+$${pularItem()})</button>`);
+    ${S.tut?'':`<button class="btn dim" id="btnPass">Pular (+$${pularItem()})</button>`}`);
   document.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{ S.lv[b.dataset.pick]=lvl(b.dataset.pick)+1; SFX.comprar(); hideOverlay(); renderItems(); then(); });
-  $('#btnPass').onclick=()=>{ S.money+=pularItem(); hideOverlay(); render(); then(); };
+  if(!S.tut) $('#btnPass').onclick=()=>{ S.money+=pularItem(); hideOverlay(); render(); then(); };
 }
 let shopStock=[];
 function showMerchant(first=true){
   if(first) shopStock = shuffle(ITEMS.filter(i=>lvl(i.id)<CFG.maxNivel)).slice(0,4).map(i=>i.id);
   const stock = shopStock.filter(id=>lvl(id)<CFG.maxNivel).map(item);
-  showOverlay(`<h2>Mercador</h2><p>Você tem <b style="color:#c48a1e">$${S.money}</b>. Cota da semana: <b style="color:#c0603f">$${CFG.quota(S.week)}</b>.</p>
+  showOverlay(`<div class="bigEm">🛒</div><h2>Mercador</h2><p>Você tem <b style="color:#c48a1e">$${S.money}</b>. Cota da semana: <b style="color:#c0603f">$${CFG.quota(S.week)}</b>.</p>
     <div class="cards">${stock.map(i=>`<button class="card" data-buy="${i.id}" ${S.money<precoItem(i,lvl(i.id))?'disabled':''}>${itemCard(i,`<span class="pr">$${precoItem(i,lvl(i.id))}</span>`,lvl(i.id)+1)}</button>`).join('') || '<p>Acabou o estoque.</p>'}</div>
     <button class="btn b" id="btnLeave">Seguir viagem</button>`);
   document.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>{ const i=item(b.dataset.buy), pr=precoItem(i,lvl(i.id)); if(S.money<pr) return; S.money-=pr; S.lv[i.id]=lvl(i.id)+1; SFX.comprar(); render(); renderItems(); showMerchant(false); });
   $('#btnLeave').onclick=()=>{ hideOverlay(); nextDay(); };
 }
 function showItemInfo(id){
-  if(S.phase==='reveal' || overlayOpen()) return;
+  if(S.phase==='reveal' || overlayOpen() || S.tut) return;
   const i=item(id);
   showOverlay(`<div class="cards"><div class="card" style="cursor:default">${itemCard(i,'',lvl(id))}</div></div>${id==='coroa'?`<p>Agora: ${fmtMult(1+S.coroa)}</p>`:''}<button class="btn b" id="btnOk">Ok</button>`);
   $('#btnOk').onclick=hideOverlay;
@@ -645,27 +802,84 @@ function fire(id, text, isMult){
   SFX.item(isMult);
 }
 
-// ===================== SEMANA =====================
+// ===================== FIM DA SEMANA E DA PARTIDA =====================
 function weekEnd(){
   const q=CFG.quota(S.week), paid=S.money>=q;
   if(paid){
-    S.money-=q; SFX.pagou();
-    showOverlay(`<h2 style="color:#6aa84f">Cota paga!</h2><p>Você pagou $${q} e sobrou $${S.money}.</p>
+    S.money-=q; S.fails=0; SFX.pagou();
+    localStorage.mina_best = Math.max(+(localStorage.mina_best||0), S.week+1);
+    showOverlay(`<div class="bigEm">🎉</div><h2 style="color:#6aa84f">Cota paga!</h2><p>Você pagou $${q} e sobrou $${S.money}.</p>
       <p>Prêmio: a próxima semana começa com um <b style="color:#7a59a8">Geodo</b>, e você escolhe um item extra.</p>
-      <p>Próximo andar: <b>${ANDARES[S.week%ANDARES.length].n}</b> · cota <b style="color:#c0603f">$${CFG.quota(S.week+1)}</b></p>
-      <button class="btn b" id="btnWeek">Descer</button>`);
+      <button class="btn b" id="btnWeek">Descer para o andar ${S.week+1}</button>`);
     $('#btnWeek').onclick=()=>{ hideOverlay(); S.week++; S.gift=true; itemPick(4, startWeek, 'Item de presente'); };
   } else {
-    SFX.naoDeu();
-    showOverlay(`<h2 style="color:#c0603f">Não deu...</h2><p>Faltaram $${q-S.money} para a cota de $${q}.</p>
-      <p>Você perde o dinheiro guardado e repete o andar ${S.week}. Os itens continuam com você.</p>
+    S.fails=(S.fails||0)+1; SFX.naoDeu();
+    if(S.fails>=2) return gameOver(q);
+    showOverlay(`<div class="bigEm">😰</div><h2 style="color:#c0603f">Não deu...</h2><p>Faltaram $${q-S.money} para a cota de $${q}.</p>
+      <p>Você perde o dinheiro guardado e repete o andar ${S.week}. <b>Última chance:</b> se falhar de novo, a partida acaba.</p>
       <button class="btn b" id="btnWeek">Tentar de novo</button>`);
     S.money=0;
     $('#btnWeek').onclick=()=>{ hideOverlay(); startWeek(); };
   }
 }
+function gameOver(q){
+  localStorage.removeItem('mina_save');
+  localStorage.mina_best = Math.max(+(localStorage.mina_best||0), S.week);
+  const st=S.stats;
+  showOverlay(`<div class="bigEm">🪦</div><h2>Fim da partida</h2><p>O fiscal não perdoou a segunda cota.</p>
+    <div class="statsBox">
+      <div><b>${S.week}</b><span>andar (${andar().n})</span></div>
+      <div><b>${st.days}</b><span>dias minerados</span></div>
+      <div><b>${ROCKS[Math.min(st.maxT,7)]?.n||'-'}</b><span>maior pedrinha</span></div>
+      <div><b>$${st.best}</b><span>melhor dia</span></div>
+    </div>
+    <p>Recorde: andar ${localStorage.mina_best}</p>
+    <button class="btn b" id="btnMenu">Voltar ao menu</button>`);
+  $('#btnMenu').onclick=()=>{ hideOverlay(); showMenu(); };
+}
 
-// ===================== TELA =====================
+// ===================== TUTORIAL =====================
+let coachBlock=false;
+function coach(html, okLabel, onOk){
+  $('#coachText').innerHTML=html;
+  const b=$('#coachOk');
+  if(okLabel){ b.style.display=''; b.textContent=okLabel; coachBlock=true; b.onclick=()=>{ hideCoach(); onOk&&onOk(); }; }
+  else { b.style.display='none'; coachBlock=false; }
+  $('#coach').classList.remove('hidden');
+}
+function hideCoach(){ $('#coach').classList.add('hidden'); coachBlock=false; }
+function startTutorial(){
+  S=freshState(); S.char='rola'; S.tut=1; S.fiscal=FISCAIS[0]; S.hist={1:'comum'};
+  applyAndar(); startDay(PATHS.comum, true);
+}
+
+// ===================== PAUSA =====================
+function pauseMenu(){
+  if(!S || S.phase==='reveal' || overlayOpen() || S.tut) return;
+  const inDay = S.phase==='mine';
+  showOverlay(`<h2>Pausa</h2>
+    <button class="btn b" id="pCont">Continuar</button>
+    <button class="btn dim" id="pRules">Regras rápidas</button>
+    <button class="btn dim" id="pSound">${sound?'Desligar o som':'Ligar o som'}</button>
+    <button class="btn" id="pExit">Sair para o menu</button>
+    ${inDay?'<p style="font-size:13px">Saindo agora, o dia de hoje recomeça quando você voltar.</p>':''}`);
+  $('#pCont').onclick=hideOverlay;
+  $('#pRules').onclick=quickRules;
+  $('#pSound').onclick=()=>{ toggleSound(); hideOverlay(); pauseMenu(); };
+  $('#pExit').onclick=()=>{ hideOverlay(); showMenu(); };
+}
+function quickRules(){
+  showOverlay(`<h2>Regras rápidas</h2><ul>
+    <li><b>Arraste</b> para mover as pedrinhas. Duas iguais viram uma maior.</li>
+    <li>Cada arrasto gasta 1 de <b>energia</b>. Sem energia, só nasce <b>torrão</b>, que custa no fim do dia. Energia que sobra fica guardada (até ${CFG.guardaMax}).</li>
+    <li>No fim do dia as pedrinhas <b>cospem</b> minério, e os <b>itens</b> somam e multiplicam.</li>
+    <li>Toda manhã, escolha o <b>caminho</b> no mapa. No dia ${CFG.days}, o <b>fiscal</b> cobra a cota. Duas cotas perdidas seguidas encerram a partida.</li>
+  </ul><button class="btn b" id="btnOk">Voltar</button>`);
+  $('#btnOk').onclick=()=>{ hideOverlay(); pauseMenu(); };
+}
+function toggleSound(){ sound=!sound; localStorage.mina_sound=sound?'1':'0'; document.querySelectorAll('.sndBtn').forEach(b=>b.style.opacity=sound?1:.4); }
+
+// ===================== DESENHO =====================
 function lookOf(t){
   if(t.t===0) return [0,0];
   for(const [dx,dy] of DIRS) if(S.tiles.some(o=>o.x===t.x+dx&&o.y===t.y+dy&&o.t===t.t)) return [dx,dy];
@@ -700,13 +914,13 @@ function render(){
       if(el.dataset.key!==key){ el.dataset.key=key; el.firstChild.innerHTML=svgOf(t.t===0?torraoInner():pedraInner(t.t,{look})); }
     }
   }
-  if(S.phase==='mine'){ const on=new Set(fileiras().flat().map(t=>t.id)); for(const t of S.tiles) els.get(t.id)?.classList.toggle('line',on.has(t.id)); }
+  if(S.phase==='mine'){ const on=has('regua')?new Set(fileiras().flat().map(t=>t.id)):new Set(); for(const t of S.tiles) els.get(t.id)?.classList.toggle('line',on.has(t.id)); }
   const q=CFG.quota(S.week);
   $('#hQuota').textContent='$'+q;
   $('#hQuotaDay').textContent=S.day===CFG.days?'cota hoje!':`cota em ${CFG.days-S.day+1} dias`;
   $('#hMoney').textContent='$'+S.money;
-  $('#hEnergy').textContent=S.phase==='map' ? '·' : S.energy;
-  $('#hEnergyMax').textContent=S.phase==='map' ? (S.saved+S.bonus?`+${S.saved+S.bonus} guardada`:'energia') : S.energy>0?`de ${S.energyMax}`:'exausta!';
+  $('#hEnergy').textContent=S.phase==='map' ? (S.saved+S.bonus?'+'+(S.saved+S.bonus):'·') : S.energy;
+  $('#hEnergyMax').textContent=S.phase==='map' ? (S.saved+S.bonus?'guardada':'energia') : S.energy>0?`de ${S.energyMax}`:'exausta!';
   $('#enIc').classList.toggle('zero',S.phase==='mine'&&S.energy<=0);
   const nt=S.energy<=1?0:S.next;
   $('#nextMini').innerHTML=S.phase==='mine'?svgOf(nt===0?torraoInner():pedraInner(nt)):'';
@@ -793,26 +1007,14 @@ const SFX = {
 };
 
 // ===================== UI =====================
-function showOverlay(html){ $('#panel').innerHTML=html; $('#overlay').classList.remove('hidden'); }
-function hideOverlay(){ $('#overlay').classList.add('hidden'); }
-function showHelp(){
-  showOverlay(`<h2>A mina das pedrinhas</h2><ul>
-    <li><b>De manhã</b> escolha por onde cavar. Cada caminho muda o dia.</li>
-    <li><b>Arraste</b>: com o Rola, tudo desliza até bater; com o Passinho, tudo anda uma casa. Duas iguais viram uma maior. Paredes não se mexem.</li>
-    <li><b>Fileira</b>: 3 ou 4 pedrinhas iguais seguidas numa linha ou coluna, no fim do dia, somam multiplicador (contorno verde).</li>
-    <li>Cada arrasto gasta 1 de energia. <b>Exausta, só nasce torrão</b>: não junta com nada e custa $${CFG.torraoCusto} no fim do dia. Energia que sobra fica <b>guardada</b> para o próximo dia (até ${CFG.guardaMax}).</li>
-    <li>No fim do dia cada pedrinha <b>cospe</b> o que tem dentro, e os seus <b>itens</b> somam e multiplicam.</li>
-    <li>Depois de minerar você ganha <b>1 item de 3</b>. Sem limite de itens.</li>
-    <li>No dia ${CFG.days}, o <b>fiscal</b> cobra a cota. Pagou: desce um andar e ganha item. Não pagou: perde o dinheiro e repete o andar.</li>
-  </ul><button class="btn b" id="ok">Bora</button>`);
-  $('#ok').onclick=()=>{ localStorage.mina_seen3=1; hideOverlay(); if(!S.char) chooseChar(); else if(S.phase==='map') morning(); };
-}
+function showOverlay(html){ $('#panel').innerHTML=html; $('#overlay').classList.remove('hidden'); $('#panel').scrollTop=0; }
+function hideOverlay(){ $('#overlay').classList.add('hidden'); $('#panel').innerHTML=''; }
 
 // ===================== ENTRADA =====================
 const KEYS={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],w:[0,-1],s:[0,1],a:[-1,0],d:[1,0]};
 addEventListener('keydown',e=>{ const k=KEYS[e.key.length===1?e.key.toLowerCase():e.key]; if(k){ e.preventDefault(); move(...k); } });
 let touch=null;
-addEventListener('pointerdown',e=>{ if(overlayOpen()||e.target.closest('button')) return; touch={x:e.clientX,y:e.clientY}; });
+addEventListener('pointerdown',e=>{ if(overlayOpen()||e.target.closest('button')||!$('#scrGame').classList.contains('on')) return; touch={x:e.clientX,y:e.clientY}; });
 addEventListener('pointerup',e=>{
   if(!touch) return; const dx=e.clientX-touch.x, dy=e.clientY-touch.y; touch=null;
   if(Math.max(Math.abs(dx),Math.abs(dy))<22) return;
@@ -822,6 +1024,7 @@ addEventListener('pointerup',e=>{
 let endArmed=null;
 function resetEnd(){ clearTimeout(endArmed); endArmed=null; $('#btnEnd').textContent='Encerrar o dia'; $('#btnEnd').classList.remove('g'); }
 $('#btnEnd').onclick=()=>{
+  if(coachBlock) return;
   if(S.energy<=0 || endArmed){ resetEnd(); endDay(); return; }
   $('#btnEnd').textContent=`Confirmar? (sobra ${S.energy}⚡)`;
   $('#btnEnd').classList.add('g');
@@ -829,12 +1032,22 @@ $('#btnEnd').onclick=()=>{
 };
 $('#btnSkip').onclick=()=>{ S.skip=true; };
 $('#btnSell').onclick=sell;
-$('#btnHelp').onclick=showHelp;
-$('#btnSound').onclick=()=>{ sound=!sound; localStorage.mina_sound=sound?'1':'0'; $('#btnSound').style.opacity=sound?1:.4; };
-$('#btnSound').style.opacity=sound?1:.4;
+$('#btnPause').onclick=pauseMenu;
+document.querySelectorAll('.sndBtn').forEach(b=>{ b.onclick=toggleSound; b.style.opacity=sound?1:.4; });
+$('#mContinue').onclick=loadGame;
+$('#mNew').onclick=newGameClick;
+$('#mTut').onclick=()=>{
+  if(localStorage.mina_save){
+    showOverlay(`<h2>Fazer o tutorial?</h2><p>O tutorial começa uma partida nova, e a partida salva será perdida.</p><button class="btn" id="btnYes">Fazer o tutorial</button><button class="btn dim" id="btnNo">Voltar</button>`);
+    $('#btnYes').onclick=()=>{ hideOverlay(); localStorage.removeItem('mina_save'); startTutorial(); };
+    $('#btnNo').onclick=hideOverlay;
+  } else startTutorial();
+};
+// arte do menu e do treinador
+$('#logo').innerHTML = [[1,58],[3,84],[5,120],[2,70]].map(([t,s])=>`<svg viewBox="0 0 100 100" style="width:${s}px;height:${s}px">${pedraInner(t)}</svg>`).join('');
+$('#coachAv').innerHTML = svgOf(pedraInner(3,{face:['happy','big']}));
 
-newGame();
-if(!localStorage.mina_seen3) showHelp();
+showMenu();
 </script>
 </body>
 </html>
