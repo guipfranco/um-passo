@@ -39,7 +39,7 @@ body.lock{overflow:hidden}
 .banner span{display:block;font-size:14px;color:#a08a74;font-weight:500;min-height:17px}
 .icon{flex:none;width:34px;height:34px;border-radius:50%;border:0;background:#efe1c6;color:#7a5a44;font:700 17px 'Fredoka';box-shadow:0 3px 0 #dcc6a0}
 .stage{position:relative}
-#board{position:relative;width:calc(var(--n,4)*var(--cell) + (var(--n,4) + 1)*var(--gap));height:calc(var(--n,4)*var(--cell) + (var(--n,4) + 1)*var(--gap));background:#e6d3b0;border-radius:26px;box-shadow:inset 0 4px 0 #d6bf98,0 6px 0 #d2b98e}
+#board{position:relative;width:calc(var(--w,4)*var(--cell) + (var(--w,4) + 1)*var(--gap));height:calc(var(--h,4)*var(--cell) + (var(--h,4) + 1)*var(--gap));background:#e6d3b0;border-radius:26px;box-shadow:inset 0 4px 0 #d6bf98,0 6px 0 #d2b98e}
 .slot{position:absolute;left:0;top:0;width:var(--cell);height:var(--cell);border-radius:20px;background:#dcc7a2;box-shadow:inset 0 3px 0 #ccb48b}
 .tile{position:absolute;left:0;top:0;width:var(--cell);height:var(--cell);transition:transform .11s ease-out}
 .face{width:100%;height:100%}
@@ -275,7 +275,7 @@ body.lock{overflow:hidden}
     <div class="wide" id="revealRow" style="display:none;flex-direction:column;gap:12px">
       <div class="total"><span>Total do dia</span><b id="dayTotal">$0</b></div>
       <div class="calc" id="calc"></div>
-      <div class="row"><button class="btn dim" id="btnSkip" style="flex:1">Pular</button><button class="btn g" id="btnSell" style="flex:2;display:none">Vender</button></div>
+      <div class="row"><button class="btn dim" id="btnFast" style="flex:1">Rápido</button><button class="btn dim" id="btnSkip" style="flex:1">Pular</button><button class="btn g" id="btnSell" style="flex:2;display:none">Vender</button></div>
     </div>
   </section>
 </div>
@@ -285,7 +285,7 @@ body.lock{overflow:hidden}
 
 <script>
 // ===================== CONFIG =====================
-let N = 4;                    // muda no Salão (5x5)
+let W = 4, H = 4, N = 4;      // largura e altura do tabuleiro (N = maior lado)
 const CFG = {
   energy: 40,                 // arrastos com energia; depois disso só nasce torrão
   torraoCusto: 2,             // cada torrão no tabuleiro no fim do dia custa isso
@@ -408,9 +408,15 @@ const FORMAS = [
   {id:'ilhas',     nome:'Ilhas',         n:7, mapa:['...####','...####','....###','###.###','###....','####...','####...'], muretas:[]},
   {id:'rio',       nome:'Rio',           n:6, mapa:['...###','....##','#....#','##....','###...','####..'], muretas:[]},
   {id:'te',        nome:'T',             n:6, mapa:['......','......','##..##','##..##','##..##','##..##'], muretas:[['v',2,3],['v',2,5]]},
+  {id:'masmorra',  nome:'Masmorra',      mapa:['......','......','......','##.###','##.###','.....#','.....#','.....#','###.##','###.##','......','......'], muretas:[]},
+  {id:'serpente',  nome:'Serpente',      mapa:['.....','.....','###..','###..','.....','.....','..###','..###','.....','.....'], muretas:[]},
+  {id:'torre',     nome:'Torre',         mapa:['...','...','...','...','...','...','...','...','...','...','...','...'], muretas:[['h',0,3],['h',2,7]]},
   {id:'janela',    nome:'Janela',        n:6, mapa:['......','.#..#.','......','......','.#..#.','......'], muretas:[['v',2,0],['v',2,5],['h',0,2],['h',5,2]]},
 ];
+const fw = f => f.mapa[0].length, fh = f => f.mapa.length;
 const formasTodas = () => [...FORMAS, ...JSON.parse(localStorage.mina_formas||'[]')];
+// no jogo, só formatos que cabem bem na tela; os longos (masmorras) ficam no laboratório
+const formasJogo = () => formasTodas().filter(f=>fw(f)<=8 && fh(f)<=8);
 const acharForma = id => formasTodas().find(f=>f.id===id);
 
 // lojinha: melhorias para sempre e coisas para o próximo dia (preço base no andar 1)
@@ -601,7 +607,7 @@ let S = null, nextId = 1, sound = localStorage.mina_sound !== '0';
 const rnd = n => Math.floor(Math.random()*n);
 const pick = a => a[rnd(a.length)];
 const shuffle = a => a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
-const inside = (x,y) => x>=0 && y>=0 && x<N && y<N;
+const inside = (x,y) => x>=0 && y>=0 && x<W && y<H;
 const pos = (x,y) => `translate(calc(${x}*(var(--cell) + var(--gap)) + var(--gap)), calc(${y}*(var(--cell) + var(--gap)) + var(--gap)))`;
 const overlayOpen = () => !$('#overlay').classList.contains('hidden');
 const sleep = ms => new Promise(r=>setTimeout(r, S.skip ? 0 : ms));
@@ -618,11 +624,14 @@ const edgeBetween = (ax,ay,bx,by) => (S.edges||[]).some(e => ay===by && e.d==='v
                                                     || ax===bx && e.d==='h' && e.x===ax && e.y===Math.min(ay,by) && Math.abs(ay-by)===1);
 
 // tabuleiro de tamanho variável (4x4 normal, 5x5 no Salão)
-function setupBoard(n){
-  N=n; board.querySelectorAll('.slot').forEach(e=>e.remove());
-  board.style.setProperty('--n', n);
-  if(n===4) board.style.removeProperty('--cell'); else board.style.setProperty('--cell', `min(${Math.floor(80/n)}vw, ${Math.floor(336/n)}px)`);
-  for(let y=0;y<n;y++) for(let x=0;x<n;x++){ const c=document.createElement('div'); c.className='slot'; c.dataset.x=x; c.dataset.y=y; c.style.transform=pos(x,y); if(S) c.style.background=andar().sl; board.prepend(c); }
+function setupBoard(w,h=w){
+  W=w; H=h; N=Math.max(w,h); board.querySelectorAll('.slot').forEach(e=>e.remove());
+  // casa do maior tamanho que caiba na largura e em ~60% da altura da tela
+  const vw=Math.min(innerWidth,440)-20, vh=Math.max(300, innerHeight*.6);
+  const cel=Math.floor(Math.min(84, vw/(w*1.11+.11), vh/(h*1.11+.11)));
+  board.style.setProperty('--w', w); board.style.setProperty('--h', h);
+  board.style.setProperty('--cell', cel+'px'); board.style.setProperty('--gap', Math.max(2,Math.round(cel*.11))+'px');
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const c=document.createElement('div'); c.className='slot'; c.dataset.x=x; c.dataset.y=y; c.style.transform=pos(x,y); if(S) c.style.background=andar().sl; board.prepend(c); }
 }
 setupBoard(4);
 // cores: 0 roxa, 1 verde, 2 mista (junta com as duas)
@@ -774,7 +783,7 @@ function gerarMapa(){
     for(let l=0;l<LANES-1;l++) if(Math.random()<.38) e.push(Math.random()<.5?[l,l+1]:[l+1,l]);
     liga.push(e);
   }
-  const forma = tipos.map(row=>row.map(k=>k==='caverna' ? pick(formasTodas()).id : null));
+  const forma = tipos.map(row=>row.map(k=>k==='caverna' ? pick(formasJogo()).id : null));
   return {tipos, liga, forma};
 }
 function opcoesHoje(){
@@ -888,9 +897,9 @@ function startDay(p, tutorial=false){
   const base = fiscalHoje('apressado') ? 25 : CFG.energy + (p.energy||0);
   const am = S.amanha||{}; S.amanha={}; S.pa = am.pa ? 3 : 0;
   S.semEnergia = !!p.semEnergia;
-  const forma = p.forma || (p.caverna ? pick(formasTodas()) : null);
+  const forma = p.forma || (p.caverna ? pick(formasJogo()) : null);
   S.forma = forma;
-  setupBoard(forma ? forma.n : (p.n||4));
+  setupBoard(forma ? fw(forma) : (p.w||p.n||4), forma ? fh(forma) : (p.h||p.n||4));
   if(S.semEnergia){ S.energy=999; S.energyMax=999; S.usedSaved=0; if(am.cafe) S.bonus+=10; }
   else {
     S.energy = tutorial ? 10 : base + 5*(S.up.folego||0) + S.saved + S.bonus + (am.cafe?10:0);
@@ -903,10 +912,10 @@ function startDay(p, tutorial=false){
     forma.mapa.forEach((row,y)=>[...row].forEach((ch,x)=>{ if(ch==='#') S.walls.push({x,y,v:true}); else if(ch==='B') S.walls.push({x,y}); }));
     S.edges = (forma.muretas||[]).map(([d,x,y])=>({d,x,y}));
   }
-  if(p.walls){ const cells=shuffle([...Array(N*N).keys()].map(i=>({x:i%N,y:i/N|0})).filter(c=>!wallAt(c.x,c.y))); S.walls.push(...cells.slice(0,p.walls)); }
+  if(p.walls){ const cells=shuffle([...Array(W*H).keys()].map(i=>({x:i%W,y:i/W|0})).filter(c=>!wallAt(c.x,c.y))); S.walls.push(...cells.slice(0,p.walls)); }
   S.walls.forEach((w,i)=>w.id='w'+i);
   if(p.edges){
-    const all=[]; for(let y=0;y<N;y++) for(let x=0;x<N-1;x++) all.push({d:'v',x,y}); for(let y=0;y<N-1;y++) for(let x=0;x<N;x++) all.push({d:'h',x,y});
+    const all=[]; for(let y=0;y<H;y++) for(let x=0;x<W-1;x++) all.push({d:'v',x,y}); for(let y=0;y<H-1;y++) for(let x=0;x<W;x++) all.push({d:'h',x,y});
     S.edges = [...S.edges, ...shuffle(all.filter(e=>!wallAt(e.x,e.y) && !(e.d==='v'?wallAt(e.x+1,e.y):wallAt(e.x,e.y+1)) && !edgeBetween(e.x,e.y,e.d==='v'?e.x+1:e.x,e.d==='v'?e.y:e.y+1))).slice(0,p.edges)];
   }
   S.edges.forEach((e,i)=>e.id='e'+i);
@@ -927,10 +936,10 @@ function startDay(p, tutorial=false){
 }
 
 function rollSpawn(){ return Math.random() < CFG.pedraChance + .12*(S.up?.picareta||0) + (S.path?.pedra||0) ? 2 : 1; }
-function emptyCells(){ const out=[]; for(let y=0;y<N;y++) for(let x=0;x<N;x++) if(!tileAt(x,y) && !wallAt(x,y)) out.push({x,y}); return out; }
+function emptyCells(){ const out=[]; for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(!tileAt(x,y) && !wallAt(x,y)) out.push({x,y}); return out; }
 function addTile(t, dir){
   let free=emptyCells(); if(!free.length) return;
-  if(dir && S.char==='passinho'){ const [dx,dy]=dir; const e=free.filter(c=>dx===1?c.x===0:dx===-1?c.x===N-1:dy===1?c.y===0:c.y===N-1); if(e.length) free=e; }
+  if(dir && S.char==='passinho'){ const [dx,dy]=dir; const e=free.filter(c=>dx===1?c.x===0:dx===-1?c.x===W-1:dy===1?c.y===0:c.y===H-1); if(e.length) free=e; }
   const c=pick(free);
   if(t===undefined){
     if(S.energy<=0 || (S.path?.torrao && Math.random()<S.path.torrao)) t=0;   // exausta (ou avalanche): torrão
@@ -946,11 +955,11 @@ function addTile(t, dir){
 // ===================== MOVIMENTO (2048 ou Threes, com paredes) =====================
 function slideOne(tiles,dx,dy){
   const ts=tiles.map(t=>({...t,m:false}));
-  const grid=Array.from({length:N},()=>Array(N).fill(null));
+  const grid=Array.from({length:H},()=>Array(W).fill(null));
   for(const w of S.walls) grid[w.y][w.x]={wall:true};
   for(const t of ts) grid[t.y][t.x]=t;
-  const idx=[...Array(N).keys()];
-  const xs=dx===1?[...idx].reverse():idx, ys=dy===1?[...idx].reverse():idx;
+  const ix=[...Array(W).keys()], iy=[...Array(H).keys()];
+  const xs=dx===1?[...ix].reverse():ix, ys=dy===1?[...iy].reverse():iy;
   let moved=false; const merges=[], gone=[], breaks=[];
   for(const y of ys) for(const x of xs){
     const t=grid[y][x]; if(!t||t.wall) continue;
@@ -968,11 +977,11 @@ function slideOne(tiles,dx,dy){
 function slide(tiles,dx,dy){
   if(S.char==='passinho') return slideOne(tiles,dx,dy);
   const ts=tiles.map(t=>({...t,m:false}));
-  const grid=Array.from({length:N},()=>Array(N).fill(null));
+  const grid=Array.from({length:H},()=>Array(W).fill(null));
   for(const w of S.walls) grid[w.y][w.x]={wall:true};
   for(const t of ts) grid[t.y][t.x]=t;
-  const idx=[...Array(N).keys()];
-  const xs=dx===1?[...idx].reverse():idx, ys=dy===1?[...idx].reverse():idx;
+  const ix=[...Array(W).keys()], iy=[...Array(H).keys()];
+  const xs=dx===1?[...ix].reverse():ix, ys=dy===1?[...iy].reverse():iy;
   let moved=false; const merges=[], gone=[], breaks=[];
   for(const y of ys) for(const x of xs){
     const t=grid[y][x]; if(!t||t.wall) continue;
@@ -1093,7 +1102,7 @@ function usarFerramenta(cx,cy){
   if(id==='picao'){
     if(w && !w.v){ S.walls=tira(S.walls,w); gasta(id); }
     else {
-      const r=board.getBoundingClientRect(), cel=cellPx(), gap=(r.width-N*cel)/(N+1);
+      const r=board.getBoundingClientRect(), cel=cellPx(), gap=(r.width-W*cel)/(W+1);
       const fx=(cx-r.left-gap/2)/(cel+gap)-x, fy=(cy-r.top-gap/2)/(cel+gap)-y;
       const lados=[[fx,'v',x-1,y],[1-fx,'v',x,y],[fy,'h',x,y-1],[1-fy,'h',x,y]].sort((a,b)=>a[0]-b[0]);
       const e=lados.map(([,d,ex,ey])=>S.edges.find(q=>q.d===d&&q.x===ex&&q.y===ey)).find(Boolean);
@@ -1125,10 +1134,10 @@ const fmtMult = m => '×'+(Math.round(m*100)/100).toString().replace('.',',');
 // fileiras (só com a Régua): 3 ou mais pedrinhas iguais seguidas numa linha ou coluna
 function fileiras(){
   const out=[], T=(x,y)=>{ const t=tileAt(x,y); return t&&t.t>0?t:null; };
-  for(const horiz of [true,false]) for(let a=0;a<N;a++){
-    let run=[];
-    for(let b=0;b<=N;b++){
-      const t = b<N ? (horiz?T(b,a):T(a,b)) : null;
+  for(const horiz of [true,false]) for(let a=0;a<(horiz?H:W);a++){
+    let run=[]; const L=horiz?W:H;
+    for(let b=0;b<=L;b++){
+      const t = b<L ? (horiz?T(b,a):T(a,b)) : null;
       if(t && run.length && run[0].t===t.t) run.push(t);
       else { if(run.length>=3) out.push(run); run = t?[t]:[]; }
     }
@@ -1147,6 +1156,7 @@ async function endDay(){
   if(S.tut===4 || S.tut===3){ S.tut=5; hideCoach(); }
   $('#btnAssovio').style.display='none';
   S.ferrAtiva=null; S.undoSnap=null;
+  S.turbo=false; $('#btnFast').style.display='';
   S.phase='reveal'; S.skip=false; S.gain=S.extra||0; S.cost=0; S.mult=1; S.shown=0; S.found=[]; S.clods=0;
   const sobra = Math.max(0,S.energy);
   if(!S.semEnergia) S.saved = S.tut ? 0 : Math.min(CFG.guardaMax, sobra);
@@ -1160,23 +1170,25 @@ async function endDay(){
   const maior = [...S.tiles].filter(t=>t.t>0).sort((a,b)=>b.t-a.t)[0];
   let cuspiram=0;
   const order=[...S.tiles].sort((a,b)=>a.t-b.t);
+  const vel = Math.max(.2, Math.min(1, 10/Math.max(1,order.length)));
+  const sl = ms => sleep(ms*vel*(S.turbo?.25:1));
   for(const t of order){
     const face=els.get(t.id)?.firstChild; if(!face) continue;
     face.classList.remove('idle');
-    if(S.path.picareta && t.t>0){ face.classList.add('crumble'); tag(t,'nada','zero'); await sleep(90); continue; }
+    if(S.path.picareta && t.t>0){ face.classList.add('crumble'); tag(t,'nada','zero'); await sl(90); continue; }
     if(t.t===0){
-      face.classList.add('wob'); await sleep(200);
+      face.classList.add('wob'); await sl(200);
       face.classList.remove('wob'); face.classList.add('crumble'); SFX.esfarelar(); S.clods++;
       if(has('adubo') && adjBig(t)){ const v=lvl('adubo')*S.week; S.gain+=v; tag(t,'+$'+v,''); fire('adubo','+$'+v); }
       else if(!custo){ }
       else if(S.pa>0){ S.pa--; tag(t,'pá','zero'); }
       else { S.cost+=custo; tag(t,`-$${custo}`,'neg'); }
-      showCalc(); countTo(Math.round(S.gain*S.mult)-S.cost); await sleep(220);
+      showCalc(); countTo(Math.round(S.gain*S.mult)-S.cost); await sl(220);
       continue;
     }
     face.innerHTML=svgOf(pedraInner(t.t,{face:['squeeze','puff'],blushBig:true}));
     face.classList.add('wob');
-    await sleep(t.t>=5?850:t.t>=3?420:240);
+    await sl(t.t>=5?850:t.t>=3?420:240);
     face.classList.remove('wob');
     let nivel=t.t;
     if(has('eco') && adjWall(t)){ nivel+=lvl('eco'); fire('eco','+'+lvl('eco')+' nível'); }
@@ -1199,8 +1211,8 @@ async function endDay(){
       if(o>=1 && o<=3) SFX.comum(o>=3?2:1);
       if(o>=4){
         shake(Math.min(3,o-3)); sparks(t, ore.c); popup(ore.n.toUpperCase()+'!', '+$'+val, ore.c); SFX.raro(Math.min(6,o-1));
-        await sleep(o>=5?1000:650);
-      } else await sleep(160);
+        await sl(o>=5?1000:650);
+      } else await sl(160);
     }
   }
   // bônus do equipamento, um de cada vez
@@ -1212,28 +1224,28 @@ async function endDay(){
     if(n) bonus.push(['musgo', 2*n*lvl('musgo')*S.week]); }
   if(has('cascalheira')){ const n=S.tiles.filter(t=>t.t===1).length; if(n) bonus.push(['cascalheira', n*lvl('cascalheira')*S.week]); }
   if(has('pedreira')){ const n=S.tiles.filter(t=>t.t===2).length; if(n) bonus.push(['pedreira', 2*n*lvl('pedreira')*S.week]); }
-  for(const [id,v] of bonus){ await sleep(380); S.gain+=v; fire(id,'+$'+v); showCalc(); countTo(Math.round(S.gain*S.mult)-S.cost); }
+  for(const [id,v] of bonus){ await sl(380); S.gain+=v; fire(id,'+$'+v); showCalc(); countTo(Math.round(S.gain*S.mult)-S.cost); }
   // multiplicadores
   if(!fiscalHoje('paoduro')){
     if(has('regua')) for(const ln of fileiras()){
-      await sleep(350);
+      await sl(350);
       const g=(ln.length>=4?.5:.25)*lvl('regua');
       S.mult+=g;
       ln.forEach(t=>els.get(t.id)?.classList.add('line'));
       popup(`Fileira de ${ROCKS[ln[0].t].n}!`, '+'+fmtMult(g), '#6aa84f');
       fire('regua','+'+fmtMult(g),true);
       showCalc(); countTo(Math.round(S.gain*S.mult)-S.cost);
-      await sleep(650);
+      await sl(650);
     }
     const mults=[];
     if(S.path.narrow) mults.push([null,2]);
     if(has('coroa') && S.coroa) mults.push(['coroa', 1+S.coroa]);
-    for(const [id,m] of mults){ await sleep(450); S.mult*=m; if(id) fire(id,fmtMult(m),true); else popup('×2','galeria estreita','#7a59a8'); SFX.raro(3); showCalc(); countTo(Math.round(S.gain*S.mult)-S.cost); }
+    for(const [id,m] of mults){ await sl(450); S.mult*=m; if(id) fire(id,fmtMult(m),true); else popup('×2','galeria estreita','#7a59a8'); SFX.raro(3); showCalc(); countTo(Math.round(S.gain*S.mult)-S.cost); }
   }
   S.dayTotal = Math.round(S.gain*S.mult) - S.cost;
   S.skip=true; countTo(S.dayTotal); S.skip=false;
   setBanner(`Fim do dia ${S.day}`, S.dayTotal>0 ? `rendeu ${fmt(S.dayTotal)}` : S.dayTotal<0 ? 'a terra deu prejuízo...' : 'dia fraco...');
-  $('#btnSkip').style.display='none'; $('#btnSell').style.display='';
+  $('#btnSkip').style.display='none'; $('#btnFast').style.display='none'; $('#btnSell').style.display='';
   $('#btnSell').textContent = S.dayTotal>=0 ? `Vender ${fmt(S.dayTotal)}` : `Pagar a limpeza (${fmt(S.dayTotal)})`;
   if(S.tut===5) coach('<b>Ptui!</b> Pedrinha cospe minério, torrão custa.', 'Legal!', ()=>{
     coach('Toque em <b>Vender</b> para embolsar!', null, null, '#revealRow');
@@ -1357,25 +1369,27 @@ function gameOver(q){
 
 // desenho pequeno de um formato (casas, buracos, blocos e muretas)
 function formaSvg(f, px=120){
-  const n=f.n, u=100/n; let g='';
+  const w=fw(f), h=fh(f), u=100/Math.max(w,h), ox=(100-w*u)/2, oy=(100-h*u)/2; let g='';
   f.mapa.forEach((row,y)=>[...row].forEach((ch,x)=>{
     if(ch==='#') return;
-    g+=`<rect x="${x*u+u*.08}" y="${y*u+u*.08}" width="${u*.84}" height="${u*.84}" rx="${u*.2}" fill="${ch==='B'?'#6b625a':'#dcc7a2'}" stroke="#2e2219" stroke-width="${ch==='B'?1.4:0}"/>`;
+    g+=`<rect x="${ox+x*u+u*.08}" y="${oy+y*u+u*.08}" width="${u*.84}" height="${u*.84}" rx="${u*.2}" fill="${ch==='B'?'#6b625a':'#dcc7a2'}" stroke="#2e2219" stroke-width="${ch==='B'?1.4:0}"/>`;
   }));
-  for(const [d,x,y] of (f.muretas||[])) g += d==='v' ? `<rect x="${(x+1)*u-2}" y="${y*u+u*.1}" width="4" height="${u*.8}" rx="2" fill="#f2b33d"/>` : `<rect x="${x*u+u*.1}" y="${(y+1)*u-2}" width="${u*.76}" height="4" rx="2" fill="#f2b33d"/>`;
+  for(const [d,x,y] of (f.muretas||[])) g += d==='v' ? `<rect x="${ox+(x+1)*u-2}" y="${oy+y*u+u*.1}" width="4" height="${u*.8}" rx="2" fill="#f2b33d"/>` : `<rect x="${ox+x*u+u*.1}" y="${oy+(y+1)*u-2}" width="${u*.76}" height="4" rx="2" fill="#f2b33d"/>`;
   return `<svg class="formaSvg" viewBox="-3 -3 106 106" style="width:${px}px;height:${px}px"><rect x="-3" y="-3" width="106" height="106" rx="12" fill="#3a2c22"/>${g}</svg>`;
 }
 
 // ===================== LABORATÓRIO =====================
 // Página de testes: escolhe a fase, ajusta os parâmetros, joga um dia isolado e compara. Dá para editar o tabuleiro.
 const LAB_FASES = ['comum','caverna','rico','galeria','corredor','estreita','desmoronamento','avalanche','cores','salao','picareta'];
-const presetDe = k => { const p=PATHS[k]; return {forma:null, n:p.n||4, energia:CFG.energy+(p.energy||0), spawns:p.spawns||1, torrao:p.torrao||0, pedra:p.pedra||0, cores:!!p.cores, picareta:!!p.picareta, walls:p.walls||0, edges:p.edges||0, clods:p.clods||0}; };
+const presetDe = k => { const p=PATHS[k]; return {forma:null, w:p.n||4, h:p.n||4, energia:CFG.energy+(p.energy||0), spawns:p.spawns||1, torrao:p.torrao||0, pedra:p.pedra||0, cores:!!p.cores, picareta:!!p.picareta, walls:p.walls||0, edges:p.edges||0, clods:p.clods||0}; };
 let LAB = JSON.parse(localStorage.mina_lab||'null') || {fase:'comum', energia:true, char:'rola', hist:[]};
 if(!LAB.cfg) LAB.cfg = presetDe(LAB.fase);
+if(LAB.cfg.w==null){ LAB.cfg.w=LAB.cfg.n||4; LAB.cfg.h=LAB.cfg.n||4; }
 function labSalva(){ localStorage.mina_lab=JSON.stringify(LAB); }
 const LAB_AJUSTES = [
   {k:'forma',   nome:'Formato',              ops:()=>[null,...formasTodas().map(f=>f.id)], fmt:v=>v?acharForma(v)?.nome||v:'quadrado'},
-  {k:'n',       nome:'Tabuleiro',            ops:[3,4,5,6,7,8],        fmt:v=>`${v}x${v}`, sem:'forma'},
+  {k:'w',       nome:'Largura',              ops:[3,4,5,6,7,8],        fmt:v=>v, sem:'forma'},
+  {k:'h',       nome:'Altura',               ops:[3,4,5,6,7,8,10,12,16,20], fmt:v=>v, sem:'forma'},
   {k:'energia', nome:'Energia',              ops:[10,20,30,40,60,80],  fmt:v=>v, so:'energia'},
   {k:'spawns',  nome:'Pedrinhas por arrasto',ops:[1,2,3],              fmt:v=>v},
   {k:'torrao',  nome:'Torrão ao nascer',     ops:[0,.1,.2,.3],         fmt:v=>Math.round(v*100)+'%'},
@@ -1404,11 +1418,11 @@ function labPainel(){
     <h3>Energia</h3><div class="labRow">${op('energia',1,LAB.energia,'<div><b>Ligada</b></div>')}${op('energia',0,!LAB.energia,'<div><b>Desligada</b><span>até travar</span></div>')}</div>
     <h3>Personagem</h3><div class="labRow">${Object.entries(CHARS).map(([k,c])=>op('char',k,LAB.char===k,`<div><b>${c.em} ${c.nome}</b></div>`)).join('')}</div>
     <button class="btn b" id="labGo">Jogar</button>
-    <button class="btn g" id="labBuild">Construir nível (tela vazia ${LAB.cfg.n}x${LAB.cfg.n})</button>
+    <button class="btn g" id="labBuild">Construir nível (tela vazia ${LAB.cfg.w}x${LAB.cfg.h})</button>
     <h3>Ajustes</h3><div class="ajustes">${ajustes}</div>
     <button class="btn dim" id="labReset">Voltar aos valores da fase</button>
     <h3>Fase (carrega os valores dela)</h3><div class="cards">${fases}</div>
-    ${minhas.length?`<h3>Seus níveis</h3><div class="cards">${minhas.map(f=>`<div class="card" style="cursor:default"><span class="em">${formaSvg(f,40)}</span><div><b>${f.nome}</b><span>${f.n}x${f.n}${f.pecas?.length?`, ${f.pecas.length} pedrinhas`:''}</span></div><button class="pt" data-delf="${f.id}">apagar</button></div>`).join('')}</div>`:''}
+    ${minhas.length?`<h3>Seus níveis</h3><div class="cards">${minhas.map(f=>`<div class="card" style="cursor:default"><span class="em">${formaSvg(f,40)}</span><div><b>${f.nome}</b><span>${fw(f)}x${fh(f)}${f.pecas?.length?`, ${f.pecas.length} pedrinhas`:''}</span></div><button class="pt" data-delf="${f.id}">apagar</button></div>`).join('')}</div>`:''}
     ${hist?`<h3>Últimos resultados</h3><ul class="labHist">${hist}</ul>`:''}
     <button class="btn dim" id="labMenu">Voltar ao menu</button>`);
   const redesenha = () => { labSalva(); const y=$('#panel').scrollTop; labPainel(); $('#panel').scrollTop=y; };
@@ -1431,7 +1445,7 @@ function labJoga(){
   const base=PATHS[LAB.fase], g=LAB.cfg;
   S.up.assovio = g.assovio||0;
   if(g.ferr) for(const f of FERRAMENTAS) S.ferr[f.id]=99;
-  const p = {...base, forma:g.forma?acharForma(g.forma):null, caverna:!g.forma && !!base.caverna, n:g.n, energy:g.energia-CFG.energy, spawns:g.spawns, rara:g.rara??RARA, torrao:g.torrao, pedra:g.pedra, cores:g.cores, picareta:g.picareta, walls:g.walls, edges:g.edges, clods:g.clods, semEnergia:!LAB.energia};
+  const p = {...base, forma:g.forma?acharForma(g.forma):null, caverna:!g.forma && !!base.caverna, w:g.w, h:g.h, energy:g.energia-CFG.energy, spawns:g.spawns, rara:g.rara??RARA, torrao:g.torrao, pedra:g.pedra, cores:g.cores, picareta:g.picareta, walls:g.walls, edges:g.edges, clods:g.clods, semEnergia:!LAB.energia};
   startDay(p);
   setBanner('Laboratório', `${base.nome} · ${LAB.energia?'com':'sem'} energia`);
   labFerramentas();
@@ -1518,7 +1532,7 @@ function labEnche(buraco){
   for(const w of S.walls){ els.get(w.id)?.remove(); els.delete(w.id); }
   for(const e of S.edges){ els.get(e.id)?.remove(); els.delete(e.id); }
   S.walls=[]; S.edges=[];
-  if(buraco){ for(const t of S.tiles){ els.get(t.id)?.remove(); els.delete(t.id); } S.tiles=[]; for(let y=0;y<N;y++) for(let x=0;x<N;x++) S.walls.push({x,y,v:true,id:'w'+(nextId++)}); }
+  if(buraco){ for(const t of S.tiles){ els.get(t.id)?.remove(); els.delete(t.id); } S.tiles=[]; for(let y=0;y<H;y++) for(let x=0;x<W;x++) S.walls.push({x,y,v:true,id:'w'+(nextId++)}); }
   render();
 }
 function labPinta(x,y){
@@ -1534,28 +1548,29 @@ function labPinta(x,y){
 // formato atual do tabuleiro do laboratório, no mesmo jeito dos FORMAS
 function formaAtual(){
   const aberta=(x,y)=>!S.walls.some(v=>v.v&&v.x===x&&v.y===y);
-  const xs=[],ys=[]; for(let y=0;y<N;y++) for(let x=0;x<N;x++) if(aberta(x,y)){ xs.push(x); ys.push(y); }
+  const xs=[],ys=[]; for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(aberta(x,y)){ xs.push(x); ys.push(y); }
   if(!xs.length) return null;
-  const x0=Math.min(...xs), y0=Math.min(...ys), n=Math.max(Math.max(...xs)-x0, Math.max(...ys)-y0)+1;
-  const mapa=[...Array(n).keys()].map(y=>[...Array(n).keys()].map(x=>{ const X=x+x0, Y=y+y0; if(X>=N||Y>=N) return '#'; const w=S.walls.find(v=>v.x===X&&v.y===Y); return w?(w.v?'#':'B'):'.'; }).join(''));
-  const muretas=S.edges.map(e=>[e.d,e.x-x0,e.y-y0]).filter(([d,x,y])=>x>=0&&y>=0&&x<n&&y<n);
-  const pecas=S.tiles.map(t=>[t.x-x0,t.y-y0,t.t,t.c??null,t.k||null]).filter(([x,y])=>x>=0&&y>=0&&x<n&&y<n);
-  return {n, mapa, muretas, pecas};
+  // recorta no menor retângulo que contém as casas
+  const x0=Math.min(...xs), y0=Math.min(...ys), w=Math.max(...xs)-x0+1, h=Math.max(...ys)-y0+1;
+  const mapa=[...Array(h).keys()].map(y=>[...Array(w).keys()].map(x=>{ const X=x+x0, Y=y+y0; const w=S.walls.find(v=>v.x===X&&v.y===Y); return w?(w.v?'#':'B'):'.'; }).join(''));
+  const muretas=S.edges.map(e=>[e.d,e.x-x0,e.y-y0]).filter(([d,x,y])=>x>=0&&y>=0&&x<w&&y<h);
+  const pecas=S.tiles.map(t=>[t.x-x0,t.y-y0,t.t,t.c??null,t.k||null]).filter(([x,y])=>x>=0&&y>=0&&x<w&&y<h);
+  return {mapa, muretas, pecas};
 }
 // mureta: acha a borda mais perto do toque e liga/desliga
 function labMureta(cx,cy){
-  const r=board.getBoundingClientRect(), cel=cellPx(), gap=(r.width-N*cel)/(N+1);
+  const r=board.getBoundingClientRect(), cel=cellPx(), gap=(r.width-W*cel)/(W+1);
   const fx=(cx-r.left-gap/2)/(cel+gap), fy=(cy-r.top-gap/2)/(cel+gap), x=Math.floor(fx), y=Math.floor(fy), ox=fx-x, oy=fy-y;
   const lados=[[ox,'v',x-1,y],[1-ox,'v',x,y],[oy,'h',x,y-1],[1-oy,'h',x,y]].sort((a,b)=>a[0]-b[0]);
   const [,d,ex,ey]=lados[0];
-  if(d==='v' && (ex<0||ex>=N-1||ey<0||ey>=N)) return; if(d==='h' && (ey<0||ey>=N-1||ex<0||ex>=N)) return;
+  if(d==='v' && (ex<0||ex>=W-1||ey<0||ey>=H)) return; if(d==='h' && (ey<0||ey>=H-1||ex<0||ex>=W)) return;
   const ja=S.edges.find(e=>e.d===d&&e.x===ex&&e.y===ey);
   if(ja){ S.edges=S.edges.filter(e=>e!==ja); els.get(ja.id)?.remove(); els.delete(ja.id); }
   else S.edges.push({d,x:ex,y:ey,id:'e'+(nextId++)});
   render();
 }
 function labCelula(cx,cy){
-  const r=board.getBoundingClientRect(), cel=cellPx(), gap=(r.width-N*cel)/(N+1);
+  const r=board.getBoundingClientRect(), cel=cellPx(), gap=(r.width-W*cel)/(W+1);
   const x=Math.floor((cx-r.left-gap/2)/(cel+gap)), y=Math.floor((cy-r.top-gap/2)/(cel+gap));
   return inside(x,y) ? [x,y] : null;
 }
@@ -1737,7 +1752,7 @@ async function trocaMusica(){
 // a música acompanha o dia: a bateria some com o cansaço, e a fita desafina quando acaba a energia
 function humor(){
   if(!MUS || musName!=='lofi-espera' || !S) return;
-  const r = S.semEnergia ? Math.max(0, 1 - S.tiles.length/(N*N)) : Math.max(0, S.energy)/Math.max(1, S.energyMax);
+  const r = S.semEnergia ? Math.max(0, 1 - S.tiles.length/(W*H)) : Math.max(0, S.energy)/Math.max(1, S.energyMax);
   MUS.niveis({f:50, o:45, j:18+47*r, c:35+25*r});
   MUS.tensao(S.semEnergia ? (r<.2 ? .5 : 0) : S.energy<=0 ? .5 : 0);
 }
@@ -1866,6 +1881,7 @@ $('#btnEnd').onclick=()=>{
   endArmed=setTimeout(resetEnd,3000);
 };
 $('#btnSkip').onclick=()=>{ S.skip=true; };
+$('#btnFast').onclick=()=>{ S.turbo=true; $('#btnFast').style.display='none'; };
 $('#btnSell').onclick=sell;
 $('#btnEdit').onclick=()=>labEditar(!S.editando);
 $('#btnAssovio').onclick=assoviar;
@@ -1887,7 +1903,7 @@ $('#mTut').onclick=()=>{
 $('#logo').innerHTML = [[1,58],[3,84],[5,120],[2,70]].map(([t,s])=>`<svg viewBox="0 0 100 100" style="width:${s}px;height:${s}px">${pedraInner(t)}</svg>`).join('');
 $('#coachAv').innerHTML = svgOf(pedraInner(3,{face:['happy','big']}));
 
-if(/[?&]lab\b/.test(location.search)) labPainel(); else showMenu();
+if(/[?&]menu\b/.test(location.search)) showMenu(); else labPainel();
 </script>
 </body>
 </html>
