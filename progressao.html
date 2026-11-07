@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Ptui! · propostas de progressão do Clássico</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0}
+body{background:#f6ecd9;font-family:'Fredoka',system-ui,sans-serif;color:#5a4636;line-height:1.4}
+main{max-width:760px;margin:0 auto;padding:18px 14px 60px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:28px;color:#7a5a44;line-height:1.1}
+h2{font-size:21px;color:#7a5a44;margin-top:6px}
+h3{font-size:17px;color:#7a5a44}
+p,li{font-size:15px}
+.sub{color:#a08a74;font-size:15px}
+ul{padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.card{background:#efe1c6;border-radius:16px;padding:10px 12px;box-shadow:0 3px 0 #dcc6a0;display:flex;gap:10px;align-items:flex-start}
+.card svg.fig{flex:none;width:52px;height:52px;overflow:visible}
+.card b{display:block;font-size:15px}
+.card span{display:block;font-size:13px;color:#7a5a44;line-height:1.3}
+.tag{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:0 7px;margin-top:4px;color:#fff}
+.tag.ja{background:#6aa84f}.tag.novo{background:#c48a1e}.tag.facil{background:#6d93a8}
+.prog{background:#fff8ea;border-radius:18px;padding:14px;box-shadow:0 4px 0 #e2cfae;display:flex;flex-direction:column;gap:10px}
+.prog.rec{box-shadow:0 4px 0 #c48a1e,0 0 0 3px #f2b33d}
+.trilha{display:flex;flex-wrap:wrap;gap:6px}
+.mundo{background:#efe1c6;border-radius:12px;padding:6px 9px;font-size:13px;line-height:1.2;min-width:100px;flex:1}
+.mundo b{display:block;font-size:14px}
+.mundo i{font-style:normal;color:#a08a74;font-size:12px}
+.mundo.novo{box-shadow:inset 0 0 0 2px #c48a1e}
+.pros{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pros div{background:#efe1c6;border-radius:12px;padding:8px 10px;font-size:14px}
+.pros b{display:block;font-size:13px;color:#a08a74}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{text-align:left;padding:6px 6px;border-bottom:1px solid #e2cfae;vertical-align:top}
+th{color:#a08a74;font-weight:600}
+td.n{font-weight:700;color:#7a5a44;white-space:nowrap}
+.longa{background:#fff3cf}
+.ico{display:inline-block;width:20px;height:20px;vertical-align:-5px;overflow:visible}
+details{background:#efe1c6;border-radius:14px;padding:0 12px}
+details summary{font-weight:700;font-size:16px;padding:10px 0;cursor:pointer;color:#7a5a44}
+details > div{padding-bottom:12px;overflow-x:auto}
+</style>
+</head>
+<body>
+<main id="m"></main>
+<script src="src/svg.js"></script>
+<script>
+const P = (t,o={}) => pedraInner(t,o);
+const fig = inner => `<svg class="fig" viewBox="0 0 100 100">${inner}</svg>`;
+const ico = inner => `<svg class="ico" viewBox="0 0 100 100">${inner}</svg>`;
+const mini = (inner,x,y,s) => `<g transform="translate(${x} ${y}) scale(${s})">${inner}</g>`;
+const base = (cx,cy,r=40,cor='#b39672',op=.35) => `<ellipse cx="${cx}" cy="${cy}" rx="${r}" ry="${r*.88}" fill="${cor}" opacity="${op}"/>`;
+// desenhos dos elementos novos
+const D = {
+  formar: mini(P(2),-6,30,.42)+mini(P(2),24,30,.42)+mini(P(3),58,22,.5)+`<text x="40" y="58" font-size="16" font-weight="700" fill="#a08a74" font-family="Fredoka">+</text>`,
+  pontos: base(50,55)+mini(P(3),22,22,.56)+`<text x="50" y="18" text-anchor="middle" font-size="22" font-weight="700" fill="#fff6d0" stroke="#c48a1e" stroke-width="1" font-family="Fredoka">+8</text>`,
+  sequencia: mini(P(3),-4,26,.46)+`<path d="M44 52 h12 m-5 -6 l6 6 -6 6" stroke="#a08a74" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`+mini(P(5),54,22,.5),
+  duplo: mini(P(3),-2,4,.5)+mini(P(4),46,4,.5)+`<text x="28" y="92" font-size="16" font-weight="700" fill="#7a5a44" font-family="Fredoka">×2 e ×1</text>`,
+  alvo: base(50,55)+`<circle cx="50" cy="55" r="30" fill="none" stroke="#f2b33d" stroke-width="5" stroke-dasharray="8 6"/>`+mini(P(3),28,28,.44),
+  carrinho: `<rect x="14" y="40" width="72" height="44" rx="8" fill="#6d4a30" stroke="#8d969d" stroke-width="5"/><rect x="22" y="47" width="56" height="30" rx="5" fill="#3b2a1e"/>`+mini(P(3),27,18,.46),
+  terra: base(50,55,42,'#b39672',.25)+`<path d="M18 60 q4 -26 30 -26 q30 -6 36 22 q6 26 -30 28 q-40 4 -36 -24z" fill="#8a6440" stroke="#5e4329" stroke-width="2.4"/><circle cx="36" cy="52" r="3" fill="#6b4a2c"/><circle cx="62" cy="64" r="3.5" fill="#6b4a2c"/><circle cx="58" cy="44" r="2.4" fill="#6b4a2c"/>`,
+  presa: mini(P(3),0,0,1)+`<path d="M14 78 q36 22 72 0 M18 70 l-8 10 M82 70 l8 10 M30 84 l-4 10 M70 84 l4 10" stroke="#5f5258" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M14 78 q36 22 72 0" stroke="#8a7c81" stroke-width="3" fill="none"/>`,
+  torrao: torraoInner(),
+  bloco: `<rect x="16" y="20" width="68" height="64" rx="10" fill="#7d6b5e" stroke="#2e2219" stroke-width="3"/><path d="M16 46 h40 l8 -26 M56 46 l10 38" stroke="#5f5045" stroke-width="3" fill="none"/>`,
+  mureta: base(28,55,24)+base(74,55,24)+`<rect x="46" y="22" width="9" height="66" rx="4.5" fill="#6b625a" stroke="#2e2219" stroke-width="2.4"/>`,
+  buraco: `<path d="M20 60 q-2 -30 28 -32 q32 -2 34 28 q2 30 -32 30 q-30 2 -30 -26z" fill="#3f3539"/>`,
+  formato: `<g fill="#b39672" opacity=".55">${[[1,0],[0,1],[1,1],[2,1],[1,2]].map(([x,y])=>`<rect x="${12+x*26}" y="${12+y*26}" width="22" height="22" rx="8"/>`).join('')}</g>`,
+  combo: mini(P(2),-4,10,.4)+mini(P(2),18,10,.4)+mini(P(3),-4,50,.4)+mini(P(3),18,50,.4)+`<path d="M62 30 h18 M62 70 h18" stroke="#a08a74" stroke-width="4" stroke-linecap="round"/><text x="60" y="56" font-size="15" font-weight="700" fill="#c48a1e" font-family="Fredoka">1 arrasto</text>`,
+  quebra: `<g fill="#b39672" opacity=".35">${[0,1,2].map(x=>[0,1,2].map(y=>`<rect x="${10+x*28}" y="${10+y*28}" width="24" height="24" rx="9"/>`).join('')).join('')}</g>`+mini(P(2),8,36,.32)+mini(P(2),64,36,.32)+`<text x="50" y="98" text-anchor="middle" font-size="14" font-weight="700" fill="#7a5a44" font-family="Fredoka">6 arrastos</text>`,
+  restricao: mini(P(4),12,10,.7)+`<circle cx="50" cy="45" r="36" fill="none" stroke="#c0603f" stroke-width="6"/><path d="M24 20 L76 70" stroke="#c0603f" stroke-width="6"/>`,
+  sobreviver: mini(P(1),2,30,.38)+mini(P(2),34,30,.38)+mini(P(1),64,30,.38)+`<text x="50" y="24" text-anchor="middle" font-size="16" font-weight="700" fill="#c48a1e" font-family="Fredoka">+2 por arrasto</text>`,
+  cores: mini(P(3,{cor:0}),-2,10,.55)+mini(P(3,{cor:1}),46,10,.55),
+  picareta: mini(P(3),-2,12,.55)+mini(pickInner(3),44,12,.55),
+  passinho: base(28,55,22)+base(74,55,22)+mini(P(2),8,34,.4)+`<path d="M46 55 h18 m-6 -7 l7 7 -7 7" stroke="#a08a74" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`,
+  rica: mini(P(2),0,24,.5)+mini(P(2),46,24,.5),
+};
+const card = (k,nome,txt,tag) => `<div class="card">${fig(D[k])}<div><b>${nome}</b><span>${txt}</span><span class="tag ${tag}">${{ja:'já existe',novo:'novo',facil:'fácil de fazer'}[tag]}</span></div></div>`;
+
+const MISS = [
+  ['formar','Formar','Forme N pedrinhas de um nível. Hoje é quase toda missão.','ja'],
+  ['pontos','Pontos','Faça N pontos, como no 2048.','ja'],
+  ['sequencia','Em sequência','Primeiro uma Rocha, depois um Geodo, nessa ordem. Missão mais longa.','facil'],
+  ['duplo','Metas juntas','Duas ou três metas na mesma fase: 2 Rochas e 1 Rocha densa. Boa para fases longas e para fechar mundos.','facil'],
+  ['alvo','Casa marcada','Forme a pedrinha em cima da casa marcada no chão. Obriga a pensar em posição.','novo'],
+  ['carrinho','Carrinho','Uma saída na borda do mapa com um carrinho. Pedrinha que desliza para dentro dele é recolhida. Coloque 3 Rochas no carrinho.','novo'],
+  ['terra','Limpar a terra','Algumas casas começam cobertas de terra. Uma junção em cima limpa a casa. Limpe todas.','novo'],
+  ['presa','Pedrinha presa','Uma pedrinha cravada no chão: não sai do lugar, mas aceita junção. Junte uma igual nela para soltá-la.','novo'],
+  ['combo','Juntar duas de uma vez','Faça 2 junções num arrasto só, N vezes.','facil'],
+  ['quebra','Quebra-cabeça','Fase montada à mão, com poucas pedrinhas e poucos arrastos: tem uma solução certa. Dá para criar no editor.','facil'],
+  ['restricao','Com restrição','Cumprir a missão sem formar algo (sem Rocha densa, por exemplo). Para variar fases já conhecidas.','facil'],
+  ['sobreviver','Aguentar','Faça N arrastos com o tabuleiro enchendo rápido.','ja'],
+];
+const MAPA = [
+  ['formato','Formatos','17 formatos prontos (cruz, anel, coração, serpente...) e os do editor. Dá para explorar muito antes de mexer na regra.','ja'],
+  ['bloco','Bloco fixo','A peça que não sai: ocupa uma casa e trava o caminho. Com ela, um 4x4 vira outro jogo.','ja'],
+  ['mureta','Mureta','Parede fina entre duas casas: a pedrinha para nela.','ja'],
+  ['buraco','Buraco','Casa que não existe: muda o formato do mapa.','ja'],
+  ['torrao','Torrão','Não junta com nada e atrapalha. Hoje só sai com ferramenta.','ja'],
+  ['terra','Casa de terra','Camada no chão que sai com uma junção em cima (missão Limpar a terra).','novo'],
+  ['presa','Pedrinha presa','Peça fixa que ainda conta para juntar (missão Pedrinha presa).','novo'],
+  ['carrinho','Saída com carrinho','Casa de borda que recolhe a pedrinha (missão Carrinho).','novo'],
+];
+const REGRA = [
+  ['cores','Duas cores','Roxa só junta com roxa, verde com verde.','ja'],
+  ['picareta','Picareta','Picareta quebra a pedrinha do mesmo nível.','ja'],
+  ['sobreviver','Duas por arrasto','Nascem 2 pedrinhas por arrasto.','ja'],
+  ['rica','Nasce maior','Nasce mais Pedra que Cascalho.','ja'],
+  ['passinho','Passinho','Tudo anda uma casa por vez. É a mudança mais forte de todas: deve vir bem tarde.','ja'],
+];
+
+const mundo = (nome,quant,txt,novo=false) => `<div class="mundo ${novo?'novo':''}"><b>${nome}</b><i>${quant}</i><br>${txt}</div>`;
+const PROGS = [
+  {nome:'1 · Pela mina, devagar', rec:true,
+   desc:'Cada mundo apresenta uma coisa nova só, e quase sempre é do mapa. A regra de arrastar só muda lá no fim, e o Passinho é o último mundo. As missões vão ficando mais longas dentro de cada mundo, e o mundo fecha com uma fase grande, de várias metas.',
+   trilha:[mundo('1 · Entrada','12 fases','formar e pontos; 4x4 até 5x5'), mundo('2 · Blocos','12 fases','a peça que não sai; formatos',true), mundo('3 · Muretas e buracos','12 fases','corredores, serpente, anel',true), mundo('4 · Terra','12 fases','limpar casas; torrões',true), mundo('5 · Carrinho','12 fases','levar até a saída',true), mundo('6 · Cores','12 fases','duas cores',true), mundo('7 · Picareta','12 fases','quebrar na hora',true), mundo('8 · Passinho','12 fases','mapas antigos, regra nova',true)],
+   pros:['Ensina sem pressa: 12 fases para cada novidade, então dá tempo de dominar.','Muita variedade sem mudar o jeito de jogar até o mundo 6.','Cada mundo tem começo, meio e uma fase grande no fim.'],
+   contra:['96 fases dão bastante trabalho de montar e calibrar.','O Passinho só aparece depois de ~85 fases.']},
+  {nome:'2 · Uma missão nova por mundo',
+   desc:'O que muda de um mundo para o outro é o tipo de missão: formar, pontos, casa marcada, carrinho, limpar a terra, soltar a presa, quebra-cabeça. Os mapas e as regras aparecem misturados dentro, aos poucos. O Passinho vira um modo difícil no fim, para quem quiser.',
+   trilha:[mundo('1 · Formar','10 fases','formatos simples'), mundo('2 · Pontos','10 fases','blocos aparecem',true), mundo('3 · Casa marcada','10 fases','muretas',true), mundo('4 · Carrinho','10 fases','buracos',true), mundo('5 · Terra','10 fases','torrões, 2 por arrasto',true), mundo('6 · Presa','10 fases','cores',true), mundo('7 · Quebra-cabeça','10 fases','fases montadas à mão',true), mundo('Passinho','modo difícil','repete tudo',true)],
+   pros:['O objetivo de cada fase é sempre bem claro: o mundo diz o que você vai fazer.','Mostra todos os tipos de missão cedo.'],
+   contra:['Mudar o objetivo a cada mundo é mais difícil de entender do que mudar o mapa.','Mapas e regras novas chegam sem aviso no meio de um mundo.']},
+  {nome:'3 · Caminhos que se dividem',
+   desc:'Depois dos dois primeiros mundos o mapa se divide: um caminho vai pela Terra e pelo Carrinho, o outro pelas Cores e pela Picareta. Você escolhe por onde ir, e os dois se encontram num mundo final que mistura tudo. O Passinho não é um mundo: toda fase cumprida pode ser jogada de novo no Passinho, valendo uma medalha.',
+   trilha:[mundo('1 · Entrada','10 fases','formar e pontos'), mundo('2 · Blocos e muretas','10 fases','formatos',true), mundo('3a · Terra / 3b · Cores','10 + 10','escolha um',true), mundo('4a · Carrinho / 4b · Picareta','10 + 10','escolha um',true), mundo('5 · Fundo da mina','12 fases','tudo junto',true), mundo('Passinho','em qualquer fase','medalha extra',true)],
+   pros:['Dá sensação de escolha e de mapa, como na Mineração.','O Passinho não atrapalha quem não gosta dele, e dá muito mais vida a cada fase.'],
+   contra:['Quem escolhe um caminho não vê o outro sem voltar.','O mundo final precisa funcionar para quem veio pelos dois lados.']},
+];
+
+const fase = (n,nome,mapa,missao,arr,longa=false) => `<tr class="${longa?'longa':''}"><td class="n">${n}</td><td><b>${nome}</b><br><span class="sub">${mapa}</span></td><td>${missao}</td><td>${arr}</td></tr>`;
+const R = t => ico(P(t));
+const M1 = [
+  fase(1,'Primeira Rocha','4x4','Forme uma '+R(3)+' Rocha','10'),
+  fase(2,'Três de uma vez','4x4','Forme 3 '+R(3)+' Rochas','16'),
+  fase(3,'Rocha densa','4x4','Forme uma '+R(4)+' Rocha densa','16'),
+  fase(4,'Primeiros pontos','4x4','Faça 120 pontos','25'),
+  fase(5,'Mais espaço','5x5','Forme 2 '+R(4)+' Rochas densas','24'),
+  fase(6,'Uma depois da outra','4x4','Forme uma '+R(3)+' Rocha, depois uma '+R(4)+' Rocha densa','20'),
+  fase(7,'Duas de uma vez','4x4','Faça 2 junções num arrasto só, 3 vezes','20'),
+  fase(8,'Pontos no 5x5','5x5','Faça 250 pontos','30'),
+  fase(9,'Quebra-cabeça','4x4, peças postas','Forme um '+R(5)+' Geodo em 6 arrastos','6'),
+  fase(10,'Primeiro Geodo','5x5','Forme um '+R(5)+' Geodo','35',true),
+  fase(11,'Sem pressa','4x4','Forme 2 '+R(4)+' Rochas densas sem formar '+R(5)+' Geodo','26',true),
+  fase(12,'Fim da entrada','5x5','2 '+R(4)+' Rochas densas, 1 '+R(5)+' Geodo e 300 pontos','45',true),
+];
+const M2 = [
+  fase(13,'A peça que não sai','4x4 com 1 bloco','Forme 2 '+R(3)+' Rochas','16'),
+  fase(14,'Dois blocos','4x4 com 2 blocos','Forme uma '+R(4)+' Rocha densa','18'),
+  fase(15,'Pilares','5x5 com 4 blocos','Forme 2 '+R(4)+' Rochas densas','26'),
+  fase(16,'Cruz','cruz 6x6','Faça 200 pontos','28'),
+  fase(17,'Bloco no meio','5x5, bloco central','Forme um '+R(5)+' Geodo','32'),
+  fase(18,'Anel','anel 5x5','Forme 3 '+R(4)+' Rochas densas','34'),
+  fase(19,'Corredor de blocos','5x5, fileira de blocos','Uma '+R(4)+' Rocha densa de cada lado','30'),
+  fase(20,'Quebra-cabeça','4x4, blocos e peças postas','Forme um '+R(5)+' Geodo em 8 arrastos','8'),
+  fase(21,'Coração','coração 7x6','Faça 300 pontos','35'),
+  fase(22,'Ampulheta','ampulheta 5x5','Forme um '+R(5)+' Geodo, depois uma '+R(4)+' Rocha densa','36',true),
+  fase(23,'Labirinto curto','6x6 com 6 blocos','Forme 2 '+R(5)+' Geodos','42',true),
+  fase(24,'Salão dos blocos','7x7 com 8 blocos','1 '+R(6)+' Cristalino e 400 pontos','55',true),
+];
+
+document.getElementById('m').innerHTML = `
+  <div><h1>Propostas de progressão do Clássico</h1><p class="sub">Para ter mais variedade, missões mais longas e mudar a regra do jogo bem mais tarde.</p></div>
+  <section><h2>O que está repetindo hoje</h2><ul>
+    <li>20 fases em 5 grupos de 4: uma mecânica nova a cada 4 fases.</li>
+    <li>Quase toda missão é "Forme N pedrinhas"; o resto é pontos ou quebrar com a picareta.</li>
+    <li>O Passinho, que muda o jeito de arrastar, já aparece na fase 9.</li>
+    <li>As fases são curtas (8 a 45 arrastos) e não tem fase grande para fechar um grupo.</li>
+  </ul></section>
+  <section><h2>As peças para montar fases</h2>
+    <h3 style="margin:8px 0 6px">Tipos de missão</h3><div class="grade">${MISS.map(m=>card(...m)).join('')}</div>
+    <h3 style="margin:14px 0 6px">Coisas no mapa (não mudam o jeito de arrastar)</h3><div class="grade">${MAPA.map(m=>card(...m)).join('')}</div>
+    <h3 style="margin:14px 0 6px">Regras que mudam o jogo (usar com calma)</h3><div class="grade">${REGRA.map(m=>card(...m)).join('')}</div>
+  </section>
+  <section style="display:flex;flex-direction:column;gap:12px"><h2>Três progressões</h2>
+    ${PROGS.map(p=>`<div class="prog ${p.rec?'rec':''}"><h3>${p.nome}${p.rec?' · minha recomendação':''}</h3><p>${p.desc}</p>
+      <div class="trilha">${p.trilha.join('')}</div>
+      <div class="pros"><div><b>A favor</b>${p.pros.join('<br>')}</div><div><b>Contra</b>${p.contra.join('<br>')}</div></div></div>`).join('')}
+    <p class="sub">Contorno dourado nos mundos: é onde entra algo novo.</p>
+  </section>
+  <section><h2>Minha recomendação</h2>
+    <p>A <b>1 · Pela mina, devagar</b>, com uma ideia da 3: o Passinho também vira um jeito de jogar de novo qualquer fase já cumprida, valendo uma medalha. Assim ele aparece cedo como desafio opcional, mas só vira regra obrigatória no último mundo.</p>
+    <ul style="margin-top:6px">
+      <li>Dois mundos inteiros só com mapa (blocos, formatos, muretas) antes de qualquer regra nova.</li>
+      <li>Missões novas entram junto com o mapa que pede por elas: a terra no mundo 4, o carrinho no 5.</li>
+      <li>Cada mundo tem 3 fases longas no fim, a última com várias metas juntas.</li>
+      <li>Uma fase de quebra-cabeça por mundo, montada no editor, para quebrar o ritmo.</li>
+    </ul>
+  </section>
+  <section style="display:flex;flex-direction:column;gap:8px"><h2>Como ficariam os dois primeiros mundos</h2>
+    <details open><summary>Mundo 1 · Entrada (12 fases)</summary><div><table><tr><th>Fase</th><th>Nome e mapa</th><th>Missão</th><th>Arrastos</th></tr>${M1.join('')}</table></div></details>
+    <details><summary>Mundo 2 · Blocos (12 fases)</summary><div><table><tr><th>Fase</th><th>Nome e mapa</th><th>Missão</th><th>Arrastos</th></tr>${M2.join('')}</table></div></details>
+    <p class="sub">Fundo amarelo: fases longas, que fecham o mundo. Os arrastos são um chute; a calibração com o robô acerta depois.</p>
+  </section>
+  <section><h2>O que precisa de código novo</h2><ul>
+    <li><b>Fácil</b>: missões em sequência, metas juntas, juntar duas de uma vez, restrição, e fases montadas à mão (o editor já faz).</li>
+    <li><b>Médio</b>: casa marcada, casa de terra e pedrinha presa (cada uma é uma camada nova no chão ou na peça).</li>
+    <li><b>Maior</b>: o carrinho (saída na borda que recolhe a pedrinha), o mapa que se divide da proposta 3 e o Passinho como medalha.</li>
+  </ul></section>`;
+</script>
+</body>
+</html>
