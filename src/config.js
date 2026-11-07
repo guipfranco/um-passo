@@ -167,9 +167,25 @@ const PATHS = {
   cores:          {nome:'Duas cores', desc:'Sem energia, até travar. Roxa só junta com roxa, verde com verde; a mista junta com as duas.', mine:true, semEnergia:true, cores:true, from:1},
   salao:          {nome:'Salão',      desc:'Sem energia, até travar. Tabuleiro 5x5, duas cores e 2 pedrinhas por arrasto.', mine:true, semEnergia:true, cores:true, spawns:2, n:5, from:2},
   caverna:        {nome:'Caverna', desc:'Tabuleiro com formato diferente.', mine:true, caverna:true, from:1},
-  picareta:       {nome:'Picareta e rocha', desc:'Nascem rochas e picaretas. Picareta do mesmo nível quebra a rocha na hora. Rocha que sobra não rende.', mine:true, picareta:true, lab:true, from:99},
+  picareta:       {nome:'Picareta', desc:'Nascem pedrinhas e picaretas. Picareta que se junta com pedrinha do mesmo nível quebra ela na hora. O que sobra não rende.', mine:true, picareta:true, lab:true, from:99},
   fogueira:       {em:'🔥', nome:'Fogueira',         desc:'Descanso: +20 de energia no próximo dia de mina.', from:3},
 };
+// Como jogar cada tipo (laboratório e catálogo): o que muda em relação ao Túnel e o que fazer.
+const COMO_JOGAR = {
+  comum: 'O jogo básico. Arraste para juntar pedrinhas iguais, que viram uma maior. Cada arrasto gasta 1 de energia. No fim do dia cada pedrinha cospe um minério: quanto maior, melhor.',
+  caverna: 'Como o Túnel, mas o tabuleiro tem outro formato, com buracos, paredes e muretas no caminho. Escolha o formato na seção Tabuleiro.',
+  rico: 'Nasce muito mais Pedra que Cascalho, mas o dia tem 10 de energia a menos. Menos arrastos, pedrinhas que já nascem maiores.',
+  galeria: 'Blocos de parede e muretas sorteados atrapalham o caminho. Os itens Eco e Musgo rendem mais com paredes.',
+  corredor: 'Muitas muretas, as paredes finas entre as casas. As pedrinhas param nelas, então pense no caminho antes de arrastar.',
+  estreita: 'Tabuleiro 3x3: pouco espaço, enche rápido. Em troca, o total do dia vale o dobro.',
+  desmoronamento: 'O dia começa com 3 torrões ocupando casas. No jogo, no fim do dia você escolhe entre 4 itens em vez de 3.',
+  avalanche: 'Sem energia: você joga até não ter mais arrasto possível. Em troca nascem 2 peças por arrasto, às vezes torrão, e o tabuleiro enche rápido.',
+  cores: 'Sem energia: joga até travar. Cada pedrinha tem cor: roxa só junta com roxa, verde só com verde. A mista junta com qualquer uma e fica da cor da outra.',
+  salao: 'Sem energia: joga até travar. Tabuleiro 5x5, com as duas cores e 2 peças por arrasto.',
+  picareta: 'Cada peça nova é uma pedrinha ou uma picareta. Pedrinha junta com pedrinha e picareta com picareta, como sempre. Quando você junta uma picareta com uma pedrinha do mesmo nível, a pedrinha quebra e você ganha o minério dela na hora. No fim do dia, o que sobrou no tabuleiro não rende nada. Dica: cresça uma pedrinha e depois uma picareta do mesmo nível.',
+};
+for(const [k,v] of Object.entries(COMO_JOGAR)) PATHS[k].como = v;
+
 const FISCAIS = [
   {id:'rabugento', em:'😤', nome:'Fiscal rabugento', desc:'Torrão custa ×2,5.'},
   {id:'miope',     em:'🧐', nome:'Fiscal míope',     desc:'Cascalho e Pedra cospem nada.'},

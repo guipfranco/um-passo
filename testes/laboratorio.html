@@ -11,7 +11,7 @@ f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEven
   q('#mLab').click(); await wait(80);
   log.push('lab: seções='+[...d.querySelectorAll('details.sec summary')].map(x=>x.textContent).join(', ')+' | selects='+d.querySelectorAll('#panel select').length);
   if(MODE==='painel'){ d.querySelectorAll('details.sec').forEach(x=>{ if(['tab','reg'].includes(x.dataset.sec)) x.open=true; }); out.textContent='ok'; return; }
-  muda('#selFase','avalanche'); log.push('fase: '+q('#selFase').value+' energia ligada='+w.eval('LAB.energia')+' spawns='+w.eval('LAB.cfg.spawns'));
+  q('[data-fase=avalanche]').click(); log.push('fase: '+d.querySelector('[data-fase].sel').dataset.fase+' energia ligada='+w.eval('LAB.energia')+' spawns='+w.eval('LAB.cfg.spawns'));
   muda('[data-item=lupa]',2); muda('[data-up=folego]',2); muda('[data-cfg=forma]','anel');
   log.push('itens: '+w.eval('JSON.stringify(LAB.itens)')+' ups: '+w.eval('JSON.stringify(LAB.ups)')+' prévia='+!!q('.formaPrev svg'));
   if(MODE==='itens'){ d.querySelector('details.sec[data-sec=itens]').open=true; d.querySelector('details.sec[data-sec=itens]').scrollIntoView(); out.textContent='ok'; return; }

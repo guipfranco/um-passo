@@ -154,6 +154,11 @@ details.sec > summary{cursor:pointer;font-weight:700;font-size:17px;color:#7a5a4
 details.sec > summary::-webkit-details-marker{display:none}
 details.sec > summary::after{content:'+';float:right;color:#c48a1e;font-size:20px;line-height:1}
 details.sec[open] > summary::after{content:'−'}
+.secVal{font-size:13px;font-weight:600;color:#a08a74;margin-left:8px}
+.card .regraPic{display:flex;align-items:center;gap:6px;margin-top:8px}
+.card .regraPic .ico{width:34px;height:34px;margin:0;flex:none}
+.card .regraPic i{font-style:normal;font-weight:700;font-size:18px;color:#7a5a44}
+.card .regraPic em{font-style:normal;font-size:12px;color:#a08a74;line-height:1.2}
 .secBody{display:flex;flex-direction:column;gap:6px;padding-bottom:12px}
 .secBody .card{background:#f6ecd9}
 b.sub{font-size:13px;color:#c48a1e;text-transform:uppercase;letter-spacing:.04em;margin-top:6px}

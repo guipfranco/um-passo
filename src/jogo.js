@@ -867,7 +867,7 @@ const LAB_AJUSTES = [
   {k:'torrao',  nome:'Torrão ao nascer',     ops:[0,.1,.2,.3],         fmt:v=>Math.round(v*100)+'%'},
   {k:'pedra',   nome:'Pedra a mais',         ops:[0,.2,.4,.6],         fmt:v=>'+'+Math.round(v*100)+'%'},
   {k:'cores',   nome:'Duas cores',           ops:[false,true],         fmt:v=>v?'sim':'não'},
-  {k:'picareta',nome:'Picareta e rocha',     ops:[false,true],         fmt:v=>v?'sim':'não'},
+  {k:'picareta',nome:'Picareta',             ops:[false,true],         fmt:v=>v?'sim':'não'},
   {k:'walls',   nome:'Paredes',              ops:[0,1,2,3,4],          fmt:v=>v},
   {k:'edges',   nome:'Muretas',              ops:[0,2,4,6,8],          fmt:v=>v},
   {k:'clods',   nome:'Torrões no começo',    ops:[0,3,6],              fmt:v=>v},
@@ -888,7 +888,7 @@ function labPainel(){
   const cfgSel=(k,ops,fmt)=>selHtml(`data-cfg="${k}"`,ops,g[k],fmt);
   const sn=(k)=>`<div class="sn"><button class="chipOp ${!g[k]?'sel':''}" data-cfgv="${k}" data-v="false">não</button><button class="chipOp ${g[k]?'sel':''}" data-cfgv="${k}" data-v="true">sim</button></div>`;
   const pct=v=>Math.round(v*100)+'%';
-  const sec=(id,titulo,html)=>`<details class="sec" data-sec="${id}" ${LAB.abertos[id]?'open':''}><summary>${titulo}</summary><div class="secBody">${html}</div></details>`;
+  const sec=(id,titulo,html,valor='')=>`<details class="sec" data-sec="${id}" ${(LAB.abertos[id]??id==='tipo')?'open':''}><summary>${titulo}${valor?`<small class="secVal">${valor}</small>`:''}</summary><div class="secBody">${html}</div></details>`;
   const minhas = JSON.parse(localStorage.mina_formas||'[]');
   const recs = Object.entries(RECS()).sort((a,b)=>b[1].total-a[1].total).slice(0,12).map(([k,e])=>`<li>${k.startsWith('jogo|')?'<small class="nv">jogo</small> ':''}${e.nome}: <b>$${e.total}</b> <small>(${e.arrastos} arrastos, ${CHARS[e.char]?.nome||''})</small></li>`).join('');
   const hist = LAB.hist.slice(-8).reverse().map(h=>`<li><b>${PATHS[h.fase]?.nome||h.fase}</b> · ${h.energia?'com':'sem'} energia · ${CHARS[h.char].nome}: ${h.arrastos} arrastos, <b>$${h.total}</b></li>`).join('');
@@ -905,7 +905,7 @@ function labPainel(){
     + campo('Pedra a mais', cfgSel('pedra',[0,.2,.4,.6],v=>'+'+pct(v)), 'Chance extra de nascer Pedra em vez de Cascalho.')
     + campo('Pedrinha rara', cfgSel('rara',[0,.02,.1,.5],pct), 'Rara cospe como 2 níveis acima.')
     + campo('Duas cores', sn('cores'), 'Roxa só junta com roxa, verde com verde.')
-    + campo('Picareta e rocha', sn('picareta'), 'Nascem picaretas que quebram a rocha do mesmo nível.');
+    + campo('Picareta', sn('picareta'), 'Nascem picaretas, que quebram a pedrinha do mesmo nível.');
   const obst = campo('Paredes', cfgSel('walls',[0,1,2,3,4],v=>v), 'Blocos sorteados que ocupam casas.')
     + campo('Muretas', cfgSel('edges',[0,2,4,6,8],v=>v), 'Paredes finas sorteadas entre casas.')
     + campo('Torrões no começo', cfgSel('clods',[0,3,6],v=>v));
@@ -916,16 +916,18 @@ function labPainel(){
     + UPGRADES.map(u=>campo(`${u.em} ${u.nome}`, nivelSel(`data-up="${u.id}"`,u.max||5,LAB.ups[u.id],u.id==='assovio'), u.desc(Math.max(1,LAB.ups[u.id]||1)))).join('')
     + `<b class="sub">Ferramentas</b>` + campo('Desfazer, picão, escavar, dinamite e luva', `<div class="sn"><button class="chipOp ${!g.ferr?'sel':''}" data-cfgv="ferr" data-v="0">não</button><button class="chipOp ${g.ferr?'sel':''}" data-cfgv="ferr" data-v="99">∞</button></div>`);
 
+  const tipos = `<p class="ajuda">Escolher um tipo carrega as regras dele. Depois dá para mudar tudo nas seções abaixo.</p><div class="cards">`
+    + LAB_FASES.map(k=>`<button class="card labOp ${LAB.fase===k?'sel':''}" data-fase="${k}"><span class="em">${disc(k,null,'discSm')}</span><div><b>${PATHS[k].nome}</b><span>${PATHS[k].como||PATHS[k].desc}</span>${k==='picareta'?regraPicareta():''}</div></button>`).join('') + '</div>';
+  const quem = `<div class="cards">${Object.entries(CHARS).map(([k,c])=>`<button class="card labOp ${LAB.char===k?'sel':''}" data-char="${k}"><span class="em">${c.em}</span><div><b>${c.nome}</b><span>${COMO_CHAR[k]}</span></div></button>`).join('')}</div>`;
   showOverlay(`${disc('lab','#4f7f9a','bigDisc')}<h2>Laboratório</h2>
     <div class="labTop">
-      ${campo('Fase', selHtml('id="selFase"', LAB_FASES, LAB.fase, k=>PATHS[k].nome))}
-      <p class="ajuda">${PATHS[LAB.fase].desc} Escolher a fase carrega as regras dela.</p>
-      <div class="labRow">${Object.entries(CHARS).map(([k,c])=>`<button class="card labOp ${LAB.char===k?'sel':''}" data-char="${k}"><div><b>${c.em} ${c.nome}</b><span>${k==='rola'?'tudo desliza até bater':'tudo anda uma casa'}</span></div></button>`).join('')}</div>
       <p class="recAtual">${nomeLab()}<br>${recTxt(RECS()[chaveLab()])}</p>
       <button class="btn b" id="labGo">Jogar</button>
     </div>
-    ${sec('tab','Tabuleiro',tabuleiro)}
-    ${sec('reg','Regras do dia',regras)}
+    ${sec('tipo','Tipo de jogo',tipos,PATHS[LAB.fase].nome)}
+    ${sec('quem','Quem joga',quem,CHARS[LAB.char].nome)}
+    ${sec('tab','Tabuleiro',tabuleiro,g.forma?acharForma(g.forma)?.nome||'':`${g.w}x${g.h}`)}
+    ${sec('reg','Regras do dia',regras,LAB.energia?'com energia':'sem energia')}
     ${sec('obs','Obstáculos',obst)}
     ${sec('itens','Itens e melhorias',itens)}
     ${recs?sec('recs','Recordes',`<ol class="labHist recs">${recs}</ol><button class="pt" id="labRecZera">apagar recordes</button>`):''}
@@ -934,7 +936,7 @@ function labPainel(){
     <div class="labRow"><button class="btn dim" id="labEd" style="flex:1">Editor de níveis</button><button class="btn dim" id="labCat" style="flex:1">Catálogo</button></div>
     <button class="btn dim" id="labMenu">Voltar ao menu</button>`);
   const redesenha = () => { labSalva(); const y=$('#panel').scrollTop; labPainel(); $('#panel').scrollTop=y; };
-  $('#selFase').onchange=e=>{ LAB.fase=JSON.parse(e.target.value); LAB.cfg={...presetDe(LAB.fase), rara:g.rara, ferr:g.ferr}; redesenha(); };
+  document.querySelectorAll('[data-fase]').forEach(b=>b.onclick=()=>{ LAB.fase=b.dataset.fase; LAB.cfg={...presetDe(LAB.fase), rara:g.rara, ferr:g.ferr}; redesenha(); });
   document.querySelectorAll('[data-char]').forEach(b=>b.onclick=()=>{ LAB.char=b.dataset.char; redesenha(); });
   document.querySelectorAll('[data-cfg]').forEach(el=>el.onchange=()=>{ g[el.dataset.cfg]=JSON.parse(el.value); redesenha(); });
   document.querySelectorAll('[data-cfgv]').forEach(b=>b.onclick=()=>{ g[b.dataset.cfgv]=JSON.parse(b.dataset.v); redesenha(); });
@@ -951,6 +953,14 @@ function labPainel(){
   $('#labEd').onclick=editorLista;
   $('#labCat').onclick=()=>catalogo(labPainel);
 }
+// pedrinha + picareta do mesmo nível = minério na hora
+function regraPicareta(){
+  return `<div class="regraPic">${icoSvg(pedraInner(3))}<i>+</i>${icoSvg(pickInner(3))}<i>=</i>${icoOre(4)}<em>mesmo nível: quebra na hora</em></div>`;
+}
+const COMO_CHAR = {
+  rola: 'Tudo desliza até bater, como no 2048. A peça nova nasce numa casa vazia qualquer.',
+  passinho: 'Tudo anda só uma casa por arrasto, como no Threes. A peça nova entra pela borda oposta à direção do arrasto.',
+};
 function labJoga(){
   hideOverlay();
   S = {...freshState(), lab:true, char:LAB.char, week:1, moves:0, extra:0};
@@ -992,7 +1002,7 @@ function labPaleta(){
   $('#labTools').innerHTML = `
     <div class="ptRow">
       <button class="pt ${sel(PINCEL.tipo==='casa')}" data-tipo="casa">Casa</button>
-      <button class="pt ${sel(PINCEL.tipo==='rocha')}" data-tipo="rocha">Rocha</button>
+      <button class="pt ${sel(PINCEL.tipo==='rocha')}" data-tipo="rocha">Pedrinha</button>
       <button class="pt ${sel(PINCEL.tipo==='pick')}" data-tipo="pick">Picareta</button>
       <button class="pt ${sel(PINCEL.tipo==='torrao')}" data-tipo="torrao">Torrão</button>
       <button class="pt ${sel(PINCEL.tipo==='parede')}" data-tipo="parede">Parede</button>
@@ -1110,7 +1120,7 @@ function catalogo(volta){
   const melh=UPGRADES.map(u=>card(u.em,u.nome,u.desc(1)+(u.max?` Até o nível ${u.max}.`:' Sem limite de nível.'))).join('');
   const ferr=FERRAMENTAS.map(f=>card(f.em,f.nome,f.desc)).join('');
   const cons=CONSUMIVEIS.map(c=>card(c.em,noIco(c.nome),c.desc)).join('');
-  const caminhos=Object.entries(PATHS).map(([k,p])=>card(disc(k,null,'discSm'),p.nome,p.desc+(p.lab?' Só no laboratório.':p.from>1?` A partir do andar ${p.from}.`:''))).join('');
+  const caminhos=Object.entries(PATHS).map(([k,p])=>card(disc(k,null,'discSm'),p.nome,(p.como||p.desc)+(p.lab?' Só no laboratório.':p.from>1?` A partir do andar ${p.from}.`:''))).join('');
   const fiscais=FISCAIS.map(f=>card(disc(f.id,COR_NO.fiscal,'discSm'),f.nome,f.desc)).join('');
   const formas=formasTodas().map(f=>card(formaSvg(f,44),f.nome,`${fw(f)}x${fh(f)}${fw(f)>8||fh(f)>8?' · só no laboratório':''}`)).join('');
   const chars=Object.entries(CHARS).map(([k,c])=>card(c.em,c.nome,c.desc)).join('');
