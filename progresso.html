@@ -43,7 +43,13 @@ body{background:#2a211b;font-family:'Fredoka',system-ui,sans-serif;color:#5a4636
 .barraM .trilho s{position:absolute;top:0;bottom:0;width:2px;background:#f3e6cc}
 .barraM svg{width:30px;height:30px;overflow:visible;margin-top:-6px}
 .barraM b{font-size:14px;color:#7a5a44;min-width:28px}
-/* C/D: silhuetas */
+/* C/D: silhuetas num quadro do painel de cima */
+.pill.silhP{justify-content:center;gap:3px;flex-direction:column;padding:5px 6px}
+.silhP .fila{display:flex;gap:3px}
+.silhP .fila span{width:30px;height:30px;border-radius:50%;background:#efe1c6;display:flex;align-items:center;justify-content:center}
+.silhP .fila svg{width:28px;height:28px;overflow:visible;filter:grayscale(1) brightness(1.25);opacity:.35;transition:all .3s}
+.silhP .fila span.ok svg{filter:none;opacity:1;animation:pop .45s}
+.silhP small{text-align:center}
 .silh{position:absolute;left:0;right:0;top:112px;display:flex;justify-content:center;gap:6px}
 .silh span{width:40px;height:40px;border-radius:50%;background:#f3e6cccc;box-shadow:0 2px 0 #0002;display:flex;align-items:center;justify-content:center}
 .silh svg{width:36px;height:36px;overflow:visible;filter:grayscale(1) brightness(1.25);opacity:.35;transition:all .3s}
@@ -110,14 +116,14 @@ const VIEWS = [
     html:`<div class="hud"><div class="pill"><span class="ic" style="background:#6aa84f">⚡</span><div><b class="vArr"></b><small>arrastos</small></div></div>
       <div class="pill"><div><b class="vEst" style="font-size:20px"></b><small class="vPerde"></small></div></div></div>
       <div class="barraM"><b class="vMis"></b><div class="trilho"><i class="vBar"></i><s style="left:33.3%"></s><s style="left:66.6%"></s></div>${ROCHA}</div>`},
-  {id:'C', nome:'Silhuetas', desc:'Uma silhueta para cada Rocha que falta. Quando você forma uma, ela ganha cor com um pulinho. Dá para ver sem ler nada.',
+  {id:'C', nome:'Silhuetas', desc:'No painel de cima, uma silhueta para cada Rocha pedida. Quando você forma uma, ela ganha cor com um pulinho. Dá para ver sem ler nada.',
     html:`<div class="hud"><div class="pill"><span class="ic" style="background:#6aa84f">⚡</span><div><b class="vArr"></b><small>arrastos</small></div></div>
-      <div class="pill"><div><b class="vEst" style="font-size:20px"></b><small class="vPerde"></small></div></div></div>
-      <div class="silh">${[0,1,2].map(()=>`<span>${ROCHA}</span>`).join('')}</div>`},
-  {id:'D', nome:'Silhuetas + estrelas', desc:'Minha recomendação. Silhuetas para a missão e, nos arrastos, uma barra que encolhe com as 3 estrelas marcadas: quando a barra passa de uma, ela cai.',
+      <div class="pill"><div><b class="vEst" style="font-size:20px"></b><small class="vPerde"></small></div></div>
+      <div class="pill silhP"><div class="fila">${[0,1,2].map(()=>`<span>${ROCHA}</span>`).join('')}</div><small>Rochas</small></div></div>`},
+  {id:'D', nome:'Silhuetas + estrelas', desc:'Minha recomendação. Silhuetas da missão no painel de cima e, nos arrastos, uma barra que encolhe com as 3 estrelas marcadas: quando a barra passa de uma, ela cai.',
     html:`<div class="hud"><div class="pill" style="flex:1.6"><span class="ic" style="background:#6aa84f">⚡</span><div class="arr"><div class="linha"><b class="vArr"></b><small>arrastos</small></div>
-      <div class="tr"><i class="vTr"></i><span class="m3" style="left:${LIM3/TOTAL*100}%">★</span><span class="m2" style="left:${LIM2/TOTAL*100}%">★</span><span class="m1" style="left:2%">★</span></div></div></div></div>
-      <div class="silh">${[0,1,2].map(()=>`<span>${ROCHA}</span>`).join('')}</div>`},
+      <div class="tr"><i class="vTr"></i><span class="m3" style="left:${LIM3/TOTAL*100}%">★</span><span class="m2" style="left:${LIM2/TOTAL*100}%">★</span><span class="m1" style="left:2%">★</span></div></div></div>
+      <div class="pill silhP"><div class="fila">${[0,1,2].map(()=>`<span>${ROCHA}</span>`).join('')}</div><small>Rochas</small></div></div>`},
   {id:'E', nome:'Carrinho', desc:'A missão vira parte do cenário: cada Rocha formada pula para dentro de um carrinho embaixo do tabuleiro. Os arrastos e as estrelas ficam em cima.',
     html:`<div class="hud"><div class="pill"><span class="ic" style="background:#6aa84f">⚡</span><div><b class="vArr"></b><small>arrastos</small></div></div>
       <div class="pill"><div><b class="vEst" style="font-size:20px"></b><small class="vPerde"></small></div></div></div>
@@ -140,7 +146,7 @@ function desenha(){
     q('.tr span').forEach(e=>{ const off=e.classList.contains('off'); e.style.color=off?'#d9c7a6':'#f2b33d'; e.style.textShadow=off?'none':'0 1px 0 #c48a1e'; });
     q('.vEst').forEach(e=>e.innerHTML=estr(st.est));
     q('.vPerde').forEach(e=>{ const n=perdeEm(st.rest); e.textContent = st.feitas>=ALVO ? 'missão cumprida' : n ? `perde ★ em ${n}` : 'última estrela'; });
-    q('.silh span, .caixa2 span').forEach((e,i)=>e.classList.toggle('ok', i<st.feitas));
+    q('.silhP .fila span, .caixa2 span').forEach((e,i)=>e.classList.toggle('ok', i<st.feitas));
     q('.cumpriu').forEach(e=>{ e.classList.toggle('on', st.feitas>=ALVO); e.querySelector('.fim').innerHTML=estr(st.est).replace(/<span class="estr">|<\/span>/g,''); });
   }
 }
