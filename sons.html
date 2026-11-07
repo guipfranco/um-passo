@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f2a2a">
+<title>Mina: laboratório de som</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jersey+10&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0c1416}
+*{box-sizing:border-box;margin:0}
+body{background:#0f2a2a;color:#fff;font-family:'Jersey 10',monospace;padding:14px 10px 40px}
+main{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+h1{font-weight:400;font-size:40px;text-align:center;line-height:.9;text-shadow:3px 3px 0 var(--ink)}
+h2{font-weight:400;font-size:30px;text-shadow:2px 2px 0 var(--ink);margin-top:6px}
+.lead{font-family:system-ui;font-size:14px;color:#9fbcbc;line-height:1.45}
+.card{background:#1c2a2e;border-radius:10px;padding:10px 12px;box-shadow:0 0 0 3px var(--ink),0 5px 0 var(--ink);display:flex;flex-direction:column;gap:8px}
+.card .t{font-size:24px}
+.card .d{font-family:system-ui;font-size:13px;color:#9fbcbc;line-height:1.4}
+.opts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+button{font:400 20px 'Jersey 10';color:#fff;border:0;border-radius:8px;padding:6px 6px;background:#3c4648;box-shadow:0 0 0 3px var(--ink),0 4px 0 var(--ink);cursor:pointer;line-height:1}
+button small{display:block;font-size:15px;color:#c9d6d6}
+button.rec{background:#e0a92b}
+button.rec small{color:#2a1a0c}
+button.play{background:#009dff}
+button.on{background:#fe5f55}
+button:active{transform:translateY(2px)}
+.lv{display:flex;gap:6px;align-items:center;font-size:18px;color:#c9d6d6}
+.lv button{padding:4px 10px;font-size:18px}
+.lv button.sel{background:#009dff}
+input[type=range]{width:100%;accent-color:#009dff}
+.row{display:flex;gap:8px;align-items:center}
+.pill{font-size:18px;background:#0c1416;border-radius:6px;padding:2px 8px;color:#c9d6d6}
+</style>
+</head>
+<body>
+<main>
+  <h1>LABORATÓRIO<br>DE SOM</h1>
+  <p class="lead">Toque nos botões para ouvir. Em cada efeito há três versões; a <b style="color:#e0a92b">dourada</b> é a minha sugestão. Os efeitos de fusão e de achado mudam com o nível: escolha o nível antes de tocar. Tudo é sintetizado no navegador, sem arquivo de áudio.</p>
+
+  <h2>MÚSICA</h2>
+  <p class="lead">As três lo-fi do Gabinete. Elas têm camadas (piano, melodia, bateria, baixo) que sobem e descem, e um controle de tensão. A ideia: a música acompanha o seu dia.</p>
+  <div class="card">
+    <div class="opts">
+      <button class="play" data-mus="lofi-espera">ESPERA<small>hip hop · 72 bpm</small></button>
+      <button class="play" data-mus="lofi-prorroga">PRORROGA<small>jazz · 80 bpm</small></button>
+      <button class="play" data-mus="lofi-segredo">SEGREDO<small>madrugada · 64 bpm</small></button>
+    </div>
+    <div class="row"><span class="pill" id="musState">parada</span><button id="musStop" style="margin-left:auto">PARAR</button></div>
+    <div class="t">SIMULAR O DIA</div>
+    <div class="d">Arraste a energia: com energia cheia toca tudo; conforme você cansa, a bateria vai sumindo e o baixo fica mais calmo; nos últimos 5 arrastos entra a tensão (a fita desafina de leve). No dia da cota a melodia fica mais presente.</div>
+    <div class="row"><span class="pill">energia <b id="enVal">40</b></span><input type="range" id="energy" min="0" max="40" value="40"></div>
+    <div class="row"><label class="pill"><input type="checkbox" id="quotaDay"> dia da cota</label><button id="revealMus" style="margin-left:auto">FIM DO DIA</button></div>
+  </div>
+
+  <h2>EFEITOS</h2>
+  <div id="sfx"></div>
+
+  <h2>TUDO JUNTO</h2>
+  <div class="card">
+    <div class="d">Uma minissessão com as versões douradas: arrastos, fusões subindo de nível, energia acabando, revelação com achado raro e a venda.</div>
+    <button class="rec" id="demo">TOCAR DEMONSTRAÇÃO</button>
+  </div>
+</main>
+
+<script type="module">
+// ======================= SINTETIZADOR =======================
+let ctx, master, sfxBus, musBus;
+function audio(){
+  if(!ctx){
+    ctx = new (window.AudioContext||window.webkitAudioContext)();
+    master = ctx.createGain(); master.gain.value = .9; master.connect(ctx.destination);
+    sfxBus = ctx.createGain(); sfxBus.gain.value = 1; sfxBus.connect(master);
+    musBus = ctx.createGain(); musBus.gain.value = 1; musBus.connect(master);
+  }
+  if(ctx.state==='suspended') ctx.resume();
+  return ctx;
+}
+const now = () => ctx.currentTime;
+function env(g,T,a,peak,d){ g.gain.setValueAtTime(.0001,T); g.gain.exponentialRampToValueAtTime(peak,T+a); g.gain.exponentialRampToValueAtTime(.0001,T+a+d); }
+function tone({f=440,to=null,type='sine',t=0,a=.005,d=.15,v=.2,filter=null,pan=0}={}){
+  const T=now()+t, o=ctx.createOscillator(), g=ctx.createGain();
+  o.type=type; o.frequency.setValueAtTime(f,T); if(to) o.frequency.exponentialRampToValueAtTime(to,T+a+d);
+  env(g,T,a,v,d);
+  let n=o; if(filter){ const fl=ctx.createBiquadFilter(); fl.type=filter.type||'lowpass'; fl.frequency.value=filter.f; fl.Q.value=filter.q||1; o.connect(fl); n=fl; }
+  const p=ctx.createStereoPanner(); p.pan.value=pan;
+  n.connect(g); g.connect(p); p.connect(sfxBus); o.start(T); o.stop(T+a+d+.05);
+}
+let NB; function nbuf(){ if(!NB){ NB=ctx.createBuffer(1,ctx.sampleRate,ctx.sampleRate); const d=NB.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1; } return NB; }
+function noise({t=0,a=.002,d=.1,v=.2,type='bandpass',f=1000,to=null,q=1,pan=0}={}){
+  const T=now()+t, s=ctx.createBufferSource(), fl=ctx.createBiquadFilter(), g=ctx.createGain(), p=ctx.createStereoPanner();
+  s.buffer=nbuf(); fl.type=type; fl.frequency.setValueAtTime(f,T); if(to) fl.frequency.exponentialRampToValueAtTime(to,T+a+d); fl.Q.value=q;
+  env(g,T,a,v,d); p.pan.value=pan;
+  s.connect(fl); fl.connect(g); g.connect(p); p.connect(sfxBus); s.start(T,Math.random()*.5); s.stop(T+a+d+.05);
+}
+// sino FM
+function bell({f=880,t=0,d=1,v=.12,ratio=3.5,idx=2.5,pan=0}={}){
+  const T=now()+t, c=ctx.createOscillator(), m=ctx.createOscillator(), mg=ctx.createGain(), g=ctx.createGain(), p=ctx.createStereoPanner();
+  c.frequency.value=f; m.frequency.value=f*ratio; mg.gain.setValueAtTime(f*idx,T); mg.gain.exponentialRampToValueAtTime(1,T+d);
+  m.connect(mg); mg.connect(c.frequency); env(g,T,.003,v,d); p.pan.value=pan;
+  c.connect(g); g.connect(p); p.connect(sfxBus); c.start(T); m.start(T); c.stop(T+d+.1); m.stop(T+d+.1);
+}
+// vozinha de bichinho: dente-de-serra com formante + glide
+function voice({f=500,to=800,t=0,d=.12,v=.14,formant=1400}={}){
+  tone({f,to,type:'sawtooth',t,d,v,filter:{type:'bandpass',f:formant,q:5}});
+  tone({f:f*2,to:to*2,type:'sine',t,d,v:v*.35});
+}
+const PENTA=[0,2,4,7,9,12,14,16,19,21,24];
+const note = (base,i) => base*Math.pow(2,PENTA[Math.min(i,PENTA.length-1)]/12);
+
+// ======================= EFEITOS =======================
+const ORE_LV = ['', 'cobre','ferro','prata','ouro','diamante'];
+const SFX = [
+  {id:'arrastar', nome:'Arrastar', d:'Toca a cada arrasto. Precisa ser discreto, porque toca 40 vezes por dia.', opts:[
+    {n:'Sopro', fn:()=>noise({f:500,to:1400,d:.11,v:.07,q:.8})},
+    {n:'Pedrinhas', rec:true, fn:()=>{ for(let i=0;i<4;i++) noise({t:i*.025+Math.random()*.01,f:2500+Math.random()*1500,d:.025,v:.05,type:'highpass'}); }},
+    {n:'Passinhos', fn:()=>{ tone({f:240,d:.05,v:.08,type:'triangle'}); tone({f:300,t:.06,d:.05,v:.07,type:'triangle'}); }},
+  ]},
+  {id:'fundir', nome:'Fundir', lv:6, d:'Duas peças iguais viram uma maior. O tom sobe com o nível, então dá para ouvir o progresso.', opts:[
+    {n:'Marimba', rec:true, fn:l=>{ const f=note(392,l); tone({f,d:.25,v:.18}); tone({f:f*4,d:.06,v:.05}); tone({f:f*2,d:.12,v:.05,type:'triangle'}); }},
+    {n:'Bolha', fn:l=>{ const f=note(260,l); tone({f,to:f*1.9,d:.09,v:.16}); tone({f:f*1.5,to:f*2.6,t:.05,d:.07,v:.07}); }},
+    {n:'Vozinha', fn:l=>{ const f=note(330,6-l); voice({f,to:f*1.5,d:.1,formant:1100+l*120}); voice({f:f*1.2,to:f*1.9,t:.09,d:.08,formant:1300+l*120}); }},
+  ]},
+  {id:'nascer', nome:'Peça nova', d:'Toca quando entra a peça nova. Bem baixinho, quase textura.', opts:[
+    {n:'Plim', fn:()=>tone({f:1568,d:.08,v:.04})},
+    {n:'Pop', rec:true, fn:()=>tone({f:520,to:180,d:.06,v:.09})},
+    {n:'Bocejo', fn:()=>voice({f:520,to:380,d:.22,v:.07,formant:900})},
+  ]},
+  {id:'quebrar', nome:'Rocha quebrando', d:'Na revelação, cada rocha quebra antes de mostrar o minério.', opts:[
+    {n:'Estalo', rec:true, fn:()=>{ noise({f:3000,d:.06,v:.22,type:'highpass'}); tone({f:140,to:45,d:.18,v:.25}); noise({t:.02,f:800,d:.15,v:.08,type:'lowpass'}); }},
+    {n:'Cascalho', fn:()=>{ for(let i=0;i<9;i++) noise({t:Math.random()*.16,f:600+Math.random()*1800,d:.04,v:.09}); tone({f:90,to:50,d:.15,v:.15}); }},
+    {n:'Casca de ovo', fn:()=>{ [0,.05,.1].forEach((t,i)=>noise({t,f:4000+i*800,d:.02,v:.12,type:'highpass'})); noise({t:.14,f:2500,d:.08,v:.14,q:3}); }},
+  ]},
+  {id:'comum', nome:'Minério comum', lv:2, lvNames:['cobre','ferro'], d:'Cobre e ferro: recompensa pequena, som curto e agradável.', opts:[
+    {n:'Moedinha', rec:true, fn:l=>{ const b=l===1?988:1175; tone({f:b,d:.06,v:.07,type:'square',filter:{f:4000}}); tone({f:b*1.335,t:.06,d:.18,v:.07,type:'square',filter:{f:4000}}); }},
+    {n:'Sininho', fn:l=>bell({f:l===1?1320:1568,d:.5,v:.08,idx:1.5})},
+    {n:'Beliscão', fn:l=>{ const f=l===1?660:784; tone({f,d:.12,v:.12,type:'triangle'}); tone({f:f*1.5,t:.04,d:.15,v:.08,type:'triangle'}); }},
+  ]},
+  {id:'raro', nome:'Achado raro', lv:3, lvNames:['prata','ouro','diamante'], d:'Prata, ouro e diamante. É o momento da loot box: quanto mais raro, maior a festa.', opts:[
+    {n:'Fanfarra', fn:l=>{ const notes=[523,659,784,1047,1319,1568].slice(0,3+l); notes.forEach((f,i)=>tone({f,t:i*.07,d:.25,v:.08,type:'square',filter:{f:3500}})); tone({f:notes.at(-1),t:notes.length*.07,d:.6,v:.08,type:'triangle'}); }},
+    {n:'Chuva de brilho', rec:true, fn:l=>{ const n=5+l*4; for(let i=0;i<n;i++) bell({f:note(1047,(n-i)%9),t:i*.055,d:.6,v:.06,idx:1.2,pan:Math.sin(i)*.6}); tone({f:131*Math.pow(2,l/3),to:262*Math.pow(2,l/3),d:.35,v:.12}); }},
+    {n:'Coro', fn:l=>{ const root=[0,0,0,262,330,392][l+2]||262; [1,1.25,1.5,2].forEach((m,i)=>{ tone({f:root*m,type:'sawtooth',a:.15,d:1.1,v:.035,filter:{f:1200}}); tone({f:root*m*1.004,type:'sawtooth',a:.15,d:1.1,v:.03,filter:{f:1200}}); }); bell({f:root*4,t:.12,d:1,v:.08}); }},
+  ]},
+  {id:'venda', nome:'Venda', d:'Ao vender o que achou no dia.', opts:[
+    {n:'Chuva de moedas', rec:true, fn:()=>{ for(let i=0;i<10;i++){ const t=i*.06+Math.random()*.03; tone({f:1975+Math.random()*300,t,d:.05,v:.05,type:'square',filter:{f:5000}}); noise({t,f:7000,d:.03,v:.03,type:'highpass'}); } }},
+    {n:'Caixa registradora', fn:()=>{ noise({f:1500,d:.04,v:.15}); noise({t:.06,f:900,d:.05,v:.12}); bell({f:2093,t:.12,d:.8,v:.1,idx:1}); }},
+    {n:'Sacolinha', fn:()=>{ tone({f:120,to:70,d:.12,v:.2}); for(let i=0;i<6;i++) noise({t:.03+i*.02,f:6000,d:.04,v:.05,type:'highpass'}); }},
+  ]},
+  {id:'cansado', nome:'Energia acabando', d:'Toca nos últimos 5 arrastos do dia.', opts:[
+    {n:'Coração', rec:true, fn:()=>{ tone({f:70,to:50,d:.12,v:.3}); tone({f:65,to:45,t:.18,d:.14,v:.25}); }},
+    {n:'Bocejo', fn:()=>voice({f:420,to:200,a:.05,d:.5,v:.1,formant:800})},
+    {n:'Aviso', fn:()=>{ tone({f:880,d:.08,v:.06,type:'triangle'}); tone({f:660,t:.12,d:.12,v:.06,type:'triangle'}); }},
+  ]},
+  {id:'fimdia', nome:'Fim do dia', d:'Quando a energia acaba e começa a revelação.', opts:[
+    {n:'Caixinha de música', rec:true, fn:()=>[1568,1319,1175,1047,880,784].forEach((f,i)=>bell({f,t:i*.16,d:.7,v:.07,ratio:5,idx:.8}))},
+    {n:'Grilos', fn:()=>{ for(let k=0;k<3;k++) for(let i=0;i<4;i++) noise({t:k*.35+i*.04,f:4800,d:.02,v:.06,q:12}); }},
+    {n:'Sino de turno', fn:()=>{ bell({f:392,d:2,v:.12,ratio:2.76,idx:3}); bell({f:392,t:.9,d:2,v:.08,ratio:2.76,idx:3}); }},
+  ]},
+  {id:'cota', nome:'Cota da semana', d:'O resultado do fim da semana: pagou (primeiro botão) ou não pagou (os outros dois).', opts:[
+    {n:'Pagou!', rec:true, fn:()=>{ [523,659,784,1047].forEach((f,i)=>tone({f,t:i*.09,d:.2,v:.08,type:'square',filter:{f:3500}})); [523,659,784].forEach(f=>tone({f,t:.4,d:.9,v:.06,type:'triangle'})); for(let i=0;i<8;i++) bell({f:note(2093,i%6),t:.4+i*.05,d:.4,v:.04,idx:1}); }},
+    {n:'Não deu (trombone)', fn:()=>[392,370,349,330].forEach((f,i)=>tone({f,to:i===3?260:null,t:i*.32,a:.02,d:i===3?.8:.28,v:.09,type:'sawtooth',filter:{f:900,q:2}}))},
+    {n:'Não deu (suspiro)', fn:()=>{ voice({f:500,to:250,a:.08,d:.8,v:.1,formant:700}); tone({f:220,to:110,t:.2,d:.9,v:.08,type:'triangle'}); }},
+  ]},
+];
+
+// monta a interface
+const root = document.getElementById('sfx');
+for(const e of SFX){
+  const c=document.createElement('div'); c.className='card';
+  const names = e.lvNames || Array.from({length:e.lv||0},(_,i)=>String(i+1));
+  c.innerHTML = `<div class="t">${e.nome.toUpperCase()}</div><div class="d">${e.d}</div>
+    ${e.lv?`<div class="lv">nível ${names.map((n,i)=>`<button data-l="${i+1}" class="${i===0?'sel':''}">${n}</button>`).join('')}</div>`:''}
+    <div class="opts">${e.opts.map((o,i)=>`<button data-o="${i}" class="${o.rec?'rec':''}">${o.n}${o.rec?'<small>sugestão</small>':''}</button>`).join('')}</div>`;
+  let lvl=1;
+  c.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{ lvl=+b.dataset.l; c.querySelectorAll('[data-l]').forEach(x=>x.classList.toggle('sel',x===b)); });
+  c.querySelectorAll('[data-o]').forEach(b=>b.onclick=()=>{ audio(); const o=e.opts[+b.dataset.o]; o.fn(e.id==='raro'?lvl+2:lvl); });
+  root.appendChild(c);
+}
+const rec = id => { const e=SFX.find(x=>x.id===id); return e.opts.find(o=>o.rec).fn; };
+
+// ======================= MÚSICA =======================
+let mus=null, musName=null, fila=Promise.resolve();
+function playMusic(name){ fila = fila.then(()=>trocar(name)).catch(e=>{ console.error(e); document.getElementById('musState').textContent='música ainda não publicada'; }); }
+async function trocar(name){
+  audio();
+  const velho=mus, nomeVelho=musName;
+  mus=null; musName=null;
+  if(velho) velho.pararMusica(.6);
+  if(nomeVelho===name){ setMusUI(); return; }
+  const m = await import(`./musica/${name}.js`);
+  m.iniciarMusica(ctx, musBus);
+  mus=m; musName=name;
+  applyDay(); setMusUI();
+}
+function setMusUI(){
+  document.querySelectorAll('[data-mus]').forEach(b=>b.classList.toggle('on',b.dataset.mus===musName));
+  document.getElementById('musState').textContent = musName ? 'tocando: '+musName.replace('lofi-','') : 'parada';
+}
+function applyDay(){
+  const e=+document.getElementById('energy').value, quota=document.getElementById('quotaDay').checked;
+  document.getElementById('enVal').textContent=e;
+  if(!mus) return;
+  const r=e/40;
+  mus.niveis({ f:50, o: quota?72:45, j: 20+45*r, c: 35+25*r });
+  mus.tensao(e<=5 ? .55 : quota ? .2 : 0);
+}
+document.querySelectorAll('[data-mus]').forEach(b=>b.onclick=()=>playMusic(b.dataset.mus));
+document.getElementById('musStop').onclick=()=>{ fila = fila.then(()=>{ if(mus){ mus.pararMusica(1); mus=null; musName=null; setMusUI(); } }); };
+document.getElementById('energy').oninput=applyDay;
+document.getElementById('quotaDay').onchange=applyDay;
+document.getElementById('revealMus').onclick=()=>{
+  if(!mus) return;
+  // na revelação a música abaixa e fica só o piano, para os efeitos brilharem
+  mus.niveis({f:40,o:20,j:16,c:30}); mus.tensao(0);
+  musBus.gain.setTargetAtTime(.5, now(), .3);
+  setTimeout(()=>{ musBus.gain.setTargetAtTime(1, now(), .5); applyDay(); }, 6000);
+};
+
+// ======================= DEMONSTRAÇÃO =======================
+document.getElementById('demo').onclick=()=>{
+  audio();
+  const seq=[]; let t=0;
+  const at=(dt,fn)=>{ t+=dt; seq.push([t,fn]); };
+  for(let i=0;i<6;i++){ at(.42,()=>rec('arrastar')()); if(i%2) at(.08,()=>rec('fundir')(1+i/2|0)); at(.1,()=>rec('nascer')()); }
+  at(.4,()=>rec('arrastar')()); at(.08,()=>rec('fundir')(4)); at(.1,()=>rec('nascer')());
+  at(.5,()=>rec('cansado')()); at(.7,()=>rec('cansado')());
+  at(.8,()=>rec('fimdia')());
+  at(1.3,()=>rec('quebrar')()); at(.25,()=>rec('comum')(1));
+  at(.45,()=>rec('quebrar')()); at(.25,()=>rec('comum')(2));
+  at(.6,()=>rec('quebrar')()); at(.25,()=>rec('raro')(4));
+  at(1.6,()=>rec('venda')());
+  for(const [tt,fn] of seq) setTimeout(fn, tt*1000);
+};
+</script>
+</body>
+</html>
