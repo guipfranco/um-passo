@@ -1,34 +1,66 @@
-# Um Passo (nome provisório)
+# Mina (nome provisório)
 
-Roguelite de luta por turnos, estilo Slay the Spire, em que o combate é um tabuleiro de 2048. Você ataca fundindo peças: quanto maior a peça que você forma, maior o dano.
+Puzzle de mineração com cara de Balatro. Você funde rochas no estilo 2048 durante o dia, cada arrasto cansa, e no fim do dia as rochas quebram e revelam o minério, como uma loot box. Vende, melhora o equipamento e tenta pagar a cota da semana.
 
-## Luta teste (v0.3, o que está jogável)
+## Protótipo atual (v0.4)
 
-- Tabuleiro **3x3**, regra do 2048: tudo desliza até bater, dois iguais se fundem e dobram.
-- **Cada fusão é um ataque**: causa dano igual ao valor da peça que nasceu. Fusões no mesmo arrasto somam (combo).
-- **Baralho**: as peças novas saem do seu baralho, não do acaso puro. O inicial tem 6 cartas de 2 e 2 de 4. Quando acaba, é embaralhado de novo. A próxima peça fica visível.
-- **Inimigo**: Gosma, 120 de vida, ataca 3 a cada 3 jogadas, e avisa antes (intenção, como no Slay the Spire).
-- Você tem 20 de vida.
-- **Encurralado** (nenhum arrasto possível): você leva um golpe e as 2 menores peças somem.
-- Calibragem com bots: vencem 54% a 66% das lutas, em cerca de 19 jogadas.
+### O dia
+- Tabuleiro **4x4**, regra do 2048: tudo desliza até bater, duas rochas iguais viram a rocha do nível seguinte.
+- Níveis: Cascalho, Pedra, Rocha, Rocha densa, Geodo, Cristalino, Geodo real.
+- **40 de energia**, cada arrasto gasta 1. O dia acaba quando a energia zera, quando o tabuleiro trava, ou no botão "Encerrar dia".
+- Nasce Cascalho (90%) ou Pedra (10%). A próxima rocha fica visível.
 
-## Para onde vai (ideias do Guilherme, ainda não feitas)
+### Fim do dia: a revelação
+- As rochas quebram uma a uma, **da menor para a maior**, para guardar o suspense.
+- Cada rocha sorteia o minério pela tabela abaixo.
+- Achado raro (prata ou melhor): a tela treme mais quanto mais raro, saltam faíscas, aparece o nome grande e toca um acorde. O total do dia sobe contando.
 
-- **Grid como progressão**: começar pequeno (2x2 ou 3x3) e comprar mais casas entre lutas.
-- **Baralho que evolui**: no começo só números baixos; ao longo da run entram cartas melhores e especiais, por exemplo:
-  - multiplicador (a fusão com ela vale ×2 de dano),
-  - coringa (se funde com qualquer número),
-  - outras a definir.
-- **Estrutura de run**: sequência de lutas, cada uma contra um inimigo; entre elas, recompensas e loja.
+| Rocha | Nada | Cobre ($1) | Ferro ($3) | Prata ($8) | Ouro ($20) | Diamante ($60) |
+|---|---|---|---|---|---|---|
+| Cascalho | 70% | 30% | | | | |
+| Pedra | 40% | 45% | 15% | | | |
+| Rocha | 15% | 45% | 35% | 5% | | |
+| Rocha densa | | 25% | 45% | 25% | 5% | |
+| Geodo | | | 30% | 45% | 22% | 3% |
+| Cristalino | | | | 40% | 45% | 15% |
+| Geodo real | | | | 10% | 50% | 40% |
 
-## Perguntas em aberto
+Regra de equilíbrio: em média uma rocha vale mais que duas do nível de baixo, então fundir sempre compensa no valor esperado.
 
-- Dano = valor da peça formada é o melhor? Alternativas: dano só ao formar peças acima de X, ou dano ao "lançar" uma peça no inimigo.
-- O que acontece quando o tabuleiro trava: golpe + limpeza (atual), ou derrota direta?
-- Inimigos com comportamentos diferentes (bloqueiam casas, jogam peças ruins no seu tabuleiro, etc.).
+### Loja (entre os dias)
+- **Fôlego**: +5 de energia por dia (até 4 níveis: $25, $40, $60, $90).
+- **Picareta**: +25% de chance de nascer Pedra (até 2 níveis: $35, $70).
+- **Martelo**: cada rocha sorteia duas vezes e fica com o melhor ($60).
+
+### Semana e cota (meio-termo)
+- 5 dias. No fim do 5º dia, paga a cota: $60, $110, $180, $270, $400, depois +50% por semana.
+- **Pagou**: o valor sai do dinheiro, a semana avança e a próxima começa com um **Geodo** no tabuleiro.
+- **Não pagou**: perde o dinheiro guardado e repete a semana. As melhorias continuam.
+
+### Calibragem (simulação, bot simples de canto)
+| Melhorias | Renda média por dia |
+|---|---|
+| nenhuma | $26 |
+| Fôlego 2 | $33 |
+| Picareta 1 + Martelo | $46 |
+| tudo no máximo | $82 |
+
+O dilema da semana 1: a cota de $60 deixa folga para uma melhoria, não para todas. O bot que compra tudo sem pensar não paga a cota.
+
+## Estilo visual
+Balatro: fundo girando, efeito de tela antiga (CRT), fonte pixelada grande, **cor como rótulo** (vermelho = cota, dourado = dinheiro, azul = energia), números enormes e muito "juice" na revelação. Os rascunhos dos três estilos considerados estão em `rascunhos.html`.
+
+## Ideias para depois
+- **Lupa**: espia o minério de uma rocha durante o dia.
+- **Rocha com veio**: aparece às vezes, com chance melhor.
+- **Mochila 5x5** (grid maior) e começar menor (3x3) como progressão.
+- Andares mais fundos com rochas melhores e obstáculos.
+- Peças especiais: dinamite, coringa.
+- Proteção contra azar na revelação.
+- Salvar o progresso no aparelho.
 
 ## Histórico
-
-- v0.1: você era uma peça que andava e absorvia monstros (dungeon crawler). Faltava o prazer de mexer o tabuleiro todo.
-- v0.2: arrasto movendo tudo, mas só você se fundia; as outras peças viravam obstáculo.
-- v0.3: volta à regra do 2048 com combate por cima.
+- v0.1: você era uma peça que andava e absorvia monstros (dungeon crawler).
+- v0.2: arrasto movendo tudo, mas só você se fundia.
+- v0.3: 2048 com combate estilo Slay the Spire (dano = valor da fusão) e baralho de peças.
+- v0.4: mineração com revelação estilo loot box, energia diária e cota semanal.
