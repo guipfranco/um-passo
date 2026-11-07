@@ -111,6 +111,7 @@ html,body{min-height:100%;background:#f6ecd9;color:#5a4636;font-family:'Fredoka'
 .card .pr{margin-left:auto;font-weight:700;color:#c48a1e;font-size:17px;white-space:nowrap}
 .card:disabled{opacity:.45}
 .novo{font-size:13px;font-weight:700;color:#fff;background:#6aa84f;border-radius:999px;padding:3px 10px;align-self:center}
+.tile.line::after{content:'';position:absolute;inset:-3px;border-radius:22px;border:3px solid #6aa84f;pointer-events:none}
 </style>
 </head>
 <body>
@@ -167,6 +168,10 @@ function lvDesc(id,L){
     folego:   [`+${8*L} de energia em todo dia de mina.`],
     picareta: [`+${25*L}% de chance de nascer Pedra (nível 2).`],
     martelo:  [`Cada pedrinha sorteia ${1+L} vezes e cospe a melhor.`],
+    cascalheira:[`+$${L} por andar para cada Cascalho no tabuleiro no fim do dia.`],
+    pedreira: [`+$${2*L} por andar para cada Pedra no tabuleiro no fim do dia.`],
+    rochedo:  [`Rocha e Rocha densa cospem ×${1+L}.`],
+    regua:    [`Fileiras de pedrinhas iguais valem +×${String(.25*L).replace('.',',')} a mais cada.`],
   }[id];
   return D[Math.min(L,D.length)-1];
 }
@@ -205,8 +210,12 @@ const ITEMS = [
   {id:'folego',    em:'💨', nome:'Fôlego',            est:'básico',   preco:25, desc:'+8 de energia em todo dia de mina.'},
   {id:'picareta',  em:'⛏️', nome:'Picareta',          est:'básico',   preco:30, desc:'Nasce Pedra (nível 2) com bem mais frequência.'},
   {id:'martelo',   em:'🔨', nome:'Martelo',           est:'básico',   preco:40, desc:'Cada pedrinha sorteia duas vezes e cospe a melhor.'},
+  {id:'cascalheira',em:'🪣', nome:'Cascalheira',      est:'pedras',   preco:20, desc:''},
+  {id:'pedreira',  em:'🏗️', nome:'Pedreira',          est:'pedras',   preco:25, desc:''},
+  {id:'rochedo',   em:'🗿', nome:'Rochedo',           est:'pedras',   preco:30, desc:''},
+  {id:'regua',     em:'📏', nome:'Régua',             est:'pedras',   preco:30, desc:''},
 ];
-const EST_COR = {miudinha:'#6aa84f', gigante:'#7a59a8', exausta:'#c0603f', parede:'#5f6b80', 'básico':'#a08a74'};
+const EST_COR = {pedras:'#c48a1e', miudinha:'#6aa84f', gigante:'#7a59a8', exausta:'#c0603f', parede:'#5f6b80', 'básico':'#a08a74'};
 
 // caminhos do mapa (from = a partir de qual semana aparece)
 const PATHS = {
@@ -306,8 +315,19 @@ for(let y=0;y<N;y++) for(let x=0;x<N;x++){ const c=document.createElement('div')
 
 // ===================== PARTIDA, SEMANA E MAPA =====================
 function newGame(){
-  S = {week:1, day:1, money:0, lv:{}, coroa:0, saved:0, bonus:0, gift:false, tiles:[], walls:[], phase:'map', energy:0, energyMax:0};
-  startWeek();
+  S = {week:1, day:1, money:0, lv:{}, coroa:0, saved:0, bonus:0, gift:false, tiles:[], walls:[], phase:'map', energy:0, energyMax:0, char:null};
+  chooseChar();
+}
+
+const CHARS = {
+  rola:     {em:'🌀', nome:'Rola',     desc:'Arrastou, tudo desliza até bater, como no 2048.'},
+  passinho: {em:'👣', nome:'Passinho', desc:'Arrastou, tudo anda só uma casa, e a pedrinha nova entra pela borda de trás, como no Threes.'},
+};
+function chooseChar(){
+  $('#mineRow').style.display='none'; $('#revealRow').style.display='none'; render(); setBanner('A mina das pedrinhas','');
+  showOverlay(`<h2>Quem vai minerar?</h2><p>Cada um mexe as pedrinhas de um jeito.</p>
+    <div class="cards">${Object.entries(CHARS).map(([k,c])=>`<button class="card" data-char="${k}"><span class="em">${c.em}</span><div><b>${c.nome}</b><span>${c.desc}</span></div></button>`).join('')}</div>`);
+  document.querySelectorAll('[data-char]').forEach(b=>b.onclick=()=>{ S.char=b.dataset.char; hideOverlay(); startWeek(); });
 }
 
 function startWeek(){
@@ -386,8 +406,9 @@ function startDay(p){
 
 function rollSpawn(){ return Math.random() < CFG.pedraChance + .25*lvl('picareta') + (S.path?.pedra||0) ? 2 : 1; }
 function emptyCells(){ const out=[]; for(let y=0;y<N;y++) for(let x=0;x<N;x++) if(!tileAt(x,y) && !wallAt(x,y)) out.push({x,y}); return out; }
-function addTile(t){
-  const free=emptyCells(); if(!free.length) return;
+function addTile(t, dir){
+  let free=emptyCells(); if(!free.length) return;
+  if(dir && S.char==='passinho'){ const [dx,dy]=dir; const e=free.filter(c=>dx===1?c.x===0:dx===-1?c.x===N-1:dy===1?c.y===0:c.y===N-1); if(e.length) free=e; }
   const c=pick(free);
   if(t===undefined){
     if(S.energy<=0) t=0;                       // exausta: só torrão
@@ -397,7 +418,25 @@ function addTile(t){
 }
 
 // ===================== 2048 (com paredes) =====================
+function slideOne(tiles,dx,dy){
+  const ts=tiles.map(t=>({...t,m:false}));
+  const grid=Array.from({length:N},()=>Array(N).fill(null));
+  for(const w of S.walls) grid[w.y][w.x]={wall:true};
+  for(const t of ts) grid[t.y][t.x]=t;
+  const idx=[...Array(N).keys()];
+  const xs=dx===1?[...idx].reverse():idx, ys=dy===1?[...idx].reverse():idx;
+  let moved=false; const merges=[], gone=[];
+  for(const y of ys) for(const x of xs){
+    const t=grid[y][x]; if(!t||t.wall) continue;
+    const nx=x+dx, ny=y+dy; if(!inside(nx,ny)) continue;
+    const o=grid[ny][nx];
+    if(!o){ grid[y][x]=null; grid[ny][nx]=t; t.x=nx; t.y=ny; moved=true; }
+    else if(!o.wall && !o.m && o.t===t.t && t.t>0){ grid[y][x]=null; o.t++; o.m=true; t.x=nx; t.y=ny; gone.push(t); merges.push(o); moved=true; }
+  }
+  return {tiles:ts.filter(t=>!gone.includes(t)).map(({m,...t})=>t), moved, merges, gone};
+}
 function slide(tiles,dx,dy){
+  if(S.char==='passinho') return slideOne(tiles,dx,dy);
   const ts=tiles.map(t=>({...t,m:false}));
   const grid=Array.from({length:N},()=>Array(N).fill(null));
   for(const w of S.walls) grid[w.y][w.x]={wall:true};
@@ -430,7 +469,7 @@ function move(dx,dy){
   S.tiles=r.tiles;
   const wasTired = S.energy<=0;
   if(S.energy>0) S.energy--; else S.tired++;
-  addTile();
+  addTile(undefined,[dx,dy]);
   render();
   SFX.arrastar();
   const tops=r.merges.map(o=>o.t).sort((a,b)=>b-a);
@@ -455,6 +494,19 @@ const adjWall = t => DIRS.some(([dx,dy])=>wallAt(t.x+dx,t.y+dy));
 const adjBig = t => DIRS.some(([dx,dy])=>{ const o=tileAt(t.x+dx,t.y+dy); return o && o.t>=3; });
 const fmtMult = m => '×'+(Math.round(m*100)/100).toString().replace('.',',');
 
+// fileiras: 3 ou mais pedrinhas iguais seguidas numa linha ou coluna
+function fileiras(){
+  const out=[], T=(x,y)=>{ const t=tileAt(x,y); return t&&t.t>0?t:null; };
+  for(const horiz of [true,false]) for(let a=0;a<N;a++){
+    let run=[];
+    for(let b=0;b<=N;b++){
+      const t = b<N ? (horiz?T(b,a):T(a,b)) : null;
+      if(t && run.length && run[0].t===t.t) run.push(t);
+      else { if(run.length>=3) out.push(run); run = t?[t]:[]; }
+    }
+  }
+  return out;
+}
 function showCalc(){
   const parts=[`<b>$${S.gain}</b>`];
   if(S.mult!==1) parts.push(fmtMult(S.mult).replace('×','× '));
@@ -500,6 +552,7 @@ async function endDay(){
     t.ore=o; S.found.push(o);
     const ore=ORES[o];
     let val=ore.p;
+    if(has('rochedo') && (t.t===3||t.t===4) && val>0){ val*=1+lvl('rochedo'); fire('rochedo','×'+(1+lvl('rochedo')),true); }
     if(has('lupa') && t===maior && val>0){ val*=1+lvl('lupa'); fire('lupa','×'+(1+lvl('lupa')),true); }
     if(o>0) cuspiram++;
     const body=`<g transform="translate(36 66) scale(.72) translate(-50 -58)">${pedraInner(t.t,o?{face:['happy','open']}:{face:['dot','wavy'],sweat:true})}</g>`;
@@ -521,9 +574,21 @@ async function endDay(){
   if(has('vaquinha') && cuspiram) bonus.push(['vaquinha', cuspiram*lvl('vaquinha')]);
   if(has('horaextra') && S.tired) bonus.push(['horaextra', S.tired*lvl('horaextra')]);
   if(has('musgo')){ const n=S.walls.filter(w=>DIRS.some(([dx,dy])=>{ const o=tileAt(w.x+dx,w.y+dy); return o && o.t>0; })).length; if(n) bonus.push(['musgo', 2*n*lvl('musgo')*S.week]); }
+  if(has('cascalheira')){ const n=S.tiles.filter(t=>t.t===1).length; if(n) bonus.push(['cascalheira', n*lvl('cascalheira')*S.week]); }
+  if(has('pedreira')){ const n=S.tiles.filter(t=>t.t===2).length; if(n) bonus.push(['pedreira', 2*n*lvl('pedreira')*S.week]); }
   for(const [id,v] of bonus){ await sleep(380); S.gain+=v; fire(id,'+$'+v); showCalc(); countTo(Math.round(S.gain*S.mult)-S.cost); }
   // multiplicadores
   if(!fiscalHoje('paoduro')){
+    for(const ln of fileiras()){
+      await sleep(350);
+      const g=(ln.length>=4?.5:.25)+.25*lvl('regua');
+      S.mult+=g;
+      ln.forEach(t=>els.get(t.id)?.classList.add('line'));
+      popup(`Fileira de ${ROCKS[ln[0].t].n}!`, '+'+fmtMult(g), '#6aa84f');
+      if(has('regua')) fire('regua','+'+fmtMult(.25*lvl('regua')),true);
+      SFX.raro(3); showCalc(); countTo(Math.round(S.gain*S.mult)-S.cost);
+      await sleep(650);
+    }
     const mults=[];
     if(S.path.narrow) mults.push([null,2]);
     if(has('coroa') && S.coroa) mults.push(['coroa', 1+S.coroa]);
@@ -635,6 +700,7 @@ function render(){
       if(el.dataset.key!==key){ el.dataset.key=key; el.firstChild.innerHTML=svgOf(t.t===0?torraoInner():pedraInner(t.t,{look})); }
     }
   }
+  if(S.phase==='mine'){ const on=new Set(fileiras().flat().map(t=>t.id)); for(const t of S.tiles) els.get(t.id)?.classList.toggle('line',on.has(t.id)); }
   const q=CFG.quota(S.week);
   $('#hQuota').textContent='$'+q;
   $('#hQuotaDay').textContent=S.day===CFG.days?'cota hoje!':`cota em ${CFG.days-S.day+1} dias`;
@@ -732,13 +798,14 @@ function hideOverlay(){ $('#overlay').classList.add('hidden'); }
 function showHelp(){
   showOverlay(`<h2>A mina das pedrinhas</h2><ul>
     <li><b>De manhã</b> escolha por onde cavar. Cada caminho muda o dia.</li>
-    <li><b>Arraste</b>: as pedrinhas deslizam até bater. Duas iguais viram uma maior. Paredes não se mexem.</li>
+    <li><b>Arraste</b>: com o Rola, tudo desliza até bater; com o Passinho, tudo anda uma casa. Duas iguais viram uma maior. Paredes não se mexem.</li>
+    <li><b>Fileira</b>: 3 ou 4 pedrinhas iguais seguidas numa linha ou coluna, no fim do dia, somam multiplicador (contorno verde).</li>
     <li>Cada arrasto gasta 1 de energia. <b>Exausta, só nasce torrão</b>: não junta com nada e custa $${CFG.torraoCusto} no fim do dia. Energia que sobra fica <b>guardada</b> para o próximo dia (até ${CFG.guardaMax}).</li>
     <li>No fim do dia cada pedrinha <b>cospe</b> o que tem dentro, e os seus <b>itens</b> somam e multiplicam.</li>
     <li>Depois de minerar você ganha <b>1 item de 3</b>. Sem limite de itens.</li>
     <li>No dia ${CFG.days}, o <b>fiscal</b> cobra a cota. Pagou: desce um andar e ganha item. Não pagou: perde o dinheiro e repete o andar.</li>
   </ul><button class="btn b" id="ok">Bora</button>`);
-  $('#ok').onclick=()=>{ localStorage.mina_seen3=1; hideOverlay(); if(S.phase==='map') morning(); };
+  $('#ok').onclick=()=>{ localStorage.mina_seen3=1; hideOverlay(); if(!S.char) chooseChar(); else if(S.phase==='map') morning(); };
 }
 
 // ===================== ENTRADA =====================
