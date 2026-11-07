@@ -140,7 +140,10 @@ function cenaB(){
   s+=`<rect x="0" y="${ty-6}" width="390" height="44" fill="#3d2f25" opacity=".5"/>`;
   for(let x=-6;x<400;x+=20) s+=`<rect x="${x}" y="${ty-4}" width="9" height="40" rx="2" fill="#7c5131" stroke="#4d321d" stroke-width="1.5"/>`;
   s+=`<line x1="0" y1="${ty+5}" x2="390" y2="${ty+5}" stroke="#2b2420" stroke-width="5"/><line x1="0" y1="${ty+27}" x2="390" y2="${ty+27}" stroke="#2b2420" stroke-width="5"/><line x1="0" y1="${ty+4}" x2="390" y2="${ty+4}" stroke="#b4bdc4" stroke-width="3"/><line x1="0" y1="${ty+26}" x2="390" y2="${ty+26}" stroke="#b4bdc4" stroke-width="3"/>`;
-  s+=`<g transform="translate(250 ${ty+16})"><rect x="-54" y="-30" width="112" height="66" rx="10" fill="#0004"/><rect x="-58" y="-34" width="112" height="64" rx="10" fill="#6d4a30" stroke="#8d969d" stroke-width="5"/><rect x="-48" y="-24" width="92" height="44" rx="6" fill="#3b2a1e"/>${ores([[5,-2.4,-.5],[4,-1.2,.4],[6,0,-.5],[3,1.2,.4],[5,2.2,-.3],[2,-.3,.6]],-2,-2,16,1.1)}</g>`;
+  const terra=rng(77); let monte='';
+  for(const [dx,dy,rx,ry,c] of [[-28,-6,26,16,'#6b4a33'],[10,-8,30,17,'#5e412c'],[30,4,18,12,'#73513a'],[-8,6,30,13,'#654630'],[-34,8,14,9,'#7a5940']]) monte+=`<path d="${blob(dx,dy,rx,ry,terra,.18,9)}" fill="${c}"/>`;
+  monte+=speck(terra,-44,-20,84,36,22,['#4f3624','#86654a'],1,2.6);
+  s+=`<g transform="translate(250 ${ty+16})"><rect x="-54" y="-30" width="112" height="66" rx="10" fill="#0004"/><rect x="-58" y="-34" width="112" height="64" rx="10" fill="#6d4a30" stroke="#8d969d" stroke-width="5"/><rect x="-48" y="-24" width="92" height="44" rx="6" fill="#3b2a1e"/><g transform="translate(-2 -2)">${monte}</g></g>`;
   // casas: só um leve tom mais claro no chão
   for(let j=0;j<4;j++) for(let i=0;i<4;i++){ const x=X(i), y=Y(j);
     s+=`<path d="${blobRect(x+2,y+2,C-4,C-4,r,1.6,14)}" fill="#6e5848" opacity=".38"/>`; }
@@ -153,7 +156,7 @@ function cenaB(){
   const lanterna=(x,y)=>`<circle cx="${x}" cy="${y}" r="110" fill="url(#bLuz)"/><rect x="${x-9}" y="${y-9}" width="18" height="18" rx="4" fill="#2e2219"/><circle cx="${x}" cy="${y}" r="5.5" fill="#ffe7a8"/>`;
   s+=`<rect width="390" height="780" fill="url(#bVin)"/>`;
   s+=`<ellipse cx="${BX+BW/2}" cy="${BY+BW/2}" rx="${BW*.62}" ry="${BW*.6}" fill="url(#bLuz)" opacity=".55"/>`;
-  s+=lanterna(BX-14,BY+BW*0.45)+lanterna(BX+BW+14,BY+BW*0.15)+lanterna(140,740);
+
   return s;
 }
 
@@ -182,10 +185,10 @@ function cenaC(){
     for(const [a,l] of [[-.5,1],[0,1.3],[.55,.9],[-.15,.7]]){ const dx=Math.sin(a)*l*26*k, dy=-Math.cos(a)*l*26*k, w=6*k;
       g+=`<path d="M${f1(x-w*Math.cos(a))} ${f1(y-w*Math.sin(a))} L${f1(x+dx-w*.6*Math.cos(a))} ${f1(y+dy-w*.6*Math.sin(a))} L${f1(x+dx*1.15)} ${f1(y+dy*1.15)} L${f1(x+dx+w*.6*Math.cos(a))} ${f1(y+dy+w*.6*Math.sin(a))} L${f1(x+w*Math.cos(a))} ${f1(y+w*Math.sin(a))}Z" fill="${cor}" stroke="#2e2219" stroke-width="2"/><path d="M${f1(x)} ${f1(y)} L${f1(x+dx)} ${f1(y+dy)}" stroke="${cl}" stroke-width="2" opacity=".8"/>`; }
     return g; };
-  s+=cristal(28,150,1,'#7fe3ef','#d9fbff','cBrilhoA')+cristal(366,240,.9,'#f2a6d8','#ffe3f5','cBrilhoR')+cristal(350,560,1.1,'#7fe3ef','#d9fbff','cBrilhoA')+cristal(36,470,.8,'#f2a6d8','#ffe3f5','cBrilhoR')+cristal(250,760,1,'#7fe3ef','#d9fbff','cBrilhoA');
+
   // cogumelos
   const cog=(x,y,k)=>`<ellipse cx="${x+2}" cy="${y+3}" rx="${11*k}" ry="${9*k}" fill="#0003"/><circle cx="${x}" cy="${y}" r="${10*k}" fill="#e0604a" stroke="#2e2219" stroke-width="2"/><circle cx="${x-3*k}" cy="${y-3*k}" r="${2.4*k}" fill="#fff"/><circle cx="${x+4*k}" cy="${y+1*k}" r="${1.8*k}" fill="#fff"/><circle cx="${x-1*k}" cy="${y+4*k}" r="${1.5*k}" fill="#fff"/>`;
-  s+=cog(150,600,1)+cog(166,612,.7)+cog(318,128,.9)+cog(98,740,.8);
+  s+=cog(150,600,1)+cog(166,612,.7)+cog(318,128,.9);
   // raio de luz
   s+=`<path d="M250 110 L330 110 L250 520 L120 520Z" fill="url(#cRaio)"/>`;
   // ninhos (sem grade): cada pedrinha num côncavo da areia
@@ -233,8 +236,8 @@ function cenaD(){
 
 const VIEWS = [
   {id:'A', nome:'Escavação', cena:cenaA, desc:'Um sítio de escavação visto de cima. As casas são marcadas só por barbantes finos entre estacas. Em volta: balde com minério, pá, peneira e escova.'},
-  {id:'B', nome:'Galeria', cena:cenaB, desc:'Chão de terra batida da mina, iluminado por lanternas, com trilho e carrinho. As casas são só um tom mais claro no chão, e a luz marca a área do jogo.'},
-  {id:'C', nome:'Gruta', cena:cenaC, desc:'Uma câmara de gruta com cristais, musgo, cogumelos e um riacho, com as paredes em sombra. Sem grade: as casas são só leves afundados na areia.'},
+  {id:'B', nome:'Galeria', cena:cenaB, desc:'Chão de terra batida da mina, com trilho e carrinho. As casas são só um tom mais claro no chão, e a luz marca a área do jogo.'},
+  {id:'C', nome:'Gruta', cena:cenaC, desc:'Uma câmara de gruta com musgo, cogumelos e um riacho, com as paredes em sombra. Sem grade: as casas são só leves afundados na areia.'},
   {id:'D', nome:'Bancada', cena:cenaD, desc:'A mesa do minerador. O tabuleiro é uma caixa de amostras forrada de feltro marrom, com mapa, vela, lupa, moedas e caderno em volta.'},
 ];
 const hud = `<div class="hud"><div class="pill"><span class="ic" style="background:#6aa84f">⚡</span><div><b>23</b><small>de 40</small></div></div><div class="pill"><span class="ic" style="background:#f2b33d">$</span><div><b>$86</b><small>dinheiro</small></div></div><div class="pill"><span class="ic" style="background:#c0603f">!</span><div><b>$150</b><small>cota em 3 dias</small></div></div></div>
