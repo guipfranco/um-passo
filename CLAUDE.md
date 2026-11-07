@@ -20,3 +20,4 @@ Puzzle de mineração com pedrinhas que cospem minério. Publicado em https://gu
 - Cada página em `testes/` abre o jogo num iframe, mexe nele e escreve `{log, errs}`. O teste falha se aparecer erro.
 - Eles conferem que nada quebra, não os números do balanceamento: a mecânica ainda está mudando. Quando um teste ficar velho por mudança de regra, ajuste o teste.
 - Rode depois de cada mudança e antes de publicar.
+- Calibrar o Clássico: `python testes/calibrar.py` (robô joga cada fase). Até onde se sobe em cada tamanho de tabuleiro: abrir `testes/calibrar/subida.html#40:4` no Edge sem janela (40 partidas no 4x4).

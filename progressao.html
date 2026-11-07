@@ -36,7 +36,7 @@ table{border-collapse:collapse;width:100%;font-size:13px}
 th,td{text-align:left;padding:6px 6px;border-bottom:1px solid #e2cfae;vertical-align:top}
 th{color:#a08a74;font-weight:600}
 td.n{font-weight:700;color:#7a5a44;white-space:nowrap}
-.longa{background:#fff3cf}
+.longa,tr.hoje{background:#fff3cf}
 .ico{display:inline-block;width:20px;height:20px;vertical-align:-5px;overflow:visible}
 details{background:#efe1c6;border-radius:14px;padding:0 12px}
 details summary{font-weight:700;font-size:16px;padding:10px 0;cursor:pointer;color:#7a5a44}
@@ -129,6 +129,24 @@ const PROGS = [
    contra:['Quem escolhe um caminho não vê o outro sem voltar.','O mundo final precisa funcionar para quem veio pelos dois lados.']},
 ];
 
+// arrastos medianos para chegar a cada pedrinha, jogando bem (robô do canto; testes/calibrar/subida.html)
+// [nível, 3x3, 4x4, 5x5]  "(nn%)" = só essa parte das partidas chega; null = ninguém chega
+const SUB = [[3,'4','5','5'],[4,'10','10','10'],[5,'19','21','22'],[6,'35','41','41'],[7,'67 (73%)','73','85'],[8,'123 (5%)','141','145'],
+  [9,null,'262 (95%)','308'],[10,null,'514 (75%)','643'],[11,null,'1.023 (18%)','1.262'],[12,null,null,'2.595 (84%)'],[13,null,null,'4.648 (56%)'],[14,null,null,null]];
+const NOMES=['','Cascalho','Pedra','Rocha','Rocha densa','Geodo','Cristalino','Geodo real','Pedra lunar','Âmbar','Esmeralda viva','Rubi real','Meteorito','Estrela','Galáxia'];
+const subRow = ([t,a,b,c]) => `<tr class="${t<=5?'hoje':''}"><td>${ico(P(t))} <b>${NOMES[t]}</b> <span class="sub">${2**t}</span></td>${[a,b,c].map(v=>`<td>${v??'<span class="sub">ninguém</span>'}</td>`).join('')}<td class="sub">${Math.ceil(2**t/2.2).toLocaleString('pt-BR')}</td></tr>`;
+const SUBIDAS = [
+  {nome:'A · Escada', desc:'Uma fase por pedrinha, cada uma pede a próxima: Rocha, Rocha densa, Geodo... até a Galáxia. O tabuleiro cresce quando precisa (3x3 no começo, 4x4 até a Esmeralda viva, 5x5 daí para cima). É o 2048 puro, com a coleção inteira como caminho.',
+   pros:'Muito simples de entender: a meta é sempre a próxima pedrinha.', contra:'As últimas fases levam horas; precisa poder salvar no meio.'},
+  {nome:'B · Cada mundo sobe um degrau', desc:'Junto com a progressão por mundos: a fase grande que fecha cada mundo pede uma pedrinha acima da do mundo anterior. Mundo 1 fecha no Cristalino (~40 arrastos), 2 no Geodo real (~75), 3 na Pedra lunar (~140), 4 no Âmbar (~260), 5 na Esmeralda viva (~520), 6 no Rubi real (~1.000), 7 no Meteorito (5x5, ~2.600), 8 na Estrela.',
+   pros:'Cada mundo termina num marco, e a subida acompanha o jogador ficando bom.', contra:'Os finais dos mundos 5 a 8 são longos; também pedem salvar no meio.'},
+  {nome:'C · Quanto mais fundo, maior nasce', desc:'A mina vai ficando mais funda e as pedrinhas que nascem ficam maiores: no começo nasce Cascalho e Pedra; mais adiante, Pedra e Rocha; depois Rocha e Rocha densa. Com o mesmo número de arrastos, as missões chegam bem mais alto, e as pedrinhas grandes aparecem sem fases de mil arrastos.',
+   pros:'Explora as pedrinhas grandes com fases curtas, e combina com o tema de descer a mina.', contra:'O começo de cada fase fica parecido; os pontos sobem muito rápido.'},
+  {nome:'D · Começar alto', desc:'Fases montadas no editor que já começam com pedrinhas grandes no tabuleiro (uma Pedra lunar, dois Âmbares...). A missão é fechar a próxima com poucos arrastos. Vira quebra-cabeça com as pedrinhas do topo.',
+   pros:'Mostra o topo da coleção logo cedo, em fases curtas e diferentes.', contra:'Cada fase é feita à mão.'},
+  {nome:'E · Expedição sem fim', desc:'Uma fase-desafio por mundo, sem limite de arrastos: vai até travar. As estrelas são por até onde chegou (no 4x4: ★ Pedra lunar, ★★ Âmbar, ★★★ Esmeralda viva), com recorde. Dá para sair e continuar depois.',
+   pros:'É o 2048 de verdade para quem quer, sem atrasar quem não quer.', contra:'Precisa salvar a partida no meio.'},
+];
 const fase = (n,nome,mapa,missao,arr,longa=false) => `<tr class="${longa?'longa':''}"><td class="n">${n}</td><td><b>${nome}</b><br><span class="sub">${mapa}</span></td><td>${missao}</td><td>${arr}</td></tr>`;
 const R = t => ico(P(t));
 const M1 = [
@@ -143,7 +161,7 @@ const M1 = [
   fase(9,'Quebra-cabeça','4x4, peças postas','Forme um '+R(5)+' Geodo em 6 arrastos','6'),
   fase(10,'Primeiro Geodo','5x5','Forme um '+R(5)+' Geodo','35',true),
   fase(11,'Sem pressa','4x4','Forme 2 '+R(4)+' Rochas densas sem formar '+R(5)+' Geodo','26',true),
-  fase(12,'Fim da entrada','5x5','2 '+R(4)+' Rochas densas, 1 '+R(5)+' Geodo e 300 pontos','45',true),
+  fase(12,'Fim da entrada','5x5','Forme um '+R(6)+' Cristalino e faça 300 pontos','55',true),
 ];
 const M2 = [
   fase(13,'A peça que não sai','4x4 com 1 bloco','Forme 2 '+R(3)+' Rochas','16'),
@@ -157,7 +175,7 @@ const M2 = [
   fase(21,'Coração','coração 7x6','Faça 300 pontos','35'),
   fase(22,'Ampulheta','ampulheta 5x5','Forme um '+R(5)+' Geodo, depois uma '+R(4)+' Rocha densa','36',true),
   fase(23,'Labirinto curto','6x6 com 6 blocos','Forme 2 '+R(5)+' Geodos','42',true),
-  fase(24,'Salão dos blocos','7x7 com 8 blocos','1 '+R(6)+' Cristalino e 400 pontos','55',true),
+  fase(24,'Salão dos blocos','7x7 com 8 blocos','Forme um '+R(7)+' Geodo real','95',true),
 ];
 
 document.getElementById('m').innerHTML = `
@@ -168,6 +186,19 @@ document.getElementById('m').innerHTML = `
     <li>O Passinho, que muda o jeito de arrastar, já aparece na fase 9.</li>
     <li>As fases são curtas (8 a 45 arrastos) e não tem fase grande para fechar um grupo.</li>
   </ul></section>
+  <section><h2>Até onde dá para subir</h2>
+    <p>Medi com um robô que joga como quem pegou o jeito do 2048 (segura a maior no canto e as fileiras em ordem), sem limite de arrastos, até travar. O jogo nasce Cascalho (2) em 90% das vezes e Pedra (4) em 10%, igual ao 2048.</p>
+    <details open style="margin-top:8px"><summary>Arrastos até a primeira de cada pedrinha</summary><div><table><tr><th>Pedrinha</th><th>3x3</th><th>4x4</th><th>5x5</th><th>mínimo</th></tr>${SUB.map(subRow).join('')}</table></div></details>
+    <ul style="margin-top:8px">
+      <li><b>Hoje as missões ficam no começo</b> (fundo amarelo): vão até o Geodo, que é o arrasto ~20 de uma partida que no 4x4 dura uns 770.</li>
+      <li><b>Cada pedrinha nova pede o dobro de arrastos.</b> O Rubi real (o 2048) fica perto de 1.000.</li>
+      <li><b>O tamanho do tabuleiro é um teto.</b> O 3x3 trava por volta do Geodo real, o 4x4 vai até a Esmeralda viva (às vezes o Rubi real) e o 5x5 chega no Meteorito e na Estrela.</li>
+    </ul>
+  </section>
+  <section style="display:flex;flex-direction:column;gap:10px"><h2>Progressões só de subida</h2>
+    <p class="sub">Mais simples que as de baixo: olham só para chegar mais alto. Dá para usar sozinhas ou junto com uma das três progressões por mundos.</p>
+    ${SUBIDAS.map(p=>`<div class="prog"><h3>${p.nome}</h3><p>${p.desc}</p><div class="pros"><div><b>A favor</b>${p.pros}</div><div><b>Contra</b>${p.contra}</div></div></div>`).join('')}
+  </section>
   <section><h2>As peças para montar fases</h2>
     <h3 style="margin:8px 0 6px">Tipos de missão</h3><div class="grade">${MISS.map(m=>card(...m)).join('')}</div>
     <h3 style="margin:14px 0 6px">Coisas no mapa (não mudam o jeito de arrastar)</h3><div class="grade">${MAPA.map(m=>card(...m)).join('')}</div>
@@ -180,8 +211,9 @@ document.getElementById('m').innerHTML = `
     <p class="sub">Contorno dourado nos mundos: é onde entra algo novo.</p>
   </section>
   <section><h2>Minha recomendação</h2>
-    <p>A <b>1 · Pela mina, devagar</b>, com uma ideia da 3: o Passinho também vira um jeito de jogar de novo qualquer fase já cumprida, valendo uma medalha. Assim ele aparece cedo como desafio opcional, mas só vira regra obrigatória no último mundo.</p>
+    <p>A <b>1 · Pela mina, devagar</b>, somada a três ideias de subida: <b>B</b> (cada mundo fecha uma pedrinha acima do anterior, do Cristalino até a Estrela), <b>C</b> (a partir do mundo 4 nascem pedrinhas maiores, então as fases do meio já pedem Pedra lunar, Âmbar e Esmeralda viva sem ficar enormes) e <b>E</b> (uma Expedição sem fim em cada mundo, para quem quer o 2048 de verdade). Da progressão 3 vem o Passinho como medalha: dá para jogar de novo qualquer fase já cumprida no Passinho, e ele só vira regra obrigatória no último mundo.</p>
     <ul style="margin-top:6px">
+      <li>As metas sobem junto com os mundos: o mundo 1 vai da Rocha ao Cristalino; o mundo 8 já pede do Âmbar à Estrela.</li>
       <li>Dois mundos inteiros só com mapa (blocos, formatos, muretas) antes de qualquer regra nova.</li>
       <li>Missões novas entram junto com o mapa que pede por elas: a terra no mundo 4, o carrinho no 5.</li>
       <li>Cada mundo tem 3 fases longas no fim, a última com várias metas juntas.</li>
@@ -194,6 +226,7 @@ document.getElementById('m').innerHTML = `
     <p class="sub">Fundo amarelo: fases longas, que fecham o mundo. Os arrastos são um chute; a calibração com o robô acerta depois.</p>
   </section>
   <section><h2>O que precisa de código novo</h2><ul>
+    <li><b>Para subir alto</b>: salvar a fase no meio e continuar depois (fases de centenas de arrastos), nascer pedrinha maior por mundo, e uma coleção das pedrinhas já descobertas, para dar vontade de chegar na próxima.</li>
     <li><b>Fácil</b>: missões em sequência, metas juntas, juntar duas de uma vez, restrição, e fases montadas à mão (o editor já faz).</li>
     <li><b>Médio</b>: casa marcada, casa de terra e pedrinha presa (cada uma é uma camada nova no chão ou na peça).</li>
     <li><b>Maior</b>: o carrinho (saída na borda que recolhe a pedrinha), o mapa que se divide da proposta 3 e o Passinho como medalha.</li>

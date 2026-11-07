@@ -1,0 +1,47 @@
+<body style="margin:0"><iframe id="f" src="../../index.html" width="400" height="800" style="border:0"></iframe><pre id="out" style="position:absolute;left:410px;top:0">x</pre>
+<script>
+// Até onde se chega jogando bem: robô "cobra" (segura a maior no canto e as fileiras em ordem), olhando 2 lances.
+// #N:tamanho  ex.: #20:4 (20 partidas no 4x4)
+const [N, TAM] = (location.hash.slice(1)||'20:4').split(':').map(Number);
+f.onload=async()=>{const w=f.contentWindow, log=[];
+ w.eval('sound=false; music=false');
+ w.eval(`
+  window.__peso=null;
+  window.__prepPeso=()=>{ // caminho em cobra começando no canto de baixo à esquerda
+    const ord=[]; for(let y=H-1,k=0;y>=0;y--,k++){ const xs=[...Array(W).keys()]; if(k%2) xs.reverse(); for(const x of xs) ord.push([x,y]); }
+    __peso={}; ord.forEach(([x,y],i)=>__peso[x+','+y]=Math.pow(2.2,(W*H-i)));
+  };
+  window.__nota=ts=>{ let s=0; for(const t of ts) s+=Math.pow(2,t.t)*__peso[t.x+','+t.y]; return s*(1+0.08*(W*H-ts.length)); };
+  window.__melhor=(ts,prof)=>{ let best=null, bs=-1;
+    for(const [dx,dy] of DIRS){ const r=slide(ts,dx,dy); if(!r.moved) continue;
+      let sc;
+      if(prof<=1) sc=__nota(r.tiles);
+      else { // média de onde pode nascer a próxima (até 4 casas sorteadas)
+        const occ=new Set(r.tiles.map(t=>t.x+','+t.y)), vaz=[]; for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(!occ.has(x+','+y)) vaz.push([x,y]);
+        const am=vaz.sort(()=>Math.random()-.5).slice(0,4); sc=0;
+        for(const [x,y] of am){ const t2=[...r.tiles,{id:'z',x,y,t:1}]; const b=__melhor(t2,prof-1); sc+= b ? b.sc : 0; }
+        sc/=Math.max(1,am.length);
+      }
+      if(sc>bs){ bs=sc; best={dir:[dx,dy], r, sc}; } }
+    return best; };
+  window.__partida=(tam)=>{
+    LAB.cfg={...presetDe('comum'), w:tam, h:tam}; labJoga(); for(const el of els.values()) el.remove(); els.clear();
+    S.tiles=[]; addTile(); addTile(); S.energy=1e9; __prepPeso();
+    const prim={}; let n=0;
+    for(;n<6000;n++){
+      const b=__melhor(S.tiles,2); if(!b) break;
+      S.tiles=b.r.tiles; for(const o of b.r.merges) if(prim[o.t]==null) prim[o.t]=n+1;
+      addTile(undefined,b.dir);
+    }
+    return {prim, arrastos:n, max:Math.max(...S.tiles.map(t=>t.t))};
+  };`);
+ const t0=performance.now(), rs=[];
+ for(let k=0;k<N;k++){ rs.push(w.eval(`__partida(${TAM})`)); await new Promise(r=>setTimeout(r,0)); }
+ const nomes=w.eval('JSON.stringify(ROCKS.map(r=>r.n))'), R=JSON.parse(nomes);
+ const q=(a,p)=>{ const s=[...a].sort((x,y)=>x-y); return s[Math.min(s.length-1,Math.floor(p*s.length))]; };
+ log.push(`${TAM}x${TAM}, ${N} partidas, ${Math.round((performance.now()-t0)/1000)} s`);
+ for(let t=3;t<=14;t++){ const v=rs.map(r=>r.prim[t]).filter(x=>x!=null); if(!v.length){ log.push(`${t} ${R[t]} (${2**t}): ninguém chegou`); continue; }
+   log.push(`${t} ${R[t]} (${2**t}): chega ${Math.round(100*v.length/N)}% | arrasto p25 ${q(v,.25)} p50 ${q(v,.5)} p75 ${q(v,.75)} | mínimo teórico ${Math.ceil(2**t/2.2)}`); }
+ log.push('fim da partida: arrastos p50 '+q(rs.map(r=>r.arrastos),.5)+' | maior p50 '+R[q(rs.map(r=>r.max),.5)]);
+ out.textContent=log.join('\n');};
+</script></body>
