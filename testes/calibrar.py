@@ -2,8 +2,8 @@
 
   python testes/calibrar.py [N]
 
-Mostra, por fase, quanto o robô cumpre a missão e os totais do dia (p25/p50/p75/p90).
-Regra usada até aqui: estrelas ≈ [p50 a p60, p90] do robô; cada grupo começa fácil e termina mais difícil.
+Mostra, por fase, quanto o robô cumpre a missão e quantos arrastos sobram quando cumpre (p25/p50/p75/p90).
+Regra usada até aqui: estrelas = [sobra p50, sobra p85] do robô; cada grupo começa fácil e termina mais difícil.
 """
 import html, os, pathlib, re, shutil, subprocess, sys, tempfile
 AQUI = pathlib.Path(__file__).resolve().parent

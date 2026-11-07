@@ -10,29 +10,25 @@ f.onload=async()=>{const w=f.contentWindow, log=[];
     missaoJoga(n);
     const m=MISSOES[n-1];
     for(let i=0;i<300;i++){
-      if(!S.semEnergia && S.energy<=0) break;
+      if(cumpriu(m.obj)) return {ok:true, sobra:S.energy, pontos:S.pontos};
+      if(S.energy<=0) break;
       let best=null, bs=-1e18;
       for(const [dx,dy] of DIRS){ const r=slide(S.tiles,dx,dy); if(!r.moved) continue;
         const vazios=W*H - r.tiles.length - S.walls.length; const sc=__nota(r)+vazios*0.8+Math.random()*0.5; if(sc>bs){bs=sc;best=[dx,dy,r];} }
       if(!best) break;
       const [dx,dy,r]=best;
-      for(const b of r.breaks){ const o=roll(b.t,b.r); S.extra+=Math.round(ORES[o].p*bonusNivel(b.t)); }
-      S.tiles=r.tiles; contaMissao(r); S.moves++; if(!S.semEnergia) S.energy--;
+      S.tiles=r.tiles; contaMissao(r); S.moves++; S.energy--;
       for(let k=0;k<(S.path.spawns||1);k++) addTile(undefined,[dx,dy]);
     }
-    let g=S.extra||0, custo=0;
-    if(!S.path.picareta) for(const t of S.tiles){ if(t.t===0){ custo+=S.semEnergia?0:custoTorrao(); continue; } const o=roll(t.t,t.r); g+=Math.round(ORES[o].p*bonusNivel(t.t)); }
-    if(S.path.narrow) g*=2;
-    S.dayTotal=Math.round(g)-custo; S.phase='reveal';
-    return {ok:cumpriu(m.obj), total:S.dayTotal, arrastos:S.moves};
+    return {ok:cumpriu(m.obj), sobra:S.energy, pontos:S.pontos};
   };`);
  const q=(a,p)=>{ if(!a.length) return '-'; const s=[...a].sort((x,y)=>x-y); return s[Math.min(s.length-1,Math.floor(p*s.length))]; };
  const nM=w.eval('MISSOES.length');
  for(let n=1;n<=nM;n++){
    const rs=[]; for(let k=0;k<N;k++){ rs.push(w.eval(`__joga(${n})`)); if(k%10===9) await new Promise(r=>setTimeout(r,0)); }
-   const ok=rs.filter(r=>r.ok), tots=rs.map(r=>r.total);
+   const ok=rs.filter(r=>r.ok), sob=ok.map(r=>r.sobra);
    const m=JSON.parse(w.eval(`JSON.stringify(MISSOES[${n-1}])`));
-   log.push(`${n} ${m.nome}: cumpre ${Math.round(100*ok.length/N)}% | total p25 ${q(tots,.25)} p50 ${q(tots,.5)} p75 ${q(tots,.75)} p90 ${q(tots,.9)} | arrastos p50 ${q(rs.map(r=>r.arrastos),.5)} | atual ${JSON.stringify(m.estrelas)}`);
+   log.push(`${n} ${m.nome} (${m.arrastos} arrastos): cumpre ${Math.round(100*ok.length/N)}% | sobram p25 ${q(sob,.25)} p50 ${q(sob,.5)} p75 ${q(sob,.75)} p90 ${q(sob,.9)} | pontos p50 ${q(rs.map(r=>r.pontos),.5)} | atual ${JSON.stringify(m.estrelas)}`);
  }
  out.textContent=log.join('\n');};
 </script></body>

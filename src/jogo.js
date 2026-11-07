@@ -130,7 +130,7 @@ function show(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', s.id===id));
   $('#shell').classList.toggle('hidden', id==='scrMenu');
   document.body.classList.toggle('lock', id==='scrGame');
-  document.body.classList.remove('semHud');
+  document.body.classList.remove('semHud','modoCla');
   scrollTo(0,0);
 }
 
@@ -462,10 +462,11 @@ function move(dx,dy){
   humor();
   for(let i=0;i<(S.path.spawns||1);i++) addTile(undefined,[dx,dy]);
   render();
+  if(S.missao) flutuaPontos(r);
   SFX.arrastar();
   const tops=r.merges.map(o=>o.t).sort((a,b)=>b-a);
   if(tops.length){ SFX.fundir(tops[0]); if(tops.length>1) setTimeout(()=>SFX.fundir(tops[1]),45); S.stats.maxT=Math.max(S.stats.maxT,tops[0]); }
-  if(S.missao) avisaMissao();
+  if(S.missao){}
   else if(S.energy<=0) SFX.torraoCai(); else if(S.energy<=5) SFX.cansado();
   for(const o of r.merges) anim(o.id,'pop');
   if(has('coroa')){ const n=r.merges.filter(o=>o.t>=5).length; if(n){ const g=n*CORO[lvl('coroa')]; S.coroa+=g; renderItems(); fire('coroa','+×'+String(+g.toFixed(2)).replace('.',','),true); } }
@@ -485,7 +486,7 @@ function move(dx,dy){
   } else if(S.tut===3 && S.energy<=0){
     S.tut=4; coach('Sem energia, só vem <b>torrão</b> 😠: toque para <b>encerrar o dia</b>.', null, null, '#btnEnd');
   }
-  if(S.missao && !S.semEnergia && S.energy<=0){ setBanner(null,'acabaram os arrastos'); setTimeout(endDay,450); return; }
+  if(S.missao){ checaMissao(); return; }
   if(!anyMove()){ setBanner(null,'não cabe mais nada'); setTimeout(endDay,450); }
 }
 
@@ -541,7 +542,7 @@ function nomeFase(){
 }
 function recordeFim(){
   if(S.tut) return;
-  if(S.missao) return missaoLinha();
+  if(S.missao) return;
   const k=chaveFase(), r=RECS(), ant=r[k];
   const novo = S.dayTotal>0 && (!ant || S.dayTotal>ant.total);
   if(novo){ r[k]={total:S.dayTotal, arrastos:S.moves||0, char:S.char, nome:nomeFase(), quando:Date.now()}; localStorage.mina_recordes=JSON.stringify(r); }
@@ -737,7 +738,7 @@ function sell(){
   abaixar(false);
   S.money=Math.max(0,S.money+S.dayTotal); S.stats.days++; S.stats.best=Math.max(S.stats.best,S.dayTotal); render();
   if(S.dayTotal>0) SFX.venda(); else SFX.esfarelar();
-  if(S.missao) return missaoFim();
+  if(S.missao) return missoesLista();
   if(S.lab) return labFim();
   if(S.isFiscal) return weekEnd();
   if(S.tut===5){ S.tut=6; coach('Escolha um <b>item</b> para render mais!', null, null, 'top'); }
@@ -1119,7 +1120,9 @@ function labCelula(cx,cy){
 }
 
 // ===================== CLÁSSICO (FASES COM MISSÃO) =====================
-// As fases e missões ficam em missoes.js. Estrelas guardadas em mina_missoes: {n: {e: estrelas, t: melhor total}}.
+// As fases ficam em missoes.js. Cada fase tem uma missão e um limite de arrastos, e acaba assim que a missão é
+// cumprida. Estrelas pelos arrastos que sobraram; pontos como no 2048 (juntar soma o valor da pedrinha nova).
+// Guardado em mina_missoes: {n: {e: melhores estrelas, t: mais pontos}}.
 const MISS = () => JSON.parse(localStorage.mina_missoes||'{}');
 const liberada = n => n===1 || (MISS()[n-1]?.e||0) > 0;
 const faseDe = m => m.fase || (m.forma ? 'caverna' : MISSOES_GRUPOS[m.g].fase);
@@ -1129,22 +1132,21 @@ const artigo = nome => /a$/.test(nome.split(' ')[0]) ? 'uma' : 'um';
 const plural = nome => nome.split(' ').map(w=>/[aeiouáéíóú]$/i.test(w)?w+'s':/r$/.test(w)?w+'es':/l$/.test(w)?w.slice(0,-1)+'is':w).join(' ');
 const qtd = (n,t) => n===1 ? `${artigo(rockName(t))} ${rockName(t)}` : `${n} ${plural(rockName(t))}`;
 const estrelasHtml = (e, cls='estr') => `<span class="${cls}">${[1,2,3].map(i=>`<i class="${i<=e?'on':''}">★</i>`).join('')}</span>`;
+const VAL = t => t>0 ? 2**t : 0;   // Cascalho 2, Pedra 4, Rocha 8, Rocha densa 16... (Rubi real = 2048)
 function objetivoTxt(o){
   if(o.forme) return `Forme ${qtd(o.n,o.forme)}`;
   if(o.cor!=null) return `Forme ${qtd(o.n,o.t)} ${corNome(o.cor)}${o.n>1?'s':''}`;
-  if(o.total) return `Renda $${o.total} no fim do dia`;
+  if(o.pontos) return `Faça ${o.pontos} pontos`;
   if(o.quebre) return o.quebre<=1 ? `Quebre ${o.n} pedrinha${o.n>1?'s':''} com a picareta` : `Quebre ${qtd(o.n,o.quebre)} com a picareta`;
-  if(o.extraia) return `Extraia $${o.extraia} com a picareta`;
-  if(o.arrastos) return `Faça ${o.arrastos} arrastos sem travar`;
+  return '';
 }
-// quanto da missão já foi feito: {at, alvo, rot (rótulo curto), din (é dinheiro)}
+// quanto da missão já foi feito: {at, alvo, rot (rótulo curto)}
 function progresso(o){
   if(o.forme) return {at:S.feitas?.[o.forme]||0, alvo:o.n, rot:o.n>1?plural(rockName(o.forme)):rockName(o.forme)};
-  if(o.cor!=null) return {at:S.coresF?.[o.t+':'+o.cor]||0, alvo:o.n, rot:`${rockName(o.t)} ${corNome(o.cor)}`};
-  if(o.total) return {at:S.phase==='mine'?null:S.dayTotal, alvo:o.total, rot:'no fim do dia', din:true};
+  if(o.cor!=null) return {at:S.coresF?.[o.t+':'+o.cor]||0, alvo:o.n, rot:`${o.n>1?plural(rockName(o.t)):rockName(o.t)} ${corNome(o.cor)}${o.n>1?'s':''}`};
+  if(o.pontos) return {at:S.pontos||0, alvo:o.pontos, rot:'pontos'};
   if(o.quebre) return {at:(S.quebras||[]).filter(t=>t>=o.quebre).length, alvo:o.n, rot:'quebradas'};
-  if(o.extraia) return {at:S.extra||0, alvo:o.extraia, rot:'extraído', din:true};
-  if(o.arrastos) return {at:S.moves||0, alvo:o.arrastos, rot:'arrastos'};
+  return {at:0, alvo:1, rot:''};
 }
 const figSvg = (inner,cls='') => `<svg class="${cls}" viewBox="0 0 100 100">${inner}</svg>`;
 const pedraCor = (t,c) => pedraInner(t, c!=null ? {cor:c} : {});
@@ -1157,46 +1159,57 @@ function figuraMissao(o){
     return `<div class="figM"><div class="alvo">${peca(pedraCor(t,c),nomeCor(t,c),'fG',t)}<b>×${o.n}</b></div>${rec([pedraCor(t-1,c),nomeCor(t-1,c),'',t-1],[pedraCor(t-1,c),nomeCor(t-1,c),'',t-1],[pedraCor(t,c),nomeCor(t,c),'',t])}</div>`; }
   if(o.quebre){ const t=Math.max(1,o.quebre), nome = o.quebre<=1 ? 'pedrinha' : rockName(t);
     return `<div class="figM"><div class="alvo">${peca(pedraInner(t),nome,'fG',t)}<b>×${o.n}</b></div>${rec([pedraInner(t),nome,'',t],[pickInner(t),'picareta'],[oreSvg(4,50,52,2.6),'minério'])}</div>`; }
-  if(o.extraia) return `<div class="figM"><div class="alvo">${peca(oreSvg(5,50,52,2.6),'minério','fG')}<b>$${o.extraia}</b></div>${rec([pedraInner(2),rockName(2),'',2],[pickInner(2),'picareta'],[oreSvg(3,50,52,2.6),'minério'])}</div>`;
-  if(o.total) return `<div class="figM"><div class="alvo">${peca(oreSvg(5,50,52,2.6),'minério','fG')}<b>$${o.total}</b></div></div>`;
-  if(o.arrastos) return `<div class="figM"><div class="alvo"><b>${o.arrastos}</b><span>arrastos</span></div></div>`;
+  if(o.pontos) return `<div class="figM"><div class="alvo"><b>${o.pontos}</b><span>pontos</span></div>${rec([pedraInner(2),rockName(2)+' 4','',2],[pedraInner(2),rockName(2)+' 4','',2],[pedraInner(3),rockName(3)+' +8','',3])}</div>`;
   return '';
 }
-// ícone pequeno da missão, no painel de cima
+// figura de cada silhueta da missão, no painel de cima
 function iconeMissao(o){
   if(o.forme || o.cor!=null) return figSvg(pedraCor(o.forme||o.t, o.cor));
-  if(o.quebre) return figSvg(pickInner(Math.max(1,o.quebre)));
-  if(o.extraia || o.total) return figSvg(oreSvg(5,50,52,2.6));
+  if(o.quebre) return figSvg(pedraInner(Math.max(1,o.quebre)));
   return '';
 }
-const cumpriu = o => { const p=progresso(o); return p.at!=null && p.at>=p.alvo; };
-const estrelasPor = (m,total) => 1 + (total>=m.estrelas[0]) + (total>=m.estrelas[1]);
-// conta o que a missão pede, a cada arrasto
+const cumpriu = o => { const p=progresso(o); return p.at>=p.alvo; };
+const estrelasPor = (m,sobra) => 1 + (sobra>=m.estrelas[0]) + (sobra>=m.estrelas[1]);
+// conta o que a missão pede e os pontos, a cada arrasto (sem mexer na tela: o robô de calibrar usa)
 function contaMissao(r){
   for(const o of r.merges){ S.feitas[o.t]=(S.feitas[o.t]||0)+1; if(o.c!=null) S.coresF[o.t+':'+o.c]=(S.coresF[o.t+':'+o.c]||0)+1; }
   for(const b of r.breaks) S.quebras.push(b.t);
+  for(const o of r.merges) if(o.k!=='p') S.pontos+=VAL(o.t);
+  for(const b of r.breaks) S.pontos+=2*VAL(b.t);
 }
-function avisaMissao(){
+function flutuaPontos(r){
+  const f=(x,y,v)=>{ const el=document.createElement('div'); el.className='flut'; el.textContent='+'+v; el.style.transform=pos(x,y); board.appendChild(el); setTimeout(()=>el.remove(),950); };
+  for(const o of r.merges) if(o.k!=='p') f(o.x,o.y,VAL(o.t));
+  for(const b of r.breaks) f(b.x,b.y,2*VAL(b.t));
+}
+// depois de cada arrasto: cumpriu, acabaram os arrastos ou travou
+function checaMissao(){
   const m=MISSOES[S.missao-1];
-  if(S.avisou || m.obj.total || !cumpriu(m.obj)) return;
-  S.avisou=true; popup('Missão cumprida!','continue para mais estrelas','#6aa84f'); SFX.pagou();
-  setBanner(null, 'missão cumprida! continue para mais estrelas');
+  const acaba=(ok,txt,motivo)=>{ S.phase='fimM'; setBanner(null,txt); if(ok) SFX.pagou(); setTimeout(()=>missaoResultado(ok,motivo), ok?800:650); };
+  if(cumpriu(m.obj)) return acaba(true,'missão cumprida!');
+  if(S.energy<=0) return acaba(false,'acabaram os arrastos','Acabaram os arrastos.');
+  if(!anyMove()) return acaba(false,'não cabe mais nada','Não cabia mais nada no tabuleiro.');
+}
+// painel de cima do Clássico: arrastos com as estrelas, silhuetas da missão e pontos
+function montaMissaoHud(m){
+  const p=progresso(m.obj), ic=iconeMissao(m.obj);
+  $('#cMis').innerHTML = ic && p.alvo<=4 ? `<div class="fila">${Array.from({length:p.alvo},()=>`<span>${ic}</span>`).join('')}</div><small>${noIco(p.rot)}</small>` : `<b id="cMisN"></b><small>${p.rot}</small>`;
+  $('#ptsP').style.display = m.obj.pontos ? 'none' : '';
 }
 function hudMissao(){
-  const m=MISSOES[S.missao-1], p=progresso(m.obj), ok=p.at!=null && p.at>=p.alvo;
-  const fim = S.dayTotal!=null && S.phase!=='mine', pic = !!S.path?.picareta;
-  $('#hMoney').textContent = fim ? '$'+S.dayTotal : pic ? '$'+(S.extra||0) : '$'+m.estrelas[1];
-  $('#hMoneyLbl').textContent = fim ? 'rendeu' : pic ? 'extraído' : 'para ★★★';
-  $('#hQuota').textContent = p.din ? (p.at==null ? '$'+p.alvo : `$${Math.min(p.at,p.alvo)}/${p.alvo}`) : `${Math.min(p.at,p.alvo)}/${p.alvo}`;
-  $('#hQuotaDay').textContent = p.rot;
-  const ic = ok ? '' : iconeMissao(m.obj);
-  if(ic) $('#quIc').innerHTML = ic; else $('#quIc').textContent = ok ? '✓' : '★';
-  $('#quIc').classList.toggle('ok', ok); $('#quIc').classList.toggle('fig', !!ic);
+  const m=MISSOES[S.missao-1], tot=m.arrastos, sobra=Math.max(0,S.energy), [e2,e3]=m.estrelas;
+  $('#cArr').textContent=sobra;
+  const tr=$('#cTr'); tr.style.width=Math.max(0,sobra/tot*100)+'%'; tr.style.background = sobra>=e3?'#6aa84f':sobra>=e2?'#f2b33d':'#c0603f';
+  for(const [id,lim] of [['#cS3',e3],['#cS2',e2],['#cS1',0]]){ const st=$(id); st.style.left=(lim?lim/tot*100:3)+'%'; st.classList.toggle('off', lim>0 && sobra<lim); }
+  $('#cPts').textContent=S.pontos||0;
+  const p=progresso(m.obj), fila=$('#cMis .fila');
+  if(fila) fila.querySelectorAll('span').forEach((e,i)=>e.classList.toggle('ok', i<p.at));
+  else if($('#cMisN')) $('#cMisN').textContent=`${Math.min(p.at,p.alvo)}/${p.alvo}`;
 }
 function regrasTxt(m){
   const fase=faseDe(m), fm=m.forma?acharForma(m.forma):null, n=PATHS[fase].n;
   const tam = fm ? `${fw(fm)}x${fh(fm)}` : `${m.w||n||4}x${m.h||m.w||n||4}`;
-  return `${PATHS[fase].nome}${fm?': '+fm.nome:''} · ${tam} · ${m.arrastos?m.arrastos+' arrastos':'até travar'} · ${CHARS[charDe(m)].nome}`;
+  return `${PATHS[fase].nome}${fm?': '+fm.nome:''} · ${tam} · ${m.arrastos} arrastos · ${CHARS[charDe(m)].nome}`;
 }
 function missoesLista(){
   hideOverlay(); hideCoach(); VEIO_DO_EDITOR=false;
@@ -1231,8 +1244,8 @@ function missaoInfo(n){
     <p class="ajuda">${regrasTxt(m)}</p>
     ${explica.map(t=>`<p class="ajuda">${t}</p>`).join('')}
     ${fase==='picareta'?regraPicareta():''}
-    <p class="metas">★ missão · ★★ $${m.estrelas[0]} · ★★★ $${m.estrelas[1]}</p>
-    ${b?`<p class="recAtual">Seu melhor: ${estrelasHtml(b.e)} · $${b.t}</p>`:''}
+    <p class="metas">★ cumprir · ★★ sobrando ${m.estrelas[0]} arrastos · ★★★ sobrando ${m.estrelas[1]}</p>
+    ${b?`<p class="recAtual">Seu melhor: ${estrelasHtml(b.e)} · ${b.t} pontos</p>`:''}
     <button class="btn g" id="mJoga">Jogar</button><button class="btn dim" id="mVolta">Voltar</button>`);
   $('#mJoga').onclick=()=>missaoJoga(n);
   $('#mVolta').onclick=hideOverlay;
@@ -1240,34 +1253,28 @@ function missaoInfo(n){
 function missaoJoga(n){
   const m=MISSOES[n-1], fase=faseDe(m), fm=m.forma?acharForma(m.forma):null;
   hideOverlay(); VEIO_DO_EDITOR=false;
-  S = {...freshState(), missao:n, tema:MISSOES_GRUPOS[m.g].tema, char:charDe(m), moves:0, extra:0, feitas:{}, coresF:{}, quebras:[], dayTotal:null};
+  S = {...freshState(), missao:n, tema:MISSOES_GRUPOS[m.g].tema, char:charDe(m), moves:0, extra:0, pontos:0, feitas:{}, coresF:{}, quebras:[]};
   S.fiscal=FISCAIS[0];
   for(const [k,v] of Object.entries(m.itens||{})) S.lv[k]=v;
-  const p = {...PATHS[fase], ...(m.regras||{}), forma:fm, caverna:false, energy:m.arrastos?m.arrastos-CFG.energy:0, semEnergia:!m.arrastos};
+  const p = {...PATHS[fase], ...(m.regras||{}), forma:fm, caverna:false, energy:m.arrastos-CFG.energy, semEnergia:false};
   if(m.w){ p.w=m.w; p.h=m.h||m.w; }
   applyAndar(); startDay(p);
+  document.body.classList.add('modoCla'); montaMissaoHud(m); render();
   setBanner(`Fase ${n}: ${m.nome}`, objetivoTxt(m.obj));
   pedeEncaixe();
 }
-// linha do resultado, no fim do dia
-function missaoLinha(){
-  const m=MISSOES[S.missao-1], ok=cumpriu(m.obj), p=progresso(m.obj);
-  $('#recLine').innerHTML = ok ? `<b>Missão cumprida!</b> ${estrelasHtml(estrelasPor(m,S.dayTotal))}` : enrich(`Faltou: ${objetivoTxt(m.obj)} (${p.din?'$':''}${p.at}/${p.alvo})`);
-  $('#btnSell').textContent = 'Continuar';
-  render();
-}
-function missaoFim(){
-  const n=S.missao, m=MISSOES[n-1], ok=cumpriu(m.obj), p=progresso(m.obj);
+function missaoResultado(ok, motivo){
+  const n=S.missao, m=MISSOES[n-1], p=progresso(m.obj), sobra=Math.max(0,S.energy);
   if(!ok){
     SFX.naoDeu();
-    showOverlay(`${disc(faseDe(m),null,'bigDisc')}<h2>Não deu</h2><p>${objetivoTxt(m.obj)}: ${p.din?'$':''}${p.at} de ${p.din?'$':''}${p.alvo}.</p>
+    showOverlay(`${disc(faseDe(m),null,'bigDisc')}<h2>Não deu</h2><p>${motivo}</p><p>${objetivoTxt(m.obj)}: ${Math.min(p.at,p.alvo)} de ${p.alvo}.</p>
       <button class="btn g" id="mDeNovo">Tentar de novo</button><button class="btn dim" id="mLista">Ver fases</button>`);
   } else {
-    const e=estrelasPor(m,S.dayTotal), r=MISS(), ant=r[n];
-    r[n]={e:Math.max(e,ant?.e||0), t:Math.max(S.dayTotal,ant?.t||0)}; localStorage.mina_missoes=JSON.stringify(r);
-    SFX.pagou();
+    const e=estrelasPor(m,sobra), r=MISS(), ant=r[n], rec=!ant || S.pontos>(ant.t||0);
+    r[n]={e:Math.max(e,ant?.e||0), t:Math.max(S.pontos,ant?.t||0)}; localStorage.mina_missoes=JSON.stringify(r);
     showOverlay(`<h2>Missão cumprida!</h2>${estrelasHtml(e,'estr grande')}
-      <p>Rendeu <b>$${S.dayTotal}</b>.${e<3?` ${e<2?`★★ com $${m.estrelas[0]} · `:''}★★★ com $${m.estrelas[1]}`:''}</p>
+      <p>Sobraram <b>${sobra}</b> arrastos · <b>${S.pontos}</b> pontos${rec&&ant?' (recorde!)':''}</p>
+      ${e<3?`<p class="metas">${e<2?`★★ sobrando ${m.estrelas[0]} · `:''}★★★ sobrando ${m.estrelas[1]}</p>`:''}
       ${n<MISSOES.length?'<button class="btn g" id="mProx">Próxima fase</button>':'<p>Você terminou todas as fases!</p>'}
       <button class="btn dim" id="mDeNovo">Jogar de novo</button><button class="btn dim" id="mLista">Ver fases</button>`);
     if($('#mProx')) $('#mProx').onclick=()=>{ missoesLista(); missaoInfo(n+1); };
@@ -1463,6 +1470,15 @@ function renderItems(){
   $('#items').innerHTML = Object.keys(S.lv).map(id=>{ const i=item(id), L=lvl(id); const badge = id==='coroa'&&S.coroa ? fmtMult(1+S.coroa) : L>1 ? 'nv '+L : ''; return `<button class="chip" data-item="${id}" style="--ec:${EST_COR[i.est]}" title="${i.nome}">${i.em}${badge?`<span class="lv">${badge}</span>`:''}</button>`; }).join('');
   document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>showItemInfo(c.dataset.item));
 }
+// etiqueta do Clássico embaixo de cada pedrinha: valor em cima, nome embaixo
+function etiqueta(el,t){
+  const lb = S.missao && t.t>0 && t.k!=='p' ? String(t.t) : '';
+  if(el.dataset.lb===lb) return; el.dataset.lb=lb;
+  let e=el.querySelector('.etq');
+  if(!lb){ e?.remove(); return; }
+  if(!e){ e=document.createElement('div'); e.className='etq'; el.appendChild(e); }
+  e.style.setProperty('--c', rd(t.t)); e.innerHTML=`<b>${VAL(t.t)}</b><small>${rockName(t.t)}</small>`;
+}
 function render(){
   board.querySelectorAll('.slot').forEach(sl=>sl.classList.toggle('void', S.walls.some(w=>w.v && w.x==sl.dataset.x && w.y==sl.dataset.y)));
   for(const w of S.walls){
@@ -1487,6 +1503,7 @@ function render(){
       const look=lookOf(t), key=t.t+':'+look+':'+t.c+':'+t.k+':'+t.r;
       if(el.dataset.key!==key){ el.dataset.key=key; el.firstChild.innerHTML=svgOf(t.t===0?torraoInner():t.k==='p'?pickInner(t.t):pedraInner(t.t,{look,cor:t.c,rara:t.r})); }
     }
+    etiqueta(el,t);
   }
   if(S.phase==='mine'){ const on=has('regua')?new Set(fileiras().flat().map(t=>t.id)):new Set(); for(const t of S.tiles) els.get(t.id)?.classList.toggle('line',on.has(t.id)); }
   const q=CFG.quota(S.week);

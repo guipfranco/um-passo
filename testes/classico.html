@@ -1,45 +1,48 @@
 <!-- tempo: 60000 -->
 <body style="margin:0"><iframe id="f" src="../index.html" width="390" height="760" style="border:0"></iframe><pre id="out" style="position:absolute;left:400px;top:0">x</pre>
 <script>
-// Clássico: menu, lista de fases, abertura da fase, jogar até o fim, estrelas, próxima fase liberada, sair pela pausa.
+// Clássico: menu, lista, abertura, painel (arrastos, silhuetas, pontos), etiquetas, cumprir a missão, perder,
+// recomeçar, próxima fase liberada, sair pela pausa e espaçamento do painel.
 const MODE=location.hash.slice(1)||'test';
 f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEventListener('error',e=>errs.push(e.message+' @'+e.lineno));w.addEventListener('unhandledrejection',e=>errs.push('rej '+e.reason));
  const wait=ms=>new Promise(r=>setTimeout(r,ms)); const q=s=>d.querySelector(s);
- const joga=async()=>{ // robô guloso até acabar os arrastos ou travar
-   for(let i=0;i<120 && w.eval('S.phase')==='mine';i++){
+ const joga=async()=>{ // robô guloso até a fase acabar
+   for(let i=0;i<60 && w.eval('S.phase')==='mine';i++){
      const dir=w.eval(`(()=>{ let b=null,bs=-1; for(const [dx,dy] of [[0,1],[-1,0],[1,0],[0,-1]]){ const r=slide(S.tiles,dx,dy); if(!r.moved) continue; const s=r.merges.reduce((a,o)=>a+Math.pow(2,o.t),0)+r.breaks.length*20+Math.random(); if(s>bs){bs=s;b=[dx,dy];} } return b; })()`);
-     if(!dir) break; w.eval(`move(${dir[0]},${dir[1]})`); await wait(20);
+     if(!dir) break; w.eval(`move(${dir[0]},${dir[1]})`); await wait(30);
    }
-   await wait(600); w.eval('S.skip=true'); for(let i=0;i<40 && q('#btnSell').style.display==='none';i++) await wait(250);
+   for(let i=0;i<20 && !w.eval('overlayOpen()');i++) await wait(150);
  };
  try{ w.eval('sound=false; music=false; localStorage.removeItem("mina_missoes")');
   log.push('menu: '+[...d.querySelectorAll('.menuBtns > button, .menuBtns .labRow button')].map(b=>b.firstChild.textContent.trim()).join(' | '));
   q('#mCla').click(); await wait(100);
-  log.push(`lista: grupos=${d.querySelectorAll('.mGrupo').length} fases=${d.querySelectorAll('.mNo').length} travadas=${d.querySelectorAll('.mNo.trava').length} atual=${q('.mNo.atual')?.dataset.m} caminho=${!!q('.mCaminho polyline')} hud oculto=${w.getComputedStyle(q('.hud')).display==='none'}`);
-  if(MODE==='lista'){ out.textContent='ok'; return; }
+  log.push(`lista: grupos=${d.querySelectorAll('.mGrupo').length} fases=${d.querySelectorAll('.mNo').length} travadas=${d.querySelectorAll('.mNo.trava').length} atual=${q('.mNo.atual')?.dataset.m}`);
   q('[data-m="1"]').click(); await wait(50);
-  log.push('abertura: '+q('#panel h2').textContent+' · '+q('.objetivo').textContent+' · '+q('#panel .ajuda').textContent);
+  log.push('abertura: '+q('#panel h2').textContent+' · '+q('.objetivo').textContent.replace(/\s+/g,' ').trim()+' · '+q('#panel .metas').textContent);
   if(MODE==='abertura'){ out.textContent='ok'; return; }
-  q('#mJoga').click(); await wait(100);
-  log.push(`jogando: missao=${w.eval('S.missao')} energia=${w.eval('S.energy')} hud=${q('#hQuota').textContent} ${q('#hQuotaDay').textContent} banner=${q('#bSub').textContent} botão=${q('#btnEnd').textContent}`);
+  q('#mJoga').click(); await wait(500);
+  const vis=s=>w.getComputedStyle(q(s)).display!=='none';
+  log.push(`painel: clássico=${vis('.hudCla')} mineração=${vis('.hud:not(.hudCla)')} arrastos=${q('#cArr').textContent} silhuetas=${d.querySelectorAll('#cMis .fila span').length} pontos=${q('#cPts').textContent} botão=${q('#btnEnd').textContent}`);
+  log.push(`etiquetas=${d.querySelectorAll('.tile .etq').length} pedrinhas=${w.eval('S.tiles.filter(t=>t.t>0).length')} texto=${q('.tile .etq')?.textContent}`);
+  // espaço entre as partes do painel: igual na horizontal e na vertical
+  const R=s=>q(s).getBoundingClientRect(), p1=d.querySelectorAll('.hudCla .pill');
+  log.push(`espaços: entre quadros=${Math.round(p1[1].getBoundingClientRect().left-p1[0].getBoundingClientRect().right)} quadros-letreiro=${Math.round(R('.top').top-R('.hudCla').bottom)} letreiro-tabuleiro=${Math.round(R('#board').top-R('.top').bottom)}`);
   if(MODE==='jogando'){ out.textContent='ok'; return; }
   await joga();
-  log.push(`fim: arrastos=${w.eval('S.moves')} feitas=${w.eval('JSON.stringify(S.feitas)')} linha=${q('#recLine').textContent} botão=${q('#btnSell').textContent} torrões=${w.eval('S.tiles.filter(t=>t.t===0).length')}`);
-  if(MODE==='fim'){ out.textContent='ok'; return; }
-  q('#btnSell').click(); await wait(100);
-  log.push('resultado: '+q('#panel h2').textContent+' estrelas='+d.querySelectorAll('#panel .estr i.on').length+' salvo='+w.eval('localStorage.mina_missoes'));
+  log.push(`fim: arrastos usados=${w.eval('S.moves')} sobraram=${w.eval('S.energy')} pontos=${w.eval('S.pontos')} painel=${q('#panel h2')?.textContent} estrelas=${d.querySelectorAll('#panel .estr.grande i.on').length} salvo=${w.eval('localStorage.mina_missoes')}`);
   if(MODE==='resultado'){ out.textContent='ok'; return; }
-  // força uma derrota: a fase 1 sem formar nada
-  w.eval('missaoJoga(1); S.energy=1'); await wait(50);
+  // perder: fase 2 com 1 arrasto e um arrasto que não junta nada
+  w.eval('missaoJoga(2); S.energy=1; render()'); await wait(50);
   const dir=w.eval(`[[0,1],[-1,0],[1,0],[0,-1]].find(([dx,dy])=>{ const r=slide(S.tiles,dx,dy); return r.moved && !r.merges.length; })`);
-  if(dir){ w.eval(`move(${dir[0]},${dir[1]})`); await wait(700); w.eval('S.skip=true'); for(let i=0;i<40 && q('#btnSell').style.display==='none';i++) await wait(250);
-    log.push('derrota: '+q('#recLine').textContent); q('#btnSell').click(); await wait(50); log.push('painel: '+q('#panel h2').textContent+' | '+q('#panel p').textContent); }
+  if(dir){ w.eval(`move(${dir[0]},${dir[1]})`); for(let i=0;i<20 && !w.eval('overlayOpen()');i++) await wait(150);
+    log.push('perdeu: '+q('#panel h2').textContent+' | '+[...d.querySelectorAll('#panel p')].map(p=>p.textContent).join(' ')); }
+  // recomeçar
+  q('#mDeNovo').click(); await wait(80); w.eval('move(1,0); move(0,1)'); await wait(50); const antes=w.eval('S.moves');
+  q('#btnEnd').click(); await wait(80); log.push(`recomeçar: arrastos antes=${antes} depois=${w.eval('S.moves')}`);
   // lista: fase 2 liberada; pausa durante a fase volta para a lista
-  q('#mLista').click(); await wait(80);
-  log.push(`lista depois: travadas=${d.querySelectorAll('.mNo.trava').length} atual=${q('.mNo.atual')?.dataset.m} estrelas fase 1=${q('[data-m="1"]').querySelectorAll('.estr i.on').length} banner=${q('#bSub').textContent}`);
-  q('[data-m="2"]').click(); await wait(30); q('#mJoga').click(); await wait(80);
   w.eval('pauseMenu()'); await wait(30); q('#pExit').click(); await wait(80);
-  log.push('pausa > sair: lista='+!!q('.mTrilha')+' | sair da lista: '); w.eval('pauseMenu()'); await wait(30); q('#pExit').click(); await wait(50); log.push('menu='+q('#scrMenu').classList.contains('on')+' save mineração='+!!w.eval('localStorage.mina_save'));
+  log.push(`lista depois: travadas=${d.querySelectorAll('.mNo.trava').length} atual=${q('.mNo.atual')?.dataset.m} banner=${q('#bSub').textContent}`);
+  w.eval('pauseMenu()'); await wait(30); q('#pExit').click(); await wait(50); log.push('menu='+q('#scrMenu').classList.contains('on')+' save mineração='+!!w.eval('localStorage.mina_save'));
  }catch(e){errs.push('EXC '+e.message+' '+(e.stack||'').split('\n')[1])}
  out.textContent=JSON.stringify({log,errs},null,1);};
 </script></body>

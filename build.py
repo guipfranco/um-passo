@@ -18,12 +18,14 @@ cfg = sub(cfg, "    regua:    [`Fileiras de pedrinhas iguais valem +×${String(.
 
 
 css_extra = r'''
-#app{display:flex;flex-direction:column;align-items:center;gap:12px;padding:12px 8px;min-height:100vh}
-#shell{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%}
+#app{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 8px;min-height:100vh}
+#shell{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%}
+#items:empty{display:none}
 #shell.hidden{display:none}
 .screen{display:none;flex-direction:column;align-items:center;gap:12px;width:100%;animation:fadein .25s}
 .screen.on{display:flex}
 @keyframes fadein{from{opacity:0;transform:translateY(8px)}}
+@media (prefers-reduced-motion: reduce){.screen{animation:none}}
 #scrMenu{min-height:92vh;justify-content:center;gap:14px}
 .logo{display:flex;align-items:flex-end;justify-content:center;height:130px}
 .logo svg{overflow:visible;animation:breathe 3s ease-in-out infinite;transform-origin:50% 90%}
@@ -160,6 +162,32 @@ details.sec[open] > summary::after{content:'−'}
 .card .regraPic i{font-style:normal;font-weight:700;font-size:18px;color:#7a5a44}
 .card .regraPic em{font-style:normal;font-size:12px;color:#a08a74;line-height:1.2}
 body.semHud .hud{display:none}
+.hudCla{display:none}
+body.modoCla .hud:not(.hudCla){display:none}
+body:not(.semHud).modoCla .hudCla{display:flex}
+.hudCla .arrP{flex:1.5}
+.hudCla .arr{flex:1;min-width:0}
+.hudCla .arr .linha{display:flex;align-items:baseline;justify-content:space-between}
+.hudCla .tr{position:relative;height:8px;background:#e2cfae;border-radius:4px;margin-top:6px}
+.hudCla .tr i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;transition:width .3s,background .3s}
+.hudCla .tr span{position:absolute;top:-9px;transform:translateX(-50%);font-size:15px;line-height:1;color:#f2b33d;text-shadow:0 1px 0 #c48a1e;transition:color .3s}
+.hudCla .tr span.off{color:#d9c7a6;text-shadow:none}
+.hudCla .silhP{flex:none;flex-direction:column;justify-content:center;gap:2px;padding:5px 7px}
+.silhP .fila{display:flex;gap:3px}
+.silhP .fila span{width:28px;height:28px;border-radius:50%;background:#e9d9bb;display:flex;align-items:center;justify-content:center}
+.silhP .fila svg{width:26px;height:26px;overflow:visible;filter:grayscale(1) brightness(1.2);opacity:.35;transition:filter .3s,opacity .3s}
+.silhP .fila span.ok svg{filter:none;opacity:1;animation:popS .45s}
+@keyframes popS{40%{transform:scale(1.4)}}
+.silhP small,.silhP b{text-align:center}
+.hudCla .ptsP{flex:.8}
+body.modoCla .tile .face{width:84%;height:84%;margin:0 auto}
+.etq{position:absolute;left:50%;bottom:-9%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;background:color-mix(in srgb,var(--c) 72%,#2e2219);color:#fff;border-radius:calc(var(--cell)*.12);padding:1px calc(var(--cell)*.07) 2px;line-height:1;pointer-events:none;white-space:nowrap;box-shadow:0 1px 0 #0003;z-index:2}
+.etq{animation:etqIn .3s ease-out}
+@keyframes etqIn{from{opacity:0;transform:translateX(-50%) scale(.6)}}
+.etq b{font-size:calc(var(--cell)*.17);font-weight:700}
+.etq small{font-size:calc(var(--cell)*.11);font-weight:600;opacity:.92;margin-top:1px}
+.flut{position:absolute;left:0;top:0;width:var(--cell);height:var(--cell);display:flex;align-items:flex-start;justify-content:center;font:700 calc(var(--cell)*.28) 'Fredoka';color:#fff6d0;-webkit-text-stroke:1px #c48a1e;pointer-events:none;z-index:20;animation:flut .95s ease-out forwards}
+@keyframes flut{0%{opacity:0;translate:0 10%}20%{opacity:1}100%{opacity:0;translate:0 -50%}}
 #quIc.ok{background:#6aa84f}
 #quIc.fig{background:#f6ecd9;box-shadow:inset 0 0 0 2px #e2cfae}
 #quIc svg{width:30px;height:30px;overflow:visible}
@@ -235,6 +263,11 @@ body = '''<div id="app">
       <div class="pill"><span class="ic en" id="enIc">⚡</span><div><b id="hEnergy"></b><small id="hEnergyMax"></small></div></div>
       <div class="pill"><span class="ic co">$</span><div><b id="hMoney"></b><small id="hMoneyLbl">dinheiro</small></div></div>
       <div class="pill"><span class="ic qu" id="quIc">!</span><div><b id="hQuota"></b><small id="hQuotaDay"></small></div></div>
+    </div>
+    <div class="hud wide hudCla">
+      <div class="pill arrP"><span class="ic en">⚡</span><div class="arr"><div class="linha"><b id="cArr"></b><small>arrastos</small></div><div class="tr"><i id="cTr"></i><span id="cS3">★</span><span id="cS2">★</span><span id="cS1">★</span></div></div></div>
+      <div class="pill silhP" id="cMis"></div>
+      <div class="pill ptsP" id="ptsP"><div><b id="cPts">0</b><small>pontos</small></div></div>
     </div>
     <div class="top wide"><button class="icon" id="btnPause">☰</button><div class="banner"><div id="bTitle"></div><span id="bSub"></span></div><button class="icon musBtn" id="btnSound">♪</button></div>
     <div class="items wide" id="items"></div>
@@ -335,9 +368,10 @@ addEventListener('pointerup',e=>{
 addEventListener('pointercancel',()=>{ if(touch){ touch=null; clearPreview(true); } });
 // Encerrar exige dois toques enquanto ainda há energia (evita toque sem querer)
 let endArmed=null;
-function resetEnd(){ clearTimeout(endArmed); endArmed=null; $('#btnEnd').textContent=S&&S.missao?'Terminar':S&&S.semEnergia?'Parar aqui':'Encerrar o dia'; $('#btnEnd').classList.remove('g'); }
+function resetEnd(){ clearTimeout(endArmed); endArmed=null; $('#btnEnd').textContent=S&&S.missao?'Recomeçar':S&&S.semEnergia?'Parar aqui':'Encerrar o dia'; $('#btnEnd').classList.remove('g'); }
 $('#btnEnd').onclick=()=>{
   if(coachBlock) return;
+  if(S && S.missao){ if(S.phase==='mine') missaoJoga(S.missao); return; }
   if(S.energy<=0 || endArmed){ resetEnd(); endDay(); return; }
   $('#btnEnd').textContent=S.semEnergia?'Confirmar?':`Confirmar? (sobra ${S.energy}⚡)`;
   $('#btnEnd').classList.add('g');
