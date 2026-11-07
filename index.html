@@ -225,7 +225,11 @@ function move(dx,dy){
   S.tiles = r.tiles; S.energy--;
   addTile();
   render();
-  for(const o of r.merges){ anim(o.id,'pop'); beep(300+o.t*90,.06,'square',.05); }
+  SFX.arrastar();
+  const tops = r.merges.map(o=>o.t).sort((a,b)=>b-a);
+  if(tops.length){ SFX.fundir(tops[0]); if(tops.length>1) setTimeout(()=>SFX.fundir(tops[1]),45); }
+  if(S.energy>0 && S.energy<=5) SFX.cansado();
+  for(const o of r.merges) anim(o.id,'pop');
   if(r.merges.some(o=>o.t>=4)) setBanner(null, `${ROCKS[Math.max(...r.merges.map(o=>o.t))].n}!`);
   if(S.energy<=0){ setBanner(null,'você está exausto'); return setTimeout(endDay,400); }
   if(!anyMove()){ setBanner(null,'sem espaço para cavar'); return setTimeout(endDay,400); }
@@ -245,7 +249,7 @@ async function endDay(){
   $('#btnSkip').style.display=''; $('#btnSell').style.display='none';
   $('#dayTotal').textContent='$0';
   setBanner(`FIM DO DIA ${S.day}`, 'quebrando as rochas...');
-  render();
+  render(); SFX.fimDia(); await sleep(700);
   const order = [...S.tiles].sort((a,b)=>a.t-b.t);
   let i=0;
   for(const t of order){
@@ -259,11 +263,11 @@ async function endDay(){
     face.innerHTML = o ? `${ore.n}<small>$${ore.p}</small>` : 'nada';
     countTo(S.dayTotal += ore.p);
     if(!S.skip){
-      beep(260*Math.pow(1.06,i), .07, 'triangle', .06);
+      SFX.quebrar(); if(o>=1 && o<=2) SFX.comum(o);
       if(o>=3){
         shake(o-2); sparks(t, ore.cor);
         popup(ore.n.toUpperCase()+'!', '+$'+ore.p, ore.cor);
-        chord(o);
+        SFX.raro(o);
         await sleep(o>=4 ? 1000 : 650);
       } else await sleep(140);
     }
@@ -277,7 +281,7 @@ async function endDay(){
 
 function sell(){
   S.money += S.dayTotal; render();
-  beep(880,.08,'square',.05); setTimeout(()=>beep(1320,.12,'square',.05),80);
+  SFX.venda();
   showShop();
 }
 
@@ -297,7 +301,7 @@ function showShop(){
   document.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>{
     const it=SHOP.find(x=>x.id===b.dataset.buy), pr=it.preco(S.upg[it.id]);
     if(S.money<pr) return;
-    S.money-=pr; S.upg[it.id]++; beep(660,.08,'square',.05); render(); showShop();
+    S.money-=pr; S.upg[it.id]++; SFX.comprar(); render(); showShop();
   });
   $('#btnSleep').onclick = () => { hideOverlay(); if(lastDay) weekEnd(); else { S.day++; startDay(); } };
 }
@@ -311,12 +315,12 @@ function weekEnd(){
       <p>Presente: a próxima semana começa com um <b style="color:#c79cff">Geodo</b> no tabuleiro.</p>
       <p>Cota da semana ${S.week+1}: <b style="color:#fe5f55">$${CFG.quota(S.week+1)}</b></p>`;
     S.week++; S.gift = true;
-    chord(4);
+    SFX.pagou();
   } else {
     html = `<h2 style="color:#fe5f55">NÃO DEU</h2><p>Faltaram $${q-S.money} para a cota de $${q}.</p>
       <p>Você perde o dinheiro guardado e repete a semana ${S.week}. Suas melhorias continuam.</p>`;
     S.money = 0;
-    beep(200,.3,'sawtooth',.06);
+    SFX.naoDeu();
   }
   S.day = 1;
   showOverlay(html + `<button class="btn b" id="btnWeek">COMEÇAR SEMANA ${S.week}</button>`);
@@ -380,18 +384,59 @@ function countTo(v){
 }
 
 // ===================== SOM =====================
-let AC=null;
-function beep(freq,dur,type='square',vol=.05){
-  if(!sound) return;
+// Estilo Threes: um som de arrasto e um som de fusão diferente para cada nível.
+let AC=null, BUS=null, NB=null;
+function ac(){
+  if(!sound) return null;
   try{
-    AC = AC || new (window.AudioContext||window.webkitAudioContext)();
-    const o=AC.createOscillator(), g=AC.createGain();
-    o.type=type; o.frequency.value=freq; g.gain.value=vol;
-    g.gain.exponentialRampToValueAtTime(.0001, AC.currentTime+dur);
-    o.connect(g); g.connect(AC.destination); o.start(); o.stop(AC.currentTime+dur);
-  }catch(e){}
+    if(!AC){ AC=new (window.AudioContext||window.webkitAudioContext)(); BUS=AC.createGain(); BUS.gain.value=.9; BUS.connect(AC.destination); }
+    if(AC.state==='suspended') AC.resume();
+    return AC;
+  }catch(e){ return null; }
 }
-function chord(level){ const base=[0,0,0,523,659,784][level]||523; [1,1.25,1.5,2].forEach((m,i)=>setTimeout(()=>beep(base*m,.18,'square',.05),i*70)); }
+function env(g,T,a,v,d){ g.gain.setValueAtTime(.0001,T); g.gain.exponentialRampToValueAtTime(v,T+a); g.gain.exponentialRampToValueAtTime(.0001,T+a+d); }
+function tone({f=440,to=null,type='sine',t=0,a=.005,d=.15,v=.2,lp=null}={}){
+  const c=ac(); if(!c) return; const T=c.currentTime+t, o=c.createOscillator(), g=c.createGain();
+  o.type=type; o.frequency.setValueAtTime(f,T); if(to) o.frequency.exponentialRampToValueAtTime(to,T+a+d);
+  env(g,T,a,v,d); let n=o; if(lp){ const fl=c.createBiquadFilter(); fl.frequency.value=lp; o.connect(fl); n=fl; }
+  n.connect(g); g.connect(BUS); o.start(T); o.stop(T+a+d+.05);
+}
+function noise({t=0,a=.002,d=.1,v=.2,type='bandpass',f=1000,to=null,q=1}={}){
+  const c=ac(); if(!c) return;
+  if(!NB){ NB=c.createBuffer(1,c.sampleRate,c.sampleRate); const d0=NB.getChannelData(0); for(let i=0;i<d0.length;i++) d0[i]=Math.random()*2-1; }
+  const T=c.currentTime+t, s=c.createBufferSource(), fl=c.createBiquadFilter(), g=c.createGain();
+  s.buffer=NB; fl.type=type; fl.frequency.setValueAtTime(f,T); if(to) fl.frequency.exponentialRampToValueAtTime(to,T+a+d); fl.Q.value=q;
+  env(g,T,a,v,d); s.connect(fl); fl.connect(g); g.connect(BUS); s.start(T,Math.random()*.5); s.stop(T+a+d+.05);
+}
+function bell({f=880,t=0,d=1,v=.1,ratio=3.5,idx=2}={}){
+  const c=ac(); if(!c) return; const T=c.currentTime+t, o=c.createOscillator(), m=c.createOscillator(), mg=c.createGain(), g=c.createGain();
+  o.frequency.value=f; m.frequency.value=f*ratio; mg.gain.setValueAtTime(f*idx,T); mg.gain.exponentialRampToValueAtTime(1,T+d);
+  m.connect(mg); mg.connect(o.frequency); env(g,T,.003,v,d); o.connect(g); g.connect(BUS);
+  o.start(T); m.start(T); o.stop(T+d+.1); m.stop(T+d+.1);
+}
+const ESCALA=[0,2,4,7,9,12,14,16,19];
+const SFX = {
+  // arrasto: um "fwip" curto e baixinho, com leve variação para não cansar
+  arrastar(){ const f=900+Math.random()*400; noise({f,to:f*2,d:.07,v:.045,q:.9}); },
+  // fusão: o tom sobe na escala e o timbre enriquece a cada nível
+  fundir(l){
+    const f=392*Math.pow(2,ESCALA[Math.min(l,9)-1]/12);
+    tone({f,d:.22,v:.17}); tone({f:f*2,d:.1,v:.05,type:'triangle'}); tone({f:f*4,d:.035,v:.04});   // marimba
+    if(l>=3) tone({f:f*.5,d:.25,v:.08});                                                         // corpo
+    if(l>=4) bell({f:f*2,t:.02,d:.7,v:.06,idx:1.6});                                             // sino
+    if(l>=5) [1.25,1.5,2].forEach((m,i)=>bell({f:f*2*m,t:.08+i*.06,d:.5,v:.045,idx:1.2}));        // brilho
+    if(l>=6){ tone({f:f*.25,to:f*.5,a:.05,d:.5,v:.1}); [1,1.5,2,3].forEach((m,i)=>bell({f:f*4*m,t:.25+i*.05,d:.6,v:.03,idx:.8})); }
+  },
+  cansado(){ tone({f:70,to:50,d:.12,v:.28}); tone({f:65,to:45,t:.18,d:.14,v:.22}); },
+  fimDia(){ [1568,1319,1175,1047,880,784].forEach((f,i)=>bell({f,t:i*.14,d:.7,v:.06,ratio:5,idx:.8})); },
+  quebrar(){ noise({f:3000,d:.05,v:.18,type:'highpass'}); tone({f:140,to:45,d:.16,v:.22}); noise({t:.02,f:800,d:.12,v:.07,type:'lowpass'}); },
+  comum(o){ const b=o===1?988:1175; tone({f:b,t:.05,d:.06,v:.06,type:'square',lp:4000}); tone({f:b*1.335,t:.11,d:.18,v:.06,type:'square',lp:4000}); },
+  raro(o){ const l=o-2, n=5+l*4; for(let i=0;i<n;i++) bell({f:1047*Math.pow(2,ESCALA[(n-i)%9]/12),t:.05+i*.055,d:.6,v:.05,idx:1.2}); tone({f:131*Math.pow(2,l/3),to:262*Math.pow(2,l/3),t:.05,d:.35,v:.1}); },
+  venda(){ for(let i=0;i<10;i++){ const t=i*.06+Math.random()*.03; tone({f:1975+Math.random()*300,t,d:.05,v:.045,type:'square',lp:5000}); noise({t,f:7000,d:.03,v:.025,type:'highpass'}); } },
+  comprar(){ tone({f:520,to:180,d:.06,v:.08}); bell({f:1568,t:.05,d:.5,v:.07,idx:1}); },
+  pagou(){ [523,659,784,1047].forEach((f,i)=>tone({f,t:i*.09,d:.2,v:.07,type:'square',lp:3500})); [523,659,784].forEach(f=>tone({f,t:.4,d:.9,v:.05,type:'triangle'})); for(let i=0;i<8;i++) bell({f:2093*Math.pow(2,ESCALA[i%6]/12),t:.4+i*.05,d:.4,v:.035,idx:1}); },
+  naoDeu(){ [392,370,349,330].forEach((f,i)=>tone({f,to:i===3?260:null,t:i*.3,a:.02,d:i===3?.8:.26,v:.08,type:'sawtooth',lp:900})); },
+};
 
 // ===================== UI =====================
 function showOverlay(html){ $('#panel').innerHTML=html; $('#overlay').classList.remove('hidden'); }

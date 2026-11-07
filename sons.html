@@ -55,7 +55,14 @@ input[type=range]{width:100%;accent-color:#009dff}
     <div class="row"><label class="pill"><input type="checkbox" id="quotaDay"> dia da cota</label><button id="revealMus" style="margin-left:auto">FIM DO DIA</button></div>
   </div>
 
-  <h2>EFEITOS</h2>
+  <h2>ESTILO THREES (JÁ NO JOGO)</h2>
+  <div class="card">
+    <div class="d">Só dois sons no dia: o arrasto e a fusão. A fusão sobe na escala a cada nível e o timbre enriquece: marimba seca até a Rocha, sino a partir da Rocha densa, brilho no Geodo e acorde grave no Cristalino.</div>
+    <div class="lv" style="flex-wrap:wrap" id="lvBtns"></div>
+    <button class="rec" id="ladder">TOCAR A ESCADA (CASCALHO ATÉ GEODO REAL)</button>
+  </div>
+
+  <h2>OUTRAS VERSÕES</h2>
   <div id="sfx"></div>
 
   <h2>TUDO JUNTO</h2>
@@ -217,6 +224,23 @@ document.getElementById('revealMus').onclick=()=>{
   musBus.gain.setTargetAtTime(.5, now(), .3);
   setTimeout(()=>{ musBus.gain.setTargetAtTime(1, now(), .5); applyDay(); }, 6000);
 };
+
+// ======================= ESTILO THREES =======================
+const ESC=[0,2,4,7,9,12,14,16,19];
+const NOMES=['Cascalho','Pedra','Rocha','R. densa','Geodo','Cristalino','Geodo real'];
+function swipe(){ const f=900+Math.random()*400; noise({f,to:f*2,d:.07,v:.045,q:.9}); }
+function fundirT(l){
+  const f=392*Math.pow(2,ESC[l-1]/12);
+  tone({f,d:.22,v:.17}); tone({f:f*2,d:.1,v:.05,type:'triangle'}); tone({f:f*4,d:.035,v:.04});
+  if(l>=3) tone({f:f*.5,d:.25,v:.08});
+  if(l>=4) bell({f:f*2,t:.02,d:.7,v:.06,idx:1.6});
+  if(l>=5) [1.25,1.5,2].forEach((m,i)=>bell({f:f*2*m,t:.08+i*.06,d:.5,v:.045,idx:1.2}));
+  if(l>=6){ tone({f:f*.25,to:f*.5,a:.05,d:.5,v:.1}); [1,1.5,2,3].forEach((m,i)=>bell({f:f*4*m,t:.25+i*.05,d:.6,v:.03,idx:.8})); }
+}
+document.getElementById('lvBtns').innerHTML = '<button data-sw>arrastar</button>' + NOMES.map((n,i)=>`<button data-fl="${i+1}">${n}</button>`).join('');
+document.querySelector('[data-sw]').onclick=()=>{ audio(); swipe(); };
+document.querySelectorAll('[data-fl]').forEach(b=>b.onclick=()=>{ audio(); swipe(); setTimeout(()=>fundirT(+b.dataset.fl),60); });
+document.getElementById('ladder').onclick=()=>{ audio(); for(let l=1;l<=7;l++){ setTimeout(swipe,(l-1)*900); setTimeout(()=>fundirT(l),(l-1)*900+60); } };
 
 // ======================= DEMONSTRAÇÃO =======================
 document.getElementById('demo').onclick=()=>{
