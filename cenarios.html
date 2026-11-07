@@ -146,7 +146,7 @@ function cenaB(){
   s+=`<g transform="translate(250 ${ty+16})"><rect x="-54" y="-30" width="112" height="66" rx="10" fill="#0004"/><rect x="-58" y="-34" width="112" height="64" rx="10" fill="#6d4a30" stroke="#8d969d" stroke-width="5"/><rect x="-48" y="-24" width="92" height="44" rx="6" fill="#3b2a1e"/><g transform="translate(-2 -2)">${monte}</g></g>`;
   // casas: manchas redondas e um pouco irregulares, só um tom mais claras que o chão
   for(let j=0;j<4;j++) for(let i=0;i<4;i++){ const x=X(i), y=Y(j);
-    s+=`<path d="${blob(x+C/2,y+C/2+2,33,30,r,.07,12)}" fill="#6e5848" opacity=".4"/><path d="M${x+14} ${y+C-14} q${C/2-14} 12 ${C-28} 0" stroke="#8c7462" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".35"/>`; }
+    s+=`<path d="${blob(x+C/2+(r()-.5)*4,y+C/2+2+(r()-.5)*4,31+r()*4,28+r()*4,r,.17,8)}" fill="#6e5848" opacity=".4"/><path d="M${x+14} ${y+C-14} q${C/2-14} 12 ${C-28} 0" stroke="#8c7462" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".35"/>`; }
   // pedra (parede)
   s+=pecas((x,y)=>`<ellipse cx="${x+38}" cy="${y+64}" rx="30" ry="7" fill="#0004"/><path d="${blob(x+36,y+37,32,28,rng(3),.13,8)}" fill="#7d6b5e" stroke="#2e2219" stroke-width="2.4"/><path d="${blob(x+29,y+29,15,10,rng(4),.2,7)}" fill="#998678"/>`);
   // caixote e barril
@@ -193,7 +193,7 @@ function cenaC(){
   s+=`<path d="M250 110 L330 110 L250 520 L120 520Z" fill="url(#cRaio)"/>`;
   // ninhos (sem grade): cada pedrinha num côncavo da areia
   s+=pecas((x,y)=>`<circle cx="${x+36}" cy="${y+40}" r="32" fill="#5f5258"/><circle cx="${x+36}" cy="${y+38}" r="23" fill="#726469"/><circle cx="${x+35}" cy="${y+36}" r="12" fill="#8a7c81"/><circle cx="${x+32}" cy="${y+32}" r="4" fill="#a3969b"/>`,
-    (x,y,v)=>`<ellipse cx="${x+36}" cy="${y+38}" rx="33" ry="29" fill="#b39672" opacity=".28"/><path d="M${x+12} ${y+52} q24 14 48 0" stroke="#efe0c2" stroke-width="3" fill="none" opacity=".35" stroke-linecap="round"/>`);
+    (x,y,v)=>`<path d="${blob(x+36+(r()-.5)*4,y+38+(r()-.5)*4,31+r()*4,27+r()*4,r,.17,8)}" fill="#b39672" opacity=".3"/><path d="M${x+12} ${y+52} q24 14 48 0" stroke="#efe0c2" stroke-width="3" fill="none" opacity=".35" stroke-linecap="round"/>`);
   return s;
 }
 
@@ -236,8 +236,8 @@ function cenaD(){
 
 const VIEWS = [
   {id:'A', nome:'Escavação', cena:cenaA, desc:'Um sítio de escavação visto de cima. As casas são marcadas só por barbantes finos entre estacas. Em volta: balde com minério, pá, peneira e escova.'},
-  {id:'B', nome:'Galeria', cena:cenaB, desc:'Chão de terra batida da mina, com trilho e carrinho. As casas são manchas redondas, um pouco mais claras, no chão.'},
-  {id:'C', nome:'Gruta', cena:cenaC, desc:'Uma câmara de gruta com musgo, cogumelos e um riacho, com as paredes em sombra. Sem grade: as casas são só leves afundados na areia.'},
+  {id:'B', nome:'Galeria', cena:cenaB, desc:'Chão de terra batida da mina, com trilho e carrinho. As casas são manchas irregulares, um pouco mais claras, no chão.'},
+  {id:'C', nome:'Gruta', cena:cenaC, desc:'Uma câmara de gruta com musgo, cogumelos e um riacho, com as paredes em sombra. Sem grade: as casas são leves afundados irregulares na areia.'},
   {id:'D', nome:'Bancada', cena:cenaD, desc:'A mesa do minerador. O tabuleiro é uma caixa de amostras forrada de feltro marrom, com mapa, vela, lupa, moedas e caderno em volta.'},
 ];
 const hud = `<div class="hud"><div class="pill"><span class="ic" style="background:#6aa84f">⚡</span><div><b>23</b><small>de 40</small></div></div><div class="pill"><span class="ic" style="background:#f2b33d">$</span><div><b>$86</b><small>dinheiro</small></div></div><div class="pill"><span class="ic" style="background:#c0603f">!</span><div><b>$150</b><small>cota em 3 dias</small></div></div></div>
