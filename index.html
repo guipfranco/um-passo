@@ -4,35 +4,43 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#15121c">
-<title>Um Passo (nível teste)</title>
+<title>Um Passo (luta teste)</title>
 <style>
-:root{--n:4;--cell:min(calc(94vw / var(--n) - 2vw),100px);--gap:min(1.6vw,8px)}
+:root{--n:3;--cell:min(calc(80vw / var(--n) - 2vw),104px);--gap:min(1.8vw,9px)}
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%;background:#15121c;color:#eee;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none;overscroll-behavior:none}
 #app{display:flex;flex-direction:column;align-items:center;gap:12px;padding:14px 8px}
-.wide{width:calc(var(--n)*var(--cell) + (var(--n) + 1)*var(--gap))}
-.hud{display:flex;gap:6px}
-.stat{background:#231e2e;border-radius:10px;padding:6px 4px;text-align:center;flex:1;min-width:0}
-.stat b{display:block;font-size:19px;white-space:nowrap}
-.stat small{opacity:.55;font-size:10px;text-transform:uppercase;letter-spacing:.06em}
-.mini{display:inline-flex;min-width:26px;height:26px;padding:0 4px;border-radius:6px;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;vertical-align:middle}
-#board{position:relative;height:calc(var(--n)*var(--cell) + (var(--n) + 1)*var(--gap));background:#1d1826;border-radius:16px;box-shadow:inset 0 0 0 2px #2e2740}
+.panel{width:min(92vw,380px);background:#231e2e;border-radius:14px;padding:10px 12px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.name{font-weight:700}
+.bar{position:relative;height:16px;background:#15121c;border-radius:8px;overflow:hidden;margin-top:6px}
+.bar i{position:absolute;inset:0 auto 0 0;border-radius:8px;transition:width .25s}
+.bar span{position:absolute;inset:0;text-align:center;font-size:11px;line-height:16px;font-weight:700}
+#enemy .bar i{background:#e04848}
+#me .bar i{background:#4fb36b}
+#enemyPanel{position:relative}
+#enemyPanel.hit{animation:hit .25s}
+@keyframes hit{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+#intent{font-size:14px;color:#ffb36b}
+#intent.soon{color:#ff6b6b;font-weight:700}
+.float{position:absolute;right:16px;top:4px;font-weight:900;font-size:26px;color:#ffd43b;pointer-events:none;animation:float .8s forwards;text-shadow:0 2px 0 #0008}
+@keyframes float{to{transform:translateY(-30px);opacity:0}}
+#board{position:relative;width:calc(var(--n)*var(--cell) + (var(--n) + 1)*var(--gap));height:calc(var(--n)*var(--cell) + (var(--n) + 1)*var(--gap));background:#1d1826;border-radius:16px;box-shadow:inset 0 0 0 2px #2e2740}
+body.hurt #board{animation:hurtflash .35s}
+@keyframes hurtflash{0%{box-shadow:inset 0 0 0 4px #ff4d6d,0 0 34px #ff4d6d90}100%{box-shadow:inset 0 0 0 2px #2e2740}}
 .cell-bg{position:absolute;left:0;top:0;width:var(--cell);height:var(--cell);border-radius:12px;background:#28213a}
-.tile{position:absolute;left:0;top:0;width:var(--cell);height:var(--cell);transition:transform .13s ease-out}
+.tile{position:absolute;left:0;top:0;width:var(--cell);height:var(--cell);transition:transform .12s ease-out}
 .face{position:relative;width:100%;height:100%;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:calc(var(--cell)*var(--fs,.44));background:var(--c,#555);color:#fff;text-shadow:0 2px 0 #0004;box-shadow:0 4px 0 #0005}
-.face.low{opacity:.45;filter:saturate(.5)}
-.face.eq{box-shadow:0 4px 0 #0005,0 0 0 4px #ffd43b}
-.face.high::after{content:'▲';position:absolute;top:2px;right:7px;font-size:calc(var(--cell)*.17);color:#fff;text-shadow:none}
-.face.player{background:#ffd43b;color:#2a1f2f;text-shadow:none;box-shadow:0 4px 0 #0005,0 0 22px #ffd43bcc}
-.face.player::before{content:'★';position:absolute;top:1px;font-size:calc(var(--cell)*.16);color:#8a5a00}
-.spawn{animation:spawn .18s ease-out}
+.spawn{animation:spawn .16s ease-out}
 @keyframes spawn{from{transform:scale(0)}to{transform:scale(1)}}
-.pop{animation:pop .22s ease-out}
-@keyframes pop{50%{transform:scale(1.25)}}
+.pop{animation:pop .2s ease-out}
+@keyframes pop{50%{transform:scale(1.2)}}
 .bump{animation:bump .16s ease-out}
-@keyframes bump{50%{transform:translate(calc(var(--dx)*10px),calc(var(--dy)*10px))}}
+@keyframes bump{50%{transform:translate(calc(var(--dx)*8px),calc(var(--dy)*8px))}}
 .die{animation:die .16s forwards}
 @keyframes die{to{transform:scale(0);opacity:0}}
+.mini{display:inline-flex;min-width:24px;height:24px;padding:0 4px;border-radius:6px;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#fff;vertical-align:middle}
+#deck{font-size:13px;opacity:.8}
 #msg{min-height:22px;text-align:center;font-size:15px;opacity:.85}
 .btns{display:flex;gap:8px;justify-content:center}
 button{font:inherit;color:#eee;background:#2c2639;border:0;border-radius:10px;padding:8px 14px;cursor:pointer}
@@ -47,18 +55,19 @@ button:active{transform:scale(.97)}
 </head>
 <body>
 <div id="app">
-  <div class="hud wide">
-    <div class="stat"><small>Você</small><b id="you">1</b></div>
-    <div class="stat"><small>Meta</small><b id="goal"></b></div>
-    <div class="stat"><small>Jogadas</small><b id="moves">0</b></div>
-    <div class="stat"><small>Próximo</small><b id="next"></b></div>
+  <div class="panel" id="enemyPanel">
+    <div class="row"><span class="name" id="ename"></span><span id="intent"></span></div>
+    <div class="bar" id="enemy"><i></i><span></span></div>
   </div>
-  <div id="board" class="wide"></div>
-  <div id="msg" class="wide"></div>
+  <div id="board"></div>
+  <div class="panel" id="mePanel">
+    <div class="row"><span class="name">Você</span><span id="deck"></span></div>
+    <div class="bar" id="me"><i></i><span></span></div>
+  </div>
+  <div id="msg"></div>
   <div class="btns">
     <button id="btnRules">? Regras</button>
     <button id="btnRestart">↻ Recomeçar</button>
-    <button id="btnMode"></button>
   </div>
 </div>
 <div id="overlay" class="hidden"><div class="box" id="box"></div></div>
@@ -66,18 +75,15 @@ button:active{transform:scale(.97)}
 <script>
 // ================== CONFIG ==================
 const CFG = {
-  N: 4,          // tamanho do tabuleiro
-  goal: 64,      // valor para vencer o nível
-  start: 1,      // seu valor inicial
-  slideAll: true, // true: desliza até bater (2048); false: uma casa por arrasto (Threes)
-  initial: 5,    // monstros no começo
-  // o que nasce, em relação ao seu valor v: [valor, peso]
-  spawnTable: v => [[v/4,1],[v/2,3],[v,4],[v*2,2],[v*4,1]],
+  N: 3,                                  // tamanho do tabuleiro
+  playerHp: 20,
+  deck: [2,2,2,2,2,2,4,4],               // baralho inicial: as peças que entram no tabuleiro
+  enemy: {nome:'Gosma', hp:120, dano:3, cada:3}, // ataca 'dano' a cada 'cada' jogadas
+  stuckClear: 2,                         // encurralado: apaga as N menores peças
 };
 
-// inimigos: tons de vermelho, do claro (fraco) ao escuro (forte)
-const COLORS=['#ff8a80','#ff6b6b','#f04848','#d93636','#c22a2a','#a81f1f','#8c1717','#701010'];
-const color = v => COLORS[Math.min(Math.round(Math.log2(v)), COLORS.length-1)];
+const COLORS=['#3d5a80','#4a6fa5','#3fb8af','#4fb36b','#8fb84a','#d6ad32','#ed8a63','#e85d75','#c86cd8','#8a6ce0','#5b7be0','#2c9fc9'];
+const color = v => COLORS[Math.min(Math.round(Math.log2(v))-1, COLORS.length-1)];
 
 // ================== ESTADO ==================
 const N = CFG.N;
@@ -86,174 +92,166 @@ const $ = s => document.querySelector(s);
 const board = $('#board');
 const els = new Map();
 let S, nextId = 1;
-let slideAll = localStorage.umpasso_slide ? localStorage.umpasso_slide==='1' : CFG.slideAll;
 const rnd = n => Math.floor(Math.random()*n);
 const pick = a => a[rnd(a.length)];
+const shuffle = a => a.map(v=>[Math.random(),v]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
 const inside = (x,y) => x>=0 && y>=0 && x<N && y<N;
 const pos = (x,y) => `translate(calc(${x}*(var(--cell) + var(--gap)) + var(--gap)), calc(${y}*(var(--cell) + var(--gap)) + var(--gap)))`;
+const overlayOpen = () => !$('#overlay').classList.contains('hidden');
 
 for(let y=0;y<N;y++) for(let x=0;x<N;x++){
   const c=document.createElement('div'); c.className='cell-bg'; c.style.transform=pos(x,y); board.appendChild(c);
 }
 
-function newGame(){
-  for(const el of els.values()) el.remove();
-  els.clear();
-  const mid = Math.floor(N/2);
-  S = {p:{id:'p', x:mid, y:mid, v:CFG.start}, mons:[], next:null, moves:0, over:false};
-  // começa com pelo menos 2 do seu tamanho
-  for(let i=0;i<CFG.initial;i++){
-    const free = emptyCells(); if(!free.length) break;
-    const c = pick(free);
-    S.mons.push({id:'m'+(nextId++), x:c.x, y:c.y, v: i<2 ? S.p.v : rollSpawn().v});
-  }
-  S.next = rollSpawn();
-  msg('Arraste: tudo desliza. Cuidado com os maiores!');
+function newFight(){
+  for(const el of els.values()) el.remove(); els.clear();
+  const E = CFG.enemy;
+  S = {tiles:[], hp:CFG.playerHp, ehp:E.hp, countdown:E.cada, draw:shuffle(CFG.deck), moves:0, dealt:0, over:false};
+  addTile(); addTile();
+  msg('Funda peças para atacar. Peça maior, golpe maior.');
   render();
 }
+
+// ---------- baralho ----------
+function drawCard(){
+  if(!S.draw.length) S.draw = shuffle(CFG.deck);   // acabou: embaralha de novo
+  return S.draw.shift();
+}
+function peekCard(){ return S.draw.length ? S.draw[0] : null; }
 
 function emptyCells(){
   const out=[];
-  for(let y=0;y<N;y++) for(let x=0;x<N;x++) if(!entAt(S.p,S.mons,x,y)) out.push({x,y});
+  for(let y=0;y<N;y++) for(let x=0;x<N;x++) if(!S.tiles.some(t=>t.x===x&&t.y===y)) out.push({x,y});
   return out;
 }
-
-function rollSpawn(){
-  const table = CFG.spawnTable(S.p.v).filter(([v])=>v>=1 && Number.isInteger(v));
-  let r = Math.random()*table.reduce((a,b)=>a+b[1],0);
-  for(const [v,w] of table){ if((r-=w)<0) return {v}; }
-  return {v:S.p.v};
+function addTile(){
+  const free = emptyCells(); if(!free.length) return;
+  const c = pick(free);
+  S.tiles.push({id:'t'+(nextId++), x:c.x, y:c.y, v:drawCard()});
 }
 
-function entAt(p,mons,x,y){
-  if(p.x===x && p.y===y) return p;
-  return mons.find(m=>!m.dead && m.x===x && m.y===y);
-}
-
-// ================== REGRA DO MOVIMENTO ==================
-// Arrastar: tudo desliza na direção do arrasto. No modo "até o fim" as peças andam
-// até bater em algo; no modo "uma casa" andam só uma casa.
-// Quem está mais à frente anda primeiro.
-// Você x monstro (quando um entra no outro):
-//   igual  -> some e você DOBRA
-//   menor  -> some
-//   maior  -> VOCÊ MORRE
-// Monstro x monstro: bloqueia.
-function stepOnce(p,mons,dx,dy,ev){
-  let changed=false;
-  const ents = [p, ...mons].sort((a,b)=>(b.x*dx+b.y*dy)-(a.x*dx+a.y*dy));
-  for(const e of ents){
-    if(e.dead) continue;
-    const nx=e.x+dx, ny=e.y+dy;
-    if(!inside(nx,ny)) continue;
-    const t = entAt(p,mons,nx,ny);
-    if(!t){ e.x=nx; e.y=ny; changed=true; continue; }
-    const isP = e===p, tIsP = t===p;
-    if(!isP && !tIsP) continue;           // monstro x monstro
-    const mo = isP ? t : e;
-    changed = true;
-    if(mo.v > p.v){ ev.dead=true; ev.killer=mo.v; return true; }
-    if(mo.v === p.v){ p.v *= 2; ev.merged++; }
-    mo.dead = true; ev.eaten.push(mo.id);
-    if(isP){ p.x=nx; p.y=ny; }
+// ================== REGRA DO 2048 ==================
+function slide(tiles,dx,dy){
+  const ts = tiles.map(t=>({...t, m:false}));
+  const grid = Array.from({length:N},()=>Array(N).fill(null));
+  for(const t of ts) grid[t.y][t.x]=t;
+  const idx = [...Array(N).keys()];
+  const xs = dx===1 ? [...idx].reverse() : idx;
+  const ys = dy===1 ? [...idx].reverse() : idx;
+  let moved=false; const merges=[]; const gone=[];
+  for(const y of ys) for(const x of xs){
+    const t = grid[y][x]; if(!t) continue;
+    let cx=x, cy=y, merged=false;
+    while(true){
+      const nx=cx+dx, ny=cy+dy;
+      if(!inside(nx,ny)) break;
+      const o = grid[ny][nx];
+      if(!o){ grid[cy][cx]=null; grid[ny][nx]=t; cx=nx; cy=ny; continue; }
+      if(!o.m && o.v===t.v){
+        grid[cy][cx]=null; o.v*=2; o.m=true;
+        t.x=nx; t.y=ny; gone.push(t); merges.push(o); merged=true;
+      }
+      break;
+    }
+    if(merged){ moved=true; continue; }
+    if(cx!==x || cy!==y){ t.x=cx; t.y=cy; moved=true; }
   }
-  return changed;
+  return {tiles: ts.filter(t=>!gone.includes(t)), moved, merges, gone};
 }
+const anyMove = () => [[0,1],[0,-1],[1,0],[-1,0]].some(([dx,dy])=>slide(S.tiles,dx,dy).moved);
 
-function simulate(dx,dy){
-  const p = {...S.p};
-  const mons = S.mons.map(m=>({...m}));
-  const ev = {changed:false, merged:0, eaten:[], dead:false, killer:0};
-  while(stepOnce(p,mons,dx,dy,ev)){
-    ev.changed = true;
-    if(ev.dead || !slideAll) break;
-  }
-  return {p, mons:mons.filter(m=>!m.dead), ev};
-}
-
+// ================== TURNO ==================
 function move(dx,dy){
-  if(S.over || !$('#overlay').classList.contains('hidden')) return;
-  const r = simulate(dx,dy);
-  if(!r.ev.changed){ anim('p','bump',dx,dy); return; }
+  if(S.over || overlayOpen()) return;
+  const r = slide(S.tiles,dx,dy);
+  if(!r.moved){ for(const t of S.tiles) anim(t.id,'bump',dx,dy); return; }
 
-  for(const id of r.ev.eaten) killEl(id);
-  S.p = r.p; S.mons = r.mons; S.moves++;
+  for(const g of r.gone){ const el=els.get(g.id); els.delete(g.id); if(el){ el.style.zIndex=0; el.style.transform=pos(g.x,g.y); setTimeout(()=>el.remove(),130); } }
+  S.tiles = r.tiles.map(({m,...t})=>t);
+  S.moves++;
 
-  if(r.ev.dead){
-    render(); anim('p','bump',dx,dy);
-    msg(`Você bateu num ${r.ev.killer} e morreu.`);
-    return end('dead', r.ev.killer);
-  }
-
-  // nasce um monstro na borda oposta ao arrasto
-  const edge = emptyCells().filter(c => dx===1 ? c.x===0 : dx===-1 ? c.x===N-1 : dy===1 ? c.y===0 : c.y===N-1);
-  if(edge.length){
-    const c = pick(edge);
-    S.mons.push({id:'m'+(nextId++), x:c.x, y:c.y, v:S.next.v});
-    S.next = rollSpawn();
-  }
-  // nunca deixa faltar alguém do seu tamanho
-  if(!S.mons.some(m=>m.v===S.p.v)) S.next = {v:S.p.v};
-
-  if(r.ev.merged){ anim('p','pop'); msg(r.ev.merged>1 ? `Combo! Dobrou ${r.ev.merged}x, agora você é ${S.p.v}.` : `Dobrou! Agora você é ${S.p.v}.`); }
-  else if(r.ev.eaten.length) msg('Derrotou um menor.');
+  // ataque: cada fusão causa dano igual ao valor da peça que nasceu
+  const dmg = r.merges.reduce((a,o)=>a+o.v, 0);
+  if(dmg) hitEnemy(dmg, r.merges.length);
   else msg('');
 
+  addTile();
   render();
-  if(S.p.v >= CFG.goal) return end('win');
-  if(![[0,1],[0,-1],[1,0],[-1,0]].some(([x,y])=>simulate(x,y).ev.changed)) end('stuck');
+  for(const o of r.merges) anim(o.id,'pop');
+  if(S.ehp<=0) return end(true);
+
+  enemyTurn();
+  if(S.hp<=0) return end(false);
+
+  // encurralado: o inimigo ataca e as menores peças somem
+  if(!anyMove()){
+    hurt(CFG.enemy.dano, 'Encurralado! Você levou um golpe e perdeu as menores peças.');
+    const low = [...S.tiles].sort((a,b)=>a.v-b.v).slice(0,CFG.stuckClear);
+    for(const t of low){ const el=els.get(t.id); els.delete(t.id); if(el){ el.firstChild.classList.add('die'); setTimeout(()=>el.remove(),170); } }
+    S.tiles = S.tiles.filter(t=>!low.includes(t));
+    render();
+    if(S.hp<=0) return end(false);
+  }
 }
 
-function end(kind, killer){
-  const won = kind==='win';
+function hitEnemy(dmg, n){
+  S.ehp = Math.max(0, S.ehp-dmg); S.dealt += dmg;
+  msg(n>1 ? `Combo de ${n} fusões: ${dmg} de dano!` : `${dmg} de dano!`);
+  const p=$('#enemyPanel'); p.classList.remove('hit'); void p.offsetWidth; p.classList.add('hit');
+  const f=document.createElement('div'); f.className='float'; f.textContent='-'+dmg; p.appendChild(f); setTimeout(()=>f.remove(),800);
+}
+
+function enemyTurn(){
+  if(--S.countdown > 0) return;
+  S.countdown = CFG.enemy.cada;
+  hurt(CFG.enemy.dano, `${CFG.enemy.nome} te acertou: -${CFG.enemy.dano}.`);
+}
+
+function hurt(n, text){
+  S.hp = Math.max(0, S.hp-n); msg(text);
+  document.body.classList.remove('hurt'); void document.body.offsetWidth; document.body.classList.add('hurt');
+  render();
+}
+
+function end(won){
   S.over = true;
-  const key='umpasso_best_'+CFG.goal;
-  let best = +(localStorage[key]||0);
-  if(won && (!best || S.moves<best)){ best=S.moves; localStorage[key]=best; }
   setTimeout(()=>{
     showOverlay(won
-      ? `<h2>Você chegou a ${S.p.v}!</h2><p>Em <b>${S.moves}</b> jogadas${best?` (recorde: ${best})`:''}.</p><button class="primary" id="again">Jogar de novo</button>`
-      : kind==='dead'
-      ? `<h2>Morreu!</h2><p>Você bateu num <b>${killer}</b>, maior que você. Chegou a <b>${S.p.v}</b> em ${S.moves} jogadas.</p><button class="primary" id="again">Tentar de novo</button>`
-      : `<h2>Travou</h2><p>Nenhum arrasto mexe mais o tabuleiro. Você chegou a <b>${S.p.v}</b> em ${S.moves} jogadas.</p><button class="primary" id="again">Tentar de novo</button>`);
-    $('#again').onclick=()=>{ hideOverlay(); newGame(); };
-  }, 350);
+      ? `<h2>Venceu a ${CFG.enemy.nome}!</h2><p>Em ${S.moves} jogadas, com ${S.hp} de vida sobrando.</p><button class="primary" id="again">Lutar de novo</button>`
+      : `<h2>Derrota</h2><p>A ${CFG.enemy.nome} ficou com ${S.ehp} de vida. Você causou ${S.dealt} de dano em ${S.moves} jogadas.</p><button class="primary" id="again">Tentar de novo</button>`);
+    $('#again').onclick=()=>{ hideOverlay(); newFight(); };
+  }, 400);
 }
 
 // ================== DESENHO ==================
+function setBar(sel, v, max){ $(sel+' i').style.width = (100*v/max)+'%'; $(sel+' span').textContent = `${v} / ${max}`; }
+
 function render(){
-  const p=S.p;
-  drawTile('p', p.x, p.y, p.v, 'player');
-  for(const m of S.mons) drawTile(m.id, m.x, m.y, m.v, m.v===p.v ? 'eq' : m.v<p.v ? 'low' : 'high');
-  $('#you').textContent = p.v;
-  $('#goal').textContent = CFG.goal;
-  $('#moves').textContent = S.moves;
-  $('#next').innerHTML = `<span class="mini" style="background:${color(S.next.v)}">${S.next.v}</span>`;
-}
-
-function drawTile(id,x,y,v,cls){
-  let el = els.get(id);
-  if(!el){
-    el = document.createElement('div'); el.className='tile';
-    el.innerHTML = '<div class="face spawn"></div>';
-    el.style.transition='none'; el.style.transform=pos(x,y);
-    board.appendChild(el); els.set(id,el);
-    void el.offsetWidth; el.style.transition='';
-    el.firstChild.addEventListener('animationend', e=>{ if(e.target===el.firstChild && e.animationName!=='die') el.firstChild.classList.remove(e.animationName); });
+  for(const t of S.tiles){
+    let el = els.get(t.id);
+    if(!el){
+      el = document.createElement('div'); el.className='tile';
+      el.innerHTML = '<div class="face spawn"></div>';
+      el.style.transition='none'; el.style.transform=pos(t.x,t.y);
+      board.appendChild(el); els.set(t.id,el);
+      void el.offsetWidth; el.style.transition='';
+      el.firstChild.addEventListener('animationend', e=>{ if(e.target===el.firstChild && e.animationName!=='die') el.firstChild.classList.remove(e.animationName); });
+    }
+    el.style.transform = pos(t.x,t.y);
+    el.style.zIndex = 1;
+    const face = el.firstChild;
+    face.textContent = t.v;
+    face.style.setProperty('--fs', t.v>=1000 ? .27 : t.v>=100 ? .33 : .44);
+    face.style.setProperty('--c', color(t.v));
   }
-  el.style.transform = pos(x,y);
-  el.style.zIndex = id==='p' ? 3 : 1;
-  const face = el.firstChild;
-  const keep = [...face.classList].filter(c=>['spawn','pop','bump','die'].includes(c));
-  face.className = ['face', cls, ...keep].join(' ');
-  face.textContent = v;
-  face.style.setProperty('--fs', v>=100 ? .3 : v>=10 ? .38 : .44);
-  if(id!=='p') face.style.setProperty('--c', color(v));
-}
-
-function killEl(id){
-  const el = els.get(id); els.delete(id);
-  if(el){ el.style.zIndex=0; el.firstChild.classList.add('die'); setTimeout(()=>el.remove(),170); }
+  const E=CFG.enemy;
+  $('#ename').textContent = E.nome;
+  setBar('#enemy', S.ehp, E.hp);
+  setBar('#me', S.hp, CFG.playerHp);
+  $('#intent').textContent = S.countdown===1 ? `⚔ ${E.dano} na próxima jogada!` : `⚔ ${E.dano} em ${S.countdown} jogadas`;
+  $('#intent').classList.toggle('soon', S.countdown===1);
+  const nx = peekCard();
+  $('#deck').innerHTML = `Próxima: ${nx ? `<span class="mini" style="background:${color(nx)}">${nx}</span>` : 'embaralhando'} · baralho ${S.draw.length}/${CFG.deck.length}`;
 }
 
 function anim(id,name,dx=0,dy=0){
@@ -268,18 +266,17 @@ function showOverlay(html){ $('#box').innerHTML = html; $('#overlay').classList.
 function hideOverlay(){ $('#overlay').classList.add('hidden'); }
 
 function showRules(){
-  showOverlay(`<h2>Um Passo (nível teste)</h2>
+  const counts = CFG.deck.reduce((a,v)=>(a[v]=(a[v]||0)+1,a),{});
+  showOverlay(`<h2>Um Passo (luta teste)</h2>
   <ul>
-    <li>Arraste (ou use setas / WASD): <b>tudo no tabuleiro desliza</b> para aquele lado até bater em algo. O botão de modo troca para andar só uma casa.</li>
-    <li>Você é a peça <b>dourada</b> com ★. Os inimigos são <b>vermelhos</b>: quanto mais escuro, mais forte.</li>
-    <li>Encostou num <b>igual</b> (contorno dourado): ele some e <b>você dobra</b>.</li>
-    <li>Encostou num <b>menor</b> (apagado): ele some.</li>
-    <li>Encostou num <b>maior</b> (▲): <b>você morre</b>. Vale também se ele deslizar em cima de você.</li>
-    <li>A cada jogada entra uma peça nova pela borda oposta (veja "Próximo").</li>
-    <li>Chegue a <b>${CFG.goal}</b>. Se nada mais se mexer, travou.</li>
+    <li>Arraste: tudo desliza até bater. Dois iguais se fundem e dobram, como no 2048.</li>
+    <li><b>Cada fusão é um ataque</b>: causa dano igual ao valor da peça que nasceu. Um 16 tira 16. Várias fusões no mesmo arrasto somam.</li>
+    <li>As peças novas saem do seu <b>baralho</b> (${Object.entries(counts).map(([v,c])=>`${c}× ${v}`).join(', ')}). Quando acaba, ele é embaralhado de novo.</li>
+    <li>O inimigo avisa quando vai atacar (⚔ em cima).</li>
+    <li>Se nenhum arrasto for possível, você está <b>encurralado</b>: leva um golpe e perde as ${CFG.stuckClear} menores peças.</li>
   </ul>
   <button class="primary" id="ok">Bora</button>`);
-  $('#ok').onclick=()=>{ localStorage.umpasso_seen2=1; hideOverlay(); };
+  $('#ok').onclick=()=>{ localStorage.umpasso_seen4=1; hideOverlay(); };
 }
 
 // ================== ENTRADA ==================
@@ -290,7 +287,7 @@ addEventListener('keydown', e=>{
 });
 let touch=null;
 addEventListener('pointerdown', e=>{
-  if(!$('#overlay').classList.contains('hidden') || e.target.closest('button')) return;
+  if(overlayOpen() || e.target.closest('button')) return;
   touch={x:e.clientX, y:e.clientY};
 });
 addEventListener('pointerup', e=>{
@@ -300,13 +297,10 @@ addEventListener('pointerup', e=>{
   if(Math.abs(dx)>Math.abs(dy)) move(Math.sign(dx),0); else move(0,Math.sign(dy));
 });
 $('#btnRules').onclick = showRules;
-$('#btnRestart').onclick = newGame;
-const modeLabel = () => $('#btnMode').textContent = slideAll ? '⇥ Até o fim' : '→ Uma casa';
-$('#btnMode').onclick = () => { slideAll = !slideAll; localStorage.umpasso_slide = slideAll ? '1' : '0'; modeLabel(); };
-modeLabel();
+$('#btnRestart').onclick = newFight;
 
-newGame();
-if(!localStorage.umpasso_seen2) showRules();
+newFight();
+if(!localStorage.umpasso_seen4) showRules();
 </script>
 </body>
 </html>

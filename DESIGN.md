@@ -1,45 +1,34 @@
 # Um Passo (nome provisório)
 
-Puzzle de celular: você é um número num tabuleiro pequeno. Cada swipe move o tabuleiro inteiro uma casa, e você cresce dobrando ao encostar em quem tem o seu tamanho.
+Roguelite de luta por turnos, estilo Slay the Spire, em que o combate é um tabuleiro de 2048. Você ataca fundindo peças: quanto maior a peça que você forma, maior o dano.
 
-## Regras do nível teste (v0.2)
+## Luta teste (v0.3, o que está jogável)
 
-- Tabuleiro 4x4, você começa como **1**. Você é dourado; inimigos são tons de vermelho (mais escuro = mais forte).
-- **Arrastar faz tudo deslizar até bater em algo**, como no 2048. Há um botão para trocar para o modo antigo, de uma casa por arrasto, como no Threes. Quem está mais à frente anda primeiro.
-- No modo até o fim, dá para dobrar mais de uma vez no mesmo arrasto (combo).
-- Quando você e um monstro se encostam (você anda nele, ou ele anda em você):
+- Tabuleiro **3x3**, regra do 2048: tudo desliza até bater, dois iguais se fundem e dobram.
+- **Cada fusão é um ataque**: causa dano igual ao valor da peça que nasceu. Fusões no mesmo arrasto somam (combo).
+- **Baralho**: as peças novas saem do seu baralho, não do acaso puro. O inicial tem 6 cartas de 2 e 2 de 4. Quando acaba, é embaralhado de novo. A próxima peça fica visível.
+- **Inimigo**: Gosma, 120 de vida, ataca 3 a cada 3 jogadas, e avisa antes (intenção, como no Slay the Spire).
+- Você tem 20 de vida.
+- **Encurralado** (nenhum arrasto possível): você leva um golpe e as 2 menores peças somem.
+- Calibragem com bots: vencem 54% a 66% das lutas, em cerca de 19 jogadas.
 
-| Monstro | Resultado |
-|---|---|
-| **igual** | some, e **você dobra** (1, 2, 4, 8...) |
-| **menor** | some |
-| **maior** | **você morre** (também se ele deslizar em cima de você) |
+## Para onde vai (ideias do Guilherme, ainda não feitas)
 
-- Monstro com monstro: bloqueia, ninguém se funde.
-- A cada jogada entra uma peça nova pela borda oposta ao arrasto. O valor dela aparece em "Próximo".
-- Se não existir ninguém do seu tamanho no tabuleiro, a próxima peça é garantida igual a você.
-- Vitória: chegar a **64**. Derrota: encostar num maior, ou nenhum arrasto mexer mais o tabuleiro.
-
-## Alavancas (bloco `CFG` no código)
-
-- `N`: tamanho do tabuleiro.
-- `slideAll`: modo padrão (até o fim ou uma casa).
-- `goal`: valor para vencer.
-- `initial`: monstros no começo.
-- `spawnTable`: o que nasce em relação ao seu valor.
+- **Grid como progressão**: começar pequeno (2x2 ou 3x3) e comprar mais casas entre lutas.
+- **Baralho que evolui**: no começo só números baixos; ao longo da run entram cartas melhores e especiais, por exemplo:
+  - multiplicador (a fusão com ela vale ×2 de dano),
+  - coringa (se funde com qualquer número),
+  - outras a definir.
+- **Estrutura de run**: sequência de lutas, cada uma contra um inimigo; entre elas, recompensas e loja.
 
 ## Perguntas em aberto
 
-- Os menores devem sumir ou só bloquear?
-- Monstros devem se fundir entre si, como no Threes?
-- Morrer quando um maior desliza em cima de você é justo, ou só quando você vai nele?
+- Dano = valor da peça formada é o melhor? Alternativas: dano só ao formar peças acima de X, ou dano ao "lançar" uma peça no inimigo.
+- O que acontece quando o tabuleiro trava: golpe + limpeza (atual), ou derrota direta?
+- Inimigos com comportamentos diferentes (bloqueiam casas, jogam peças ruins no seu tabuleiro, etc.).
 
-## Ideias guardadas para depois
+## Histórico
 
-Ficaram fora do nível teste. Estavam na v0.1 e podem voltar se fizerem sentido:
-
-- Vários andares com escada e meta crescente.
-- Bênçãos entre andares (Espinhos, Empurrão, Voraz...).
-- Vida e dano ao bater num maior.
-- Caçadores que andam até você.
-- Relógio: monstros crescem a cada N turnos.
+- v0.1: você era uma peça que andava e absorvia monstros (dungeon crawler). Faltava o prazer de mexer o tabuleiro todo.
+- v0.2: arrasto movendo tudo, mas só você se fundia; as outras peças viravam obstáculo.
+- v0.3: volta à regra do 2048 com combate por cima.
