@@ -223,6 +223,8 @@ body.lock{overflow:hidden}
 .ptDica{font-size:12px;color:#a08a74;margin:0}
 .slot.void{background:#3a2c22 !important;box-shadow:inset 0 0 0 3px #2a1f18,inset 0 6px 10px #0006;border-radius:14px}
 .formaSvg{display:block;margin:0 auto}
+.ptNome{border:0;border-radius:999px;padding:6px 12px;font:600 14px 'Fredoka';background:#fff;color:#5a4636;width:150px}
+#mineRow{flex-wrap:wrap;justify-content:center}
 .panel h3{font-size:15px;color:#a08a74;margin:6px 0 -4px;text-transform:uppercase;letter-spacing:.04em}
 .edge{position:absolute;z-index:4;background:#6b625a;border:2.5px solid #2e2219;border-radius:8px;box-shadow:0 3px 0 #0003}
 .edge.v{width:12px;height:calc(var(--cell) - 10px);left:calc((var(--ex) + 1)*(var(--cell) + var(--gap)) + var(--gap)/2 - 6px);top:calc(var(--ey)*(var(--cell) + var(--gap)) + var(--gap) + 5px)}
@@ -259,6 +261,7 @@ body.lock{overflow:hidden}
     <div class="stage" id="stage"><div id="board"></div></div>
     <div class="row wide" id="mineRow">
       <button class="btn dim" id="btnEdit" style="display:none">Editar</button>
+      <button class="btn b" id="btnAssovio" style="display:none">Assovio</button>
       <button class="btn" id="btnEnd" style="margin:0 auto">Encerrar o dia</button>
     </div>
     <div class="labTools wide hidden" id="labTools"></div>
@@ -369,6 +372,10 @@ const FORMAS = [
   {id:'largo',     nome:'Túnel largo',   n:5, mapa:['#####','.....','.....','.....','#####'], muretas:[]},
   {id:'zigue',     nome:'Zigue-zague',   n:5, mapa:['.....','.....','.....','.....','.....'], muretas:[['h',0,0],['h',1,0],['h',2,0],['h',3,0],['h',1,2],['h',2,2],['h',3,2],['h',4,2]]},
   {id:'quartos',   nome:'Quatro quartos',n:4, mapa:['....','....','....','....'], muretas:[['v',1,0],['v',1,3],['h',0,1],['h',3,1]]},
+  {id:'coracao',   nome:'Coração',       n:7, mapa:['#..#..#','.......','.......','.......','#.....#','##...##','###.###'], muretas:[]},
+  {id:'ilhas',     nome:'Ilhas',         n:7, mapa:['...####','...####','....###','###.###','###....','####...','####...'], muretas:[]},
+  {id:'rio',       nome:'Rio',           n:6, mapa:['...###','....##','#....#','##....','###...','####..'], muretas:[]},
+  {id:'te',        nome:'T',             n:6, mapa:['......','......','##..##','##..##','##..##','##..##'], muretas:[['v',2,3],['v',2,5]]},
   {id:'janela',    nome:'Janela',        n:6, mapa:['......','.#..#.','......','......','.#..#.','......'], muretas:[['v',2,0],['v',2,5],['h',0,2],['h',5,2]]},
 ];
 const formasTodas = () => [...FORMAS, ...JSON.parse(localStorage.mina_formas||'[]')];
@@ -380,6 +387,7 @@ const UPGRADES = [
   {id:'picareta', em:'⛏️', nome:'Picareta', desc:l=>`+12% de chance de nascer Pedra.`,              preco:l=>Math.round(15*Math.pow(1.6,l)), max:5},
   {id:'martelo',  em:'🔨', nome:'Martelo',  desc:l=>`Cada pedrinha sorteia +1 vez e cospe a melhor.`, preco:l=>Math.round(30*Math.pow(2,l)), max:3},
   {id:'balanca',  em:'⚖️', nome:'Balança',  desc:l=>`Todo minério vale +15%.`,             preco:l=>Math.round(20*Math.pow(1.6,l))},
+  {id:'assovio',  em:'🎶', nome:'Assovio',  desc:l=>`Chama uma pedrinha sem mexer o tabuleiro: ${l}x por dia.`, preco:l=>Math.round(18*Math.pow(1.7,l)), max:3},
 ];
 const CONSUMIVEIS = [
   {id:'cafe',  em:'☕', nome:'Café',           desc:'+10 de energia.',            preco:5},
@@ -823,6 +831,7 @@ function startDay(p, tutorial=false){
     S.energy = tutorial ? 10 : base + 5*(S.up.folego||0) + S.saved + S.bonus + (am.cafe?10:0);
     S.energyMax = S.energy; S.usedSaved = tutorial ? 0 : S.saved+S.bonus; S.saved=0; S.bonus=0;
   }
+  S.assovios = S.up.assovio||0; assovioBtn();
   $('#btnEdit').style.display = S.lab ? '' : 'none'; S.editando=false; $('#labTools').classList.add('hidden');
   humor();
   if(forma){
@@ -842,7 +851,8 @@ function startDay(p, tutorial=false){
     for(let i=0;i<(p.clods||0);i++) addTile(0);
     if(S.gift){ addTile(5); S.gift=false; }
     if(am.sorte) addTile(3);
-    addTile(); addTile();
+    if(forma?.pecas?.length){ for(const [x,y,t,cc,k] of forma.pecas){ if(tileAt(x,y)||wallAt(x,y)) continue; const tl={id:'t'+(nextId++),x,y,t}; if(cc!=null) tl.c=cc; if(k) tl.k=k; S.tiles.push(tl); } }
+    else { addTile(); addTile(); }
   }
   $('#mineRow').style.display=''; $('#revealRow').style.display='none';
   $('#btnEnd').classList.remove('hot'); resetEnd();
@@ -969,6 +979,22 @@ function quebrar(b){
   setBanner(null, `extraído hoje: $${S.extra}`);
 }
 
+// Assovio: nasce uma pedrinha sem arrastar (passa a vez)
+function assovioBtn(){
+  const b=$('#btnAssovio'); if(!b) return;
+  b.style.display = S && S.phase==='mine' && (S.up.assovio||0)>0 ? '' : 'none';
+  b.textContent = `Assovio (${S.assovios>90?'∞':S.assovios})`; b.disabled = !S.assovios;
+}
+function assoviar(){
+  if(!S || S.phase!=='mine' || overlayOpen() || coachBlock || S.editando || !S.assovios || !emptyCells().length) return;
+  if(S.assovios<90) S.assovios--;
+  S.moves=(S.moves||0)+1;
+  if(!S.semEnergia){ if(S.energy>0) S.energy--; else S.tired++; }
+  humor(); addTile(); render(); assovioBtn();
+  tone({f:880,to:1320,d:.12,v:.08,type:'triangle'}); tone({f:1320,to:1760,t:.13,d:.14,v:.07,type:'triangle'});
+  if(!anyMove()){ setBanner(null,'não cabe mais nada'); setTimeout(endDay,450); }
+}
+
 // ===================== FIM DO DIA: CUSPE + EQUIPAMENTO =====================
 function roll(t){
   const once=()=>{ const tb=DROPS[Math.min(t,10)]; let r=Math.random()*100; for(let i=0;i<tb.length;i++){ if((r-=tb[i])<0) return i; } return 0; };
@@ -1002,6 +1028,7 @@ function showCalc(){
 async function endDay(){
   if(S.phase!=='mine') return;
   if(S.tut===4 || S.tut===3){ S.tut=5; hideCoach(); }
+  $('#btnAssovio').style.display='none';
   S.phase='reveal'; S.skip=false; S.gain=S.extra||0; S.cost=0; S.mult=1; S.shown=0; S.found=[]; S.clods=0;
   const sobra = Math.max(0,S.energy);
   if(!S.semEnergia) S.saved = S.tut ? 0 : Math.min(CFG.guardaMax, sobra);
@@ -1227,7 +1254,7 @@ if(!LAB.cfg) LAB.cfg = presetDe(LAB.fase);
 function labSalva(){ localStorage.mina_lab=JSON.stringify(LAB); }
 const LAB_AJUSTES = [
   {k:'forma',   nome:'Formato',              ops:()=>[null,...formasTodas().map(f=>f.id)], fmt:v=>v?acharForma(v)?.nome||v:'quadrado'},
-  {k:'n',       nome:'Tabuleiro',            ops:[3,4,5,6],            fmt:v=>`${v}x${v}`, sem:'forma'},
+  {k:'n',       nome:'Tabuleiro',            ops:[3,4,5,6,7,8],        fmt:v=>`${v}x${v}`, sem:'forma'},
   {k:'energia', nome:'Energia',              ops:[10,20,30,40,60,80],  fmt:v=>v, so:'energia'},
   {k:'spawns',  nome:'Pedrinhas por arrasto',ops:[1,2,3],              fmt:v=>v},
   {k:'torrao',  nome:'Torrão ao nascer',     ops:[0,.1,.2,.3],         fmt:v=>Math.round(v*100)+'%'},
@@ -1237,6 +1264,7 @@ const LAB_AJUSTES = [
   {k:'walls',   nome:'Paredes',              ops:[0,1,2,3,4],          fmt:v=>v},
   {k:'edges',   nome:'Muretas',              ops:[0,2,4,6,8],          fmt:v=>v},
   {k:'clods',   nome:'Torrões no começo',    ops:[0,3,6],              fmt:v=>v},
+  {k:'assovio', nome:'Assovio por dia',      ops:[0,1,2,3,99],         fmt:v=>v>90?'∞':v},
 ];
 function labPainel(){
   hideCoach(); show('scrMap'); trilha('menu');
@@ -1247,14 +1275,17 @@ function labPainel(){
   const op=(grp,val,sel,html,cls='')=>`<button class="card labOp ${cls} ${sel?'sel':''}" data-grp="${grp}" data-val="${val}">${html}</button>`;
   const fases = LAB_FASES.map(k=>op('fase',k,LAB.fase===k,`<span class="em">${disc(k,null,'discSm')}</span><div><b>${PATHS[k].nome}</b><span>${PATHS[k].desc}</span></div>`)).join('');
   const ajustes = LAB_AJUSTES.filter(a=>(!a.so || LAB.energia) && !(a.sem && LAB.cfg[a.sem])).map(a=>`<div class="ajuste"><span>${a.nome}</span><div class="chips">${(typeof a.ops==='function'?a.ops():a.ops).map(o=>`<button class="chipOp ${LAB.cfg[a.k]===o?'sel':''}" data-aj="${a.k}" data-v='${JSON.stringify(o)}'>${a.fmt(o)}</button>`).join('')}</div></div>`).join('');
+  const minhas = JSON.parse(localStorage.mina_formas||'[]');
   const hist = LAB.hist.slice(-8).reverse().map(h=>`<li><b>${PATHS[h.fase]?.nome||h.fase}</b> · ${h.energia?'com':'sem'} energia · ${CHARS[h.char].nome}${h.cfg?` · ${h.cfg.n}x${h.cfg.n}, ${h.cfg.spawns}/arrasto`:''}: ${h.arrastos} arrastos, <b>$${h.total}</b></li>`).join('');
   showOverlay(`${disc('lab','#4f7f9a','bigDisc')}<h2>Laboratório</h2>
     <h3>Energia</h3><div class="labRow">${op('energia',1,LAB.energia,'<div><b>Ligada</b></div>')}${op('energia',0,!LAB.energia,'<div><b>Desligada</b><span>até travar</span></div>')}</div>
     <h3>Personagem</h3><div class="labRow">${Object.entries(CHARS).map(([k,c])=>op('char',k,LAB.char===k,`<div><b>${c.em} ${c.nome}</b></div>`)).join('')}</div>
     <button class="btn b" id="labGo">Jogar</button>
+    <button class="btn g" id="labBuild">Construir nível (tela vazia ${LAB.cfg.n}x${LAB.cfg.n})</button>
     <h3>Ajustes</h3><div class="ajustes">${ajustes}</div>
     <button class="btn dim" id="labReset">Voltar aos valores da fase</button>
     <h3>Fase (carrega os valores dela)</h3><div class="cards">${fases}</div>
+    ${minhas.length?`<h3>Seus níveis</h3><div class="cards">${minhas.map(f=>`<div class="card" style="cursor:default"><span class="em">${formaSvg(f,40)}</span><div><b>${f.nome}</b><span>${f.n}x${f.n}${f.pecas?.length?`, ${f.pecas.length} pedrinhas`:''}</span></div><button class="pt" data-delf="${f.id}">apagar</button></div>`).join('')}</div>`:''}
     ${hist?`<h3>Últimos resultados</h3><ul class="labHist">${hist}</ul>`:''}
     <button class="btn dim" id="labMenu">Voltar ao menu</button>`);
   const redesenha = () => { labSalva(); const y=$('#panel').scrollTop; labPainel(); $('#panel').scrollTop=y; };
@@ -1265,6 +1296,8 @@ function labPainel(){
   });
   document.querySelectorAll('.chipOp').forEach(b=>b.onclick=()=>{ LAB.cfg[b.dataset.aj]=JSON.parse(b.dataset.v); redesenha(); });
   $('#labReset').onclick=()=>{ LAB.cfg=presetDe(LAB.fase); redesenha(); };
+  $('#labBuild').onclick=()=>{ LAB.cfg.forma=null; labSalva(); labJoga(); labConstruir(); };
+  document.querySelectorAll('[data-delf]').forEach(b=>b.onclick=()=>{ const id=b.dataset.delf; localStorage.mina_formas=JSON.stringify(JSON.parse(localStorage.mina_formas||'[]').filter(f=>f.id!==id)); if(LAB.cfg.forma===id) LAB.cfg.forma=null; redesenha(); });
   $('#labGo').onclick=labJoga;
   $('#labMenu').onclick=()=>{ hideOverlay(); showMenu(); };
 }
@@ -1273,6 +1306,7 @@ function labJoga(){
   S = {...freshState(), lab:true, char:LAB.char, week:1, moves:0, extra:0};
   S.fiscal=FISCAIS[0]; applyAndar();
   const base=PATHS[LAB.fase], g=LAB.cfg;
+  S.up.assovio = g.assovio||0;
   const p = {...base, forma:g.forma?acharForma(g.forma):null, caverna:!g.forma && !!base.caverna, n:g.n, energy:g.energia-CFG.energy, spawns:g.spawns, torrao:g.torrao, pedra:g.pedra, cores:g.cores, picareta:g.picareta, walls:g.walls, edges:g.edges, clods:g.clods, semEnergia:!LAB.energia};
   startDay(p);
   setBanner('Laboratório', `${base.nome} · ${LAB.energia?'com':'sem'} energia`);
@@ -1294,6 +1328,7 @@ function labFerramentas(){
 function labEditar(on){
   if(!S) return;
   S.editando=on; $('#labTools').classList.toggle('hidden',!on);
+  if(!on && S.phase==='mine' && !S.tiles.length){ addTile(); addTile(); }
   $('#btnEdit').textContent = on ? 'Pronto' : 'Editar';
   if(on) labPaleta();
   render();
@@ -1303,6 +1338,7 @@ function labPaleta(){
   const niveis = [...Array(16).keys()].map(i=>i+1).map(t=>`<button class="pb ${sel(PINCEL.tipo!=='torrao'&&PINCEL.tipo!=='parede'&&PINCEL.tipo!=='apagar'&&PINCEL.t===t)}" data-t="${t}" title="${rockName(t)}"><svg viewBox="0 0 100 100">${PINCEL.tipo==='pick'?pickInner(t):pedraInner(t)}</svg><small>${t}</small></button>`).join('');
   $('#labTools').innerHTML = `
     <div class="ptRow">
+      <button class="pt ${sel(PINCEL.tipo==='casa')}" data-tipo="casa">Casa</button>
       <button class="pt ${sel(PINCEL.tipo==='rocha')}" data-tipo="rocha">Rocha</button>
       <button class="pt ${sel(PINCEL.tipo==='pick')}" data-tipo="pick">Picareta</button>
       <button class="pt ${sel(PINCEL.tipo==='torrao')}" data-tipo="torrao">Torrão</button>
@@ -1318,8 +1354,12 @@ function labPaleta(){
     </div>
     <div class="ptRow">
       <button class="pt" id="labLimpa">Limpar</button>
+      <button class="pt" id="labTudoB">Tudo buraco</button>
+      <button class="pt" id="labTudoC">Tudo casa</button>
+      <button class="pt" id="labPecas">Sem pedrinhas</button>
       <button class="pt" id="labMaisE">+10 energia</button>
-      <button class="pt" id="labSalvaF">Salvar formato</button>
+      <input class="ptNome" id="labNome" placeholder="nome do nível" value="${LABNOME}">
+      <button class="pt" id="labSalvaF">Salvar nível</button>
       <button class="pt" id="labCopiaF">Copiar formato</button>
     </div>
     <p class="ptDica" id="ptDica">${PINCEL.tipo==='mureta'?'Toque perto da borda entre duas casas para pôr ou tirar a mureta.':'Toque nas casas para pintar.'}</p>`;
@@ -1327,20 +1367,40 @@ function labPaleta(){
   document.querySelectorAll('.pb').forEach(b=>b.onclick=()=>{ PINCEL.t=+b.dataset.t; if(!['rocha','pick'].includes(PINCEL.tipo)) PINCEL.tipo='rocha'; labPaleta(); });
   document.querySelectorAll('[data-cor]').forEach(b=>b.onclick=()=>{ const v=b.dataset.cor; PINCEL.c = v==='null' ? null : +v; labPaleta(); });
   $('#labLimpa').onclick=()=>{ for(const el of els.values()) el.remove(); els.clear(); S.tiles=[]; S.walls=[]; S.edges=[]; render(); };
+  $('#labNome').oninput=e=>{ LABNOME=e.target.value; };
+  $('#labTudoB').onclick=()=>{ labEnche(true); };
+  $('#labTudoC').onclick=()=>{ labEnche(false); };
+  $('#labPecas').onclick=()=>{ for(const t of S.tiles){ els.get(t.id)?.remove(); els.delete(t.id); } S.tiles=[]; render(); };
   $('#labSalvaF').onclick=()=>{
     const f=formaAtual(); const minhas=JSON.parse(localStorage.mina_formas||'[]');
-    f.id='meu'+Date.now(); f.nome='Meu formato '+(minhas.length+1); minhas.push(f); localStorage.mina_formas=JSON.stringify(minhas);
+    if(!f){ $('#ptDica').textContent='Pinte pelo menos uma casa.'; return; }
+    f.id='meu'+Date.now(); f.nome=(LABNOME||'').trim()||'Meu nível '+(minhas.length+1); minhas.push(f); localStorage.mina_formas=JSON.stringify(minhas);
     $('#ptDica').textContent=`Salvo como "${f.nome}". Ele aparece no laboratório e nas Cavernas do jogo.`;
   };
   $('#labCopiaF').onclick=()=>{
-    const txt=JSON.stringify(formaAtual());
+    const f=formaAtual(); if(f && LABNOME) f.nome=LABNOME; const txt=JSON.stringify(f);
     (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>{ $('#ptDica').textContent='Copiado! Pode colar e me mandar.'; }).catch(()=>{ $('#ptDica').textContent=txt; });
   };
   $('#labMaisE').onclick=()=>{ if(S.semEnergia) return; S.energy+=10; S.energyMax=Math.max(S.energyMax,S.energy); render(); };
 }
+let LABNOME='';
+// constrói do zero: tela toda de buraco, pincel "Casa"
+function labConstruir(){
+  labEnche(true); for(const t of S.tiles){ els.get(t.id)?.remove(); els.delete(t.id); } S.tiles=[];
+  PINCEL.tipo='casa'; labEditar(true);
+  setBanner('Construtor', 'pinte as casas que existem');
+}
+function labEnche(buraco){
+  for(const w of S.walls){ els.get(w.id)?.remove(); els.delete(w.id); }
+  for(const e of S.edges){ els.get(e.id)?.remove(); els.delete(e.id); }
+  S.walls=[]; S.edges=[];
+  if(buraco){ for(const t of S.tiles){ els.get(t.id)?.remove(); els.delete(t.id); } S.tiles=[]; for(let y=0;y<N;y++) for(let x=0;x<N;x++) S.walls.push({x,y,v:true,id:'w'+(nextId++)}); }
+  render();
+}
 function labPinta(x,y){
   const velho=tileAt(x,y); if(velho){ S.tiles=S.tiles.filter(t=>t!==velho); els.get(velho.id)?.remove(); els.delete(velho.id); }
   const w=S.walls.find(v=>v.x===x&&v.y===y); if(w){ S.walls=S.walls.filter(v=>v!==w); els.get(w.id)?.remove(); els.delete(w.id); }
+  if(PINCEL.tipo==='casa'){ render(); return; }
   if(PINCEL.tipo==='parede') S.walls.push({x,y,id:'w'+(nextId++)});
   else if(PINCEL.tipo==='buraco') S.walls.push({x,y,v:true,id:'w'+(nextId++)});
   else if(PINCEL.tipo==='torrao') S.tiles.push({id:'t'+(nextId++),x,y,t:0});
@@ -1349,8 +1409,14 @@ function labPinta(x,y){
 }
 // formato atual do tabuleiro do laboratório, no mesmo jeito dos FORMAS
 function formaAtual(){
-  const mapa=[...Array(N).keys()].map(y=>[...Array(N).keys()].map(x=>{ const w=S.walls.find(v=>v.x===x&&v.y===y); return w?(w.v?'#':'B'):'.'; }).join(''));
-  return {n:N, mapa, muretas:S.edges.map(e=>[e.d,e.x,e.y])};
+  const aberta=(x,y)=>!S.walls.some(v=>v.v&&v.x===x&&v.y===y);
+  const xs=[],ys=[]; for(let y=0;y<N;y++) for(let x=0;x<N;x++) if(aberta(x,y)){ xs.push(x); ys.push(y); }
+  if(!xs.length) return null;
+  const x0=Math.min(...xs), y0=Math.min(...ys), n=Math.max(Math.max(...xs)-x0, Math.max(...ys)-y0)+1;
+  const mapa=[...Array(n).keys()].map(y=>[...Array(n).keys()].map(x=>{ const X=x+x0, Y=y+y0; if(X>=N||Y>=N) return '#'; const w=S.walls.find(v=>v.x===X&&v.y===Y); return w?(w.v?'#':'B'):'.'; }).join(''));
+  const muretas=S.edges.map(e=>[e.d,e.x-x0,e.y-y0]).filter(([d,x,y])=>x>=0&&y>=0&&x<n&&y<n);
+  const pecas=S.tiles.map(t=>[t.x-x0,t.y-y0,t.t,t.c??null,t.k||null]).filter(([x,y])=>x>=0&&y>=0&&x<n&&y<n);
+  return {n, mapa, muretas, pecas};
 }
 // mureta: acha a borda mais perto do toque e liga/desliga
 function labMureta(cx,cy){
@@ -1677,6 +1743,7 @@ $('#btnEnd').onclick=()=>{
 $('#btnSkip').onclick=()=>{ S.skip=true; };
 $('#btnSell').onclick=sell;
 $('#btnEdit').onclick=()=>labEditar(!S.editando);
+$('#btnAssovio').onclick=assoviar;
 $('#btnPause').onclick=pauseMenu;
 document.querySelectorAll('.musBtn').forEach(b=>{ b.onclick=toggleMusic; b.style.opacity=music?1:.4; });
 addEventListener('pointerdown',()=>{ if(AC&&AC.state==='suspended') AC.resume(); else if(!AC&&music){ ctxAudio(); trilha(musKey); } },{capture:true});
