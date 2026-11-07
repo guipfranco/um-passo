@@ -58,6 +58,7 @@ button:active{transform:scale(.97)}
   <div class="btns">
     <button id="btnRules">? Regras</button>
     <button id="btnRestart">↻ Recomeçar</button>
+    <button id="btnMode"></button>
   </div>
 </div>
 <div id="overlay" class="hidden"><div class="box" id="box"></div></div>
@@ -68,6 +69,7 @@ const CFG = {
   N: 4,          // tamanho do tabuleiro
   goal: 64,      // valor para vencer o nível
   start: 1,      // seu valor inicial
+  slideAll: true, // true: desliza até bater (2048); false: uma casa por arrasto (Threes)
   initial: 5,    // monstros no começo
   // o que nasce, em relação ao seu valor v: [valor, peso]
   spawnTable: v => [[v/4,1],[v/2,3],[v,4],[v*2,2],[v*4,1]],
@@ -84,6 +86,7 @@ const $ = s => document.querySelector(s);
 const board = $('#board');
 const els = new Map();
 let S, nextId = 1;
+let slideAll = localStorage.umpasso_slide ? localStorage.umpasso_slide==='1' : CFG.slideAll;
 const rnd = n => Math.floor(Math.random()*n);
 const pick = a => a[rnd(a.length)];
 const inside = (x,y) => x>=0 && y>=0 && x<N && y<N;
@@ -105,7 +108,7 @@ function newGame(){
     S.mons.push({id:'m'+(nextId++), x:c.x, y:c.y, v: i<2 ? S.p.v : rollSpawn().v});
   }
   S.next = rollSpawn();
-  msg('Arraste: tudo no tabuleiro anda uma casa.');
+  msg('Arraste: tudo desliza. Cuidado com os maiores!');
   render();
 }
 
@@ -128,32 +131,42 @@ function entAt(p,mons,x,y){
 }
 
 // ================== REGRA DO MOVIMENTO ==================
-// Tudo anda uma casa na direção do arrasto. Quem está mais à frente anda primeiro,
-// então uma fila inteira desliza junta se houver espaço na ponta.
+// Arrastar: tudo desliza na direção do arrasto. No modo "até o fim" as peças andam
+// até bater em algo; no modo "uma casa" andam só uma casa.
+// Quem está mais à frente anda primeiro.
 // Você x monstro (quando um entra no outro):
 //   igual  -> some e você DOBRA
 //   menor  -> some
-//   maior  -> bloqueia
+//   maior  -> VOCÊ MORRE
 // Monstro x monstro: bloqueia.
-function simulate(dx,dy){
-  const p = {...S.p};
-  const mons = S.mons.map(m=>({...m}));
+function stepOnce(p,mons,dx,dy,ev){
+  let changed=false;
   const ents = [p, ...mons].sort((a,b)=>(b.x*dx+b.y*dy)-(a.x*dx+a.y*dy));
-  const ev = {changed:false, merged:false, eaten:[], blocked:false};
   for(const e of ents){
     if(e.dead) continue;
     const nx=e.x+dx, ny=e.y+dy;
     if(!inside(nx,ny)) continue;
     const t = entAt(p,mons,nx,ny);
-    if(!t){ e.x=nx; e.y=ny; ev.changed=true; continue; }
+    if(!t){ e.x=nx; e.y=ny; changed=true; continue; }
     const isP = e===p, tIsP = t===p;
     if(!isP && !tIsP) continue;           // monstro x monstro
     const mo = isP ? t : e;
-    if(mo.v > p.v){ if(isP) ev.blocked=true; continue; }
-    if(mo.v === p.v){ p.v *= 2; ev.merged=true; }
+    changed = true;
+    if(mo.v > p.v){ ev.dead=true; ev.killer=mo.v; return true; }
+    if(mo.v === p.v){ p.v *= 2; ev.merged++; }
     mo.dead = true; ev.eaten.push(mo.id);
     if(isP){ p.x=nx; p.y=ny; }
+  }
+  return changed;
+}
+
+function simulate(dx,dy){
+  const p = {...S.p};
+  const mons = S.mons.map(m=>({...m}));
+  const ev = {changed:false, merged:0, eaten:[], dead:false, killer:0};
+  while(stepOnce(p,mons,dx,dy,ev)){
     ev.changed = true;
+    if(ev.dead || !slideAll) break;
   }
   return {p, mons:mons.filter(m=>!m.dead), ev};
 }
@@ -166,6 +179,12 @@ function move(dx,dy){
   for(const id of r.ev.eaten) killEl(id);
   S.p = r.p; S.mons = r.mons; S.moves++;
 
+  if(r.ev.dead){
+    render(); anim('p','bump',dx,dy);
+    msg(`Você bateu num ${r.ev.killer} e morreu.`);
+    return end('dead', r.ev.killer);
+  }
+
   // nasce um monstro na borda oposta ao arrasto
   const edge = emptyCells().filter(c => dx===1 ? c.x===0 : dx===-1 ? c.x===N-1 : dy===1 ? c.y===0 : c.y===N-1);
   if(edge.length){
@@ -176,17 +195,17 @@ function move(dx,dy){
   // nunca deixa faltar alguém do seu tamanho
   if(!S.mons.some(m=>m.v===S.p.v)) S.next = {v:S.p.v};
 
-  if(r.ev.merged){ anim('p','pop'); msg(`Dobrou! Agora você é ${S.p.v}.`); }
+  if(r.ev.merged){ anim('p','pop'); msg(r.ev.merged>1 ? `Combo! Dobrou ${r.ev.merged}x, agora você é ${S.p.v}.` : `Dobrou! Agora você é ${S.p.v}.`); }
   else if(r.ev.eaten.length) msg('Derrotou um menor.');
-  else if(r.ev.blocked) msg('Um maior te bloqueou.');
   else msg('');
 
   render();
-  if(S.p.v >= CFG.goal) return end(true);
-  if(![[0,1],[0,-1],[1,0],[-1,0]].some(([x,y])=>simulate(x,y).ev.changed)) end(false);
+  if(S.p.v >= CFG.goal) return end('win');
+  if(![[0,1],[0,-1],[1,0],[-1,0]].some(([x,y])=>simulate(x,y).ev.changed)) end('stuck');
 }
 
-function end(won){
+function end(kind, killer){
+  const won = kind==='win';
   S.over = true;
   const key='umpasso_best_'+CFG.goal;
   let best = +(localStorage[key]||0);
@@ -194,6 +213,8 @@ function end(won){
   setTimeout(()=>{
     showOverlay(won
       ? `<h2>Você chegou a ${S.p.v}!</h2><p>Em <b>${S.moves}</b> jogadas${best?` (recorde: ${best})`:''}.</p><button class="primary" id="again">Jogar de novo</button>`
+      : kind==='dead'
+      ? `<h2>Morreu!</h2><p>Você bateu num <b>${killer}</b>, maior que você. Chegou a <b>${S.p.v}</b> em ${S.moves} jogadas.</p><button class="primary" id="again">Tentar de novo</button>`
       : `<h2>Travou</h2><p>Nenhum arrasto mexe mais o tabuleiro. Você chegou a <b>${S.p.v}</b> em ${S.moves} jogadas.</p><button class="primary" id="again">Tentar de novo</button>`);
     $('#again').onclick=()=>{ hideOverlay(); newGame(); };
   }, 350);
@@ -249,11 +270,11 @@ function hideOverlay(){ $('#overlay').classList.add('hidden'); }
 function showRules(){
   showOverlay(`<h2>Um Passo (nível teste)</h2>
   <ul>
-    <li>Arraste (ou use setas / WASD): <b>tudo no tabuleiro anda uma casa</b> para aquele lado, se tiver espaço.</li>
+    <li>Arraste (ou use setas / WASD): <b>tudo no tabuleiro desliza</b> para aquele lado até bater em algo. O botão de modo troca para andar só uma casa.</li>
     <li>Você é a peça <b>dourada</b> com ★. Os inimigos são <b>vermelhos</b>: quanto mais escuro, mais forte.</li>
     <li>Encostou num <b>igual</b> (contorno dourado): ele some e <b>você dobra</b>.</li>
     <li>Encostou num <b>menor</b> (apagado): ele some.</li>
-    <li>Um <b>maior</b> (▲) bloqueia o caminho.</li>
+    <li>Encostou num <b>maior</b> (▲): <b>você morre</b>. Vale também se ele deslizar em cima de você.</li>
     <li>A cada jogada entra uma peça nova pela borda oposta (veja "Próximo").</li>
     <li>Chegue a <b>${CFG.goal}</b>. Se nada mais se mexer, travou.</li>
   </ul>
@@ -280,6 +301,9 @@ addEventListener('pointerup', e=>{
 });
 $('#btnRules').onclick = showRules;
 $('#btnRestart').onclick = newGame;
+const modeLabel = () => $('#btnMode').textContent = slideAll ? '⇥ Até o fim' : '→ Uma casa';
+$('#btnMode').onclick = () => { slideAll = !slideAll; localStorage.umpasso_slide = slideAll ? '1' : '0'; modeLabel(); };
+modeLabel();
 
 newGame();
 if(!localStorage.umpasso_seen2) showRules();
