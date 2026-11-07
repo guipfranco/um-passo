@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Ptui! · rascunhos do aviso de junção</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0}
+body{background:#2a211b;font-family:'Fredoka',system-ui,sans-serif;color:#f6ecd9;min-height:100vh;overscroll-behavior:none}
+.switch{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);z-index:50;display:flex;gap:3px;background:#000c;padding:4px;border-radius:999px;max-width:98vw;overflow-x:auto}
+.switch button{border:0;border-radius:999px;padding:8px 11px;font:600 13px 'Fredoka';background:transparent;color:#ccc;white-space:nowrap}
+.switch button.on{background:#fff;color:#000}
+.wrap{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 0 70px}
+.tit{text-align:center;max-width:370px;padding:0 12px}
+.tit b{font-size:21px;display:block}
+.tit span{font-size:14px;opacity:.85;line-height:1.3;display:block}
+.acoes{display:flex;gap:6px}
+.acoes button{border:0;border-radius:999px;padding:6px 12px;font:600 13px 'Fredoka';background:#f6ecd9;color:#5a4636}
+.caixa{position:relative}
+.caixa iframe{position:absolute;left:0;top:0;width:390px;height:600px;border:0;border-radius:24px;transform-origin:top left;background:#f6ecd9}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="tit"><b id="tNome"></b><span id="tDesc"></span></div>
+  <div class="acoes"><button id="bDemo">ver sozinho</button><button id="bNovo">recomeçar</button></div>
+  <div class="caixa" id="caixa"><iframe id="f"></iframe></div>
+</div>
+<div class="switch" id="sw"></div>
+<script>
+// Cada opção abre o jogo de verdade e troca só o aviso das pedrinhas que vão se juntar durante o arrasto.
+// p = quanto do arrasto já foi feito (0 a 1); prev = prévia do jogo (r.merges: onde nasce a nova; r.gone: a que some).
+const P = `const d=Math.max(Math.abs(dx),Math.abs(dy)), p=Math.max(0,Math.min(1,(d-PV_MIN)/(cellPx()*.9)));`;
+const VS = [
+  {id:'atual', nome:'Atual', desc:'O anel amarelo em volta das duas pedrinhas.', css:'', js:''},
+  {id:'A', nome:'Encosto', desc:'As duas se espicham uma na direção da outra, como quem vai dar um abraço. Nada em volta delas.',
+    css:`.tile.willmerge::before{display:none !important}`,
+    js:`efeito=(dx,dy)=>{ if(!prev) return; ${P} const h=prev.dir[0]!==0;
+      for(const o of [...prev.r.merges,...prev.r.gone]){ const f=els.get(o.id)?.firstChild; if(!f) continue;
+        f.style.transformOrigin='50% 75%'; f.style.transform = h ? \`scale(\${1+.16*p},\${1-.1*p})\` : \`scale(\${1-.1*p},\${1+.16*p})\`; } };
+      limpa=()=>document.querySelectorAll('.tile .face').forEach(f=>f.style.transform='');`},
+  {id:'B', nome:'Luz no chão', desc:'Uma luz quente acende no chão onde a pedrinha nova vai nascer. As pedrinhas não ganham contorno.',
+    css:`.tile.willmerge::before{display:none !important}
+      .luzM{position:absolute;left:0;top:0;width:var(--cell);height:var(--cell);pointer-events:none;border-radius:50%;background:radial-gradient(circle at 50% 60%,#fff6cf 0%,#ffd98acc 30%,#ffd98a00 68%);transform-origin:center}`,
+    js:`efeito=(dx,dy)=>{ if(!prev) return; ${P}
+      for(const o of prev.r.merges){ let g=document.getElementById('luz'+o.id);
+        if(!g){ g=document.createElement('div'); g.id='luz'+o.id; g.className='luzM'; g.style.transform=pos(o.x,o.y)+' scale(1.25)'; board.insertBefore(g, board.querySelector('.tile')); }
+        g.style.opacity=p; } };
+      limpa=()=>document.querySelectorAll('.luzM').forEach(e=>e.remove());`},
+  {id:'C', nome:'Balãozinho', desc:'Um balãozinho aparece em cima mostrando a pedrinha que vai nascer.',
+    css:`.tile.willmerge::before{display:none !important}
+      .balao{position:absolute;left:0;top:0;width:var(--cell);height:var(--cell);pointer-events:none;z-index:30}
+      .balao div{position:absolute;left:50%;top:-34%;width:56%;height:56%;margin-left:-28%;background:#fffaf0;border-radius:50%;box-shadow:0 3px 0 #0002,0 0 0 2px #e8d6b4;transform-origin:50% 120%}
+      .balao div::after{content:'';position:absolute;left:44%;bottom:-9%;width:12%;height:12%;background:#fffaf0;border-radius:50%;box-shadow:0 0 0 2px #e8d6b4}
+      .balao svg{width:100%;height:100%;overflow:visible}`,
+    js:`efeito=(dx,dy)=>{ if(!prev) return; ${P}
+      for(const o of prev.r.merges){ let g=document.getElementById('bal'+o.id);
+        if(!g){ g=document.createElement('div'); g.id='bal'+o.id; g.className='balao'; g.innerHTML='<div><svg viewBox="0 0 100 100">'+pedraInner(o.t)+'</svg></div>'; g.style.transform=pos(o.x,o.y); board.appendChild(g); }
+        g.style.opacity=Math.min(1,p*1.5); g.firstChild.style.transform='scale('+(.55+.45*p)+')'; } };
+      limpa=()=>document.querySelectorAll('.balao').forEach(e=>e.remove());`},
+  {id:'D', nome:'Pulinho', desc:'As duas dão pulinhos de animação, com uma estrelinha brilhando em cima.',
+    css:`.tile.willmerge::before{display:none !important}
+      .tile.willmerge .face{animation:pulinho .42s ease-in-out infinite}
+      @keyframes pulinho{0%,100%{transform:translateY(0)}45%{transform:translateY(-13%) scale(1.03,.97)}}
+      .tile.willmerge::after{content:'';position:absolute;left:58%;top:0;width:18%;height:18%;background:#ffd24a;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);animation:brilho .6s ease-in-out infinite;z-index:3}
+      @keyframes brilho{50%{transform:scale(.55) rotate(25deg);opacity:.6}}`, js:''},
+];
+
+let atual=null, auto=false, w=null;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function abre(v){
+  atual=v; auto=false;
+  document.getElementById('tNome').textContent=v.nome; document.getElementById('tDesc').textContent=v.desc+' Arraste no tabuleiro.';
+  document.querySelectorAll('#sw button').forEach(b=>b.classList.toggle('on',b.dataset.v===v.id));
+  const f=document.getElementById('f'); f.onload=()=>prepara(v); f.src='index.html?arrastar='+v.id+'&x='+Date.now();
+  history.replaceState(null,'','#'+v.id);
+}
+function prepara(v){
+  w=document.getElementById('f').contentWindow; const d=w.document;
+  w.eval(`sound=false; music=false; localStorage.mina_tut=1;
+    LAB.cfg={...presetDe('comum'), w:4, h:4, ferr:0}; LAB.itens={}; LAB.ups={}; labJoga();
+    for(const el of els.values()) el.remove(); els.clear();
+    S.tiles=[[0,0,1],[1,0,1],[2,0,2],[3,0,2],[0,1,3],[2,1,3],[3,1,1],[0,2,2],[1,2,2],[0,3,1],[2,3,1],[3,3,4]].map(([x,y,t],i)=>({id:'d'+i,x,y,t}));
+    render(); setBanner('Junte as iguais','');`);
+  const st=d.createElement('style'); st.textContent=v.css; d.head.appendChild(st);
+  w.eval(`window.efeito=()=>{}; window.limpa=()=>{}; ${v.js}
+    const __pd=previewDrag, __cp=clearPreview;
+    previewDrag=function(dx,dy){ __pd(dx,dy); efeito(dx,dy); };
+    clearPreview=function(v){ limpa(); __cp(v); };`);
+  d.addEventListener('pointerdown',()=>{ auto=false; });
+  if(location.hash.includes(':parado')){ w.previewDrag(60,0); return; }
+  demo();
+}
+async function demo(){
+  auto=true; const dirs=[[1,0],[0,1],[-1,0],[0,-1]]; let k=0;
+  while(auto){ const [dx,dy]=dirs[k++%4];
+    for(let i=0;i<=14 && auto;i++){ w.previewDrag(dx*i*5,dy*i*5); await sleep(40); }
+    await sleep(1000); if(!auto) break; w.clearPreview(true); await sleep(700); }
+}
+document.getElementById('sw').innerHTML=VS.map(v=>`<button data-v="${v.id}">${v.id==='atual'?'':v.id+' '}${v.nome}</button>`).join('');
+document.querySelectorAll('#sw button').forEach(b=>b.onclick=()=>abre(VS.find(v=>v.id===b.dataset.v)));
+document.getElementById('bDemo').onclick=()=>{ if(!auto && w){ w.clearPreview(true); demo(); } };
+document.getElementById('bNovo').onclick=()=>abre(atual);
+function escala(){ const s=Math.min(1,(innerWidth-16)/390), c=document.getElementById('caixa'); c.style.width=390*s+'px'; c.style.height=600*s+'px'; document.getElementById('f').style.transform=`scale(${s})`; }
+addEventListener('resize',escala); escala();
+abre(VS.find(v=>v.id===(location.hash.slice(1).split(':')[0]||'A'))||VS[1]);
+</script>
+</body>
+</html>
