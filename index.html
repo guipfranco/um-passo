@@ -167,6 +167,13 @@ html,body{min-height:100%;background:#f6ecd9;color:#5a4636;font-family:'Fredoka'
 #coach .btn{margin-top:8px;padding:7px 18px;font-size:15px}
 #coach .cav{flex:none;width:54px;height:54px}
 #coach .cav svg{width:100%;height:100%;overflow:visible}
+.ico{display:inline-block;width:1.35em;height:1.35em;vertical-align:-.35em;margin-right:2px;overflow:visible}
+.ico.big{width:44px;height:44px;vertical-align:middle;margin:0}
+.card.pc{cursor:default}
+.card .nv{font-size:11px;font-weight:600;color:#a08a74}
+.drops{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:3px}
+.drop{white-space:nowrap;color:#5a4636;font-weight:600}
+.banner span .ico{width:1.2em;height:1.2em}
 </style>
 </head>
 <body>
@@ -388,6 +395,52 @@ const wallAt = (x,y) => S.walls.some(w=>w.x===x&&w.y===y);
 const tileAt = (x,y) => S.tiles.find(t=>t.x===x&&t.y===y);
 
 for(let y=0;y<N;y++) for(let x=0;x<N;x++){ const c=document.createElement('div'); c.className='slot'; c.style.transform=pos(x,y); board.appendChild(c); }
+
+// ===================== ÍCONES NO TEXTO =====================
+// Todo texto que cita uma pedrinha, o torrão, um minério ou a parede ganha o desenho ao lado.
+const icoSvg = inner => `<svg class="ico" viewBox="0 0 100 100">${inner}</svg>`;
+const icoRock = t => icoSvg(t===0 ? torraoInner() : pedraInner(t));
+const icoOre  = o => o===0 ? icoSvg(clodSvg(50,52,2.6)) : icoSvg(gemSvg(50,56,ORES[o].c,2.6));
+let GLOSS=null, GLOSS_RE=null;
+function gloss(){
+  if(GLOSS) return;
+  GLOSS={};
+  ROCKS.forEach((r,t)=>{ if(t>0) GLOSS[r.n]=icoRock(t); });
+  for(const w of ['torrão','torrões','Torrão','Torrões']) GLOSS[w]=icoRock(0);
+  ORES.forEach((o,i)=>{ if(i){ GLOSS[o.n]=icoOre(i); GLOSS[o.n[0].toUpperCase()+o.n.slice(1)]=icoOre(i); } });
+  for(const w of ['parede','paredes','Parede','Paredes']) GLOSS[w]=icoSvg(wallInner());
+  const keys=Object.keys(GLOSS).sort((a,b)=>b.length-a.length).map(k=>k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));
+  GLOSS_RE=new RegExp(`(^|[^A-Za-zÀ-ÿ])(${keys.join('|')})(?![A-Za-zÀ-ÿ])`,'g');
+}
+// nome sem ícone (para títulos que já mostram o desenho grande): um caractere invisível quebra a busca
+const noIco = w => w[0]+'⁠'+w.slice(1);
+function enrich(html){
+  gloss();
+  return String(html).split(/(<[^>]+>)/).map(p=>p.startsWith('<')?p:p.replace(GLOSS_RE,(m,pre,w)=>pre+GLOSS[w]+w)).join('');
+}
+
+// o que cada pedrinha pode cuspir
+function dropsHtml(t){
+  const tb=DROPS[Math.min(t,8)];
+  return tb.map((p,i)=>p?`<span class="drop">${p}% ${i?ORES[i].n:icoOre(0)+'nada'}</span>`:'').join('');
+}
+function pedraCard(t){
+  if(t===0) return `<div class="card pc"><span class="em">${icoRock(0).replace('class="ico"','class="ico big"')}</span><div><b>${noIco('Torrão')}</b><span>Nasce quando a energia acaba. Não junta com nada e custa dinheiro no fim do dia.</span></div></div>`;
+  return `<div class="card pc"><span class="em">${icoRock(t).replace('class="ico"','class="ico big"')}</span><div><b>${noIco(ROCKS[Math.min(t,7)].n)} <small class="nv">nível ${t}</small></b><span class="drops">${dropsHtml(t)}</span></div></div>`;
+}
+function tileInfo(t){
+  if(!S || S.tut || overlayOpen()) return;
+  const viz = t.t>0 ? `<p>Junte com outra igual para virar ${ROCKS[Math.min(t.t+1,7)].n}.</p>` : '';
+  showOverlay(`<div class="cards">${pedraCard(t.t)}</div>${viz}<button class="btn b" id="btnOk">Ok</button>`);
+  $('#btnOk').onclick=hideOverlay;
+}
+function pedrapedia(back){
+  showOverlay(`<h2>Pedrinhas</h2><p>Duas iguais viram a do nível seguinte. Quanto maior, melhor o que ela cospe.</p>
+    <div class="cards">${[1,2,3,4,5,6,7,0].map(pedraCard).join('')}</div>
+    <p>Valores: ${[1,2,3,4,5].map(i=>`${ORES[i].n} $${ORES[i].p}`).join(' · ')}</p>
+    <button class="btn b" id="btnOk">Voltar</button>`);
+  $('#btnOk').onclick=()=>{ hideOverlay(); back&&back(); };
+}
 
 // ===================== TELAS =====================
 function show(id){
@@ -647,13 +700,13 @@ function move(dx,dy){
   if(S.tut===1 && tops.length){
     S.tut=2;
     const nova = els.get(r.merges[0].id);
-    coach('Juntou! Duas pedrinhas iguais viram <b>esta, maior</b>. Cascalho, Pedra, Rocha, Geodo... Quanto maior, melhor o que ela guarda dentro.', 'Entendi', ()=>{
+    setTimeout(()=>coach('Juntou! Duas pedrinhas iguais viram <b>esta, maior</b>. Cascalho, Pedra, Rocha, Geodo... Quanto maior, melhor o que ela guarda dentro.', 'Entendi', ()=>{
       coach('Cada arrasto gasta <b>1 de energia</b>. A sua energia fica aqui.', 'Entendi', ()=>{
         coach('Esta é a <b>próxima pedrinha</b> que vai entrar no tabuleiro. Agora continue juntando até a energia acabar!', 'Bora', ()=>{
           S.tut=3; coach('Continue juntando pedrinhas iguais.', null, null, pillOf('#hEnergy'));
         }, '#nextMini');
       }, pillOf('#hEnergy'));
-    }, nova);
+    }, nova), 350);
   } else if(S.tut===3 && S.energy<=0){
     S.tut=4; coach('Acabou a energia! Agora só nasce <b>torrão</b> 😠: ele não junta com nada e custa dinheiro no fim do dia. Toque aqui para <b>encerrar o dia</b>.', null, null, '#btnEnd');
   }
@@ -869,7 +922,7 @@ let coachBlock=false, coachTarget=null, coachTimer=null;
 // alvo: seletor ou elemento que o balão explica ('top' = sem alvo, no alto)
 function coach(html, okLabel, onOk, target){
   coachTarget = target==='top' ? 'top' : typeof target==='string' ? $(target) : (target||null);
-  $('#coachText').innerHTML=html;
+  $('#coachText').innerHTML=enrich(html);
   const b=$('#coachOk');
   if(okLabel){ b.style.display=''; b.textContent=okLabel; coachBlock=true; b.onclick=()=>{ hideCoach(); onOk&&onOk(); }; }
   else { b.style.display='none'; coachBlock=false; }
@@ -908,12 +961,14 @@ function pauseMenu(){
   showOverlay(`<h2>Pausa</h2>
     <button class="btn b" id="pCont">Continuar</button>
     <button class="btn dim" id="pRules">Regras rápidas</button>
+    <button class="btn dim" id="pPedras">Pedrinhas</button>
     <button class="btn dim" id="pMusic">${music?'Desligar a música':'Ligar a música'}</button>
     <button class="btn dim" id="pSound">${sound?'Desligar os efeitos':'Ligar os efeitos'}</button>
     <button class="btn" id="pExit">Sair para o menu</button>
     ${inDay?'<p style="font-size:13px">Saindo agora, o dia de hoje recomeça quando você voltar.</p>':''}`);
   $('#pCont').onclick=hideOverlay;
   $('#pRules').onclick=quickRules;
+  $('#pPedras').onclick=()=>pedrapedia(pauseMenu);
   $('#pSound').onclick=()=>{ toggleSound(); hideOverlay(); pauseMenu(); };
   $('#pMusic').onclick=()=>{ toggleMusic(); hideOverlay(); pauseMenu(); };
   $('#pExit').onclick=()=>{ hideOverlay(); showMenu(); };
@@ -951,7 +1006,7 @@ function render(){
   for(const t of S.tiles){
     let el=els.get(t.id);
     if(!el){
-      el=document.createElement('div'); el.className='tile';
+      el=document.createElement('div'); el.className='tile'; el.dataset.id=t.id;
       el.innerHTML='<div class="face idle spawn"></div>';
       el.style.transition='none'; el.style.transform=pos(t.x,t.y);
       board.appendChild(el); els.set(t.id,el);
@@ -977,7 +1032,7 @@ function render(){
   renderItems();
 }
 
-function setBanner(title,sub){ if(title!==null) $('#bTitle').textContent=title; $('#bSub').textContent=sub||''; }
+function setBanner(title,sub){ if(title!==null) $('#bTitle').textContent=title; $('#bSub').innerHTML=enrich(sub||''); }
 function anim(id,name){ const el=els.get(id); if(!el) return; const f=el.firstChild; f.classList.remove(name); void f.offsetWidth; f.classList.add(name); }
 function shake(level){ const c='shake'+Math.min(level,3); stage.classList.remove('shake1','shake2','shake3'); void stage.offsetWidth; stage.classList.add(c); }
 function popup(big,small,cor){ const p=document.createElement('div'); p.className='popup'; p.style.setProperty('--pc',cor); p.innerHTML=`${big}<small>${small}</small>`; stage.appendChild(p); setTimeout(()=>p.remove(),1000); }
@@ -1089,7 +1144,7 @@ const SFX = {
 };
 
 // ===================== UI =====================
-function showOverlay(html){ $('#panel').innerHTML=html; $('#overlay').classList.remove('hidden'); $('#panel').scrollTop=0; }
+function showOverlay(html){ $('#panel').innerHTML=enrich(html); $('#overlay').classList.remove('hidden'); $('#panel').scrollTop=0; }
 function hideOverlay(){ $('#overlay').classList.add('hidden'); $('#panel').innerHTML=''; }
 
 // ===================== ENTRADA =====================
@@ -1099,7 +1154,12 @@ let touch=null;
 addEventListener('pointerdown',e=>{ if(overlayOpen()||e.target.closest('button')||!$('#scrGame').classList.contains('on')) return; touch={x:e.clientX,y:e.clientY}; });
 addEventListener('pointerup',e=>{
   if(!touch) return; const dx=e.clientX-touch.x, dy=e.clientY-touch.y; touch=null;
-  if(Math.max(Math.abs(dx),Math.abs(dy))<22) return;
+  if(Math.max(Math.abs(dx),Math.abs(dy))<22){
+    // toque (sem arrastar) numa pedrinha: mostra o que ela é e o que pode cuspir
+    const el=e.target.closest && e.target.closest('.tile');
+    if(el && S && S.phase==='mine'){ const t=S.tiles.find(x=>x.id===el.dataset.id); if(t) tileInfo(t); }
+    return;
+  }
   if(Math.abs(dx)>Math.abs(dy)) move(Math.sign(dx),0); else move(0,Math.sign(dy));
 });
 // Encerrar exige dois toques enquanto ainda há energia (evita toque sem querer)
