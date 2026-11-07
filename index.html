@@ -236,6 +236,24 @@ body.lock{overflow:hidden}
 .recAtual{font-size:13px;color:#7a5a44;text-align:center;background:#efe1c6;border-radius:12px;padding:6px 10px;margin:0}
 .recAtual b{color:#c48a1e}
 .recs li{margin-bottom:3px}
+.btn.lab{background:#4f7f9a;box-shadow:0 5px 0 #34586b}
+.labTop{display:flex;flex-direction:column;gap:8px}
+.campo{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px dashed #e0cfae}
+.campo > div{flex:1;min-width:0}
+.campo b{display:block;font-size:15px;color:#5a4636}
+.campo small{display:block;font-size:12px;color:#a08a74;line-height:1.25}
+.labSel{font:600 14px 'Fredoka';color:#5a4636;background:#fff;border:2px solid #dcc6a0;border-radius:12px;padding:6px 8px;max-width:52%}
+.sn{display:flex;gap:4px;flex:none}
+.ajuda{font-size:13px;color:#a08a74;margin:0;text-align:left}
+details.sec{background:#efe1c6;border-radius:16px;padding:0 12px;box-shadow:0 3px 0 #dcc6a0}
+details.sec > summary{cursor:pointer;font-weight:700;font-size:17px;color:#7a5a44;padding:11px 0;list-style:none}
+details.sec > summary::-webkit-details-marker{display:none}
+details.sec > summary::after{content:'+';float:right;color:#c48a1e;font-size:20px;line-height:1}
+details.sec[open] > summary::after{content:'−'}
+.secBody{display:flex;flex-direction:column;gap:6px;padding-bottom:12px}
+.secBody .card{background:#f6ecd9}
+b.sub{font-size:13px;color:#c48a1e;text-transform:uppercase;letter-spacing:.04em;margin-top:6px}
+.formaPrev{display:flex;justify-content:center}
 .panel h3{font-size:15px;color:#a08a74;margin:6px 0 -4px;text-transform:uppercase;letter-spacing:.04em}
 .edge{position:absolute;z-index:4;background:#6b625a;border:2.5px solid #2e2219;border-radius:8px;box-shadow:0 3px 0 #0003}
 .edge.v{width:12px;height:calc(var(--cell) - 10px);left:calc((var(--ex) + 1)*(var(--cell) + var(--gap)) + var(--gap)/2 - 6px);top:calc(var(--ey)*(var(--cell) + var(--gap)) + var(--gap) + 5px)}
@@ -249,11 +267,12 @@ body.lock{overflow:hidden}
     <h1 class="title">Ptui!</h1>
     <p class="tagline">junte as pedrinhas e veja o que elas cospem</p>
     <div class="menuBtns">
+      <button class="btn big lab" id="mLab">Laboratório<small>teste fases, formatos e itens</small></button>
       <button class="btn b big" id="mContinue">Continuar</button>
       <button class="btn big" id="mNew">Novo jogo</button>
       <button class="btn dim big" id="mTut">Como jogar</button>
     </div>
-    <div class="menuFoot"><span id="mBest"></span><button class="icon musBtn" id="mSound">♪</button><button class="linkBtn" id="mLab">laboratório</button><button class="linkBtn" id="mCred">créditos</button></div>
+    <div class="menuFoot"><span id="mBest"></span><button class="icon musBtn" id="mSound">♪</button><button class="linkBtn" id="mCred">créditos</button></div>
   </section>
 
   <div id="shell" class="hidden">
@@ -478,8 +497,9 @@ const TD = ['#5e4329','#c9b48a','#b57f52','#9c5136','#5f6b80','#7a59a8','#3e9fb2
 const rc = t => t<TC.length ? TC[t] : `hsl(${(t*53)%360} 62% 62%)`;
 const rd = t => t<TD.length ? TD[t] : `hsl(${(t*53)%360} 55% 42%)`;
 const INK = '#2e2219';
-const MOOD = ['', ['sleep','sleep'], ['dot','o'], ['dot','smile'], ['proud','smile'], ['star','big'], ['star','big'], ['star','big']];
-const moodOf = t => MOOD[Math.min(t,7)];
+const MOOD = ['', ['sleep','sleep'], ['dot','o'], ['dot','smile'], ['proud','smile'], ['star','big'], ['star','big'], ['star','big'],
+  ['happy','smile'], ['dot','smile'], ['star','big'], ['proud','big'], ['grump','big'], ['star','big'], ['happy','smile']];
+const moodOf = t => MOOD[Math.min(t,14)];
 function eyes(cx,cy,mood,s=1,gap=11,lx=0,ly=0){
   const L=cx-gap*s+lx, R=cx+gap*s+lx; cy+=ly;
   if(mood==='sleep') return `<path d="M${L-4*s} ${cy} q${4*s} ${3*s} ${8*s} 0 M${R-4*s} ${cy} q${4*s} ${3*s} ${8*s} 0" stroke="${INK}" stroke-width="${2.6*s}" fill="none" stroke-linecap="round"/>`;
@@ -574,33 +594,82 @@ function haloSvg(c){
   if(c===2) return `<path d="M50 16 A42 42 0 0 0 50 100Z" fill="${CORES[0]}" opacity=".6"/><path d="M50 16 A42 42 0 0 1 50 100Z" fill="${CORES[1]}" opacity=".6"/>`;
   return `<circle cx="50" cy="58" r="42" fill="${CORES[c]}" opacity=".6"/>`;
 }
+// Cada nível tem corpo, acessório e cara próprios (não só cor):
+// 1 Cascalho, 2 Pedra, 3 Rocha (corpo de pedra) · 4 Rocha densa (capacete de mineiro) · 5 Geodo (cristais brotando)
+// 6 Cristalino (corpo facetado, coroa) · 7 Geodo real (capa e coroa) · 8 Pedra lunar (esfera, lua, crateras)
+// 9 Âmbar (gota translúcida com um bichinho preso) · 10 Esmeralda viva (gema octogonal com folhas)
+// 11 Rubi real (coroa grande e bigode) · 12 Meteorito (em chamas, crateras) · 13 Estrela (corpo de estrela, raios)
+// 14 Galáxia (disco em espiral, anel) · 15+ Galáxia com planetas em órbita (um a mais por nível)
 function pedraInner(t, opt={}){
-  const r=22+Math.min(t,7)*3, cy=58, s=.8+t*.05;
+  const r=22+Math.min(t,7)*3, cy=58, s=.8+Math.min(t,9)*.05;
   const [em,mm] = opt.face || moodOf(t);
   const [lx,ly] = opt.look || [0,0];
-  let aura='';
-  if(t>=8) aura += `<circle cx="50" cy="${cy}" r="${r+9}" fill="none" stroke="${rc(t)}" stroke-width="3" stroke-dasharray="4 6" opacity=".7"/>`;
-  if(t>=10) aura = `<circle cx="50" cy="${cy}" r="${r+14}" fill="${rc(t)}" opacity=".22"/>` + aura;
-  if(t>=13) aura = [...Array(8).keys()].map(i=>{ const a=i*Math.PI/4, x1=50+Math.cos(a)*(r+4), y1=cy+Math.sin(a)*(r+4), x2=50+Math.cos(a)*(r+18), y2=cy+Math.sin(a)*(r+18); return `<path d="M${x1} ${y1} L${x2} ${y2}" stroke="${rc(t)}" stroke-width="5" stroke-linecap="round" opacity=".75"/>`; }).join('') + aura;
-  let b = (opt.cor!=null ? haloSvg(opt.cor) : '') + aura + `<ellipse cx="50" cy="${cy+r*.85}\" rx="${r*.8}" ry="5" fill="#0002"/>
-    <path d="M${50-r} ${cy} Q${50-r} ${cy-r*1.05} 50 ${cy-r} Q${50+r*1.05} ${cy-r*.95} ${50+r} ${cy+2} Q${50+r*.9} ${cy+r*.85} 50 ${cy+r*.85} Q${50-r*1.02} ${cy+r*.88} ${50-r} ${cy}z" fill="${rc(t)}" stroke="${INK}" stroke-width="2.4"/>
-    <path d="M${50-r*.8} ${cy+r*.3} Q50 ${cy+r*.95} ${50+r*.85} ${cy+r*.25} Q${50+r*.6} ${cy+r*.8} 50 ${cy+r*.8} Q${50-r*.75} ${cy+r*.8} ${50-r*.8} ${cy+r*.3}z" fill="${rd(t)}"/>
-    <ellipse cx="${50-r*.45}" cy="${cy-r*.55}" rx="${r*.22}" ry="${r*.12}" fill="#fff" opacity=".45" transform="rotate(-25 ${50-r*.45} ${cy-r*.55})"/>`;
-  if(t>=12){ // Meteorito em diante: crateras
-    b += `<circle cx="${50+r*.35}" cy="${cy+r*.15}" r="${r*.16}" fill="${rd(t)}" stroke="${INK}" stroke-width="1.2" opacity=".8"/><circle cx="${50-r*.25}" cy="${cy+r*.45}" r="${r*.1}" fill="${rd(t)}" opacity=".8"/>`;
+  const C=rc(t), D=rd(t), K=`stroke="${INK}" stroke-width="2.4" stroke-linejoin="round"`;
+  const X=(a)=>50+a*r, Y=(b)=>cy+b*r;
+  let back='', body='', det='', head='', front='';
+
+  // ---------- atrás do corpo ----------
+  if(t===7) back += `<path d="M${X(-.8)} ${Y(-.3)} Q${X(-1.35)} ${Y(.9)} ${X(-.5)} ${Y(1.05)} L${X(.5)} ${Y(1.05)} Q${X(1.35)} ${Y(.9)} ${X(.8)} ${Y(-.3)}Z" fill="#b8323e" ${K}/>`;
+  if(t===12) back += `<path d="M${X(.1)} ${Y(-.7)} Q${X(.9)} ${Y(-1.2)} ${X(1.25)} ${Y(-1.65)} Q${X(1.05)} ${Y(-.85)} ${X(.95)} ${Y(-.2)}Z" fill="#ff7a2a" ${K}/>
+    <path d="M${X(-.45)} ${Y(-.75)} Q${X(.2)} ${Y(-1.45)} ${X(.65)} ${Y(-1.85)} Q${X(.55)} ${Y(-1.05)} ${X(.35)} ${Y(-.6)}Z" fill="#ffb03a" ${K}/>
+    <path d="M${X(.05)} ${Y(-.75)} Q${X(.55)} ${Y(-1.1)} ${X(.8)} ${Y(-1.35)} Q${X(.7)} ${Y(-.85)} ${X(.6)} ${Y(-.5)}Z" fill="#ffe27a"/>`;
+  if(t===13) back += [...Array(8).keys()].map(i=>{ const a=i*Math.PI/4+Math.PI/8, x1=50+Math.cos(a)*(r+2), y1=cy+Math.sin(a)*(r+2), x2=50+Math.cos(a)*(r+16), y2=cy+Math.sin(a)*(r+16); return `<path d="M${x1} ${y1} L${x2} ${y2}" stroke="${C}" stroke-width="5" stroke-linecap="round" opacity=".8"/>`; }).join('');
+  if(t>=14) back += `<ellipse cx="50" cy="${cy}" rx="${r*1.45}" ry="${r*.42}" fill="none" stroke="#f2b33d" stroke-width="3" opacity=".85" transform="rotate(-18 50 ${cy})"/>`;
+  if(t>=8 && t<=11) back += `<circle cx="50" cy="${cy}" r="${r+9}" fill="none" stroke="${C}" stroke-width="3" stroke-dasharray="4 6" opacity=".7"/>`;
+  if(t>=10 && t!==13) back = `<circle cx="50" cy="${cy}" r="${r+14}" fill="${C}" opacity=".2"/>` + back;
+
+  // ---------- corpo ----------
+  const shade = `<path d="M${X(-.8)} ${Y(.3)} Q50 ${Y(.95)} ${X(.85)} ${Y(.25)} Q${X(.6)} ${Y(.8)} 50 ${Y(.8)} Q${X(-.75)} ${Y(.8)} ${X(-.8)} ${Y(.3)}z" fill="${D}"/>`;
+  const shine = `<ellipse cx="${X(-.45)}" cy="${Y(-.55)}" rx="${r*.22}" ry="${r*.12}" fill="#fff" opacity=".45" transform="rotate(-25 ${X(-.45)} ${Y(-.55)})"/>`;
+  const poly = pts => 'M'+pts.map(([a,b])=>`${X(a)} ${Y(b)}`).join(' L')+'Z';
+  if(t===6){
+    body = `<path d="${poly([[-1,-.15],[-.55,-.95],[.55,-.95],[1,-.15],[.7,.8],[-.7,.8]])}" fill="${C}" ${K}/>
+      <path d="M${X(-.55)} ${Y(-.95)} L50 ${Y(-.2)} L${X(.55)} ${Y(-.95)} M${X(-1)} ${Y(-.15)} L50 ${Y(-.2)} L${X(1)} ${Y(-.15)} M50 ${Y(-.2)} L50 ${Y(.8)}" stroke="${D}" stroke-width="1.8" fill="none" opacity=".75"/>${shine}`;
+  } else if(t===8){
+    body = `<circle cx="50" cy="${cy}" r="${r*.92}" fill="${C}" ${K}/><path d="M${X(-.62)} ${Y(.55)} A${r*.92} ${r*.92} 0 0 0 ${X(.7)} ${Y(.55)}" fill="none" stroke="${D}" stroke-width="5" opacity=".55"/>${shine}`;
+  } else if(t===9){
+    body = `<path d="M50 ${Y(-1.15)} Q${X(1.05)} ${Y(-.1)} ${X(.9)} ${Y(.35)} Q${X(.7)} ${Y(.9)} 50 ${Y(.88)} Q${X(-.7)} ${Y(.9)} ${X(-.9)} ${Y(.35)} Q${X(-1.05)} ${Y(-.1)} 50 ${Y(-1.15)}Z" fill="${C}" fill-opacity=".85" ${K}/>${shine}`;
+  } else if(t===10){
+    body = `<path d="${poly([[-.55,-.95],[.55,-.95],[1,-.4],[1,.4],[.55,.85],[-.55,.85],[-1,.4],[-1,-.4]])}" fill="${C}" ${K}/>
+      <path d="${poly([[-.4,-.65],[.4,-.65],[.7,-.3],[.7,.3],[.4,.6],[-.4,.6],[-.7,.3],[-.7,-.3]])}" fill="#fff" opacity=".13"/>${shine}`;
+  } else if(t===13){
+    const p=[...Array(10).keys()].map(i=>{ const a=-Math.PI/2+i*Math.PI/5, rr=(i%2?.58:1.15)*r; return `${50+Math.cos(a)*rr} ${cy+Math.sin(a)*rr}`; }).join(' L');
+    body = `<path d="M${p}Z" fill="${C}" ${K}/>${shine}`;
+  } else if(t>=14){
+    body = `<circle cx="50" cy="${cy}" r="${r*.95}" fill="${C}" ${K}/>` +
+      [0,1,2].map(i=>`<path d="M50 ${cy} q${r*.55} -${r*.12} ${r*.8} ${r*.5}" stroke="#d6c6ff" stroke-width="3.2" fill="none" opacity=".7" transform="rotate(${i*120+t*17} 50 ${cy})"/>`).join('') +
+      [[-.5,-.35,2.4],[.5,-.45,1.8],[.25,.55,2],[-.55,.4,1.6],[.7,.15,1.5]].map(([a,b,rr])=>sparkle(X(a),Y(b),rr,'#fff')).join('');
+  } else {
+    body = `<path d="M${X(-1)} ${cy} Q${X(-1)} ${Y(-1.05)} 50 ${Y(-1)} Q${X(1.05)} ${Y(-.95)} ${X(1)} ${cy+2} Q${X(.9)} ${Y(.85)} 50 ${Y(.85)} Q${X(-1.02)} ${Y(.88)} ${X(-1)} ${cy}z" fill="${C}" ${K}/>${shade}${shine}`;
   }
-  if(t>=14){ // Galáxia: estrelinhas no corpo
-    for(const [dx,dy,rr] of [[-.5,-.2,2.4],[.45,-.35,1.8],[.1,.5,2],[-.2,.25,1.5],[.6,.2,1.6]]) b += sparkle(50+r*dx,cy+r*dy,rr,'#fff');
-  }
-  if(t>=5) b += sparkle(50+r*.7,cy-r*.8,5) + sparkle(50-r*.9,cy-r*.2,3.5);
-  if(t>=9) b += sparkle(50-r*.6,cy-r*.95,4) + sparkle(50+r*1.05,cy+r*.2,3.5);
-  if(t>=6) b += crown(50,cy-r+2,1.1+Math.min(Math.max(t-10,0),4)*.12);
-  if(t>=11) b += `<circle cx="50" cy="${cy-r-7}" r="3.2" fill="#e04a5a" stroke="${INK}" stroke-width="1.2"/>`;
-  if(opt.rara) b += `<circle cx="50" cy="${cy}" r="${r+4}" fill="none" stroke="#f2b33d" stroke-width="3.5"/>` + sparkle(50-r*.95,cy-r*.75,4.5,'#ffe27a') + sparkle(50+r*.95,cy+r*.35,3.8,'#ffe27a') + sparkle(50+r*.2,cy+r*.9,3.2,'#ffe27a');
+
+  // ---------- detalhes no corpo ----------
+  if(t===8 || t===12) det += `<circle cx="${X(.42)}" cy="${Y(.2)}" r="${r*.15}" fill="${D}" stroke="${INK}" stroke-width="1.2" opacity=".85"/><circle cx="${X(-.3)}" cy="${Y(.5)}" r="${r*.1}" fill="${D}" opacity=".85"/><circle cx="${X(.1)}" cy="${Y(.62)}" r="${r*.07}" fill="${D}" opacity=".85"/>`;
+  if(t===9) det += `<g opacity=".8"><ellipse cx="${X(.42)}" cy="${Y(.42)}" rx="4.5" ry="2.8" fill="#5a3a12"/><path d="M${X(.42)-3} ${Y(.42)-1} l-3 -3 M${X(.42)} ${Y(.42)-2} l0 -4 M${X(.42)+3} ${Y(.42)-1} l3 -3 M${X(.42)-2} ${Y(.42)+2} l-3 3 M${X(.42)+2} ${Y(.42)+2} l3 3" stroke="#5a3a12" stroke-width="1.2" stroke-linecap="round"/><ellipse cx="${X(.42)-1}" cy="${Y(.42)-3}" rx="3.5" ry="1.6" fill="#d8eaff" opacity=".8"/></g>
+    <path d="M${X(.15)} ${Y(.86)} q-2 6 0 8 q2 -2 0 -8z" fill="${C}" ${K}/>`;
+  if(t===5 || t===7) det += sparkle(X(.7),Y(-.8),5) + sparkle(X(-.9),Y(-.2),3.5);
+  if(t===10) det += sparkle(X(.75),Y(-.75),4.5);
+
+  // ---------- na cabeça ----------
+  if(t===4) head += `<path d="M${X(-.92)} ${Y(-.42)} Q${X(-.9)} ${Y(-1.2)} 50 ${Y(-1.22)} Q${X(.9)} ${Y(-1.2)} ${X(.92)} ${Y(-.42)}Z" fill="#f2b33d" ${K}/>
+    <path d="M${X(-1.08)} ${Y(-.42)} H${X(1.08)}" stroke="${INK}" stroke-width="3.6" stroke-linecap="round"/>
+    <circle cx="50" cy="${Y(-.86)}" r="${r*.17}" fill="#fff3b0" ${K}/><circle cx="50" cy="${Y(-.86)}" r="${r*.07}" fill="#fff"/>`;
+  if(t===5) head += [[-.38,.42],[0,.62],[.36,.38]].map(([a,h])=>`<path d="M${X(a)-5} ${Y(-.86)} L${X(a)} ${Y(-.86-h)} L${X(a)+5} ${Y(-.86)}Z" fill="#c9a6f2" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/>`).join('');
+  if(t===6) head += crown(50,Y(-.92),1.1);
+  if(t===7) head += crown(50,Y(-.98),1.25) + `<circle cx="50" cy="${Y(-1.18)}" r="2.6" fill="#6fe3ff" stroke="${INK}" stroke-width="1"/>`;
+  if(t===8) head += `<path d="M${X(-.25)} ${Y(-1.32)} a${r*.36} ${r*.36} 0 1 0 ${r*.4} ${r*.48} a${r*.28} ${r*.28} 0 1 1 -${r*.4} -${r*.48}z" fill="#fff3b0" ${K}/>`;
+  if(t===10) head += `<path d="M50 ${Y(-.95)} q-${r*.32} -${r*.42} -${r*.55} -${r*.05} q${r*.28} ${r*.2} ${r*.55} ${r*.05}z" fill="#3fbf6f" ${K}/><path d="M50 ${Y(-.95)} q${r*.32} -${r*.42} ${r*.55} -${r*.05} q-${r*.28} ${r*.2} -${r*.55} ${r*.05}z" fill="#5fd88a" ${K}/><path d="M50 ${Y(-.95)} v-${r*.25}" stroke="${INK}" stroke-width="2"/>`;
+  if(t===11) head += crown(50,Y(-.92),1.7) + `<circle cx="50" cy="${Y(-1.22)}" r="3.6" fill="#e0384a" stroke="${INK}" stroke-width="1.2"/>`;
+  if(t>=15) head += [...Array(Math.min(t-14,6)).keys()].map(i=>{ const a=i*2.4+t, x=50+Math.cos(a)*r*1.45, y=cy+Math.sin(a)*r*.42; return `<circle cx="${x}" cy="${y}" r="${3.6-i*.3}" fill="hsl(${(i*70+t*30)%360} 70% 62%)" stroke="${INK}" stroke-width="1"/>`; }).join('');
+
+  // ---------- rara, cor, cara ----------
+  let b = (opt.cor!=null ? haloSvg(opt.cor) : '') + back + `<ellipse cx="50" cy="${Y(.88)}" rx="${r*.8}" ry="5" fill="#0002"/>` + body + det + head;
+  if(opt.rara) b += `<circle cx="50" cy="${cy}" r="${r+4}" fill="none" stroke="#f2b33d" stroke-width="3.5"/>` + sparkle(X(-.95),Y(-.75),4.5,'#ffe27a') + sparkle(X(.95),Y(.35),3.8,'#ffe27a') + sparkle(X(.2),Y(.9),3.2,'#ffe27a');
   if(opt.blushBig) b += blush(50,cy+5,s,15,true);
   else if(t>=3) b += blush(50,cy+4,s);
   b += eyes(50,cy-2,em,s,11,lx*2.5,ly*2.5) + mouth(50+lx*1.5,cy+9+ly*1.5,mm,s);
-  if(opt.sweat) b += sweat(50+r*.75,cy-r*.6);
+  if(t===11 && !opt.face) b += `<path d="M50 ${cy+5} q-5 -4 -12 1 q6 4 12 -1 q6 -4 12 1 q-7 4 -12 -1z" fill="#5a3a22" stroke="${INK}" stroke-width="1.2"/>`;
+  if(opt.sweat) b += sweat(X(.75),Y(-.6));
   return b;
 }
 const svgOf = inner => `<svg viewBox="0 0 100 100">${inner}</svg>`;
@@ -1084,7 +1153,7 @@ function assoviar(){
 // Pontuação de uma fase = quanto o dia rendeu. Recorde por fase:
 // no laboratório, por combinação (fase, formato, energia, personagem e ajustes); no jogo, por caminho e formato.
 const RECS = () => JSON.parse(localStorage.mina_recordes||'{}');
-const chaveLab = () => 'lab|'+JSON.stringify({f:LAB.fase, e:LAB.energia, c:LAB.char, ...LAB.cfg});
+const chaveLab = () => 'lab|'+JSON.stringify({f:LAB.fase, e:LAB.energia, c:LAB.char, ...LAB.cfg, i:LAB.itens, u:LAB.ups});
 function chaveJogo(k, forma){ return 'jogo|'+k+(forma?':'+forma:''); }
 function chaveFase(){
   if(S.lab) return chaveLab();
@@ -1092,9 +1161,10 @@ function chaveFase(){
 }
 function nomeLab(){
   const pre=presetDe(LAB.fase), g=LAB.cfg;
-  const ajust = Object.keys(pre).some(k=>k!=='forma' && g[k]!==pre[k]) || g.ferr || g.assovio || (g.rara!=null && g.rara!==RARA);
+  const ajust = Object.keys(pre).some(k=>k!=='forma' && g[k]!==pre[k]) || g.ferr || (g.rara!=null && g.rara!==RARA);
+  const nItens = Object.values(LAB.itens).filter(Boolean).length + Object.values(LAB.ups).filter(Boolean).length;
   const fm = g.forma ? acharForma(g.forma)?.nome : null;
-  return `${PATHS[LAB.fase].nome}${fm?' · '+fm:''} · ${LAB.energia?'com':'sem'} energia · ${CHARS[LAB.char].nome}${ajust?' · ajustada':''}`;
+  return `${PATHS[LAB.fase].nome}${fm?' · '+fm:''} · ${LAB.energia?'com':'sem'} energia · ${CHARS[LAB.char].nome}${ajust?' · ajustada':''}${nItens?` · ${nItens} itens`:''}`;
 }
 function nomeFase(){
   if(S.lab) return nomeLab();
@@ -1425,6 +1495,7 @@ const presetDe = k => { const p=PATHS[k]; return {forma:null, w:p.n||4, h:p.n||4
 let LAB = JSON.parse(localStorage.mina_lab||'null') || {fase:'comum', energia:true, char:'rola', hist:[]};
 if(!LAB.cfg) LAB.cfg = presetDe(LAB.fase);
 if(LAB.cfg.w==null){ LAB.cfg.w=LAB.cfg.n||4; LAB.cfg.h=LAB.cfg.n||4; }
+LAB.itens = LAB.itens || {}; LAB.ups = LAB.ups || {assovio:LAB.cfg.assovio||0}; LAB.abertos = LAB.abertos || {};
 function labSalva(){ localStorage.mina_lab=JSON.stringify(LAB); }
 const LAB_AJUSTES = [
   {k:'forma',   nome:'Formato',              ops:()=>[null,...formasTodas().map(f=>f.id)], fmt:v=>v?acharForma(v)?.nome||v:'quadrado'},
@@ -1449,35 +1520,68 @@ function labPainel(){
   S.fiscal=FISCAIS[0]; applyAndar(); clearBoard(); render();
   $('#mapBody').innerHTML=''; $('#mapBody').style.height='0px';
   setBanner('Laboratório','');
-  const op=(grp,val,sel,html,cls='')=>`<button class="card labOp ${cls} ${sel?'sel':''}" data-grp="${grp}" data-val="${val}">${html}</button>`;
-  const fases = LAB_FASES.map(k=>op('fase',k,LAB.fase===k,`<span class="em">${disc(k,null,'discSm')}</span><div><b>${PATHS[k].nome}</b><span>${PATHS[k].desc}</span></div>`)).join('');
-  const ajustes = LAB_AJUSTES.filter(a=>(!a.so || LAB.energia) && !(a.sem && LAB.cfg[a.sem])).map(a=>`<div class="ajuste"><span>${a.nome}</span><div class="chips">${(typeof a.ops==='function'?a.ops():a.ops).map(o=>`<button class="chipOp ${LAB.cfg[a.k]===o?'sel':''}" data-aj="${a.k}" data-v='${JSON.stringify(o)}'>${a.fmt(o)}</button>`).join('')}</div></div>`).join('');
+  const g=LAB.cfg;
+  const selHtml=(attr,ops,val,fmt)=>`<select class="labSel" ${attr}>${ops.map(o=>`<option value='${JSON.stringify(o)}' ${JSON.stringify(o)===JSON.stringify(val)?'selected':''}>${fmt(o)}</option>`).join('')}</select>`;
+  const campo=(nome,ctrl,ajuda='')=>`<div class="campo"><div><b>${nome}</b>${ajuda?`<small>${ajuda}</small>`:''}</div>${ctrl}</div>`;
+  const cfgSel=(k,ops,fmt)=>selHtml(`data-cfg="${k}"`,ops,g[k],fmt);
+  const sn=(k)=>`<div class="sn"><button class="chipOp ${!g[k]?'sel':''}" data-cfgv="${k}" data-v="false">não</button><button class="chipOp ${g[k]?'sel':''}" data-cfgv="${k}" data-v="true">sim</button></div>`;
+  const pct=v=>Math.round(v*100)+'%';
+  const sec=(id,titulo,html)=>`<details class="sec" data-sec="${id}" ${LAB.abertos[id]?'open':''}><summary>${titulo}</summary><div class="secBody">${html}</div></details>`;
   const minhas = JSON.parse(localStorage.mina_formas||'[]');
   const recs = Object.entries(RECS()).sort((a,b)=>b[1].total-a[1].total).slice(0,12).map(([k,e])=>`<li>${k.startsWith('jogo|')?'<small class="nv">jogo</small> ':''}${e.nome}: <b>$${e.total}</b> <small>(${e.arrastos} arrastos, ${CHARS[e.char]?.nome||''})</small></li>`).join('');
-  const hist = LAB.hist.slice(-8).reverse().map(h=>`<li><b>${PATHS[h.fase]?.nome||h.fase}</b> · ${h.energia?'com':'sem'} energia · ${CHARS[h.char].nome}${h.cfg?` · ${h.cfg.n}x${h.cfg.n}, ${h.cfg.spawns}/arrasto`:''}: ${h.arrastos} arrastos, <b>$${h.total}</b></li>`).join('');
+  const hist = LAB.hist.slice(-8).reverse().map(h=>`<li><b>${PATHS[h.fase]?.nome||h.fase}</b> · ${h.energia?'com':'sem'} energia · ${CHARS[h.char].nome}: ${h.arrastos} arrastos, <b>$${h.total}</b></li>`).join('');
+
+  const tabuleiro = campo('Formato', selHtml('data-cfg="forma"', [null,...formasTodas().map(f=>f.id)], g.forma, v=>v?acharForma(v)?.nome||v:'livre (largura x altura)'), 'Formatos prontos já têm buracos, paredes e muretas.')
+    + (g.forma ? `<div class="formaPrev">${formaSvg(acharForma(g.forma)||{mapa:['.']},110)}</div>` :
+       campo('Largura', cfgSel('w',[3,4,5,6,7,8],v=>v+' casas')) + campo('Altura', cfgSel('h',[3,4,5,6,7,8,10,12,16,20],v=>v+' casas')))
+    + `<button class="btn g" id="labBuild">Construir nível (tela vazia ${g.w}x${g.h})</button>`
+    + (minhas.length?`<b class="sub">Seus níveis</b><div class="cards">${minhas.map(f=>`<div class="card" style="cursor:default"><span class="em">${formaSvg(f,40)}</span><div><b>${f.nome}</b><span>${fw(f)}x${fh(f)}${f.pecas?.length?`, ${f.pecas.length} pedrinhas`:''}</span></div><button class="pt" data-delf="${f.id}">apagar</button></div>`).join('')}</div>`:'');
+  const regras = campo('Energia', `<div class="sn"><button class="chipOp ${LAB.energia?'sel':''}" data-en="1">ligada</button><button class="chipOp ${!LAB.energia?'sel':''}" data-en="0">desligada</button></div>`, 'Ligada: cada arrasto gasta 1 e, sem energia, só nasce torrão. Desligada: joga até travar.')
+    + (LAB.energia ? campo('Energia por dia', cfgSel('energia',[10,20,30,40,60,80],v=>v)) : '')
+    + campo('Pedrinhas por arrasto', cfgSel('spawns',[1,2,3],v=>v), 'Quantas nascem a cada arrasto.')
+    + campo('Torrão ao nascer', cfgSel('torrao',[0,.1,.2,.3],pct), 'Chance de a peça nova ser torrão.')
+    + campo('Pedra a mais', cfgSel('pedra',[0,.2,.4,.6],v=>'+'+pct(v)), 'Chance extra de nascer Pedra em vez de Cascalho.')
+    + campo('Pedrinha rara', cfgSel('rara',[0,.02,.1,.5],pct), 'Rara cospe como 2 níveis acima.')
+    + campo('Duas cores', sn('cores'), 'Roxa só junta com roxa, verde com verde.')
+    + campo('Picareta e rocha', sn('picareta'), 'Nascem picaretas que quebram a rocha do mesmo nível.');
+  const obst = campo('Paredes', cfgSel('walls',[0,1,2,3,4],v=>v), 'Blocos sorteados que ocupam casas.')
+    + campo('Muretas', cfgSel('edges',[0,2,4,6,8],v=>v), 'Paredes finas sorteadas entre casas.')
+    + campo('Torrões no começo', cfgSel('clods',[0,3,6],v=>v));
+  const nivelSel=(attr,max,val,inf=false)=>selHtml(attr,[...Array(max+1).keys()].concat(inf?[99]:[]),val||0,v=>v>90?'∞':v?('nível '+v):'não');
+  const itens = `<p class="ajuda">Escolha com o que o dia começa.</p><b class="sub">Itens</b>`
+    + ITEMS.map(it=>campo(`${it.em} ${it.nome}`, nivelSel(`data-item="${it.id}"`,3,LAB.itens[it.id]), lvDesc(it.id,Math.max(1,LAB.itens[it.id]||1)))).join('')
+    + `<b class="sub">Melhorias</b>`
+    + UPGRADES.map(u=>campo(`${u.em} ${u.nome}`, nivelSel(`data-up="${u.id}"`,u.max||5,LAB.ups[u.id],u.id==='assovio'), u.desc(Math.max(1,LAB.ups[u.id]||1)))).join('')
+    + `<b class="sub">Ferramentas</b>` + campo('Desfazer, picão, escavar, dinamite e luva', `<div class="sn"><button class="chipOp ${!g.ferr?'sel':''}" data-cfgv="ferr" data-v="0">não</button><button class="chipOp ${g.ferr?'sel':''}" data-cfgv="ferr" data-v="99">∞</button></div>`);
+
   showOverlay(`${disc('lab','#4f7f9a','bigDisc')}<h2>Laboratório</h2>
-    <h3>Energia</h3><div class="labRow">${op('energia',1,LAB.energia,'<div><b>Ligada</b></div>')}${op('energia',0,!LAB.energia,'<div><b>Desligada</b><span>até travar</span></div>')}</div>
-    <h3>Personagem</h3><div class="labRow">${Object.entries(CHARS).map(([k,c])=>op('char',k,LAB.char===k,`<div><b>${c.em} ${c.nome}</b></div>`)).join('')}</div>
-    <p class="recAtual">${nomeLab()}<br>${recTxt(RECS()[chaveLab()])}</p>
-    <button class="btn b" id="labGo">Jogar</button>
-    <button class="btn g" id="labBuild">Construir nível (tela vazia ${LAB.cfg.w}x${LAB.cfg.h})</button>
-    <h3>Ajustes</h3><div class="ajustes">${ajustes}</div>
-    <button class="btn dim" id="labReset">Voltar aos valores da fase</button>
-    <h3>Fase (carrega os valores dela)</h3><div class="cards">${fases}</div>
-    ${minhas.length?`<h3>Seus níveis</h3><div class="cards">${minhas.map(f=>`<div class="card" style="cursor:default"><span class="em">${formaSvg(f,40)}</span><div><b>${f.nome}</b><span>${fw(f)}x${fh(f)}${f.pecas?.length?`, ${f.pecas.length} pedrinhas`:''}</span></div><button class="pt" data-delf="${f.id}">apagar</button></div>`).join('')}</div>`:''}
-    ${recs?`<h3>Recordes</h3><ol class="labHist recs">${recs}</ol><button class="pt" id="labRecZera">apagar recordes</button>`:''}
-    ${hist?`<h3>Últimos resultados</h3><ul class="labHist">${hist}</ul>`:''}
+    <div class="labTop">
+      ${campo('Fase', selHtml('id="selFase"', LAB_FASES, LAB.fase, k=>PATHS[k].nome))}
+      <p class="ajuda">${PATHS[LAB.fase].desc} Escolher a fase carrega as regras dela.</p>
+      <div class="labRow">${Object.entries(CHARS).map(([k,c])=>`<button class="card labOp ${LAB.char===k?'sel':''}" data-char="${k}"><div><b>${c.em} ${c.nome}</b><span>${k==='rola'?'tudo desliza até bater':'tudo anda uma casa'}</span></div></button>`).join('')}</div>
+      <p class="recAtual">${nomeLab()}<br>${recTxt(RECS()[chaveLab()])}</p>
+      <button class="btn b" id="labGo">Jogar</button>
+    </div>
+    ${sec('tab','Tabuleiro',tabuleiro)}
+    ${sec('reg','Regras do dia',regras)}
+    ${sec('obs','Obstáculos',obst)}
+    ${sec('itens','Itens e melhorias',itens)}
+    ${recs?sec('recs','Recordes',`<ol class="labHist recs">${recs}</ol><button class="pt" id="labRecZera">apagar recordes</button>`):''}
+    ${hist?sec('hist','Últimos resultados',`<ul class="labHist">${hist}</ul>`):''}
+    <button class="btn dim" id="labReset">Voltar às regras da fase</button>
     <button class="btn dim" id="labMenu">Voltar ao menu</button>`);
   const redesenha = () => { labSalva(); const y=$('#panel').scrollTop; labPainel(); $('#panel').scrollTop=y; };
-  document.querySelectorAll('.labOp').forEach(b=>b.onclick=()=>{
-    const g=b.dataset.grp, v=b.dataset.val;
-    if(g==='fase'){ LAB.fase=v; LAB.cfg=presetDe(v); } else if(g==='energia') LAB.energia=v==='1'; else LAB.char=v;
-    redesenha();
-  });
-  document.querySelectorAll('.chipOp').forEach(b=>b.onclick=()=>{ LAB.cfg[b.dataset.aj]=JSON.parse(b.dataset.v); redesenha(); });
+  $('#selFase').onchange=e=>{ LAB.fase=JSON.parse(e.target.value); LAB.cfg={...presetDe(LAB.fase), rara:g.rara, ferr:g.ferr}; redesenha(); };
+  document.querySelectorAll('[data-char]').forEach(b=>b.onclick=()=>{ LAB.char=b.dataset.char; redesenha(); });
+  document.querySelectorAll('[data-cfg]').forEach(el=>el.onchange=()=>{ g[el.dataset.cfg]=JSON.parse(el.value); redesenha(); });
+  document.querySelectorAll('[data-cfgv]').forEach(b=>b.onclick=()=>{ g[b.dataset.cfgv]=JSON.parse(b.dataset.v); redesenha(); });
+  document.querySelectorAll('[data-en]').forEach(b=>b.onclick=()=>{ LAB.energia=b.dataset.en==='1'; redesenha(); });
+  document.querySelectorAll('[data-item]').forEach(el=>el.onchange=()=>{ LAB.itens[el.dataset.item]=+el.value; redesenha(); });
+  document.querySelectorAll('[data-up]').forEach(el=>el.onchange=()=>{ LAB.ups[el.dataset.up]=+el.value; redesenha(); });
+  document.querySelectorAll('details.sec').forEach(d=>d.ontoggle=()=>{ LAB.abertos[d.dataset.sec]=d.open; labSalva(); });
+  document.querySelectorAll('[data-delf]').forEach(b=>b.onclick=()=>{ const id=b.dataset.delf; localStorage.mina_formas=JSON.stringify(JSON.parse(localStorage.mina_formas||'[]').filter(f=>f.id!==id)); if(g.forma===id) g.forma=null; redesenha(); });
   $('#labReset').onclick=()=>{ LAB.cfg=presetDe(LAB.fase); redesenha(); };
-  $('#labBuild').onclick=()=>{ LAB.cfg.forma=null; labSalva(); labJoga(); labConstruir(); };
-  document.querySelectorAll('[data-delf]').forEach(b=>b.onclick=()=>{ const id=b.dataset.delf; localStorage.mina_formas=JSON.stringify(JSON.parse(localStorage.mina_formas||'[]').filter(f=>f.id!==id)); if(LAB.cfg.forma===id) LAB.cfg.forma=null; redesenha(); });
+  $('#labBuild').onclick=()=>{ g.forma=null; labSalva(); labJoga(); labConstruir(); };
   $('#labGo').onclick=labJoga;
   if($('#labRecZera')) $('#labRecZera').onclick=()=>{ localStorage.removeItem('mina_recordes'); redesenha(); };
   $('#labMenu').onclick=()=>{ hideOverlay(); showMenu(); };
@@ -1487,7 +1591,8 @@ function labJoga(){
   S = {...freshState(), lab:true, char:LAB.char, week:1, moves:0, extra:0};
   S.fiscal=FISCAIS[0]; applyAndar();
   const base=PATHS[LAB.fase], g=LAB.cfg;
-  S.up.assovio = g.assovio||0;
+  for(const [k,v] of Object.entries(LAB.itens)) if(v) S.lv[k]=v;
+  for(const [k,v] of Object.entries(LAB.ups)) if(v) S.up[k]=v;
   if(g.ferr) for(const f of FERRAMENTAS) S.ferr[f.id]=99;
   const p = {...base, forma:g.forma?acharForma(g.forma):null, caverna:!g.forma && !!base.caverna, w:g.w, h:g.h, energy:g.energia-CFG.energy, spawns:g.spawns, rara:g.rara??RARA, torrao:g.torrao, pedra:g.pedra, cores:g.cores, picareta:g.picareta, walls:g.walls, edges:g.edges, clods:g.clods, semEnergia:!LAB.energia};
   startDay(p);
@@ -1948,7 +2053,7 @@ $('#mTut').onclick=()=>{
 $('#logo').innerHTML = [[1,58],[3,84],[5,120],[2,70]].map(([t,s])=>`<svg viewBox="0 0 100 100" style="width:${s}px;height:${s}px">${pedraInner(t)}</svg>`).join('');
 $('#coachAv').innerHTML = svgOf(pedraInner(3,{face:['happy','big']}));
 
-if(/[?&]menu\b/.test(location.search)) showMenu(); else labPainel();
+if(/[?&]lab\b/.test(location.search)) labPainel(); else showMenu();
 </script>
 </body>
 </html>
