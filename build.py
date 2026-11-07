@@ -174,6 +174,10 @@ body.semHud .hud{display:none}
 .objetivo .pecaN small{display:block;font-size:11px;font-weight:600;color:#a08a74;line-height:1.1;white-space:nowrap;text-transform:none;letter-spacing:0}
 .objetivo .alvo .pecaN small{font-size:14px;color:#7a5a44}
 #bTitle .ico{width:1.1em;height:1.1em}
+.nomeP{display:inline !important;font-size:inherit !important;min-height:0 !important;line-height:inherit !important;white-space:nowrap;background:color-mix(in srgb,var(--f) 30%,transparent);border-radius:.6em;padding:0 .34em 0 .14em}
+.nomeP b{display:inline !important;font-size:inherit !important;font-weight:700;color:color-mix(in srgb,var(--c) 58%,#2e2219) !important}
+.nomeP .ico{margin-right:1px}
+.objetivo .pecaN small.nomeT{font-weight:700;color:color-mix(in srgb,var(--c) 58%,#2e2219)}
 .figM .receita svg{width:34px;height:34px;overflow:visible}
 .figM .receita i{font-style:normal;font-weight:700;font-size:16px;color:#a08a74}
 .mTrilha{position:relative;display:flex;flex-direction:column;gap:2px;padding:6px 10px 14px}
