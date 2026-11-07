@@ -200,6 +200,7 @@ body.lock{overflow:hidden}
 .dl{position:absolute;left:6px;font-size:11px;font-weight:700;color:#a08a74;transform:translateY(-50%);z-index:0}
 .linkBtn{border:0;background:none;color:#a08a74;font:600 13px 'Fredoka';text-decoration:underline;cursor:pointer}
 .panel a{color:#c0603f}
+.tile.willmerge::before{content:'';position:absolute;inset:6px;border-radius:50%;box-shadow:0 0 0 3px #ffd98a,0 0 16px 4px #ffd98acc;pointer-events:none;z-index:2}
 .panel h3{font-size:15px;color:#a08a74;margin:6px 0 -4px;text-transform:uppercase;letter-spacing:.04em}
 .edge{position:absolute;z-index:4;background:#6b625a;border:2.5px solid #2e2219;border-radius:8px;box-shadow:0 3px 0 #0003}
 .edge.v{width:12px;height:calc(var(--cell) - 10px);left:calc((var(--ex) + 1)*(var(--cell) + var(--gap)) + var(--gap)/2 - 6px);top:calc(var(--ey)*(var(--cell) + var(--gap)) + var(--gap) + 5px)}
@@ -1330,18 +1331,59 @@ function hideOverlay(){ $('#overlay').classList.add('hidden'); $('#panel').inner
 // ===================== ENTRADA =====================
 const KEYS={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],w:[0,-1],s:[0,1],a:[-1,0],d:[1,0]};
 addEventListener('keydown',e=>{ const k=KEYS[e.key.length===1?e.key.toLowerCase():e.key]; if(k){ e.preventDefault(); move(...k); } });
-let touch=null;
-addEventListener('pointerdown',e=>{ if(overlayOpen()||e.target.closest('button')||!$('#scrGame').classList.contains('on')) return; touch={x:e.clientX,y:e.clientY}; });
+// Arrastar com prévia: as pedrinhas seguem o dedo até onde iriam; só confirma ao soltar.
+// Dá para ir e voltar, testar outras direções e desistir (soltando perto do começo).
+let touch=null, prev=null;
+const PV_MIN=10, CONFIRMA=22;
+const cellPx = () => board.querySelector('.slot')?.getBoundingClientRect().width || 80;
+function clearPreview(voltar){
+  document.querySelectorAll('.tile.willmerge').forEach(el=>el.classList.remove('willmerge'));
+  if(S && S.tiles) for(const t of S.tiles){ const el=els.get(t.id); if(!el) continue; el.style.transition=''; if(voltar) el.style.transform=pos(t.x,t.y); }
+  prev=null;
+}
+function previewDrag(dx,dy){
+  const d=Math.max(Math.abs(dx),Math.abs(dy));
+  if(d<PV_MIN){ if(prev) clearPreview(true); return; }
+  const dir = Math.abs(dx)>Math.abs(dy) ? [Math.sign(dx),0] : [0,Math.sign(dy)], key=dir.join();
+  if(!prev || prev.key!==key){
+    if(prev) clearPreview(true);
+    const r=slide(S.tiles,dir[0],dir[1]), tgt={};
+    for(const t of r.tiles) tgt[t.id]=[t.x,t.y];
+    for(const g of r.gone) tgt[g.id]=[g.x,g.y];
+    prev={key, dir, r, tgt};
+    for(const o of r.merges) els.get(o.id)?.classList.add('willmerge');
+    for(const g of r.gone) els.get(g.id)?.classList.add('willmerge');
+  }
+  let p=Math.min(1,(d-PV_MIN)/(cellPx()*.9));
+  for(const t of S.tiles){
+    const el=els.get(t.id); if(!el) continue;
+    const [tx,ty]=prev.tgt[t.id]||[t.x,t.y];
+    // direção que não mexe nada: só uma resistência leve
+    const ox = prev.r.moved ? (tx-t.x)*p : prev.dir[0]*p*.06, oy = prev.r.moved ? (ty-t.y)*p : prev.dir[1]*p*.06;
+    el.style.transition='none';
+    el.style.transform=`${pos(t.x,t.y)} translate(calc(${ox}*(var(--cell) + var(--gap))), calc(${oy}*(var(--cell) + var(--gap))))`;
+  }
+}
+addEventListener('pointerdown',e=>{ if(overlayOpen()||e.target.closest('button')||!$('#scrGame').classList.contains('on')) return; touch={x:e.clientX,y:e.clientY}; prev=null; });
+addEventListener('pointermove',e=>{
+  if(!touch || !S || S.phase!=='mine' || overlayOpen() || coachBlock) return;
+  previewDrag(e.clientX-touch.x, e.clientY-touch.y);
+});
 addEventListener('pointerup',e=>{
   if(!touch) return; const dx=e.clientX-touch.x, dy=e.clientY-touch.y; touch=null;
-  if(Math.max(Math.abs(dx),Math.abs(dy))<22){
+  const tinha=!!prev;
+  if(Math.max(Math.abs(dx),Math.abs(dy))<CONFIRMA){
+    clearPreview(true);
     // toque (sem arrastar) numa pedrinha: mostra o que ela é e o que pode cuspir
-    const el=e.target.closest && e.target.closest('.tile');
+    const el=!tinha && e.target.closest && e.target.closest('.tile');
     if(el && S && S.phase==='mine'){ const t=S.tiles.find(x=>x.id===el.dataset.id); if(t) tileInfo(t); }
     return;
   }
+  clearPreview(false);
   if(Math.abs(dx)>Math.abs(dy)) move(Math.sign(dx),0); else move(0,Math.sign(dy));
+  if(S && S.phase==='mine') for(const t of S.tiles){ const el=els.get(t.id); if(el) el.style.transform=pos(t.x,t.y); }
 });
+addEventListener('pointercancel',()=>{ if(touch){ touch=null; clearPreview(true); } });
 // Encerrar exige dois toques enquanto ainda há energia (evita toque sem querer)
 let endArmed=null;
 function resetEnd(){ clearTimeout(endArmed); endArmed=null; $('#btnEnd').textContent=S&&S.semEnergia?'Parar aqui':'Encerrar o dia'; $('#btnEnd').classList.remove('g'); }
