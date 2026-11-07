@@ -162,6 +162,20 @@ details.sec[open] > summary::after{content:'−'}
 .card .regraPic i{font-style:normal;font-weight:700;font-size:18px;color:#7a5a44}
 .card .regraPic em{font-style:normal;font-size:12px;color:#a08a74;line-height:1.2}
 body.semHud .hud{display:none}
+#cenario{position:absolute;left:0;top:0;width:100%;z-index:0;pointer-events:none}
+#cenario svg{display:block}
+#app{position:relative;z-index:1}
+body.jogo{background:var(--cenBg,#3a3136)}
+body.jogo #board{background:transparent !important;box-shadow:none}
+body.jogo .slot{background:none !important;box-shadow:none;border-radius:0}
+.slot svg{position:absolute;left:-6%;top:-6%;width:112%;height:112%;overflow:visible;pointer-events:none}
+.slot .base{fill:var(--base,#b39672);opacity:var(--baseOp,.3)}
+.slot .brilho{fill:none;stroke:var(--brilho,#efe0c2);stroke-width:3;stroke-linecap:round;opacity:.35}
+body.jogo .slot.void{background:none !important;box-shadow:none}
+.slot.void .base{fill:var(--vazio,#3f3539);opacity:.9}
+.slot.void .brilho{display:none}
+body.jogo .banner{background:#f3e6cce6;border-radius:14px;padding:3px 8px;box-shadow:0 3px 0 #0002}
+body.jogo #revealRow{background:#f3e6cce6;border-radius:18px;padding:8px;box-shadow:0 3px 0 #0002}
 .hudCla{display:none}
 body.modoCla .hud:not(.hudCla){display:none}
 body:not(.semHud).modoCla .hudCla{display:flex}
@@ -242,7 +256,8 @@ body.rola #stage{touch-action:none}
 .edge.h{height:12px;width:calc(var(--cell) - 10px);top:calc((var(--ey) + 1)*(var(--cell) + var(--gap)) + var(--gap)/2 - 6px);left:calc(var(--ex)*(var(--cell) + var(--gap)) + var(--gap) + 5px)}
 '''
 
-body = '''<div id="app">
+body = '''<div id="cenario"></div>
+<div id="app">
   <section id="scrMenu" class="screen on">
     <div class="logo" id="logo"></div>
     <h1 class="title">Ptui!</h1>

@@ -259,6 +259,20 @@ details.sec[open] > summary::after{content:'−'}
 .card .regraPic i{font-style:normal;font-weight:700;font-size:18px;color:#7a5a44}
 .card .regraPic em{font-style:normal;font-size:12px;color:#a08a74;line-height:1.2}
 body.semHud .hud{display:none}
+#cenario{position:absolute;left:0;top:0;width:100%;z-index:0;pointer-events:none}
+#cenario svg{display:block}
+#app{position:relative;z-index:1}
+body.jogo{background:var(--cenBg,#3a3136)}
+body.jogo #board{background:transparent !important;box-shadow:none}
+body.jogo .slot{background:none !important;box-shadow:none;border-radius:0}
+.slot svg{position:absolute;left:-6%;top:-6%;width:112%;height:112%;overflow:visible;pointer-events:none}
+.slot .base{fill:var(--base,#b39672);opacity:var(--baseOp,.3)}
+.slot .brilho{fill:none;stroke:var(--brilho,#efe0c2);stroke-width:3;stroke-linecap:round;opacity:.35}
+body.jogo .slot.void{background:none !important;box-shadow:none}
+.slot.void .base{fill:var(--vazio,#3f3539);opacity:.9}
+.slot.void .brilho{display:none}
+body.jogo .banner{background:#f3e6cce6;border-radius:14px;padding:3px 8px;box-shadow:0 3px 0 #0002}
+body.jogo #revealRow{background:#f3e6cce6;border-radius:18px;padding:8px;box-shadow:0 3px 0 #0002}
 .hudCla{display:none}
 body.modoCla .hud:not(.hudCla){display:none}
 body:not(.semHud).modoCla .hudCla{display:flex}
@@ -340,6 +354,7 @@ body.rola #stage{touch-action:none}
 </style>
 </head>
 <body>
+<div id="cenario"></div>
 <div id="app">
   <section id="scrMenu" class="screen on">
     <div class="logo" id="logo"></div>
@@ -847,6 +862,81 @@ const edgeBetween = (ax,ay,bx,by) => (S.edges||[]).some(e => ay===by && e.d==='v
                                                     || ax===bx && e.d==='h' && e.x===ax && e.y===Math.min(ay,by) && Math.abs(ay-by)===1);
 
 // tabuleiro de tamanho variável (4x4 normal, 5x5 no Salão)
+// ===================== CENÁRIO =====================
+// O chão em volta do tabuleiro, visto de cima: Gruta (areia, paredes em sombra, riacho e musgo) ou Galeria
+// (terra batida, trilho e carrinho). Alterna por andar (Mineração) e por grupo (Clássico).
+// As casas são manchas irregulares no próprio chão; casa que não existe vira um buraco escuro.
+const cnRng = s => () => (s=(s*16807)%2147483647)/2147483647;
+const cnF = v => v.toFixed(1);
+function cnSuave(pts){ const m=(a,b)=>[(a[0]+b[0])/2,(a[1]+b[1])/2]; let d=`M${m(pts[pts.length-1],pts[0]).map(cnF).join(' ')}`;
+  for(let i=0;i<pts.length;i++){ const p=pts[i], mm=m(p,pts[(i+1)%pts.length]); d+=` Q${cnF(p[0])} ${cnF(p[1])} ${cnF(mm[0])} ${cnF(mm[1])}`; } return d+'Z'; }
+function cnBolha(cx,cy,rx,ry,r,amp,n=10){ const pts=[]; for(let i=0;i<n;i++){ const a=i/n*Math.PI*2, k=1+(r()-.5)*2*amp; pts.push([cx+Math.cos(a)*rx*k, cy+Math.sin(a)*ry*k]); } return cnSuave(pts); }
+function cnBolhaRet(x,y,w,h,r,amp,passo=18){ const pts=[], per=2*(w+h), n=Math.max(8,Math.round(per/passo));
+  for(let i=0;i<n;i++){ const t=i/n*per; let px,py,nx,ny;
+    if(t<w){px=x+t;py=y;nx=0;ny=-1;} else if(t<w+h){px=x+w;py=y+t-w;nx=1;ny=0;} else if(t<2*w+h){px=x+w-(t-w-h);py=y+h;nx=0;ny=1;} else {px=x;py=y+h-(t-2*w-h);nx=-1;ny=0;}
+    const d=(r()-.5)*2*amp; pts.push([px+nx*d,py+ny*d]); } return cnSuave(pts); }
+function cnPintas(r,x,y,w,h,n,cores,min,max){ let s=''; for(let i=0;i<n;i++){ const rx=min+r()*(max-min);
+  s+=`<ellipse cx="${cnF(x+r()*w)}" cy="${cnF(y+r()*h)}" rx="${cnF(rx)}" ry="${cnF(rx*(.55+r()*.45))}" fill="${cores[i%cores.length]}"/>`; } return s; }
+const TEMAS = {
+  gruta:   {bg:'#3a3136', base:'#b39672', baseOp:.3, brilho:'#efe0c2', vazio:'#3f3539'},
+  galeria: {bg:'#4a3a2e', base:'#6e5848', baseOp:.42, brilho:'#8c7462', vazio:'#2a1f18'},
+};
+const temaCenario = () => ((S?.tema||S?.week||1)-1)%2 ? 'galeria' : 'gruta';
+// base de cada casa: mancha irregular, a mesma sempre para a mesma casa
+function baseCasa(x,y){ const r=cnRng(1009+x*131+y*977);
+  return `<svg viewBox="0 0 100 100"><path class="base" d="${cnBolha(50+(r()-.5)*5,52+(r()-.5)*5,42+r()*5,38+r()*5,r,.17,8)}"/><path class="brilho" d="M20 77 q30 17 60 0"/></svg>`; }
+function desenhaCenario(){
+  const el=$('#cenario'); if(!el) return;
+  if(!$('#scrGame').classList.contains('on')){ el.innerHTML=''; return; }
+  const k=temaCenario(), T=TEMAS[k], bs=document.body.style;
+  bs.setProperty('--base',T.base); bs.setProperty('--baseOp',T.baseOp); bs.setProperty('--brilho',T.brilho); bs.setProperty('--vazio',T.vazio); bs.setProperty('--cenBg',T.bg);
+  const sy=scrollY, vw=innerWidth, vh=Math.max(innerHeight, Math.ceil(fimDoJogo()));
+  const b=board.getBoundingClientRect(), bx=b.left+b.width/2, by=b.top+sy+b.height/2;
+  const livre=$('#scrGame').getBoundingClientRect().bottom+sy+10, h=vh-livre;   // espaço livre embaixo dos botões
+  const r=cnRng(k==='gruta'?41:23);
+  let s='';
+  if(k==='gruta'){
+    const chao=cnBolhaRet(8,8,vw-16,vh-16,r,8,26);
+    s+=`<defs><clipPath id="cnChao"><path d="${chao}"/></clipPath><filter id="cnBorra" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="16"/></filter>
+      <linearGradient id="cnRaio" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6d8" stop-opacity=".2"/><stop offset="1" stop-color="#fff6d8" stop-opacity="0"/></linearGradient></defs>`;
+    s+=`<rect width="${vw}" height="${vh}" fill="${T.bg}"/><path d="${chao}" fill="#d3bc95"/>`+cnPintas(r,10,10,vw-20,vh-20,Math.round(vw*vh/650),['#c7ae86','#dec9a4','#bba077'],1,3.5);
+    if(h>=90){
+      const y0=livre+8;
+      s+=`<g clip-path="url(#cnChao)"><path d="M-10 ${cnF(y0)} C${cnF(vw*.14)} ${cnF(y0-12)} ${cnF(vw*.22)} ${cnF(y0+h*.35)} ${cnF(vw*.17)} ${cnF(y0+h*.55)} S${cnF(vw*.3)} ${vh} ${cnF(vw*.42)} ${vh+20} L-10 ${vh+20}Z" fill="#3d7f88"/>
+        <path d="M-10 ${cnF(y0+8)} C${cnF(vw*.12)} ${cnF(y0-2)} ${cnF(vw*.18)} ${cnF(y0+h*.37)} ${cnF(vw*.14)} ${cnF(y0+h*.57)} S${cnF(vw*.26)} ${vh} ${cnF(vw*.38)} ${vh+20} L-10 ${vh+20}Z" fill="#5aa9b3"/>
+        <path d="M${cnF(vw*.04)} ${cnF(y0+h*.3)} q14 -6 26 2 M${cnF(vw*.07)} ${cnF(y0+h*.6)} q14 -6 24 2" stroke="#9fdde3" stroke-width="2.5" fill="none" stroke-linecap="round"/></g>`;
+      for(const [fx,fy,kk] of [[.84,.35,1],[.62,.75,.8]]){ const x=vw*fx, y=livre+h*fy;
+        s+=`<path d="${cnBolha(x,y,26*kk,18*kk,r,.25,9)}" fill="#7fae5a"/><path d="${cnBolha(x-4,y-3,15*kk,10*kk,r,.3,8)}" fill="#97c46d"/>`; }
+      const cog=(x,y,kk)=>`<ellipse cx="${x+2}" cy="${y+3}" rx="${11*kk}" ry="${9*kk}" fill="#0003"/><circle cx="${x}" cy="${y}" r="${10*kk}" fill="#e0604a" stroke="#2e2219" stroke-width="2"/><circle cx="${x-3*kk}" cy="${y-3*kk}" r="${2.4*kk}" fill="#fff"/><circle cx="${x+4*kk}" cy="${y+kk}" r="${1.8*kk}" fill="#fff"/>`;
+      s+=cog(vw*.42,livre+h*.32,1)+cog(vw*.42+16,livre+h*.32+12,.7);
+    }
+    s+=`<g clip-path="url(#cnChao)"><path d="${chao}" fill="none" stroke="#2c2428" stroke-width="80" filter="url(#cnBorra)" opacity=".85"/></g>`;
+    s+=`<path d="M${cnF(vw*.62)} 0 L${cnF(vw*.85)} 0 L${cnF(bx+b.width*.15)} ${cnF(by+b.height*.2)} L${cnF(bx-b.width*.3)} ${cnF(by+b.height*.2)}Z" fill="url(#cnRaio)"/>`;
+  } else {
+    s+=`<defs><radialGradient id="cnLuz"><stop offset="0" stop-color="#ffd98a" stop-opacity=".5"/><stop offset="1" stop-color="#ffd98a" stop-opacity="0"/></radialGradient>
+      <radialGradient id="cnVin" cx="${cnF(bx/vw*100)}%" cy="${cnF(by/vh*100)}%" r="75%"><stop offset=".45" stop-color="#140a04" stop-opacity="0"/><stop offset="1" stop-color="#140a04" stop-opacity=".65"/></radialGradient></defs>`;
+    s+=`<rect width="${vw}" height="${vh}" fill="${T.bg}"/>`;
+    for(let i=0;i<Math.round(vw*vh/9000);i++) s+=`<path d="${cnBolha(r()*vw,r()*vh,40+r()*60,30+r()*45,r,.22,10)}" fill="${['#5a473a','#47372c','#5f4b3d','#4e3d31'][i%4]}" opacity=".55"/>`;
+    s+=cnPintas(r,0,0,vw,vh,Math.round(vw*vh/1100),['#5f4c3e','#3f3127','#665243'],.8,2.6);
+    for(let i=0;i<Math.round(vw*vh/32000);i++){ const x=r()*vw, y=r()*vh; s+=`<path d="M${cnF(x)} ${cnF(y)} l${cnF((r()-.5)*30)} ${cnF(8+r()*14)} l${cnF((r()-.5)*24)} ${cnF(8+r()*12)}" stroke="#30251d" stroke-width="1.5" fill="none" stroke-linecap="round" opacity=".6"/>`; }
+    if(h>=70){
+      const ty=livre+Math.min(26,h*.25);
+      for(let x=-6;x<vw+10;x+=20) s+=`<rect x="${x}" y="${cnF(ty-4)}" width="9" height="40" rx="2" fill="#7c5131" stroke="#4d321d" stroke-width="1.5"/>`;
+      s+=`<line x1="0" y1="${cnF(ty+5)}" x2="${vw}" y2="${cnF(ty+5)}" stroke="#2b2420" stroke-width="5"/><line x1="0" y1="${cnF(ty+27)}" x2="${vw}" y2="${cnF(ty+27)}" stroke="#2b2420" stroke-width="5"/><line x1="0" y1="${cnF(ty+4)}" x2="${vw}" y2="${cnF(ty+4)}" stroke="#b4bdc4" stroke-width="3"/><line x1="0" y1="${cnF(ty+26)}" x2="${vw}" y2="${cnF(ty+26)}" stroke="#b4bdc4" stroke-width="3"/>`;
+      const t=cnRng(77); let monte='';
+      for(const [dx,dy,rx,ry,c] of [[-28,-6,26,16,'#6b4a33'],[10,-8,30,17,'#5e412c'],[30,4,18,12,'#73513a'],[-8,6,30,13,'#654630'],[-34,8,14,9,'#7a5940']]) monte+=`<path d="${cnBolha(dx,dy,rx,ry,t,.18,9)}" fill="${c}"/>`;
+      s+=`<g transform="translate(${cnF(vw*.64)} ${cnF(ty+16)})"><rect x="-54" y="-30" width="112" height="66" rx="10" fill="#0004"/><rect x="-58" y="-34" width="112" height="64" rx="10" fill="#6d4a30" stroke="#8d969d" stroke-width="5"/><rect x="-48" y="-24" width="92" height="44" rx="6" fill="#3b2a1e"/><g transform="translate(-2 -2)">${monte}</g></g>`;
+      if(h>=150){
+        s+=`<g transform="translate(${cnF(vw*.14)} ${cnF(livre+h*.72)})"><rect x="-28" y="-26" width="58" height="58" rx="4" fill="#0004"/><rect x="-32" y="-30" width="58" height="58" rx="4" fill="#9a6a3c" stroke="#5e3b1f" stroke-width="2.5"/><path d="M-26 -24 L20 22 M20 -24 L-26 22" stroke="#7a4f28" stroke-width="7"/><rect x="-32" y="-30" width="58" height="58" rx="4" fill="none" stroke="#7a4f28" stroke-width="6"/></g>`;
+        s+=`<g transform="translate(${cnF(vw*.86)} ${cnF(livre+h*.74)})"><circle cx="4" cy="5" r="30" fill="#0004"/><circle r="30" fill="#8a5a35" stroke="#4f3320" stroke-width="2.5"/><circle r="24" fill="none" stroke="#5d6d7c" stroke-width="3.5"/><circle r="12" fill="none" stroke="#5d6d7c" stroke-width="3"/></g>`;
+      }
+    }
+    s+=`<rect width="${vw}" height="${vh}" fill="url(#cnVin)"/>`;
+    s+=`<ellipse cx="${cnF(bx)}" cy="${cnF(by)}" rx="${cnF(b.width*.66)}" ry="${cnF(b.height*.64)}" fill="url(#cnLuz)" opacity=".5"/>`;
+  }
+  el.innerHTML=`<svg width="${vw}" height="${vh}" viewBox="0 0 ${vw} ${vh}">${s}</svg>`;
+}
+
 function setupBoard(w,h=w){
   W=w; H=h; N=Math.max(w,h); board.querySelectorAll('.slot').forEach(e=>e.remove());
   // casa do maior tamanho que caiba na largura e em ~60% da altura da tela
@@ -854,7 +944,7 @@ function setupBoard(w,h=w){
   const cel=Math.floor(Math.min(84, vw/(w*1.11+.11), vh/(h*1.11+.11)));
   board.style.setProperty('--w', w); board.style.setProperty('--h', h);
   board.style.setProperty('--cell', cel+'px'); board.style.setProperty('--gap', Math.max(2,Math.round(cel*.11))+'px');
-  for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const c=document.createElement('div'); c.className='slot'; c.dataset.x=x; c.dataset.y=y; c.style.transform=pos(x,y); if(S) c.style.background=andar().sl; board.prepend(c); }
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const c=document.createElement('div'); c.className='slot'; c.dataset.x=x; c.dataset.y=y; c.style.transform=pos(x,y); c.innerHTML=baseCasa(x,y); board.prepend(c); }
 }
 setupBoard(4);
 
@@ -880,6 +970,7 @@ function encaixa(redimensiona=true){
   }
   document.body.classList.toggle('rola', fimDoJogo() > innerHeight+1);
   if(!$('#coach').classList.contains('hidden')) placeCoach();
+  desenhaCenario();
 }
 // no fim do dia o resultado ocupa mais que os botões do dia: se não couber, a página desce até ele
 function mostraFim(){
@@ -954,6 +1045,8 @@ function show(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', s.id===id));
   $('#shell').classList.toggle('hidden', id==='scrMenu');
   document.body.classList.toggle('lock', id==='scrGame');
+  document.body.classList.toggle('jogo', id==='scrGame');
+  if(id!=='scrGame') desenhaCenario();
   document.body.classList.remove('semHud','modoCla');
   scrollTo(0,0);
 }
@@ -1009,8 +1102,6 @@ function chooseChar(){
 // ===================== SEMANA E MAPA =====================
 function applyAndar(){
   const a = andar();
-  board.style.background = a.bd;
-  document.querySelectorAll('.slot').forEach(s=>s.style.background=a.sl);
   document.body.style.setProperty('--andar', a.bd);
 }
 function startWeek(){
