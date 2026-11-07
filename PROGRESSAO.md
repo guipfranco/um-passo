@@ -143,6 +143,12 @@ Registra minérios, itens, pedrinhas brilhantes (1 em 50, cospem em triplo), fis
 
 ---
 
+## Implementado (v0.5)
+- Itens de equipamento (11), sem limite; pegar de novo sobe o nível (até 3).
+- Cálculo do cuspe com bônus e multiplicadores, itens pulando na revelação.
+- Energia guardada (até 15), paredes, mapa com 7 caminhos e o fiscal.
+- Cada semana é um andar novo (nome e cor), com cota calibrada por simulação: cresce como a renda até o andar 4 e depois aperta.
+
 ## Ordem sugerida
 1. **Equipamento** com 8 itens (2 de cada estratégia) e o novo cálculo do cuspe, mais a **energia guardada**.
 2. **Paredes** e o **mapa** com 4 caminhos e o fiscal.
