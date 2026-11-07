@@ -21,6 +21,12 @@ body{background:#2a211b;font-family:'Fredoka',system-ui,sans-serif;color:#5a4636
 .caixa{position:relative}
 .phone{position:absolute;left:0;top:0;width:390px;height:780px;border-radius:28px;overflow:hidden;transform-origin:top left;box-shadow:0 10px 40px #0009}
 .phone > svg{position:absolute;inset:0}
+.phone > svg.com{display:none}
+.phone.rastro > svg.com{display:block}
+.phone.rastro > svg.sem{display:none}
+.chave{display:flex;gap:4px;background:#0006;padding:3px;border-radius:999px}
+.chave button{border:0;border-radius:999px;padding:6px 12px;font:600 13px 'Fredoka';background:transparent;color:#ccc}
+.chave button.on{background:#f6ecd9;color:#5a4636}
 .hud{position:absolute;left:10px;right:10px;top:12px;display:flex;gap:8px}
 .pill{flex:1;background:#f3e6cc;border-radius:16px;padding:6px 8px;display:flex;align-items:center;gap:7px;box-shadow:0 3px 0 #0003;min-width:0}
 .pill .ic{flex:none;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;box-shadow:0 2px 0 #0002}
@@ -86,6 +92,25 @@ function tufo(x,y,k=1,cores=['#7fb35a','#93c56b','#6a9c48']){
   return s;
 }
 
+// rastros de arrasto entre casas vizinhas: uma faixa gasta e alguns riscos
+function rastros(faixa, risco, op, seed){
+  const q=rng(seed); let s='';
+  const cx=i=>X(i)+C/2, cy=j=>Y(j)+C/2+2;
+  const pt=(x1,y1,x2,y2,nx,ny,t,o)=>[x1+(x2-x1)*t+nx*o, y1+(y2-y1)*t+ny*o];
+  for(let j=0;j<4;j++) for(let i=0;i<4;i++) for(const [di,dj] of [[1,0],[0,1]]){
+    const i2=i+di, j2=j+dj; if(i2>3||j2>3) continue;
+    const x1=cx(i), y1=cy(j), x2=cx(i2), y2=cy(j2), nx=-(y2-y1)/(C+G), ny=(x2-x1)/(C+G);
+    // faixa só entre as bases, como um pescoço ligando uma à outra
+    const wob=(q()-.5)*4, [ax,ay]=pt(x1,y1,x2,y2,nx,ny,.3,0), [mx,my]=pt(x1,y1,x2,y2,nx,ny,.5,wob), [bx,by]=pt(x1,y1,x2,y2,nx,ny,.7,0);
+    s+=`<path d="M${f1(ax)} ${f1(ay)} Q${f1(mx)} ${f1(my)} ${f1(bx)} ${f1(by)}" stroke="${faixa}" stroke-width="${f1(13+q()*5)}" stroke-linecap="round" fill="none" opacity="${op}"/>`;
+    // um ou dois riscos curvos, de quem arrastou
+    for(const k of [-3.5,3.5]){ if(q()<.35) continue;
+      const o=k+(q()-.5)*2, [sx,sy]=pt(x1,y1,x2,y2,nx,ny,.27+q()*.06,o), [cx2,cy2]=pt(x1,y1,x2,y2,nx,ny,.5,o+(q()-.5)*4), [ex,ey]=pt(x1,y1,x2,y2,nx,ny,.73-q()*.06,o+(q()-.5)*2);
+      s+=`<path d="M${f1(sx)} ${f1(sy)} Q${f1(cx2)} ${f1(cy2)} ${f1(ex)} ${f1(ey)}" stroke="${risco}" stroke-width="1.3" stroke-linecap="round" fill="none" opacity="${op}"/>`; }
+  }
+  return s;
+}
+
 // ================= A: ESCAVAÇÃO =================
 function cenaA(){
   const r=rng(11); let s=`<defs>
@@ -125,7 +150,7 @@ function cenaA(){
 }
 
 // ================= B: GALERIA =================
-function cenaB(){
+function cenaB(rastro=false){
   const r=rng(23); let s=`<defs>
     <radialGradient id="bLuz" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffd98a" stop-opacity=".55"/><stop offset="1" stop-color="#ffd98a" stop-opacity="0"/></radialGradient>
     <radialGradient id="bVin" cx="50%" cy="41%" r="70%"><stop offset=".45" stop-color="#140a04" stop-opacity="0"/><stop offset="1" stop-color="#140a04" stop-opacity=".7"/></radialGradient>
@@ -145,6 +170,7 @@ function cenaB(){
   monte+=speck(terra,-44,-20,84,36,22,['#4f3624','#86654a'],1,2.6);
   s+=`<g transform="translate(250 ${ty+16})"><rect x="-54" y="-30" width="112" height="66" rx="10" fill="#0004"/><rect x="-58" y="-34" width="112" height="64" rx="10" fill="#6d4a30" stroke="#8d969d" stroke-width="5"/><rect x="-48" y="-24" width="92" height="44" rx="6" fill="#3b2a1e"/><g transform="translate(-2 -2)">${monte}</g></g>`;
   // casas: manchas redondas e um pouco irregulares, só um tom mais claras que o chão
+  if(rastro) s+=rastros('#6e5848','#7d6654',.34,301);
   for(let j=0;j<4;j++) for(let i=0;i<4;i++){ const x=X(i), y=Y(j);
     s+=`<path d="${blob(x+C/2+(r()-.5)*4,y+C/2+2+(r()-.5)*4,31+r()*4,28+r()*4,r,.17,8)}" fill="#6e5848" opacity=".4"/><path d="M${x+14} ${y+C-14} q${C/2-14} 12 ${C-28} 0" stroke="#8c7462" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".35"/>`; }
   // pedra (parede)
@@ -161,7 +187,7 @@ function cenaB(){
 }
 
 // ================= C: GRUTA =================
-function cenaC(){
+function cenaC(rastro=false){
   const r=rng(41); let s=`<defs>
     <radialGradient id="cBrilhoA" r="50%"><stop offset="0" stop-color="#8ff0ff" stop-opacity=".55"/><stop offset="1" stop-color="#8ff0ff" stop-opacity="0"/></radialGradient>
     <radialGradient id="cBrilhoR" r="50%"><stop offset="0" stop-color="#ffb3e6" stop-opacity=".5"/><stop offset="1" stop-color="#ffb3e6" stop-opacity="0"/></radialGradient>
@@ -192,6 +218,7 @@ function cenaC(){
   // raio de luz
   s+=`<path d="M250 110 L330 110 L250 520 L120 520Z" fill="url(#cRaio)"/>`;
   // ninhos (sem grade): cada pedrinha num côncavo da areia
+  if(rastro) s+=rastros('#b39672','#a3876a',.28,401);
   s+=pecas((x,y)=>`<circle cx="${x+36}" cy="${y+40}" r="32" fill="#5f5258"/><circle cx="${x+36}" cy="${y+38}" r="23" fill="#726469"/><circle cx="${x+35}" cy="${y+36}" r="12" fill="#8a7c81"/><circle cx="${x+32}" cy="${y+32}" r="4" fill="#a3969b"/>`,
     (x,y,v)=>`<path d="${blob(x+36+(r()-.5)*4,y+38+(r()-.5)*4,31+r()*4,27+r()*4,r,.17,8)}" fill="#b39672" opacity=".3"/><path d="M${x+12} ${y+52} q24 14 48 0" stroke="#efe0c2" stroke-width="3" fill="none" opacity=".35" stroke-linecap="round"/>`);
   return s;
@@ -236,15 +263,17 @@ function cenaD(){
 
 const VIEWS = [
   {id:'A', nome:'Escavação', cena:cenaA, desc:'Um sítio de escavação visto de cima. As casas são marcadas só por barbantes finos entre estacas. Em volta: balde com minério, pá, peneira e escova.'},
-  {id:'B', nome:'Galeria', cena:cenaB, desc:'Chão de terra batida da mina, com trilho e carrinho. As casas são manchas irregulares, um pouco mais claras, no chão.'},
-  {id:'C', nome:'Gruta', cena:cenaC, desc:'Uma câmara de gruta com musgo, cogumelos e um riacho, com as paredes em sombra. Sem grade: as casas são leves afundados irregulares na areia.'},
+  {id:'B', nome:'Galeria', cena:cenaB, rastro:true, desc:'Chão de terra batida da mina, com trilho e carrinho. As casas são manchas irregulares, um pouco mais claras, no chão.'},
+  {id:'C', nome:'Gruta', cena:cenaC, rastro:true, desc:'Uma câmara de gruta com musgo, cogumelos e um riacho, com as paredes em sombra. Sem grade: as casas são leves afundados irregulares na areia.'},
   {id:'D', nome:'Bancada', cena:cenaD, desc:'A mesa do minerador. O tabuleiro é uma caixa de amostras forrada de feltro marrom, com mapa, vela, lupa, moedas e caderno em volta.'},
 ];
 const hud = `<div class="hud"><div class="pill"><span class="ic" style="background:#6aa84f">⚡</span><div><b>23</b><small>de 40</small></div></div><div class="pill"><span class="ic" style="background:#f2b33d">$</span><div><b>$86</b><small>dinheiro</small></div></div><div class="pill"><span class="ic" style="background:#c0603f">!</span><div><b>$150</b><small>cota em 3 dias</small></div></div></div>
   <div class="top"><span class="icon">☰</span><div class="banner"><b>Andar 1 · dia 2</b><span>Túnel</span></div><span class="icon">♪</span></div>
   <div class="btnEnd">Encerrar o dia</div>`;
 document.getElementById('views').innerHTML = VIEWS.map(v=>`<section class="view" id="v${v.id}"><div class="tit"><b>${v.id} · ${v.nome}</b><span>${v.desc}</span></div>
-  <div class="caixa"><div class="phone"><svg viewBox="0 0 390 780" width="390" height="780">${v.cena()}</svg>${hud}</div></div></section>`).join('');
+  ${v.rastro?`<div class="chave" data-p="${v.id}"><button data-r="1" class="on">com rastros</button><button data-r="0">sem rastros</button></div>`:''}
+  <div class="caixa"><div class="phone ${v.rastro?'rastro':''}" id="p${v.id}"><svg class="sem" viewBox="0 0 390 780" width="390" height="780">${v.cena(false)}</svg>${v.rastro?`<svg class="com" viewBox="0 0 390 780" width="390" height="780">${v.cena(true)}</svg>`:''}${hud}</div></div></section>`).join('');
+document.querySelectorAll('.chave button').forEach(b=>b.onclick=()=>{ const id=b.parentNode.dataset.p; document.getElementById('p'+id).classList.toggle('rastro', b.dataset.r==='1'); b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); });
 document.getElementById('sw').innerHTML = VIEWS.map(v=>`<button data-v="${v.id}">${v.id} ${v.nome}</button>`).join('');
 function mostra(id){ document.querySelectorAll('.view').forEach(e=>e.classList.toggle('on',e.id==='v'+id)); document.querySelectorAll('#sw button').forEach(b=>b.classList.toggle('on',b.dataset.v===id)); location.hash=id; }
 document.querySelectorAll('#sw button').forEach(b=>b.onclick=()=>mostra(b.dataset.v));
