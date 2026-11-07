@@ -174,6 +174,10 @@ html,body{min-height:100%;background:#f6ecd9;color:#5a4636;font-family:'Fredoka'
 .drops{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:3px}
 .drop{white-space:nowrap;color:#5a4636;font-weight:600}
 .banner span .ico{width:1.2em;height:1.2em}
+.panel h3{font-size:15px;color:#a08a74;margin:6px 0 -4px;text-transform:uppercase;letter-spacing:.04em}
+.edge{position:absolute;z-index:4;background:#6b625a;border:2.5px solid #2e2219;border-radius:8px;box-shadow:0 3px 0 #0003}
+.edge.v{width:12px;height:calc(var(--cell) - 10px);left:calc((var(--ex) + 1)*(var(--cell) + var(--gap)) + var(--gap)/2 - 6px);top:calc(var(--ey)*(var(--cell) + var(--gap)) + var(--gap) + 5px)}
+.edge.h{height:12px;width:calc(var(--cell) - 10px);top:calc((var(--ey) + 1)*(var(--cell) + var(--gap)) + var(--gap)/2 - 6px);left:calc(var(--ex)*(var(--cell) + var(--gap)) + var(--gap) + 5px)}
 </style>
 </head>
 <body>
@@ -205,8 +209,7 @@ html,body{min-height:100%;background:#f6ecd9;color:#5a4636;font-family:'Fredoka'
   <section id="scrGame" class="screen">
     <div class="stage" id="stage"><div id="board"></div></div>
     <div class="row wide" id="mineRow">
-      <div class="next">próxima<div class="cradle" id="nextMini"></div></div>
-      <button class="btn" id="btnEnd">Encerrar o dia</button>
+      <button class="btn" id="btnEnd" style="margin:0 auto">Encerrar o dia</button>
     </div>
     <div class="wide" id="revealRow" style="display:none;flex-direction:column;gap:12px">
       <div class="total"><span>Total do dia</span><b id="dayTotal">$0</b></div>
@@ -230,11 +233,12 @@ const CFG = {
   pedraChance: 0.10,
   // calibrada por simulação (bot de canto pegando itens úteis): ~60% da renda mediana até a semana 4,
   // depois a cota passa a crescer mais rápido que a renda e a partida aperta lá pela semana 6 ou 7
-  quota: w => [100, 300, 1000, 3000, 7500, 14000, 22000, 32000][w-1] ?? Math.round(32000*Math.pow(1.4,w-8)/100)*100,
+  quota: w => [150, 450, 1400, 4000, 10000, 19000, 30000, 44000][w-1] ?? Math.round(44000*Math.pow(1.4,w-8)/100)*100,
   maxNivel: 3,                // itens sobem até o nível 3 (pegar de novo = subir de nível)
 };
 // preços e custo do torrão crescem com o andar
-const precoItem = (i,l) => Math.round(i.preco*(1+l)*Math.pow(3,S.week-1));
+const escalaPreco = () => Math.pow(2,S.week-1);
+const precoItem = (i,l) => Math.round(i.preco*.8*(1+l)*escalaPreco());
 const custoTorrao = () => CFG.torraoCusto*S.week*(S.isFiscal&&S.fiscal.id==='rabugento'?2.5:1);
 const pularItem = () => 5*Math.pow(3,S.week-1);
 const CORO = [0,.05,.08,.1];
@@ -272,11 +276,11 @@ const ROCKS = [
 ];
 const ORES = [
   {n:'nada',     p:0},
-  {n:'cobre',    p:1,  c:'#e07b3c'},
-  {n:'ferro',    p:3,  c:'#b8c0c8'},
-  {n:'prata',    p:8,  c:'#eef2f6'},
-  {n:'ouro',     p:20, c:'#f5c542'},
-  {n:'diamante', p:60, c:'#6fe3ff'},
+  {n:'cobre',    p:2,  c:'#e07b3c'},
+  {n:'ferro',    p:5,  c:'#8b949e'},
+  {n:'prata',    p:12, c:'#eef2f6'},
+  {n:'ouro',     p:30, c:'#f5c542'},
+  {n:'diamante', p:90, c:'#6fe3ff'},
 ];
 const DROPS = {1:[70,30],2:[40,45,15],3:[15,45,35,5],4:[0,25,45,25,5],5:[0,0,30,45,22,3],6:[0,0,0,40,45,15],7:[0,0,0,10,50,40],8:[0,0,0,0,40,60]};
 
@@ -290,9 +294,6 @@ const ITEMS = [
   {id:'adubo',     em:'🌱', nome:'Adubo',             est:'exausta',  preco:20, desc:'Torrão encostado numa Rocha ou maior rende $1 em vez de custar.'},
   {id:'eco',       em:'🔔', nome:'Eco',               est:'parede',   preco:25, desc:'Pedrinha encostada numa parede cospe como se fosse 1 nível maior.'},
   {id:'musgo',     em:'🍀', nome:'Musgo',             est:'parede',   preco:20, desc:'+$2 para cada parede com pedrinha encostada no fim do dia.'},
-  {id:'folego',    em:'💨', nome:'Fôlego',            est:'básico',   preco:25, desc:'+8 de energia em todo dia de mina.'},
-  {id:'picareta',  em:'⛏️', nome:'Picareta',          est:'básico',   preco:30, desc:'Nasce Pedra (nível 2) com bem mais frequência.'},
-  {id:'martelo',   em:'🔨', nome:'Martelo',           est:'básico',   preco:40, desc:'Cada pedrinha sorteia duas vezes e cospe a melhor.'},
   {id:'cascalheira',em:'🪣', nome:'Cascalheira',      est:'pedras',   preco:20, desc:''},
   {id:'pedreira',  em:'🏗️', nome:'Pedreira',          est:'pedras',   preco:25, desc:''},
   {id:'rochedo',   em:'🗿', nome:'Rochedo',           est:'pedras',   preco:30, desc:''},
@@ -300,12 +301,25 @@ const ITEMS = [
 ];
 const EST_COR = {pedras:'#c48a1e', miudinha:'#6aa84f', gigante:'#7a59a8', exausta:'#c0603f', parede:'#5f6b80', 'básico':'#a08a74'};
 
+// lojinha: melhorias para sempre e coisas para o próximo dia (preço base no andar 1)
+const UPGRADES = [
+  {id:'folego',   em:'💨', nome:'Fôlego',   desc:l=>`+5 de energia em todo dia (agora: +${5*l}).`,              preco:l=>Math.round(12*Math.pow(1.5,l))},
+  {id:'picareta', em:'⛏️', nome:'Picareta', desc:l=>`Nasce mais Pedra: +12% (agora: +${12*l}%).`,              preco:l=>Math.round(15*Math.pow(1.6,l)), max:5},
+  {id:'martelo',  em:'🔨', nome:'Martelo',  desc:l=>`Cada pedrinha sorteia mais 1 vez e cospe a melhor (agora: ${1+l} vezes).`, preco:l=>Math.round(30*Math.pow(2,l)), max:3},
+  {id:'balanca',  em:'⚖️', nome:'Balança',  desc:l=>`Todo minério vale +15% (agora: +${15*l}%).`,             preco:l=>Math.round(20*Math.pow(1.6,l))},
+];
+const CONSUMIVEIS = [
+  {id:'cafe',  em:'☕', nome:'Café',           desc:'No próximo dia de mina, +10 de energia.',            preco:5},
+  {id:'sorte', em:'🍀', nome:'Pedra da sorte', desc:'O próximo dia de mina já começa com uma Rocha.',     preco:8},
+  {id:'pa',    em:'🧹', nome:'Pá',             desc:'No próximo dia, até 3 torrões não custam nada.',     preco:4},
+];
+
 // caminhos do mapa (from = a partir de qual semana aparece)
 const PATHS = {
   comum:          {em:'⛏️', nome:'Veio comum',       desc:'Um dia normal de mina.', mine:true, from:1},
   rico:           {em:'💎', nome:'Veio rico',        desc:'Nasce muito mais Pedra, mas com 10 de energia a menos.', mine:true, energy:-10, pedra:.4, from:1},
-  galeria:        {em:'🧱', nome:'Galeria',          desc:'O tabuleiro tem 3 paredes. Bom para Eco e Musgo.', mine:true, walls:3, from:1},
-  mercador:       {em:'🛒', nome:'Mercador',         desc:'Não minera hoje. Compre itens com o seu dinheiro.', from:1},
+  galeria:        {em:'🧱', nome:'Galeria',          desc:'Tem paredes: um bloco numa casa e muretas entre as casas. Bom para Eco e Musgo.', mine:true, walls:1, edges:3, from:1},
+  corredor:       {em:'🚧', nome:'Corredor',         desc:'Muretas entre as casas mudam por onde as pedrinhas passam.', mine:true, edges:6, from:2},
   estreita:       {em:'🚪', nome:'Galeria estreita', desc:'Tabuleiro 3x3 hoje, mas o total do dia vale ×2.', mine:true, narrow:true, from:2},
   desmoronamento: {em:'🪨', nome:'Desmoronamento',   desc:'Começa com 3 torrões. No fim, escolha entre 4 itens.', mine:true, clods:3, picks:4, from:2},
   fogueira:       {em:'🔥', nome:'Fogueira',         desc:'Não minera hoje. No próximo dia de mina, +20 de energia.', from:3},
@@ -347,6 +361,25 @@ const crown = (cx,cy,s=1) => `<path d="M${cx-10*s} ${cy} l${3*s} -${10*s} ${4*s}
 const sparkle = (x,y,r,c='#fff') => `<path d="M${x} ${y-r} Q${x} ${y} ${x+r} ${y} Q${x} ${y} ${x} ${y+r} Q${x} ${y} ${x-r} ${y} Q${x} ${y} ${x} ${y-r}z" fill="${c}"/>`;
 const sweat = (x,y) => `<path d="M${x} ${y} q-4 7 0 9 q4 -2 0 -9z" fill="#9fd4f0" stroke="${INK}" stroke-width="1.4"/>`;
 function gemSvg(cx,cy,c,s=1){ return `<path d="M${cx-9*s} ${cy-3*s} l${4*s} -${6*s} h${10*s} l${4*s} ${6*s} l-${9*s} ${12*s}z" fill="${c}" stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"/><path d="M${cx-5*s} ${cy-9*s} l${2*s} ${6*s} M${cx+5*s} ${cy-9*s} l-${2*s} ${6*s} M${cx-9*s} ${cy-3*s} h${18*s}" stroke="${INK}" stroke-width="1" opacity=".5"/>${sparkle(cx+7*s,cy-11*s,4*s)}`; }
+// cada minério com o formato com que costuma ser desenhado
+function oreSvg(o,cx,cy,s=1){
+  const P=(x,y)=>`${cx+x*s} ${cy+y*s}`, K=`stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"`;
+  if(o===0) return clodSvg(cx,cy,s*1.05);
+  if(o===1) return `<path d="M${P(-10,2)} L${P(-6,-8)} L${P(3,-10)} L${P(10,-3)} L${P(8,7)} L${P(-2,9)}Z" fill="#d9772e" ${K}/>
+    <path d="M${P(-6,-8)} L${P(3,-10)} L${P(1,-1)}Z" fill="#f2a25c"/>
+    <circle cx="${cx+5*s}" cy="${cy+3*s}" r="${2.2*s}" fill="#4fbf8f"/><circle cx="${cx-5*s}" cy="${cy+4*s}" r="${1.6*s}" fill="#4fbf8f"/>`;
+  if(o===2) return `<path d="M${P(-12,6)} L${P(12,6)} L${P(9,-2)} L${P(-9,-2)}Z" fill="#7b848e" ${K}/>
+    <path d="M${P(-9,-2)} L${P(9,-2)} L${P(6,-8)} L${P(-6,-8)}Z" fill="#aeb6bf" ${K}/>
+    <path d="M${P(-5,-6)} h${7*s}" stroke="#fff" stroke-width="${1.4*s}" stroke-linecap="round" opacity=".7"/>`;
+  if(o===3) return `<circle cx="${cx}" cy="${cy}" r="${10*s}" fill="#e9eef3" ${K}/>
+    <circle cx="${cx}" cy="${cy}" r="${7*s}" fill="none" stroke="#b9c3cc" stroke-width="${1.4*s}"/>
+    <path d="M${P(0,-4)} l${1.2*s} ${2.6*s} ${2.8*s} ${.4*s} -${2*s} ${2*s} ${.5*s} ${2.8*s} -${2.5*s} -${1.4*s} -${2.5*s} ${1.4*s} ${.5*s} -${2.8*s} -${2*s} -${2*s} ${2.8*s} -${.4*s}z" fill="#c7d0d8"/>
+    ${sparkle(cx+8*s,cy-8*s,3.5*s)}`;
+  if(o===4) return `<path d="M${P(-10,2)} Q${P(-12,-6)} ${P(-4,-8)} Q${P(0,-13)} ${P(5,-8)} Q${P(12,-7)} ${P(10,1)} Q${P(12,8)} ${P(3,9)} Q${P(-3,12)} ${P(-8,8)} Q${P(-13,7)} ${P(-10,2)}Z" fill="#f5c542" ${K}/>
+    <ellipse cx="${cx-3*s}" cy="${cy-4*s}" rx="${3*s}" ry="${1.8*s}" fill="#fff3b0"/><circle cx="${cx+4*s}" cy="${cy+2*s}" r="${1.4*s}" fill="#e0a91e"/>
+    ${sparkle(cx+9*s,cy-9*s,3.5*s)}`;
+  return gemSvg(cx,cy,'#6fe3ff',s);
+}
 function clodSvg(cx,cy,s=1){ return `<path d="M${cx-9*s} ${cy+3*s} q-2 -8 5 -10 q4 -6 10 -2 q7 1 5 9 q1 7 -8 7 q-10 1 -12 -4z" fill="#7a5a3c" stroke="${INK}" stroke-width="1.8"/><circle cx="${cx-2*s}" cy="${cy-2*s}" r="${1.2*s}" fill="#5e4329"/><circle cx="${cx+4*s}" cy="${cy+3*s}" r="${1.4*s}" fill="#5e4329"/>`; }
 function torraoInner(){
   return `<path d="M18 70 Q14 48 30 40 Q36 26 52 30 Q66 22 76 36 Q90 42 86 62 Q88 80 66 82 Q50 88 34 82 Q16 82 18 70z" fill="#7a5a3c" stroke="${INK}" stroke-width="2.4"/>
@@ -393,6 +426,9 @@ const fiscalHoje = id => S.isFiscal && S.fiscal.id===id;
 const DIRS = [[1,0],[-1,0],[0,1],[0,-1]];
 const wallAt = (x,y) => S.walls.some(w=>w.x===x&&w.y===y);
 const tileAt = (x,y) => S.tiles.find(t=>t.x===x&&t.y===y);
+// mureta entre duas casas vizinhas (v: entre (x,y) e (x+1,y); h: entre (x,y) e (x,y+1))
+const edgeBetween = (ax,ay,bx,by) => (S.edges||[]).some(e => ay===by && e.d==='v' && e.y===ay && e.x===Math.min(ax,bx) && Math.abs(ax-bx)===1
+                                                    || ax===bx && e.d==='h' && e.x===ax && e.y===Math.min(ay,by) && Math.abs(ay-by)===1);
 
 for(let y=0;y<N;y++) for(let x=0;x<N;x++){ const c=document.createElement('div'); c.className='slot'; c.style.transform=pos(x,y); board.appendChild(c); }
 
@@ -400,7 +436,7 @@ for(let y=0;y<N;y++) for(let x=0;x<N;x++){ const c=document.createElement('div')
 // Todo texto que cita uma pedrinha, o torrão, um minério ou a parede ganha o desenho ao lado.
 const icoSvg = inner => `<svg class="ico" viewBox="0 0 100 100">${inner}</svg>`;
 const icoRock = t => icoSvg(t===0 ? torraoInner() : pedraInner(t));
-const icoOre  = o => o===0 ? icoSvg(clodSvg(50,52,2.6)) : icoSvg(gemSvg(50,56,ORES[o].c,2.6));
+const icoOre  = o => icoSvg(oreSvg(o,50,52,2.6));
 let GLOSS=null, GLOSS_RE=null;
 function gloss(){
   if(GLOSS) return;
@@ -409,6 +445,7 @@ function gloss(){
   for(const w of ['torrão','torrões','Torrão','Torrões']) GLOSS[w]=icoRock(0);
   ORES.forEach((o,i)=>{ if(i){ GLOSS[o.n]=icoOre(i); GLOSS[o.n[0].toUpperCase()+o.n.slice(1)]=icoOre(i); } });
   for(const w of ['parede','paredes','Parede','Paredes']) GLOSS[w]=icoSvg(wallInner());
+  for(const w of ['mureta','muretas','Mureta','Muretas']) GLOSS[w]=icoSvg('<rect x="42" y="8" width="16" height="84" rx="8" fill="#6b625a" stroke="'+INK+'" stroke-width="3"/>');
   const keys=Object.keys(GLOSS).sort((a,b)=>b.length-a.length).map(k=>k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));
   GLOSS_RE=new RegExp(`(^|[^A-Za-zÀ-ÿ])(${keys.join('|')})(?![A-Za-zÀ-ÿ])`,'g');
 }
@@ -452,7 +489,7 @@ function show(id){
 function freshState(){
   return {week:1, day:1, money:0, lv:{}, coroa:0, saved:0, bonus:0, gift:false, tiles:[], walls:[], phase:'map',
           energy:0, energyMax:0, char:null, hist:{}, todayOpts:null, fails:0, tut:null,
-          stats:{days:0, best:0, maxT:0}};
+          stats:{days:0, best:0, maxT:0}, up:{}, amanha:{}, edges:[]};
 }
 
 // ===================== MENU =====================
@@ -473,8 +510,8 @@ function newGameClick(){
     $('#btnNo').onclick=hideOverlay;
   } else go();
 }
-function saveGame(){ if(S && !S.tut){ const {tiles,walls,...rest}=S; localStorage.mina_save=JSON.stringify({...rest,tiles:[],walls:[]}); } }
-function loadGame(){ S=JSON.parse(localStorage.mina_save); applyAndar(); morning(true); }
+function saveGame(){ if(S && !S.tut){ const {tiles,walls,edges,...rest}=S; localStorage.mina_save=JSON.stringify({...rest,tiles:[],walls:[],edges:[]}); } }
+function loadGame(){ S={...freshState(), ...JSON.parse(localStorage.mina_save)}; applyAndar(); morning(true); }
 
 const CHARS = {
   rola:     {em:'🌀', nome:'Rola',     desc:'Arrastou, tudo desliza até bater, como no 2048.'},
@@ -502,7 +539,7 @@ function startWeek(){
   applyAndar();
   morning();
 }
-function clearBoard(){ for(const el of els.values()) el.remove(); els.clear(); S.tiles=[]; S.walls=[]; }
+function clearBoard(){ for(const el of els.values()) el.remove(); els.clear(); S.tiles=[]; S.walls=[]; S.edges=[]; }
 
 function morning(resume=false){
   clearBoard(); S.phase='map'; S.isFiscal=false;
@@ -578,8 +615,7 @@ function nodeInfo(k){
 function choosePath(k){
   const p=PATHS[k]; S.path=p; S.hist[S.day]=k;
   if(p.mine) return startDay(p);
-  if(k==='mercador') return showMerchant();
-  if(k==='fogueira'){ S.bonus+=20; SFX.comprar(); toast('🔥 Você descansou na fogueira: +20 de energia no próximo dia de mina.', nextDay); }
+  if(k==='fogueira'){ S.bonus+=20; SFX.comprar(); toast('🔥 Você descansou na fogueira: +20 de energia no próximo dia de mina.', ()=>openShop(nextDay)); }
 }
 
 function nextDay(){
@@ -598,16 +634,23 @@ function startDay(p, tutorial=false){
   clearBoard(); show('scrGame');
   S.path=p; S.phase='mine'; trilha(S.isFiscal?'fiscal':'mina'); S.tired=0; S.next=rollSpawn();
   const base = fiscalHoje('apressado') ? 25 : CFG.energy + (p.energy||0);
-  S.energy = tutorial ? 10 : base + 8*lvl('folego') + S.saved + S.bonus;
+  const am = S.amanha||{}; S.amanha={}; S.pa = am.pa ? 3 : 0;
+  S.energy = tutorial ? 10 : base + 5*(S.up.folego||0) + S.saved + S.bonus + (am.cafe?10:0);
   S.energyMax = S.energy; humor(); S.usedSaved = tutorial ? 0 : S.saved+S.bonus; S.saved=0; S.bonus=0;
   if(p.narrow){ for(let y=0;y<N;y++) S.walls.push({x:3,y}); for(let x=0;x<3;x++) S.walls.push({x,y:3}); }
   if(p.walls){ const cells=shuffle([...Array(16).keys()].map(i=>({x:i%4,y:i/4|0}))); S.walls.push(...cells.slice(0,p.walls)); }
   S.walls.forEach((w,i)=>w.id='w'+i);
+  if(p.edges){
+    const all=[]; for(let y=0;y<N;y++) for(let x=0;x<N-1;x++) all.push({d:'v',x,y}); for(let y=0;y<N-1;y++) for(let x=0;x<N;x++) all.push({d:'h',x,y});
+    S.edges = shuffle(all.filter(e=>!wallAt(e.x,e.y) && !(e.d==='v'?wallAt(e.x+1,e.y):wallAt(e.x,e.y+1)))).slice(0,p.edges);
+    S.edges.forEach((e,i)=>e.id='e'+i);
+  }
   if(tutorial){
     S.tiles.push({id:'t'+(nextId++),x:0,y:1,t:1},{id:'t'+(nextId++),x:3,y:1,t:1}); S.next=1;
   } else {
     for(let i=0;i<(p.clods||0);i++) addTile(0);
     if(S.gift){ addTile(5); S.gift=false; }
+    if(am.sorte) addTile(3);
     addTile(); addTile();
   }
   $('#mineRow').style.display=''; $('#revealRow').style.display='none';
@@ -617,7 +660,7 @@ function startDay(p, tutorial=false){
   if(tutorial) coach('Arraste o dedo <b>para o lado</b> para juntar as duas pedrinhas iguais. ↔', null, null, '#board');
 }
 
-function rollSpawn(){ return Math.random() < CFG.pedraChance + .25*lvl('picareta') + (S.path?.pedra||0) ? 2 : 1; }
+function rollSpawn(){ return Math.random() < CFG.pedraChance + .12*(S.up?.picareta||0) + (S.path?.pedra||0) ? 2 : 1; }
 function emptyCells(){ const out=[]; for(let y=0;y<N;y++) for(let x=0;x<N;x++) if(!tileAt(x,y) && !wallAt(x,y)) out.push({x,y}); return out; }
 function addTile(t, dir){
   let free=emptyCells(); if(!free.length) return;
@@ -641,7 +684,7 @@ function slideOne(tiles,dx,dy){
   let moved=false; const merges=[], gone=[];
   for(const y of ys) for(const x of xs){
     const t=grid[y][x]; if(!t||t.wall) continue;
-    const nx=x+dx, ny=y+dy; if(!inside(nx,ny)) continue;
+    const nx=x+dx, ny=y+dy; if(!inside(nx,ny) || edgeBetween(x,y,nx,ny)) continue;
     const o=grid[ny][nx];
     if(!o){ grid[y][x]=null; grid[ny][nx]=t; t.x=nx; t.y=ny; moved=true; }
     else if(!o.wall && !o.m && o.t===t.t && t.t>0){ grid[y][x]=null; o.t++; o.m=true; t.x=nx; t.y=ny; gone.push(t); merges.push(o); moved=true; }
@@ -661,7 +704,7 @@ function slide(tiles,dx,dy){
     const t=grid[y][x]; if(!t||t.wall) continue;
     let cx=x, cy=y, merged=false;
     while(true){
-      const nx=cx+dx, ny=cy+dy; if(!inside(nx,ny)) break;
+      const nx=cx+dx, ny=cy+dy; if(!inside(nx,ny) || edgeBetween(cx,cy,nx,ny)) break;
       const o=grid[ny][nx];
       if(!o){ grid[cy][cx]=null; grid[ny][nx]=t; cx=nx; cy=ny; continue; }
       if(!o.wall && !o.m && o.t===t.t && t.t>0){ grid[cy][cx]=null; o.t++; o.m=true; t.x=nx; t.y=ny; gone.push(t); merges.push(o); merged=true; }
@@ -701,10 +744,8 @@ function move(dx,dy){
     S.tut=2;
     const nova = els.get(r.merges[0].id);
     setTimeout(()=>coach('Juntou! Duas pedrinhas iguais viram <b>esta, maior</b>. Cascalho, Pedra, Rocha, Geodo... Quanto maior, melhor o que ela guarda dentro.', 'Entendi', ()=>{
-      coach('Cada arrasto gasta <b>1 de energia</b>. A sua energia fica aqui.', 'Entendi', ()=>{
-        coach('Esta é a <b>próxima pedrinha</b> que vai entrar no tabuleiro. Agora continue juntando até a energia acabar!', 'Bora', ()=>{
-          S.tut=3; coach('Continue juntando pedrinhas iguais.', null, null, pillOf('#hEnergy'));
-        }, '#nextMini');
+      coach('Cada arrasto gasta <b>1 de energia</b>. A sua energia fica aqui. Continue juntando até ela acabar!', 'Bora', ()=>{
+        S.tut=3; coach('Continue juntando pedrinhas iguais.', null, null, pillOf('#hEnergy'));
       }, pillOf('#hEnergy'));
     }, nova), 350);
   } else if(S.tut===3 && S.energy<=0){
@@ -716,10 +757,10 @@ function move(dx,dy){
 // ===================== FIM DO DIA: CUSPE + EQUIPAMENTO =====================
 function roll(t){
   const once=()=>{ const tb=DROPS[Math.min(t,8)]; let r=Math.random()*100; for(let i=0;i<tb.length;i++){ if((r-=tb[i])<0) return i; } return 0; };
-  let b=once(); for(let i=0;i<lvl('martelo');i++) b=Math.max(b,once()); return b;
+  let b=once(); for(let i=0;i<(S.up.martelo||0);i++) b=Math.max(b,once()); return b;
 }
 function tag(t, text, cls){ const el=els.get(t.id); if(!el) return; const p=document.createElement('span'); p.className='price '+cls; p.textContent=text; el.appendChild(p); }
-const adjWall = t => DIRS.some(([dx,dy])=>wallAt(t.x+dx,t.y+dy));
+const adjWall = t => DIRS.some(([dx,dy])=>wallAt(t.x+dx,t.y+dy) || edgeBetween(t.x,t.y,t.x+dx,t.y+dy));
 const adjBig = t => DIRS.some(([dx,dy])=>{ const o=tileAt(t.x+dx,t.y+dy); return o && o.t>=3; });
 const fmtMult = m => '×'+(Math.round(m*100)/100).toString().replace('.',',');
 
@@ -766,6 +807,7 @@ async function endDay(){
       face.classList.add('wob'); await sleep(200);
       face.classList.remove('wob'); face.classList.add('crumble'); SFX.esfarelar(); S.clods++;
       if(has('adubo') && adjBig(t)){ const v=lvl('adubo')*S.week; S.gain+=v; tag(t,'+$'+v,''); fire('adubo','+$'+v); }
+      else if(S.pa>0){ S.pa--; tag(t,'pá','zero'); }
       else { S.cost+=custo; tag(t,`-$${custo}`,'neg'); }
       showCalc(); countTo(Math.round(S.gain*S.mult)-S.cost); await sleep(220);
       continue;
@@ -781,12 +823,12 @@ async function endDay(){
     if(fiscalHoje('miope') && t.t<=2) o=0;
     t.ore=o; S.found.push(o);
     const ore=ORES[o];
-    let val=ore.p;
+    let val=Math.round(ore.p*(1+.15*(S.up.balanca||0)));
     if(has('rochedo') && (t.t===3||t.t===4) && val>0){ val*=1+lvl('rochedo'); fire('rochedo','×'+(1+lvl('rochedo')),true); }
     if(has('lupa') && t===maior && val>0){ val*=1+lvl('lupa'); fire('lupa','×'+(1+lvl('lupa')),true); }
     if(o>0) cuspiram++;
     const body=`<g transform="translate(36 66) scale(.72) translate(-50 -58)">${pedraInner(t.t,o?{face:['happy','open']}:{face:['dot','wavy'],sweat:true})}</g>`;
-    const spat=`<g class="spat">${o?gemSvg(70,34,ore.c,1.25):clodSvg(70,36,1.15)}</g>`;
+    const spat=`<g class="spat">${oreSvg(o,70,34,1.25)}</g>`;
     face.innerHTML=svgOf(body+spat);
     SFX.cuspe();
     S.gain+=val; showCalc(); countTo(Math.round(S.gain*S.mult)-S.cost);
@@ -803,7 +845,9 @@ async function endDay(){
   const bonus = [];
   if(has('vaquinha') && cuspiram) bonus.push(['vaquinha', cuspiram*lvl('vaquinha')]);
   if(has('horaextra') && S.tired) bonus.push(['horaextra', S.tired*lvl('horaextra')]);
-  if(has('musgo')){ const n=S.walls.filter(w=>DIRS.some(([dx,dy])=>{ const o=tileAt(w.x+dx,w.y+dy); return o && o.t>0; })).length; if(n) bonus.push(['musgo', 2*n*lvl('musgo')*S.week]); }
+  if(has('musgo')){ const occ=(x,y)=>{ const o=tileAt(x,y); return o && o.t>0; };
+    const n=S.walls.filter(w=>DIRS.some(([dx,dy])=>occ(w.x+dx,w.y+dy))).length + S.edges.filter(e=>occ(e.x,e.y)||(e.d==='v'?occ(e.x+1,e.y):occ(e.x,e.y+1))).length;
+    if(n) bonus.push(['musgo', 2*n*lvl('musgo')*S.week]); }
   if(has('cascalheira')){ const n=S.tiles.filter(t=>t.t===1).length; if(n) bonus.push(['cascalheira', n*lvl('cascalheira')*S.week]); }
   if(has('pedreira')){ const n=S.tiles.filter(t=>t.t===2).length; if(n) bonus.push(['pedreira', 2*n*lvl('pedreira')*S.week]); }
   for(const [id,v] of bonus){ await sleep(380); S.gain+=v; fire(id,'+$'+v); showCalc(); countTo(Math.round(S.gain*S.mult)-S.cost); }
@@ -841,7 +885,7 @@ function sell(){
   if(S.dayTotal>0) SFX.venda(); else SFX.esfarelar();
   if(S.isFiscal) return weekEnd();
   if(S.tut===5){ S.tut=6; coach('Depois de minerar você leva <b>um item</b>. Itens fazem as pedrinhas renderem muito mais. Escolha um!', null, null, 'top'); }
-  itemPick(S.path.picks||3, ()=>{ if(S.tut===6) hideCoach(); nextDay(); }, 'Escolha um item');
+  itemPick(S.path.picks||3, ()=>openShop(nextDay), 'Escolha um item');
 }
 
 // ===================== ITENS =====================
@@ -856,6 +900,34 @@ function itemPick(n, then, title){
     ${S.tut?'':`<button class="btn dim" id="btnPass">Pular (+$${pularItem()})</button>`}`);
   document.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{ S.lv[b.dataset.pick]=lvl(b.dataset.pick)+1; SFX.comprar(); hideOverlay(); renderItems(); then(); });
   if(!S.tut) $('#btnPass').onclick=()=>{ S.money+=pularItem(); hideOverlay(); render(); then(); };
+}
+let shopItens=[];
+function openShop(then, first=true){
+  if(first){ shopItens = shuffle(ITEMS.filter(i=>lvl(i.id)<CFG.maxNivel)).slice(0,2).map(i=>i.id); trilha('mercador'); }
+  const esc=escalaPreco(), am=S.amanha||(S.amanha={});
+  const preco = n => Math.max(1,Math.round(n*esc));
+  const row = (attrs, em, nome, desc, pr, off, extra='') => `<button class="card" ${attrs} ${off?'disabled':''}><span class="em">${em}</span><div><b>${nome}</b><span>${desc}</span>${extra}</div><span class="pr">${pr}</span></button>`;
+  const ups = UPGRADES.map(u=>{ const l=S.up[u.id]||0, max=u.max&&l>=u.max, pr=preco(u.preco(l));
+    return row(`data-up="${u.id}"`, u.em, `${u.nome}${l?` <small class="nv">nível ${l}</small>`:''}`, u.desc(l+1), max?'máx':'$'+pr, max||S.money<pr); }).join('');
+  const cons = CONSUMIVEIS.map(c=>{ const pr=preco(c.preco), tem=am[c.id];
+    return row(`data-con="${c.id}"`, c.em, noIco(c.nome), c.desc, tem?'ok!':'$'+pr, tem||S.money<pr); }).join('');
+  const its = shopItens.filter(id=>lvl(id)<CFG.maxNivel).map(item).map(i=>{ const pr=precoItem(i,lvl(i.id));
+    return `<button class="card" data-buy="${i.id}" ${S.money<pr?'disabled':''}>${itemCard(i,`<span class="pr">$${pr}</span>`,lvl(i.id)+1)}</button>`; }).join('');
+  const renovar = preco(3);
+  showOverlay(`<div class="bigEm">🏪</div><h2>Lojinha</h2>
+    <p>Você tem <b style="color:#c48a1e">$${S.money}</b> · cota: <b style="color:#c0603f">$${CFG.quota(S.week)}</b> no dia ${CFG.days}</p>
+    <h3>Melhorias (para sempre)</h3><div class="cards">${ups}</div>
+    <h3>Para o próximo dia</h3><div class="cards">${cons}</div>
+    <h3>Itens</h3><div class="cards">${its||'<p>Sem itens agora.</p>'}</div>
+    <button class="btn dim" id="btnReroll" ${S.money<renovar?'disabled':''}>Renovar itens ($${renovar})</button>
+    <button class="btn b" id="btnLeave">Seguir</button>`);
+  const again = () => { SFX.comprar(); render(); renderItems(); openShop(then,false); };
+  document.querySelectorAll('[data-up]').forEach(b=>b.onclick=()=>{ const u=UPGRADES.find(x=>x.id===b.dataset.up), l=S.up[u.id]||0, pr=preco(u.preco(l)); if(S.money<pr) return; S.money-=pr; S.up[u.id]=l+1; again(); });
+  document.querySelectorAll('[data-con]').forEach(b=>b.onclick=()=>{ const c=CONSUMIVEIS.find(x=>x.id===b.dataset.con), pr=preco(c.preco); if(S.money<pr) return; S.money-=pr; am[c.id]=1; again(); });
+  document.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>{ const i=item(b.dataset.buy), pr=precoItem(i,lvl(i.id)); if(S.money<pr) return; S.money-=pr; S.lv[i.id]=lvl(i.id)+1; again(); });
+  $('#btnReroll').onclick=()=>{ if(S.money<renovar) return; S.money-=renovar; shopItens = shuffle(ITEMS.filter(i=>lvl(i.id)<CFG.maxNivel)).slice(0,2).map(i=>i.id); again(); };
+  $('#btnLeave').onclick=()=>{ hideOverlay(); if(S.tut===6) hideCoach(); then(); };
+  if(S.tut===6 && first) coach('Depois de cada lugar abre a <b>lojinha</b>: melhorias para sempre, coisas para o próximo dia e itens. Compre o que der e toque em <b>Seguir</b>.', null, null, 'top');
 }
 let shopStock=[];
 function showMerchant(first=true){
@@ -1003,6 +1075,9 @@ function render(){
   for(const w of S.walls){
     if(!els.has(w.id)){ const el=document.createElement('div'); el.className='tile'; el.style.transform=pos(w.x,w.y); el.innerHTML=`<div class="face">${svgOf(wallInner())}</div>`; board.appendChild(el); els.set(w.id,el); }
   }
+  for(const e of (S.edges||[])){
+    if(!els.has(e.id)){ const el=document.createElement('div'); el.className='edge '+e.d; el.style.setProperty('--ex',e.x); el.style.setProperty('--ey',e.y); board.appendChild(el); els.set(e.id,el); }
+  }
   for(const t of S.tiles){
     let el=els.get(t.id);
     if(!el){
@@ -1027,8 +1102,6 @@ function render(){
   $('#hEnergy').textContent=S.phase==='map' ? (S.saved+S.bonus?'+'+(S.saved+S.bonus):'·') : S.energy;
   $('#hEnergyMax').textContent=S.phase==='map' ? (S.saved+S.bonus?'guardada':'energia') : S.energy>0?`de ${S.energyMax}`:'exausta!';
   $('#enIc').classList.toggle('zero',S.phase==='mine'&&S.energy<=0);
-  const nt=S.energy<=1?0:S.next;
-  $('#nextMini').innerHTML=S.phase==='mine'?svgOf(nt===0?torraoInner():pedraInner(nt)):'';
   renderItems();
 }
 
