@@ -4,51 +4,36 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#15121c">
-<title>Um Passo (protótipo)</title>
+<title>Um Passo (nível teste)</title>
 <style>
-:root{--cell:min(16.5vw,84px);--gap:min(1.6vw,8px)}
+:root{--n:5;--cell:min(calc(94vw / var(--n) - 2vw),84px);--gap:min(1.6vw,8px)}
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%;background:#15121c;color:#eee;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none;overscroll-behavior:none}
 #app{display:flex;flex-direction:column;align-items:center;gap:12px;padding:14px 8px}
-.wide{width:calc(5*var(--cell) + 6*var(--gap))}
+.wide{width:calc(var(--n)*var(--cell) + (var(--n) + 1)*var(--gap))}
 .hud{display:flex;gap:6px}
 .stat{background:#231e2e;border-radius:10px;padding:6px 4px;text-align:center;flex:1;min-width:0}
 .stat b{display:block;font-size:19px;white-space:nowrap}
 .stat small{opacity:.55;font-size:10px;text-transform:uppercase;letter-spacing:.06em}
-#hp{color:#ff5d7a;font-size:16px;letter-spacing:1px}
-.mini{display:inline-flex;width:26px;height:26px;border-radius:6px;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;vertical-align:middle}
-.mini.chaser{border-radius:50%;outline:2px dashed #ff4d6d}
-#board{position:relative;height:calc(5*var(--cell) + 6*var(--gap));background:#1d1826;border-radius:16px;box-shadow:inset 0 0 0 2px #2e2740}
-body.hurt #board{animation:hurtflash .35s}
-@keyframes hurtflash{0%{box-shadow:inset 0 0 0 4px #ff4d6d,0 0 34px #ff4d6d90}100%{box-shadow:inset 0 0 0 2px #2e2740}}
+.mini{display:inline-flex;min-width:26px;height:26px;padding:0 4px;border-radius:6px;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;vertical-align:middle}
+#board{position:relative;height:calc(var(--n)*var(--cell) + (var(--n) + 1)*var(--gap));background:#1d1826;border-radius:16px;box-shadow:inset 0 0 0 2px #2e2740}
 .cell-bg{position:absolute;left:0;top:0;width:var(--cell);height:var(--cell);border-radius:12px;background:#28213a}
 .tile{position:absolute;left:0;top:0;width:var(--cell);height:var(--cell);transition:transform .13s ease-out}
-.face{position:relative;width:100%;height:100%;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:calc(var(--cell)*.44);background:var(--c,#555);color:#fff;text-shadow:0 2px 0 #0004;box-shadow:0 4px 0 #0005}
+.face{position:relative;width:100%;height:100%;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:calc(var(--cell)*var(--fs,.44));background:var(--c,#555);color:#fff;text-shadow:0 2px 0 #0004;box-shadow:0 4px 0 #0005}
 .face.low{opacity:.45;filter:saturate(.5)}
 .face.eq{box-shadow:0 4px 0 #0005,0 0 0 3px #ffffffdd}
 .face.high::after{content:'▲';position:absolute;top:2px;right:7px;font-size:calc(var(--cell)*.17);color:#ff4d6d;text-shadow:none}
-.face.chaser{border-radius:50%}
-.face.chaser::before{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px dashed #ff4d6d99}
-.face.chaser.ready::before{border:3px solid #ff4d6d;animation:pulse .5s infinite alternate}
-@keyframes pulse{to{transform:scale(1.08);opacity:.4}}
 .face.player{background:#fff3d6;color:#2a1f2f;text-shadow:none;box-shadow:0 4px 0 #0005,0 0 0 4px #ffcf4a}
 .face.player::before{content:'★';position:absolute;top:1px;font-size:calc(var(--cell)*.16);color:#d49a00}
-.face.stairs{background:#0d0b12;color:#ffcf4a;box-shadow:inset 0 0 0 3px #ffcf4a;animation:glow .8s infinite alternate}
-@keyframes glow{to{box-shadow:inset 0 0 0 3px #ffcf4a,0 0 18px #ffcf4a}}
 .spawn{animation:spawn .18s ease-out}
 @keyframes spawn{from{transform:scale(0)}to{transform:scale(1)}}
 .pop{animation:pop .22s ease-out}
 @keyframes pop{50%{transform:scale(1.25)}}
 .bump{animation:bump .16s ease-out}
-@keyframes bump{50%{transform:translate(calc(var(--dx)*12px),calc(var(--dy)*12px))}}
-.hit{animation:hit .25s}
-@keyframes hit{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@keyframes bump{50%{transform:translate(calc(var(--dx)*10px),calc(var(--dy)*10px))}}
 .die{animation:die .16s forwards}
 @keyframes die{to{transform:scale(0);opacity:0}}
 #msg{min-height:22px;text-align:center;font-size:15px;opacity:.85}
-#clock{text-align:center;font-size:13px;color:#ffb36b}
-#clock.soon{color:#ff4d6d;font-weight:700}
-#perks{text-align:center;font-size:12px;opacity:.6;min-height:16px}
 .btns{display:flex;gap:8px;justify-content:center}
 button{font:inherit;color:#eee;background:#2c2639;border:0;border-radius:10px;padding:8px 14px;cursor:pointer}
 button:active{transform:scale(.97)}
@@ -57,24 +42,19 @@ button:active{transform:scale(.97)}
 .box{background:#231e2e;border-radius:16px;padding:18px;max-width:380px;width:100%;max-height:90vh;overflow:auto}
 .box h2{margin:0 0 8px}
 .box ul{padding-left:18px;line-height:1.45;font-size:14px}
-.perk{display:block;width:100%;text-align:left;margin:8px 0;padding:12px;background:#2f2842}
-.perk span{display:block;font-size:13px;opacity:.75;margin-top:3px}
 .primary{background:#ffcf4a;color:#2a1f2f;font-weight:700;width:100%;margin-top:8px}
 </style>
 </head>
 <body>
 <div id="app">
   <div class="hud wide">
-    <div class="stat"><small>Andar</small><b id="floor">1</b></div>
-    <div class="stat"><small>Nível</small><b><span id="lvl">1</span><span style="opacity:.45;font-size:14px"> /<span id="goal">4</span></span></b></div>
-    <div class="stat"><small>Vida</small><b id="hp"></b></div>
-    <div class="stat"><small>Ouro</small><b id="gold">0</b></div>
+    <div class="stat"><small>Você</small><b id="you">1</b></div>
+    <div class="stat"><small>Meta</small><b id="goal"></b></div>
+    <div class="stat"><small>Jogadas</small><b id="moves">0</b></div>
     <div class="stat"><small>Próximo</small><b id="next"></b></div>
   </div>
   <div id="board" class="wide"></div>
-  <div id="clock" class="wide"></div>
   <div id="msg" class="wide"></div>
-  <div id="perks" class="wide"></div>
   <div class="btns">
     <button id="btnRules">? Regras</button>
     <button id="btnRestart">↻ Recomeçar</button>
@@ -83,47 +63,30 @@ button:active{transform:scale(.97)}
 <div id="overlay" class="hidden"><div class="box" id="box"></div></div>
 
 <script>
-// ================== CONFIG (alavancas de design) ==================
+// ================== CONFIG ==================
 const CFG = {
-  N: 5,                       // tamanho do tabuleiro
-  startHp: 3,
-  maxHpCap: 6,
-  goalSteps: f => 2 + Math.floor((f-1)/2), // quantos níveis subir no andar f: 2,2,3,3,4,4...
-  chaserPeriod: 2,            // caçadores agem a cada N turnos
-  chaserChance: f => f <= 1 ? 0 : Math.min(.15 + .07*f, .45),
-  cap: f => 8 + f,            // máx. de monstros no tabuleiro
-  spawnTable: v => [[v-2,1],[v-1,3],[v,4],[v+1,2],[v+2,1]], // [valor, peso]
-  voracidade: 4,              // perk Voraz: N abates de menores = +1 nível
-  growEvery: 10,              // a cada N turnos no andar, todos os monstros crescem +1
+  N: 5,          // tamanho do tabuleiro
+  goal: 64,      // valor para vencer o nível
+  start: 1,      // seu valor inicial
+  initial: 7,    // monstros no começo
+  // o que nasce, em relação ao seu valor v: [valor, peso]
+  spawnTable: v => [[v/4,1],[v/2,3],[v,4],[v*2,2],[v*4,1]],
 };
 
-const PERKS = [
-  {id:'coracao', nome:'Coração extra', desc:'+1 de vida máxima e cura 1.', stack:true, when:()=>S.p.maxHp<CFG.maxHpCap, apply(){S.p.maxHp++; S.p.hp=Math.min(S.p.maxHp,S.p.hp+1);}},
-  {id:'cura', nome:'Fôlego', desc:'Recupera toda a vida.', stack:true, when:()=>S.p.hp<S.p.maxHp, apply(){S.p.hp=S.p.maxHp;}},
-  {id:'espinhos', nome:'Espinhos', desc:'Quando você bate num monstro maior, ele perde 1 nível.'},
-  {id:'empurrao', nome:'Empurrão', desc:'Bater num monstro maior empurra ele uma casa, se houver espaço.'},
-  {id:'voraz', nome:'Voraz', desc:`A cada ${CFG.voracidade} monstros menores derrotados, você sobe 1 nível.`},
-  {id:'calma', nome:'Passos pesados', desc:'Caçadores agem a cada 3 turnos em vez de 2.'},
-];
-
 const COLORS=['#5aa9e6','#3fb8af','#7cc36b','#e0b43a','#ed8a63','#e85d75','#c86cd8','#8a6ce0','#5b7be0','#2c9fc9','#d9534f','#8e44ad'];
-const color = v => COLORS[(v-1) % COLORS.length];
+const color = v => COLORS[Math.round(Math.log2(v)) % COLORS.length];
 
 // ================== ESTADO ==================
 const N = CFG.N;
+document.documentElement.style.setProperty('--n', N);
 const $ = s => document.querySelector(s);
 const board = $('#board');
 const els = new Map();
 let S, nextId = 1;
 const rnd = n => Math.floor(Math.random()*n);
 const pick = a => a[rnd(a.length)];
-const shuffle = a => a.map(v=>[Math.random(),v]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);
-const dist = (a,b) => Math.abs(a.x-b.x)+Math.abs(a.y-b.y);
 const inside = (x,y) => x>=0 && y>=0 && x<N && y<N;
 const pos = (x,y) => `translate(calc(${x}*(var(--cell) + var(--gap)) + var(--gap)), calc(${y}*(var(--cell) + var(--gap)) + var(--gap)))`;
-const monAt = (x,y) => S.mons.find(m=>m.x===x && m.y===y);
-const isStairs = (x,y) => S.stairs && S.stairs.x===x && S.stairs.y===y;
-const occupied = (x,y) => (S.p.x===x && S.p.y===y) || monAt(x,y) || isStairs(x,y);
 
 for(let y=0;y<N;y++) for(let x=0;x<N;x++){
   const c=document.createElement('div'); c.className='cell-bg'; c.style.transform=pos(x,y); board.appendChild(c);
@@ -132,200 +95,121 @@ for(let y=0;y<N;y++) for(let x=0;x<N;x++){
 function newGame(){
   for(const el of els.values()) el.remove();
   els.clear();
-  S = {floor:1, turn:0, gold:0, kills:0, merges:0, xp:0, over:false, busy:false,
-       p:{x:2,y:2,v:1,hp:CFG.startHp,maxHp:CFG.startHp}, mons:[], stairs:null, perks:{}, next:null, goal:0};
-  startFloor();
-}
-
-function startFloor(){
-  for(const [id,el] of els) if(id!=='p'){ el.remove(); els.delete(id); }
-  S.mons=[]; S.stairs=null; S.floorTurn=0;
-  S.p.x=Math.floor(N/2); S.p.y=Math.floor(N/2);
-  S.goal = S.p.v + CFG.goalSteps(S.floor);
-  const count = 5 + Math.min(S.floor,4);
-  for(let i=0;i<2;i++) spawnMonster({v:S.p.v, kind:'static'});
-  for(let i=2;i<count;i++) spawnMonster(rollSpawn());
+  const mid = Math.floor(N/2);
+  S = {p:{id:'p', x:mid, y:mid, v:CFG.start}, mons:[], next:null, moves:0, over:false};
+  // começa com pelo menos 2 do seu tamanho
+  for(let i=0;i<CFG.initial;i++){
+    const free = emptyCells(); if(!free.length) break;
+    const c = pick(free);
+    S.mons.push({id:'m'+(nextId++), x:c.x, y:c.y, v: i<2 ? S.p.v : rollSpawn().v});
+  }
   S.next = rollSpawn();
-  msg(`Andar ${S.floor}: chegue ao nível ${S.goal} para abrir a escada.`);
+  msg('Arraste: tudo no tabuleiro anda uma casa.');
   render();
 }
 
-function rollSpawn(){
-  const table = CFG.spawnTable(S.p.v).filter(([v])=>v>=1);
-  let r = Math.random()*table.reduce((a,b)=>a+b[1],0), val = S.p.v;
-  for(const [v,w] of table){ if((r-=w)<0){ val=v; break; } }
-  return {v:val, kind: Math.random()<CFG.chaserChance(S.floor) ? 'chaser' : 'static'};
-}
-
-function empties(minDist){
+function emptyCells(){
   const out=[];
-  for(let y=0;y<N;y++) for(let x=0;x<N;x++)
-    if(!occupied(x,y) && dist({x,y},S.p)>=minDist) out.push({x,y});
+  for(let y=0;y<N;y++) for(let x=0;x<N;x++) if(!entAt(S.p,S.mons,x,y)) out.push({x,y});
   return out;
 }
 
-function spawnMonster(spec){
-  let c = empties(2); if(!c.length) c = empties(1); if(!c.length) return false;
-  const cell = pick(c);
-  S.mons.push({id:'m'+(nextId++), x:cell.x, y:cell.y, v:spec.v, kind:spec.kind, cd:CFG.chaserPeriod});
-  return true;
+function rollSpawn(){
+  const table = CFG.spawnTable(S.p.v).filter(([v])=>v>=1 && Number.isInteger(v));
+  let r = Math.random()*table.reduce((a,b)=>a+b[1],0);
+  for(const [v,w] of table){ if((r-=w)<0) return {v}; }
+  return {v:S.p.v};
 }
 
-// ================== TURNO ==================
+function entAt(p,mons,x,y){
+  if(p.x===x && p.y===y) return p;
+  return mons.find(m=>!m.dead && m.x===x && m.y===y);
+}
+
+// ================== REGRA DO MOVIMENTO ==================
+// Tudo anda uma casa na direção do arrasto. Quem está mais à frente anda primeiro,
+// então uma fila inteira desliza junta se houver espaço na ponta.
+// Você x monstro (quando um entra no outro):
+//   igual  -> some e você DOBRA
+//   menor  -> some
+//   maior  -> bloqueia
+// Monstro x monstro: bloqueia.
+function simulate(dx,dy){
+  const p = {...S.p};
+  const mons = S.mons.map(m=>({...m}));
+  const ents = [p, ...mons].sort((a,b)=>(b.x*dx+b.y*dy)-(a.x*dx+a.y*dy));
+  const ev = {changed:false, merged:false, eaten:[], blocked:false};
+  for(const e of ents){
+    if(e.dead) continue;
+    const nx=e.x+dx, ny=e.y+dy;
+    if(!inside(nx,ny)) continue;
+    const t = entAt(p,mons,nx,ny);
+    if(!t){ e.x=nx; e.y=ny; ev.changed=true; continue; }
+    const isP = e===p, tIsP = t===p;
+    if(!isP && !tIsP) continue;           // monstro x monstro
+    const mo = isP ? t : e;
+    if(mo.v > p.v){ if(isP) ev.blocked=true; continue; }
+    if(mo.v === p.v){ p.v *= 2; ev.merged=true; }
+    mo.dead = true; ev.eaten.push(mo.id);
+    if(isP){ p.x=nx; p.y=ny; }
+    ev.changed = true;
+  }
+  return {p, mons:mons.filter(m=>!m.dead), ev};
+}
+
 function move(dx,dy){
-  if(S.busy || S.over) return;
-  const p=S.p, nx=p.x+dx, ny=p.y+dy;
-  if(!inside(nx,ny)){ anim('p','bump',dx,dy); return; } // parede: não gasta turno
+  if(S.over || !$('#overlay').classList.contains('hidden')) return;
+  const r = simulate(dx,dy);
+  if(!r.ev.changed){ anim('p','bump',dx,dy); return; }
 
-  if(isStairs(nx,ny)){
-    p.x=nx; p.y=ny; S.busy=true; render();
-    setTimeout(floorCleared, 260);
-    return;
-  }
+  for(const id of r.ev.eaten) killEl(id);
+  S.p = r.p; S.mons = r.mons; S.moves++;
 
-  const m = monAt(nx,ny);
-  if(!m){ p.x=nx; p.y=ny; }
-  else if(m.v===p.v){
-    kill(m); p.v++; S.merges++; S.gold+=m.v; p.x=nx; p.y=ny;
-    anim('p','pop'); msg(`Absorveu um ${m.v}! Agora você é ${p.v}.`);
+  // nasce um monstro na borda oposta ao arrasto
+  const edge = emptyCells().filter(c => dx===1 ? c.x===0 : dx===-1 ? c.x===N-1 : dy===1 ? c.y===0 : c.y===N-1);
+  if(edge.length){
+    const c = pick(edge);
+    S.mons.push({id:'m'+(nextId++), x:c.x, y:c.y, v:S.next.v});
+    S.next = rollSpawn();
   }
-  else if(m.v<p.v){
-    kill(m); S.gold+=m.v; S.kills++; p.x=nx; p.y=ny;
-    msg(`Derrotou um ${m.v} (+${m.v} ouro).`);
-    if(S.perks.voraz && ++S.xp>=CFG.voracidade){ S.xp=0; p.v++; anim('p','pop'); msg(`Voraz! Subiu para ${p.v}.`); }
-  }
-  else {
-    hurt(`Um ${m.v} é forte demais para você!`);
-    anim('p','bump',dx,dy);
-    if(S.perks.espinhos){ m.v--; anim(m.id,'pop'); }
-    if(S.perks.empurrao){
-      const bx=m.x+dx, by=m.y+dy;
-      if(inside(bx,by) && !occupied(bx,by)){ m.x=bx; m.y=by; }
-    }
-  }
-  endTurn();
-}
+  // nunca deixa faltar alguém do seu tamanho
+  if(!S.mons.some(m=>m.v===S.p.v)) S.next = {v:S.p.v};
 
-function endTurn(){
-  S.turn++;
-  const p=S.p;
-  if(!S.stairs && p.v>=S.goal) placeStairs();
-
-  const period = S.perks.calma ? 3 : CFG.chaserPeriod;
-  for(const m of S.mons){
-    if(m.kind!=='chaser') continue;
-    if(--m.cd > 0) continue;
-    m.cd = period;
-    if(dist(m,p)===1){
-      if(m.v>p.v){ anim(m.id,'bump',Math.sign(p.x-m.x),Math.sign(p.y-m.y)); hurt(`Um caçador ${m.v} te atacou!`); }
-      continue;
-    }
-    stepToward(m);
-  }
-
-  S.floorTurn++;
-  if(S.floorTurn % CFG.growEvery === 0){
-    for(const m of S.mons){ m.v++; anim(m.id,'pop'); }
-    msg('Os monstros cresceram! (+1 em todos)');
-  }
-
-  // nasce se houver vaga, ou sempre que o próximo for do seu tamanho (evita tabuleiro travado)
-  if(S.mons.length < CFG.cap(S.floor) || S.next.v===p.v){
-    if(spawnMonster(S.next)) S.next = rollSpawn();
-  }
-  // garante que sempre vai existir algo do seu tamanho pra absorver
-  if(!S.mons.some(m=>m.v===p.v)) S.next = {v:p.v, kind:'static'};
+  if(r.ev.merged){ anim('p','pop'); msg(`Dobrou! Agora você é ${S.p.v}.`); }
+  else if(r.ev.eaten.length) msg('Derrotou um menor.');
+  else if(r.ev.blocked) msg('Um maior te bloqueou.');
+  else msg('');
 
   render();
-  if(p.hp<=0) gameOver();
+  if(S.p.v >= CFG.goal) return end(true);
+  if(![[0,1],[0,-1],[1,0],[-1,0]].some(([x,y])=>simulate(x,y).ev.changed)) end(false);
 }
 
-function stepToward(m){
-  const p=S.p, dx=Math.sign(p.x-m.x), dy=Math.sign(p.y-m.y);
-  const opts = Math.abs(p.x-m.x) >= Math.abs(p.y-m.y) ? [[dx,0],[0,dy]] : [[0,dy],[dx,0]];
-  for(const [ox,oy] of opts){
-    if(!ox && !oy) continue;
-    const nx=m.x+ox, ny=m.y+oy;
-    if(inside(nx,ny) && !occupied(nx,ny)){ m.x=nx; m.y=ny; return; }
-  }
-}
-
-function placeStairs(){
-  let c = empties(2); if(!c.length) c = empties(1);
-  if(!c.length){ const low=[...S.mons].sort((a,b)=>a.v-b.v)[0]; kill(low); c=[{x:low.x,y:low.y}]; }
-  S.stairs = pick(c);
-  msg('A escada ⇩ apareceu! Chegue nela para descer.');
-}
-
-function kill(m){
-  S.mons = S.mons.filter(x=>x!==m);
-  const el = els.get(m.id); els.delete(m.id);
-  if(el){ el.style.zIndex=0; el.firstChild.classList.add('die'); setTimeout(()=>el.remove(),170); }
-}
-
-function hurt(text){
-  S.p.hp--; msg(text);
-  anim('p','hit');
-  document.body.classList.remove('hurt'); void document.body.offsetWidth; document.body.classList.add('hurt');
-}
-
-function floorCleared(){
-  S.floor++;
-  const pool = PERKS.filter(k=>(k.stack || !S.perks[k.id]) && (!k.when || k.when()));
-  const choices = shuffle(pool).slice(0,3);
-  if(choices.length<3) choices.push({id:'tesouro', nome:'Tesouro', desc:`+${5*S.floor} de ouro.`, apply(){S.gold+=5*S.floor;}});
-  showOverlay(`<h2>Andar ${S.floor-1} concluído!</h2><p style="opacity:.7">Escolha uma bênção:</p>` +
-    choices.map((c,i)=>`<button class="perk" data-i="${i}"><b>${c.nome}</b><span>${c.desc}</span></button>`).join(''));
-  $('#box').querySelectorAll('.perk').forEach(b=>b.onclick=()=>{
-    const c = choices[+b.dataset.i];
-    S.perks[c.id] = (S.perks[c.id]||0)+1;
-    if(c.apply) c.apply();
-    hideOverlay(); S.busy=false; startFloor();
-  });
-}
-
-function gameOver(){
+function end(won){
   S.over = true;
-  const best = Math.max(+(localStorage.umpasso_best||0), S.floor);
-  localStorage.umpasso_best = best;
+  const key='umpasso_best_'+CFG.goal;
+  let best = +(localStorage[key]||0);
+  if(won && (!best || S.moves<best)){ best=S.moves; localStorage[key]=best; }
   setTimeout(()=>{
-    showOverlay(`<h2>Fim da linha</h2>
-      <ul><li>Andar alcançado: <b>${S.floor}</b> (recorde: ${best})</li>
-      <li>Nível final: <b>${S.p.v}</b></li><li>Ouro: ${S.gold}</li>
-      <li>Absorções: ${S.merges} · Abates: ${S.kills} · Turnos: ${S.turn}</li></ul>
-      <button class="primary" id="again">Jogar de novo</button>`);
+    showOverlay(won
+      ? `<h2>Você chegou a ${S.p.v}!</h2><p>Em <b>${S.moves}</b> jogadas${best?` (recorde: ${best})`:''}.</p><button class="primary" id="again">Jogar de novo</button>`
+      : `<h2>Travou</h2><p>Nenhum arrasto mexe mais o tabuleiro. Você chegou a <b>${S.p.v}</b> em ${S.moves} jogadas.</p><button class="primary" id="again">Tentar de novo</button>`);
     $('#again').onclick=()=>{ hideOverlay(); newGame(); };
-  }, 400);
+  }, 350);
 }
 
 // ================== DESENHO ==================
 function render(){
   const p=S.p;
   drawTile('p', p.x, p.y, p.v, 'player');
-  for(const m of S.mons){
-    let cls = 'mon ' + (m.v===p.v ? 'eq' : m.v<p.v ? 'low' : 'high');
-    if(m.kind==='chaser'){ cls += ' chaser'; if(m.cd===1) cls += ' ready'; }
-    drawTile(m.id, m.x, m.y, m.v, cls);
-  }
-  if(S.stairs) drawTile('s', S.stairs.x, S.stairs.y, '⇩', 'stairs');
-  else if(els.has('s')){ els.get('s').remove(); els.delete('s'); }
-
-  $('#floor').textContent = S.floor;
-  $('#lvl').textContent = p.v;
-  $('#goal').textContent = S.goal;
-  $('#gold').textContent = S.gold;
-  const left = CFG.growEvery - (S.floorTurn % CFG.growEvery);
-  $('#clock').textContent = left===1 ? 'Os monstros crescem no próximo turno!' : `Monstros crescem em ${left} turnos`;
-  $('#clock').classList.toggle('soon', left<=2);
-  $('#hp').textContent = '♥'.repeat(Math.max(0,p.hp)) + '♡'.repeat(Math.max(0,p.maxHp-p.hp));
-  const n=S.next;
-  $('#next').innerHTML = `<span class="mini ${n.kind==='chaser'?'chaser':''}" style="background:${color(n.v)}">${n.v}</span>`;
-  const owned = Object.entries(S.perks).filter(([id])=>!['coracao','cura','tesouro'].includes(id))
-    .map(([id])=>PERKS.find(k=>k.id===id).nome + (id==='voraz' ? ` (${S.xp}/${CFG.voracidade})` : ''));
-  $('#perks').textContent = owned.length ? 'Bênçãos: ' + owned.join(' · ') : '';
+  for(const m of S.mons) drawTile(m.id, m.x, m.y, m.v, m.v===p.v ? 'eq' : m.v<p.v ? 'low' : 'high');
+  $('#you').textContent = p.v;
+  $('#goal').textContent = CFG.goal;
+  $('#moves').textContent = S.moves;
+  $('#next').innerHTML = `<span class="mini" style="background:${color(S.next.v)}">${S.next.v}</span>`;
 }
 
-function drawTile(id,x,y,label,cls){
+function drawTile(id,x,y,v,cls){
   let el = els.get(id);
   if(!el){
     el = document.createElement('div'); el.className='tile';
@@ -338,10 +222,16 @@ function drawTile(id,x,y,label,cls){
   el.style.transform = pos(x,y);
   el.style.zIndex = id==='p' ? 3 : 1;
   const face = el.firstChild;
-  const keep = [...face.classList].filter(c=>['spawn','pop','bump','hit','die'].includes(c));
+  const keep = [...face.classList].filter(c=>['spawn','pop','bump','die'].includes(c));
   face.className = ['face', cls, ...keep].join(' ');
-  face.textContent = label;
-  if(typeof label==='number') face.style.setProperty('--c', color(label));
+  face.textContent = v;
+  face.style.setProperty('--fs', v>=100 ? .3 : v>=10 ? .38 : .44);
+  if(id!=='p') face.style.setProperty('--c', color(v));
+}
+
+function killEl(id){
+  const el = els.get(id); els.delete(id);
+  if(el){ el.style.zIndex=0; el.firstChild.classList.add('die'); setTimeout(()=>el.remove(),170); }
 }
 
 function anim(id,name,dx=0,dy=0){
@@ -356,25 +246,23 @@ function showOverlay(html){ $('#box').innerHTML = html; $('#overlay').classList.
 function hideOverlay(){ $('#overlay').classList.add('hidden'); }
 
 function showRules(){
-  showOverlay(`<h2>Um Passo</h2>
+  showOverlay(`<h2>Um Passo (nível teste)</h2>
   <ul>
-    <li>Arraste o dedo (ou use as setas / WASD) para andar <b>uma casa</b>. Você é a peça clara com ★.</li>
-    <li>Monstro com o <b>mesmo número</b> (contorno branco): você absorve e sobe 1 nível.</li>
-    <li>Número <b>menor</b> (apagado): você derrota e ganha ouro.</li>
-    <li>Número <b>maior</b> (▲ vermelho): bater nele custa 1 ♥.</li>
-    <li>Monstros <b>redondos</b> são caçadores: andam até você a cada 2 turnos e atacam se forem maiores. Anel vermelho piscando: age no próximo turno.</li>
-    <li>A cada turno nasce um monstro novo (veja "Próximo").</li>
-    <li>A cada 10 turnos no andar, <b>todos os monstros crescem +1</b>. Não enrole!</li>
-    <li>Chegue ao nível-meta para abrir a escada ⇩ e descer. Entre andares você escolhe uma bênção.</li>
+    <li>Arraste (ou use setas / WASD): <b>tudo no tabuleiro anda uma casa</b> para aquele lado, se tiver espaço.</li>
+    <li>Você é a peça clara com ★.</li>
+    <li>Encostou num <b>igual</b> (contorno branco): ele some e <b>você dobra</b>.</li>
+    <li>Encostou num <b>menor</b> (apagado): ele some.</li>
+    <li>Um <b>maior</b> (▲) bloqueia o caminho.</li>
+    <li>A cada jogada entra uma peça nova pela borda oposta (veja "Próximo").</li>
+    <li>Chegue a <b>${CFG.goal}</b>. Se nada mais se mexer, travou.</li>
   </ul>
   <button class="primary" id="ok">Bora</button>`);
-  $('#ok').onclick=()=>{ localStorage.umpasso_seen=1; hideOverlay(); };
+  $('#ok').onclick=()=>{ localStorage.umpasso_seen2=1; hideOverlay(); };
 }
 
 // ================== ENTRADA ==================
 const KEYS = {ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],w:[0,-1],s:[0,1],a:[-1,0],d:[1,0]};
 addEventListener('keydown', e=>{
-  if(!$('#overlay').classList.contains('hidden')) return;
   const k = KEYS[e.key.length===1 ? e.key.toLowerCase() : e.key];
   if(k){ e.preventDefault(); move(...k); }
 });
@@ -393,7 +281,7 @@ $('#btnRules').onclick = showRules;
 $('#btnRestart').onclick = newGame;
 
 newGame();
-if(!localStorage.umpasso_seen) showRules();
+if(!localStorage.umpasso_seen2) showRules();
 </script>
 </body>
 </html>
