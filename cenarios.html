@@ -42,8 +42,8 @@ body{background:#2a211b;font-family:'Fredoka',system-ui,sans-serif;color:#5a4636
 // ---------- geometria do tabuleiro (igual ao jogo num celular de 390 px) ----------
 const BX=26, BY=150, C=72, G=10, BW=4*C+5*G;
 const X = i => BX+G+i*(C+G), Y = j => BY+G+j*(C+G);
-// pedrinhas de exemplo: número = nível, T = torrão, W = parede (bloco)
-const LAYOUT = [[1,0,2,'W'],[0,3,0,1],[2,'T',5,0],[0,1,4,2]];
+// pedrinhas de exemplo: número = nível, T = torrão
+const LAYOUT = [[1,0,2,0],[0,3,0,1],[2,'T',5,0],[0,1,4,2]];
 
 function rng(s){ return ()=>(s=(s*16807)%2147483647)/2147483647; }
 const f1 = v => v.toFixed(1);
@@ -93,9 +93,6 @@ function cenaA(){
     <linearGradient id="aSomEsq" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5a3a1e" stop-opacity=".3"/><stop offset="1" stop-color="#5a3a1e" stop-opacity="0"/></linearGradient>
   </defs>`;
   s+=`<rect width="390" height="780" fill="#d9b88d"/>`+speck(r,0,0,390,780,320,['#cba67a','#e6caa0','#c39c6f','#d0ad82'],1.2,4.5);
-  // pedrinhas soltas no chão
-  for(let i=0;i<26;i++){ const x=r()*390, y=r()*780; if(x>BX-20&&x<BX+BW+20&&y>BY-20&&y<BY+BW+20) continue;
-    s+=`<path d="${blob(x,y,3+r()*4,2.5+r()*3,r,.25,7)}" fill="${['#b8a089','#a8907a','#c8b39c'][i%3]}" stroke="#8a735e" stroke-width="1"/>`; }
   // grama nas beiradas
   for(const [x,y,k] of [[18,128,1.1],[372,132,1.2],[355,300,.9],[14,380,1],[30,560,1.2],[372,600,1.1],[60,760,1.3],[200,740,1],[340,770,1.2],[150,600,.8]]) s+=tufo(x,y,k);
   // a cava
@@ -134,22 +131,19 @@ function cenaB(){
     <radialGradient id="bVin" cx="50%" cy="41%" r="70%"><stop offset=".45" stop-color="#140a04" stop-opacity="0"/><stop offset="1" stop-color="#140a04" stop-opacity=".7"/></radialGradient>
   </defs>`;
   s+=`<rect width="390" height="780" fill="#4a3a2e"/>`;
-  // calçamento de pedra
-  for(let y=-10;y<800;y+=30) for(let x=-10+((y/30)%2)*15;x<400;x+=32){
-    s+=`<path d="${blob(x+(r()-.5)*6,y+(r()-.5)*6,14+r()*3,12+r()*3,r,.14,8)}" fill="${['#6d5848','#755f4e','#665141','#7a6452'][Math.floor(r()*4)]}" stroke="#3d2f25" stroke-width="1.5"/>`;
-  }
+  // chão de terra batida: manchas suaves, poeira e algumas rachaduras
+  for(let i=0;i<34;i++) s+=`<path d="${blob(r()*390,r()*780,40+r()*60,30+r()*45,r,.22,10)}" fill="${['#5a473a','#47372c','#5f4b3d','#4e3d31'][i%4]}" opacity=".55"/>`;
+  s+=speck(r,0,0,390,780,260,['#5f4c3e','#3f3127','#665243'],.8,2.6,.7);
+  for(let i=0;i<9;i++){ const x=r()*390, y=r()*780; s+=`<path d="M${f1(x)} ${f1(y)} l${f1((r()-.5)*30)} ${f1(8+r()*14)} l${f1((r()-.5)*24)} ${f1(8+r()*12)}" stroke="#30251d" stroke-width="1.5" fill="none" stroke-linecap="round" opacity=".6"/>`; }
   // trilho com carrinho
   const ty=598;
   s+=`<rect x="0" y="${ty-6}" width="390" height="44" fill="#3d2f25" opacity=".5"/>`;
   for(let x=-6;x<400;x+=20) s+=`<rect x="${x}" y="${ty-4}" width="9" height="40" rx="2" fill="#7c5131" stroke="#4d321d" stroke-width="1.5"/>`;
   s+=`<line x1="0" y1="${ty+5}" x2="390" y2="${ty+5}" stroke="#2b2420" stroke-width="5"/><line x1="0" y1="${ty+27}" x2="390" y2="${ty+27}" stroke="#2b2420" stroke-width="5"/><line x1="0" y1="${ty+4}" x2="390" y2="${ty+4}" stroke="#b4bdc4" stroke-width="3"/><line x1="0" y1="${ty+26}" x2="390" y2="${ty+26}" stroke="#b4bdc4" stroke-width="3"/>`;
   s+=`<g transform="translate(250 ${ty+16})"><rect x="-54" y="-30" width="112" height="66" rx="10" fill="#0004"/><rect x="-58" y="-34" width="112" height="64" rx="10" fill="#6d4a30" stroke="#8d969d" stroke-width="5"/><rect x="-48" y="-24" width="92" height="44" rx="6" fill="#3b2a1e"/>${ores([[5,-2.4,-.5],[4,-1.2,.4],[6,0,-.5],[3,1.2,.4],[5,2.2,-.3],[2,-.3,.6]],-2,-2,16,1.1)}</g>`;
-  // área do jogo: o mesmo piso, com lajotas um pouco maiores e mais claras
-  s+=`<path d="${blobRect(BX-4,BY-4,BW+8,BW+8,r,3,20)}" fill="#4a3a2e"/>`;
+  // casas: só um leve tom mais claro no chão
   for(let j=0;j<4;j++) for(let i=0;i<4;i++){ const x=X(i), y=Y(j);
-    s+=`<path d="${blobRect(x-2,y-2,C+4,C+4,r,2.2,14)}" fill="${['#7a6552','#7f6956','#76614f'][(i+j)%3]}" stroke="#3d2f25" stroke-width="1.5"/>`;
-    s+=speck(r,x+6,y+6,C-12,C-12,5,['#6f5b49','#8a7461'],1,2.5);
-  }
+    s+=`<path d="${blobRect(x+2,y+2,C-4,C-4,r,1.6,14)}" fill="#6e5848" opacity=".38"/>`; }
   // pedra (parede)
   s+=pecas((x,y)=>`<ellipse cx="${x+38}" cy="${y+64}" rx="30" ry="7" fill="#0004"/><path d="${blob(x+36,y+37,32,28,rng(3),.13,8)}" fill="#7d6b5e" stroke="#2e2219" stroke-width="2.4"/><path d="${blob(x+29,y+29,15,10,rng(4),.2,7)}" fill="#998678"/>`);
   // caixote e barril
@@ -172,19 +166,17 @@ function cenaC(){
   </defs>`;
   s+=`<rect width="390" height="780" fill="#3a3136"/>`;
   // chão da câmara (areia)
-  s+=`<path d="${blobRect(4,118,382,620,r,10,26)}" fill="#bfa47e"/><path d="${blobRect(14,128,362,600,r,8,24)}" fill="#d3bc95"/>`;
+  const chao=blobRect(14,128,362,600,r,8,24);
+  s+=`<clipPath id="cChao"><path d="${chao}"/></clipPath><filter id="cBorra" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="14"/></filter>`;
+  s+=`<path d="${chao}" fill="#d3bc95"/>`;
   s+=speck(r,20,135,350,580,220,['#c7ae86','#dec9a4','#bba077'],1,3.5);
   // riacho
-  s+=`<path d="M-10 560 C60 540 90 600 70 660 S120 760 160 800 L-10 800Z" fill="#3d7f88"/><path d="M-10 568 C52 552 78 604 60 662 S106 760 146 800 L-10 800Z" fill="#5aa9b3"/>`;
-  s+=`<path d="M8 590 q14 -6 26 2 M30 650 q14 -6 24 2 M60 720 q14 -6 24 2 M24 700 q10 -4 18 1" stroke="#9fdde3" stroke-width="2.5" fill="none" stroke-linecap="round"/>`;
+  s+=`<g clip-path="url(#cChao)"><path d="M-10 560 C60 540 90 600 70 660 S120 760 160 800 L-10 800Z" fill="#3d7f88"/><path d="M-10 568 C52 552 78 604 60 662 S106 760 146 800 L-10 800Z" fill="#5aa9b3"/>
+    <path d="M30 600 q14 -6 26 2 M40 650 q14 -6 24 2 M70 710 q14 -6 24 2 M48 680 q10 -4 18 1" stroke="#9fdde3" stroke-width="2.5" fill="none" stroke-linecap="round"/></g>`;
   // musgo
   for(const [x,y,k] of [[340,560,1],[60,180,.8],[300,700,1.1],[200,560,.7]]){ s+=`<path d="${blob(x,y,26*k,18*k,r,.25,9)}" fill="#7fae5a"/><path d="${blob(x-4,y-3,15*k,10*k,r,.3,8)}" fill="#97c46d"/>`+speck(r,x-18*k,y-10*k,36*k,20*k,6,['#6a9a48'],1.5,2.5); }
-  // borda de rocha da caverna
-  const pedras=[];
-  for(let x=-10;x<400;x+=34){ pedras.push([x,108+r()*14,28+r()*10]); pedras.push([x+12,748+r()*14,28+r()*12]); }
-  for(let y=110;y<770;y+=36){ pedras.push([-6+r()*10,y,26+r()*12]); pedras.push([396-r()*10,y,26+r()*12]); }
-  for(const [x,y,rr] of pedras){ s+=`<path d="${blob(x,y,rr,rr*.85,r,.18,9)}" fill="#4a4045" stroke="#2c2428" stroke-width="2"/><path d="${blob(x-rr*.25,y-rr*.25,rr*.5,rr*.4,r,.2,7)}" fill="#5c5156"/>`; }
-  s+=`<rect x="0" y="0" width="390" height="112" fill="#3a3136"/>`;
+  // parede da caverna: sombra que escurece a areia nas beiradas
+  s+=`<g clip-path="url(#cChao)"><path d="${chao}" fill="none" stroke="#2c2428" stroke-width="70" filter="url(#cBorra)" opacity=".85"/></g>`;
   // cristais
   const cristal=(x,y,k,cor,cl,brilho)=>{ let g=`<circle cx="${x}" cy="${y}" r="${44*k}" fill="url(#${brilho})"/>`;
     for(const [a,l] of [[-.5,1],[0,1.3],[.55,.9],[-.15,.7]]){ const dx=Math.sin(a)*l*26*k, dy=-Math.cos(a)*l*26*k, w=6*k;
@@ -241,8 +233,8 @@ function cenaD(){
 
 const VIEWS = [
   {id:'A', nome:'Escavação', cena:cenaA, desc:'Um sítio de escavação visto de cima. As casas são marcadas só por barbantes finos entre estacas. Em volta: balde com minério, pá, peneira e escova.'},
-  {id:'B', nome:'Galeria', cena:cenaB, desc:'Piso de pedra da mina, iluminado por lanternas, com trilho e carrinho. As casas são lajotas do próprio piso, e a luz marca a área do jogo.'},
-  {id:'C', nome:'Gruta', cena:cenaC, desc:'Uma câmara de gruta com cristais, musgo, cogumelos e um riacho. Sem grade: as casas são só leves afundados na areia.'},
+  {id:'B', nome:'Galeria', cena:cenaB, desc:'Chão de terra batida da mina, iluminado por lanternas, com trilho e carrinho. As casas são só um tom mais claro no chão, e a luz marca a área do jogo.'},
+  {id:'C', nome:'Gruta', cena:cenaC, desc:'Uma câmara de gruta com cristais, musgo, cogumelos e um riacho, com as paredes em sombra. Sem grade: as casas são só leves afundados na areia.'},
   {id:'D', nome:'Bancada', cena:cenaD, desc:'A mesa do minerador. O tabuleiro é uma caixa de amostras forrada de feltro marrom, com mapa, vela, lupa, moedas e caderno em volta.'},
 ];
 const hud = `<div class="hud"><div class="pill"><span class="ic" style="background:#6aa84f">⚡</span><div><b>23</b><small>de 40</small></div></div><div class="pill"><span class="ic" style="background:#f2b33d">$</span><div><b>$86</b><small>dinheiro</small></div></div><div class="pill"><span class="ic" style="background:#c0603f">!</span><div><b>$150</b><small>cota em 3 dias</small></div></div></div>
