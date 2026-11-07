@@ -225,6 +225,12 @@ body.lock{overflow:hidden}
 .formaSvg{display:block;margin:0 auto}
 .ptNome{border:0;border-radius:999px;padding:6px 12px;font:600 14px 'Fredoka';background:#fff;color:#5a4636;width:150px}
 #mineRow{flex-wrap:wrap;justify-content:center}
+.ferrBar{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.fb{border:0;border-radius:999px;padding:6px 12px;font:600 14px 'Fredoka';background:#efe1c6;color:#5a4636;box-shadow:0 3px 0 #dcc6a0;cursor:pointer}
+.fb small{font-size:11px;color:#a08a74}
+.fb.on{background:#f2b33d;color:#4a3410;box-shadow:0 3px 0 #c48a1e}
+.fb:disabled{opacity:.4}
+.tile.sel::after{content:'';position:absolute;inset:2px;border-radius:18px;border:4px solid #3f7fe0;pointer-events:none}
 .panel h3{font-size:15px;color:#a08a74;margin:6px 0 -4px;text-transform:uppercase;letter-spacing:.04em}
 .edge{position:absolute;z-index:4;background:#6b625a;border:2.5px solid #2e2219;border-radius:8px;box-shadow:0 3px 0 #0003}
 .edge.v{width:12px;height:calc(var(--cell) - 10px);left:calc((var(--ex) + 1)*(var(--cell) + var(--gap)) + var(--gap)/2 - 6px);top:calc(var(--ey)*(var(--cell) + var(--gap)) + var(--gap) + 5px)}
@@ -264,6 +270,7 @@ body.lock{overflow:hidden}
       <button class="btn b" id="btnAssovio" style="display:none">Assovio</button>
       <button class="btn" id="btnEnd" style="margin:0 auto">Encerrar o dia</button>
     </div>
+    <div class="ferrBar wide" id="ferrBar"></div>
     <div class="labTools wide hidden" id="labTools"></div>
     <div class="wide" id="revealRow" style="display:none;flex-direction:column;gap:12px">
       <div class="total"><span>Total do dia</span><b id="dayTotal">$0</b></div>
@@ -330,18 +337,43 @@ const ROCKS = [
   {n:'Pedra lunar'}, {n:'Âmbar'}, {n:'Esmeralda viva'}, {n:'Rubi real'}, {n:'Meteorito'}, {n:'Estrela'}, {n:'Galáxia'},
 ];
 const ORES = [
-  {n:'nada',     p:0},
-  {n:'cobre',    p:2,  c:'#e07b3c'},
-  {n:'ferro',    p:5,  c:'#8b949e'},
-  {n:'prata',    p:12, c:'#eef2f6'},
-  {n:'ouro',     p:30, c:'#f5c542'},
-  {n:'diamante', p:90, c:'#6fe3ff'},
+  {n:'nada',                 p:0},
+  {n:'carvão',               p:1,    c:'#4a4440'},
+  {n:'cobre',                p:2,    c:'#e07b3c'},
+  {n:'ferro',                p:5,    c:'#8b949e'},
+  {n:'prata',                p:12,   c:'#eef2f6'},
+  {n:'ouro',                 p:30,   c:'#f5c542'},
+  {n:'ametista',             p:50,   c:'#a77bdf'},
+  {n:'diamante',             p:90,   c:'#6fe3ff'},
+  {n:'esmeralda',            p:150,  c:'#2fbf6f'},
+  {n:'rubi',                 p:250,  c:'#e0384a'},
+  {n:'safira',               p:400,  c:'#2f6fe0'},
+  {n:'opala',                p:650,  c:'#bfe8ff'},
+  {n:'fragmento de estrela', p:1000, c:'#fff1a0'},
+  {n:'pedra filosofal',      p:2000, c:'#ff5a3a'},
 ];
-const DROPS = {1:[70,30],2:[40,45,15],3:[15,45,35,5],4:[0,25,45,25,5],5:[0,0,30,45,22,3],6:[0,0,0,40,45,15],7:[0,0,0,10,50,40],8:[0,0,0,0,40,60],9:[0,0,0,0,25,75],10:[0,0,0,0,10,90]};
+// chance (%) de cada minério, na ordem acima, por nível de pedrinha
+const DROPS = {
+  1:[55,20,25],
+  2:[30,15,40,15],
+  3:[10,10,40,35,5],
+  4:[0,0,25,45,25,5],
+  5:[0,0,0,30,40,22,6,2],
+  6:[0,0,0,0,35,40,12,10,3],
+  7:[0,0,0,0,10,40,20,22,6,2],
+  8:[0,0,0,0,0,30,25,25,12,6,2],
+  9:[0,0,0,0,0,0,25,30,22,13,8,2],
+  10:[0,0,0,0,0,0,0,25,25,22,15,10,3],
+  11:[0,0,0,0,0,0,0,0,20,25,25,20,8,2],
+  12:[0,0,0,0,0,0,0,0,0,20,25,30,20,5],
+  13:[0,0,0,0,0,0,0,0,0,0,15,35,35,15],
+  14:[0,0,0,0,0,0,0,0,0,0,0,20,45,35],
+};
+const RARA = 0.02;   // chance de uma pedrinha nascer rara (cospe como 2 níveis acima)
 // nome de qualquer nível (acima do 14: Galáxia 2, Galáxia 3...)
 const rockName = t => t<ROCKS.length ? ROCKS[t].n : `Galáxia ${t-ROCKS.length+2}`;
-// níveis acima do 10 cospem diamante e o valor dobra a cada nível
-const bonusNivel = t => t>10 ? Math.pow(2,t-10) : 1;
+// acima do nível 14 o valor dobra a cada nível
+const bonusNivel = t => t>14 ? Math.pow(2,t-14) : 1;
 
 // itens de equipamento: sem limite, cada um só uma vez
 const ITEMS = [
@@ -388,6 +420,14 @@ const UPGRADES = [
   {id:'martelo',  em:'🔨', nome:'Martelo',  desc:l=>`Cada pedrinha sorteia +1 vez e cospe a melhor.`, preco:l=>Math.round(30*Math.pow(2,l)), max:3},
   {id:'balanca',  em:'⚖️', nome:'Balança',  desc:l=>`Todo minério vale +15%.`,             preco:l=>Math.round(20*Math.pow(1.6,l))},
   {id:'assovio',  em:'🎶', nome:'Assovio',  desc:l=>`Chama uma pedrinha sem mexer o tabuleiro: ${l}x por dia.`, preco:l=>Math.round(18*Math.pow(1.7,l)), max:3},
+];
+// ferramentas: ficam com você entre os dias até serem usadas
+const FERRAMENTAS = [
+  {id:'desfazer', em:'↶',  nome:'Desfazer', desc:'Volta o último arrasto.',            preco:6, dica:''},
+  {id:'picao',    em:'⚒️', nome:'Picão',    desc:'Quebra um bloco de parede ou mureta.', preco:6, dica:'toque na parede ou mureta para quebrar'},
+  {id:'escavar',  em:'🕳️', nome:'Escavar',  desc:'Transforma um buraco em casa.',       preco:8, dica:'toque num buraco para cavar'},
+  {id:'dinamite', em:'🧨', nome:'Dinamite', desc:'Destrói uma pedrinha ou torrão.',      preco:5, dica:'toque na pedrinha para explodir'},
+  {id:'luva',     em:'🧤', nome:'Luva',     desc:'Leva uma pedrinha para outra casa.',   preco:7, dica:'toque na pedrinha e depois na casa vazia'},
 ];
 const CONSUMIVEIS = [
   {id:'cafe',  em:'☕', nome:'Café',           desc:'+10 de energia.',            preco:5},
@@ -457,19 +497,42 @@ function gemSvg(cx,cy,c,s=1){ return `<path d="M${cx-9*s} ${cy-3*s} l${4*s} -${6
 function oreSvg(o,cx,cy,s=1){
   const P=(x,y)=>`${cx+x*s} ${cy+y*s}`, K=`stroke="${INK}" stroke-width="1.8" stroke-linejoin="round"`;
   if(o===0) return clodSvg(cx,cy,s*1.05);
-  if(o===1) return `<path d="M${P(-10,2)} L${P(-6,-8)} L${P(3,-10)} L${P(10,-3)} L${P(8,7)} L${P(-2,9)}Z" fill="#d9772e" ${K}/>
+  if(o===2) return `<path d="M${P(-10,2)} L${P(-6,-8)} L${P(3,-10)} L${P(10,-3)} L${P(8,7)} L${P(-2,9)}Z" fill="#d9772e" ${K}/>
     <path d="M${P(-6,-8)} L${P(3,-10)} L${P(1,-1)}Z" fill="#f2a25c"/>
     <circle cx="${cx+5*s}" cy="${cy+3*s}" r="${2.2*s}" fill="#4fbf8f"/><circle cx="${cx-5*s}" cy="${cy+4*s}" r="${1.6*s}" fill="#4fbf8f"/>`;
-  if(o===2) return `<path d="M${P(-12,6)} L${P(12,6)} L${P(9,-2)} L${P(-9,-2)}Z" fill="#7b848e" ${K}/>
+  if(o===3) return `<path d="M${P(-12,6)} L${P(12,6)} L${P(9,-2)} L${P(-9,-2)}Z" fill="#7b848e" ${K}/>
     <path d="M${P(-9,-2)} L${P(9,-2)} L${P(6,-8)} L${P(-6,-8)}Z" fill="#aeb6bf" ${K}/>
     <path d="M${P(-5,-6)} h${7*s}" stroke="#fff" stroke-width="${1.4*s}" stroke-linecap="round" opacity=".7"/>`;
-  if(o===3) return `<circle cx="${cx}" cy="${cy}" r="${10*s}" fill="#e9eef3" ${K}/>
+  if(o===4) return `<circle cx="${cx}" cy="${cy}" r="${10*s}" fill="#e9eef3" ${K}/>
     <circle cx="${cx}" cy="${cy}" r="${7*s}" fill="none" stroke="#b9c3cc" stroke-width="${1.4*s}"/>
     <path d="M${P(0,-4)} l${1.2*s} ${2.6*s} ${2.8*s} ${.4*s} -${2*s} ${2*s} ${.5*s} ${2.8*s} -${2.5*s} -${1.4*s} -${2.5*s} ${1.4*s} ${.5*s} -${2.8*s} -${2*s} -${2*s} ${2.8*s} -${.4*s}z" fill="#c7d0d8"/>
     ${sparkle(cx+8*s,cy-8*s,3.5*s)}`;
-  if(o===4) return `<path d="M${P(-10,2)} Q${P(-12,-6)} ${P(-4,-8)} Q${P(0,-13)} ${P(5,-8)} Q${P(12,-7)} ${P(10,1)} Q${P(12,8)} ${P(3,9)} Q${P(-3,12)} ${P(-8,8)} Q${P(-13,7)} ${P(-10,2)}Z" fill="#f5c542" ${K}/>
+  if(o===5) return `<path d="M${P(-10,2)} Q${P(-12,-6)} ${P(-4,-8)} Q${P(0,-13)} ${P(5,-8)} Q${P(12,-7)} ${P(10,1)} Q${P(12,8)} ${P(3,9)} Q${P(-3,12)} ${P(-8,8)} Q${P(-13,7)} ${P(-10,2)}Z" fill="#f5c542" ${K}/>
     <ellipse cx="${cx-3*s}" cy="${cy-4*s}" rx="${3*s}" ry="${1.8*s}" fill="#fff3b0"/><circle cx="${cx+4*s}" cy="${cy+2*s}" r="${1.4*s}" fill="#e0a91e"/>
     ${sparkle(cx+9*s,cy-9*s,3.5*s)}`;
+  if(o===1) return `<path d="M${P(-9,4)} L${P(-7,-5)} L${P(-1,-9)} L${P(6,-6)} L${P(10,2)} L${P(5,8)} L${P(-4,8)}Z" fill="#2f2c2a" ${K}/>
+    <path d="M${P(-6,-4)} L${P(-1,-7)} L${P(1,-2)}Z M${P(4,-3)} L${P(7,1)} L${P(3,2)}Z" fill="#5a5550"/>`;
+  if(o===6) return `<rect x="${cx-11*s}" y="${cy+3*s}" width="${22*s}" height="${7*s}" rx="${3*s}" fill="#8a7f72" ${K}/>
+    <path d="M${P(-9,7)} L${P(-8,-1)} L${P(-6,-5)} L${P(-4,-1)} L${P(-4,7)}Z" fill="#9a6ad8" ${K}/>
+    <path d="M${P(4,7)} L${P(4,-2)} L${P(7,-7)} L${P(9,-2)} L${P(9,7)}Z" fill="#9a6ad8" ${K}/>
+    <path d="M${P(-3,6)} L${P(-3,-6)} L${P(0,-12)} L${P(3,-6)} L${P(3,6)}Z" fill="#b48ce8" ${K}/>
+    <path d="M${P(0,-11)} L${P(0,5)}" stroke="#e3cffc" stroke-width="${1.2*s}"/>`;
+  if(o===7) return gemSvg(cx,cy,'#6fe3ff',s);
+  if(o===8) return `<path d="M${P(-8,-6)} L${P(-5,-9)} L${P(5,-9)} L${P(8,-6)} L${P(8,6)} L${P(5,9)} L${P(-5,9)} L${P(-8,6)}Z" fill="#2fbf6f" ${K}/>
+    <rect x="${cx-5*s}" y="${cy-5*s}" width="${10*s}" height="${10*s}" fill="#7fe0a8" opacity=".7"/>${sparkle(cx+8*s,cy-9*s,3.5*s)}`;
+  if(o===9) return `<ellipse cx="${cx}" cy="${cy}" rx="${9*s}" ry="${10.5*s}" fill="#e0384a" ${K}/>
+    <ellipse cx="${cx}" cy="${cy}" rx="${5*s}" ry="${6*s}" fill="none" stroke="#ff8a96" stroke-width="${1.2*s}"/>
+    <ellipse cx="${cx-3*s}" cy="${cy-5*s}" rx="${2.4*s}" ry="${1.5*s}" fill="#fff" opacity=".7"/>${sparkle(cx+8*s,cy-9*s,3.5*s)}`;
+  if(o===10) return `<path d="M${P(0,-11)} Q${P(9,-1)} ${P(8,4)} Q${P(6,10)} ${P(0,10)} Q${P(-6,10)} ${P(-8,4)} Q${P(-9,-1)} ${P(0,-11)}Z" fill="#2f6fe0" ${K}/>
+    <path d="M${P(-3,1)} Q${P(-3,-4)} ${P(0,-7)}" stroke="#9cc0ff" stroke-width="${1.6*s}" fill="none" stroke-linecap="round"/>${sparkle(cx+8*s,cy-8*s,3.5*s)}`;
+  if(o===11) return `<ellipse cx="${cx}" cy="${cy}" rx="${10*s}" ry="${8*s}" fill="#dff6ff" ${K}/>
+    <circle cx="${cx-4*s}" cy="${cy-2*s}" r="${2.6*s}" fill="#ff9ad5" opacity=".75"/><circle cx="${cx+3*s}" cy="${cy-3*s}" r="${2.2*s}" fill="#7fe0a8" opacity=".75"/>
+    <circle cx="${cx+4*s}" cy="${cy+3*s}" r="${2.4*s}" fill="#a77bdf" opacity=".75"/><circle cx="${cx-2*s}" cy="${cy+3.5*s}" r="${2*s}" fill="#6fb8ff" opacity=".75"/>${sparkle(cx+9*s,cy-8*s,3.5*s)}`;
+  if(o===12){ const pts=[...Array(10).keys()].map(i=>{ const a=-Math.PI/2+i*Math.PI/5, r=(i%2?4.6:11)*s; return `${cx+Math.cos(a)*r} ${cy+Math.sin(a)*r}`; }).join(' L');
+    return `<circle cx="${cx}" cy="${cy}" r="${13*s}" fill="#fff3b0" opacity=".45"/><path d="M${pts}Z" fill="#fff1a0" ${K}/>${sparkle(cx+9*s,cy-9*s,3.5*s)}`; }
+  if(o===13) return `<circle cx="${cx}" cy="${cy}" r="${12*s}" fill="#ff5a3a" opacity=".25"/><circle cx="${cx}" cy="${cy}" r="${8.5*s}" fill="#e8432f" ${K}/>
+    <ellipse cx="${cx}" cy="${cy}" rx="${13*s}" ry="${4*s}" fill="none" stroke="#f2b33d" stroke-width="${2*s}" transform="rotate(-20 ${cx} ${cy})"/>
+    <circle cx="${cx-3*s}" cy="${cy-3*s}" r="${2.4*s}" fill="#ffd0b8"/>${sparkle(cx+9*s,cy-9*s,3.5*s)}`;
   return gemSvg(cx,cy,'#6fe3ff',s);
 }
 function clodSvg(cx,cy,s=1){ return `<path d="M${cx-9*s} ${cy+3*s} q-2 -8 5 -10 q4 -6 10 -2 q7 1 5 9 q1 7 -8 7 q-10 1 -12 -4z" fill="#7a5a3c" stroke="${INK}" stroke-width="1.8"/><circle cx="${cx-2*s}" cy="${cy-2*s}" r="${1.2*s}" fill="#5e4329"/><circle cx="${cx+4*s}" cy="${cy+3*s}" r="${1.4*s}" fill="#5e4329"/>`; }
@@ -521,6 +584,7 @@ function pedraInner(t, opt={}){
   if(t>=9) b += sparkle(50-r*.6,cy-r*.95,4) + sparkle(50+r*1.05,cy+r*.2,3.5);
   if(t>=6) b += crown(50,cy-r+2,1.1+Math.min(Math.max(t-10,0),4)*.12);
   if(t>=11) b += `<circle cx="50" cy="${cy-r-7}" r="3.2" fill="#e04a5a" stroke="${INK}" stroke-width="1.2"/>`;
+  if(opt.rara) b += `<circle cx="50" cy="${cy}" r="${r+4}" fill="none" stroke="#f2b33d" stroke-width="3.5"/>` + sparkle(50-r*.95,cy-r*.75,4.5,'#ffe27a') + sparkle(50+r*.95,cy+r*.35,3.8,'#ffe27a') + sparkle(50+r*.2,cy+r*.9,3.2,'#ffe27a');
   if(opt.blushBig) b += blush(50,cy+5,s,15,true);
   else if(t>=3) b += blush(50,cy+4,s);
   b += eyes(50,cy-2,em,s,11,lx*2.5,ly*2.5) + mouth(50+lx*1.5,cy+9+ly*1.5,mm,s);
@@ -591,7 +655,7 @@ function enrich(html){
 
 // o que cada pedrinha pode cuspir
 function dropsHtml(t){
-  const tb=DROPS[Math.min(t,10)];
+  const tb=DROPS[Math.min(t,14)];
   return tb.map((p,i)=>p?`<span class="drop">${p}% ${i?ORES[i].n:icoOre(0)+'nada'}</span>`:'').join('');
 }
 function pedraCard(t){
@@ -600,14 +664,15 @@ function pedraCard(t){
 }
 function tileInfo(t){
   if(!S || S.tut || overlayOpen()) return;
-  const viz = (t.t>0 ? `<p>Com outra igual, vira ${rockName(t.t+1)}.</p>` : '') + (t.c!=null ? `<p>${['Roxa: junta com roxa ou mista.','Verde: junta com verde ou mista.','Mista: junta com qualquer cor.'][t.c]}</p>` : '');
+  const viz = (t.t>0 ? `<p>Com outra igual, vira ${rockName(t.t+1)}.</p>` : '') + (t.r ? `<p>Rara: cospe como ${rockName(t.t+2)}.</p>` : '') + (t.c!=null ? `<p>${['Roxa: junta com roxa ou mista.','Verde: junta com verde ou mista.','Mista: junta com qualquer cor.'][t.c]}</p>` : '');
   showOverlay(`<div class="cards">${pedraCard(t.t)}</div>${viz}<button class="btn b" id="btnOk">Ok</button>`);
   $('#btnOk').onclick=hideOverlay;
 }
 function pedrapedia(back){
   showOverlay(`<h2>Pedrinhas</h2><p>Duas iguais viram a próxima.</p>
-    <div class="cards">${[1,2,3,4,5,6,7,0].map(pedraCard).join('')}</div>
-    <p>Valores: ${[1,2,3,4,5].map(i=>`${ORES[i].n} $${ORES[i].p}`).join(' · ')}</p>
+    <div class="cards">${[...Array(14).keys()].map(i=>i+1).concat(0).map(pedraCard).join('')}</div>
+    <p>Valores: ${ORES.slice(1).map(o=>`${o.n} $${o.p}`).join(' · ')}</p>
+    <p>Pedrinha rara (contorno dourado): cospe como 2 níveis acima.</p>
     <button class="btn b" id="btnOk">Voltar</button>`);
   $('#btnOk').onclick=()=>{ hideOverlay(); back&&back(); };
 }
@@ -623,7 +688,7 @@ function show(id){
 function freshState(){
   return {week:1, day:1, money:0, lv:{}, coroa:0, saved:0, bonus:0, gift:false, tiles:[], walls:[], phase:'map',
           energy:0, energyMax:0, char:null, hist:{}, trilha:{}, lane:null, mapa:null, fails:0, tut:null,
-          stats:{days:0, best:0, maxT:0}, up:{}, amanha:{}, edges:[]};
+          stats:{days:0, best:0, maxT:0}, up:{}, amanha:{}, edges:[], ferr:{}};
 }
 
 // ===================== MENU =====================
@@ -873,6 +938,7 @@ function addTile(t, dir){
   }
   const tile={id:'t'+(nextId++), x:c.x, y:c.y, t};
   if(S.path?.picareta && t>0) tile.k = Math.random()<.5 ? 'p' : 'r';
+  if(t>0 && tile.k!=='p' && Math.random() < (S.path?.rara ?? RARA)) tile.r=1;
   if(S.path?.cores && t>0) tile.c = Math.random()<.08 ? 2 : (Math.random()<.5 ? 0 : 1);
   S.tiles.push(tile);
 }
@@ -893,8 +959,8 @@ function slideOne(tiles,dx,dy){
     if(!o){ grid[y][x]=null; grid[ny][nx]=t; t.x=nx; t.y=ny; moved=true; }
     else if(!o.wall && !o.m && o.t===t.t && t.t>0 && corOk(o,t)){
       grid[y][x]=null; t.x=nx; t.y=ny; moved=true;
-      if(o.k && t.k && o.k!==t.k){ grid[ny][nx]=null; gone.push(t,o); breaks.push({x:nx,y:ny,t:o.t}); }
-      else { o.t++; o.c=corJunta(o,t); o.m=true; gone.push(t); merges.push(o); }
+      if(o.k && t.k && o.k!==t.k){ grid[ny][nx]=null; gone.push(t,o); breaks.push({x:nx,y:ny,t:o.t,r:o.r||t.r}); }
+      else { o.t++; o.c=corJunta(o,t); if(t.r) o.r=1; o.m=true; gone.push(t); merges.push(o); }
     }
   }
   return {tiles:ts.filter(t=>!gone.includes(t)).map(({m,...t})=>t), moved, merges, gone, breaks};
@@ -917,8 +983,8 @@ function slide(tiles,dx,dy){
       if(!o){ grid[cy][cx]=null; grid[ny][nx]=t; cx=nx; cy=ny; continue; }
       if(!o.wall && !o.m && o.t===t.t && t.t>0 && corOk(o,t)){
         grid[cy][cx]=null; t.x=nx; t.y=ny; merged=true;
-        if(o.k && t.k && o.k!==t.k){ grid[ny][nx]=null; gone.push(t,o); breaks.push({x:nx,y:ny,t:o.t}); }
-        else { o.t++; o.c=corJunta(o,t); o.m=true; gone.push(t); merges.push(o); }
+        if(o.k && t.k && o.k!==t.k){ grid[ny][nx]=null; gone.push(t,o); breaks.push({x:nx,y:ny,t:o.t,r:o.r||t.r}); }
+        else { o.t++; o.c=corJunta(o,t); if(t.r) o.r=1; o.m=true; gone.push(t); merges.push(o); }
       }
       break;
     }
@@ -930,10 +996,11 @@ function slide(tiles,dx,dy){
 const anyMove = () => DIRS.some(([dx,dy])=>slide(S.tiles,dx,dy).moved);
 
 function move(dx,dy){
-  if(!S || S.phase!=='mine' || overlayOpen() || coachBlock || S.editando || !$('#scrGame').classList.contains('on')) return;
+  if(!S || S.phase!=='mine' || overlayOpen() || coachBlock || S.editando || S.ferrAtiva || !$('#scrGame').classList.contains('on')) return;
   if(S.tut===1 && dy!==0){ coach('Para o <b>lado</b>! ↔', null, null, '#board'); return; }
   const r=slide(S.tiles,dx,dy);
   if(!r.moved) return;
+  S.undoSnap = foto();
   for(const g of r.gone){ const el=els.get(g.id); els.delete(g.id); if(el){ el.style.zIndex=0; el.style.transform=pos(g.x,g.y); setTimeout(()=>el.remove(),120); } }
   for(const b of r.breaks) quebrar(b);
   S.tiles=r.tiles;
@@ -970,12 +1037,12 @@ function move(dx,dy){
 
 // picareta encontrou a rocha do mesmo nível: extrai o minério na hora
 function quebrar(b){
-  const o=roll(b.t), ore=ORES[o], val=Math.round(ore.p*(1+.15*(S.up.balanca||0))*bonusNivel(b.t));
+  const o=roll(b.t, b.r), ore=ORES[o], val=Math.round(ore.p*(1+.15*(S.up.balanca||0))*bonusNivel(b.t));
   S.extra=(S.extra||0)+val;
   const el=document.createElement('div'); el.className='tile'; el.style.transform=pos(b.x,b.y); el.style.zIndex=5;
   el.innerHTML=`<div class="face"><svg viewBox="0 0 100 100"><g class="spat">${oreSvg(o,50,50,1.6)}</g></svg></div><span class="price ${o?'':'zero'}">${o?'$'+val:'nada'}</span>`;
   board.appendChild(el); setTimeout(()=>{ el.style.transition='opacity .4s'; el.style.opacity=0; setTimeout(()=>el.remove(),400); }, 750);
-  SFX.cuspe(); if(o>=1&&o<=2) SFX.comum(o); if(o>=3){ SFX.raro(o); sparks(b,ore.c); shake(o-2); }
+  SFX.cuspe(); if(o>=1&&o<=3) SFX.comum(o>=3?2:1); if(o>=4){ SFX.raro(Math.min(6,o-1)); sparks(b,ore.c); shake(Math.min(3,o-3)); }
   setBanner(null, `extraído hoje: $${S.extra}`);
 }
 
@@ -987,6 +1054,7 @@ function assovioBtn(){
 }
 function assoviar(){
   if(!S || S.phase!=='mine' || overlayOpen() || coachBlock || S.editando || !S.assovios || !emptyCells().length) return;
+  S.undoSnap = foto();
   if(S.assovios<90) S.assovios--;
   S.moves=(S.moves||0)+1;
   if(!S.semEnergia){ if(S.energy>0) S.energy--; else S.tired++; }
@@ -995,9 +1063,58 @@ function assoviar(){
   if(!anyMove()){ setBanner(null,'não cabe mais nada'); setTimeout(endDay,450); }
 }
 
+// ===================== FERRAMENTAS =====================
+const cp = a => a.map(o=>({...o}));
+function foto(){ return {tiles:cp(S.tiles), walls:cp(S.walls), edges:cp(S.edges), energy:S.energy, tired:S.tired, moves:S.moves, extra:S.extra, coroa:S.coroa, assovios:S.assovios}; }
+function redesenhaTudo(){ for(const el of els.values()) el.remove(); els.clear(); render(); }
+function ferrBar(){
+  const bar=$('#ferrBar'); if(!bar) return;
+  if(!S || S.phase!=='mine' || S.editando){ bar.innerHTML=''; return; }
+  bar.innerHTML = FERRAMENTAS.filter(f=>(S.ferr[f.id]||0)>0).map(f=>{ const n=S.ferr[f.id]; return `<button class="fb ${S.ferrAtiva===f.id?'on':''}" data-ferr="${f.id}" ${f.id==='desfazer'&&!S.undoSnap?'disabled':''}>${f.em} ${f.nome} <small>${n>90?'∞':n}</small></button>`; }).join('');
+  bar.querySelectorAll('[data-ferr]').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.ferr;
+    if(id==='desfazer') return desfazer();
+    S.ferrAtiva = S.ferrAtiva===id ? null : id; S.luvaSel=null;
+    document.querySelectorAll('.tile.sel').forEach(el=>el.classList.remove('sel'));
+    setBanner(null, S.ferrAtiva ? FERRAMENTAS.find(f=>f.id===id).dica : '');
+    ferrBar();
+  });
+}
+function gasta(id){ if((S.ferr[id]||0)<90) S.ferr[id]--; S.ferrAtiva=null; S.luvaSel=null; setBanner(null,''); SFX.item(false); }
+function desfazer(){
+  if(!S.undoSnap || !(S.ferr.desfazer>0)) return;
+  Object.assign(S, S.undoSnap); S.undoSnap=null; gasta('desfazer');
+  humor(); redesenhaTudo(); assovioBtn();
+}
+function usarFerramenta(cx,cy){
+  const c=labCelula(cx,cy), id=S.ferrAtiva; if(!c) return;
+  const [x,y]=c, t=tileAt(x,y), w=S.walls.find(v=>v.x===x&&v.y===y);
+  const tira = (arr,o) => { els.get(o.id)?.remove(); els.delete(o.id); return arr.filter(v=>v!==o); };
+  if(id==='picao'){
+    if(w && !w.v){ S.walls=tira(S.walls,w); gasta(id); }
+    else {
+      const r=board.getBoundingClientRect(), cel=cellPx(), gap=(r.width-N*cel)/(N+1);
+      const fx=(cx-r.left-gap/2)/(cel+gap)-x, fy=(cy-r.top-gap/2)/(cel+gap)-y;
+      const lados=[[fx,'v',x-1,y],[1-fx,'v',x,y],[fy,'h',x,y-1],[1-fy,'h',x,y]].sort((a,b)=>a[0]-b[0]);
+      const e=lados.map(([,d,ex,ey])=>S.edges.find(q=>q.d===d&&q.x===ex&&q.y===ey)).find(Boolean);
+      if(e){ S.edges=tira(S.edges,e); gasta(id); }
+    }
+  } else if(id==='escavar'){
+    if(w && w.v){ S.walls=S.walls.filter(v=>v!==w); gasta(id); }
+  } else if(id==='dinamite'){
+    if(t){ const el=els.get(t.id); els.delete(t.id); if(el){ el.firstChild.classList.add('crumble'); setTimeout(()=>el.remove(),450); } S.tiles=S.tiles.filter(v=>v!==t); SFX.esfarelar(); shake(1); gasta(id); }
+  } else if(id==='luva'){
+    if(t){ S.luvaSel=t.id; document.querySelectorAll('.tile.sel').forEach(el=>el.classList.remove('sel')); els.get(t.id)?.classList.add('sel'); return; }
+    const sel=S.tiles.find(v=>v.id===S.luvaSel);
+    if(sel && !w){ els.get(sel.id)?.classList.remove('sel'); sel.x=x; sel.y=y; gasta(id); }
+  }
+  render();
+}
+
 // ===================== FIM DO DIA: CUSPE + EQUIPAMENTO =====================
-function roll(t){
-  const once=()=>{ const tb=DROPS[Math.min(t,10)]; let r=Math.random()*100; for(let i=0;i<tb.length;i++){ if((r-=tb[i])<0) return i; } return 0; };
+function roll(t, rara){
+  const nv=Math.min(t+(rara?2:0),14);
+  const once=()=>{ const tb=DROPS[nv]; let r=Math.random()*100; for(let i=0;i<tb.length;i++){ if((r-=tb[i])<0) return i; } return 0; };
   let b=once(); for(let i=0;i<(S.up.martelo||0);i++) b=Math.max(b,once()); return b;
 }
 function tag(t, text, cls){ const el=els.get(t.id); if(!el) return; const p=document.createElement('span'); p.className='price '+cls; p.textContent=text; el.appendChild(p); }
@@ -1029,6 +1146,7 @@ async function endDay(){
   if(S.phase!=='mine') return;
   if(S.tut===4 || S.tut===3){ S.tut=5; hideCoach(); }
   $('#btnAssovio').style.display='none';
+  S.ferrAtiva=null; S.undoSnap=null;
   S.phase='reveal'; S.skip=false; S.gain=S.extra||0; S.cost=0; S.mult=1; S.shown=0; S.found=[]; S.clods=0;
   const sobra = Math.max(0,S.energy);
   if(!S.semEnergia) S.saved = S.tut ? 0 : Math.min(CFG.guardaMax, sobra);
@@ -1062,8 +1180,8 @@ async function endDay(){
     face.classList.remove('wob');
     let nivel=t.t;
     if(has('eco') && adjWall(t)){ nivel+=lvl('eco'); fire('eco','+'+lvl('eco')+' nível'); }
-    let o=roll(nivel);
-    { const L=lvl('peneira'); if(L && (t.t===1 || (t.t===2&&L>=2))){ const min=L>=3?2:1; if(o<min){ o=min; fire('peneira',ORES[min].n+'!'); } } }
+    let o=roll(nivel, t.r);
+    { const L=lvl('peneira'); if(L && (t.t===1 || (t.t===2&&L>=2))){ const min=L>=3?3:2; if(o<min){ o=min; fire('peneira',ORES[min].n+'!'); } } }
     if(fiscalHoje('miope') && t.t<=2) o=0;
     t.ore=o; S.found.push(o);
     const ore=ORES[o];
@@ -1078,10 +1196,10 @@ async function endDay(){
     S.gain+=val; showCalc(); countTo(Math.round(S.gain*S.mult)-S.cost);
     tag(t, o?`$${val}`:'nada', o?'':'zero');
     if(!S.skip){
-      if(o>=1 && o<=2) SFX.comum(o);
-      if(o>=3){
-        shake(o-2); sparks(t, ore.c); popup(ore.n.toUpperCase()+'!', '+$'+val, ore.c); SFX.raro(o);
-        await sleep(o>=4?1000:650);
+      if(o>=1 && o<=3) SFX.comum(o>=3?2:1);
+      if(o>=4){
+        shake(Math.min(3,o-3)); sparks(t, ore.c); popup(ore.n.toUpperCase()+'!', '+$'+val, ore.c); SFX.raro(Math.min(6,o-1));
+        await sleep(o>=5?1000:650);
       } else await sleep(160);
     }
   }
@@ -1158,16 +1276,19 @@ function openShop(then, first=true){
     return row(`data-con="${c.id}"`, c.em, noIco(c.nome), c.desc, tem?'ok!':'$'+pr, tem||S.money<pr); }).join('');
   const its = shopItens.filter(id=>lvl(id)<CFG.maxNivel).map(item).map(i=>{ const pr=precoItem(i,lvl(i.id));
     return `<button class="card" data-buy="${i.id}" ${S.money<pr?'disabled':''}>${itemCard(i,`<span class="pr">$${pr}</span>`,lvl(i.id)+1)}</button>`; }).join('');
+  const ferrs = FERRAMENTAS.map(f=>{ const pr=preco(f.preco), tem=S.ferr[f.id]||0; return row(`data-fer="${f.id}"`, f.em, `${f.nome}${tem?` <small class="nv">tem ${tem}</small>`:''}`, f.desc, '$'+pr, S.money<pr); }).join('');
   const renovar = preco(3);
   showOverlay(`<div class="bigEm">🏪</div><h2>Lojinha</h2>
     <p>Você tem <b style="color:#c48a1e">$${S.money}</b> · cota: <b style="color:#c0603f">$${CFG.quota(S.week)}</b> no dia ${CFG.days}</p>
     <h3>Melhorias (para sempre)</h3><div class="cards">${ups}</div>
     <h3>Para o próximo dia</h3><div class="cards">${cons}</div>
+    <h3>Ferramentas (ficam com você)</h3><div class="cards">${ferrs}</div>
     <h3>Itens</h3><div class="cards">${its||'<p>Sem itens agora.</p>'}</div>
     <button class="btn dim" id="btnReroll" ${S.money<renovar?'disabled':''}>Renovar itens ($${renovar})</button>
     <button class="btn b" id="btnLeave">Seguir</button>`);
   const again = () => { SFX.comprar(); render(); renderItems(); openShop(then,false); };
   document.querySelectorAll('[data-up]').forEach(b=>b.onclick=()=>{ const u=UPGRADES.find(x=>x.id===b.dataset.up), l=S.up[u.id]||0, pr=preco(u.preco(l)); if(S.money<pr) return; S.money-=pr; S.up[u.id]=l+1; again(); });
+  document.querySelectorAll('[data-fer]').forEach(b=>b.onclick=()=>{ const f=FERRAMENTAS.find(x=>x.id===b.dataset.fer), pr=preco(f.preco); if(S.money<pr) return; S.money-=pr; S.ferr[f.id]=(S.ferr[f.id]||0)+1; again(); });
   document.querySelectorAll('[data-con]').forEach(b=>b.onclick=()=>{ const c=CONSUMIVEIS.find(x=>x.id===b.dataset.con), pr=preco(c.preco); if(S.money<pr) return; S.money-=pr; am[c.id]=1; again(); });
   document.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>{ const i=item(b.dataset.buy), pr=precoItem(i,lvl(i.id)); if(S.money<pr) return; S.money-=pr; S.lv[i.id]=lvl(i.id)+1; again(); });
   $('#btnReroll').onclick=()=>{ if(S.money<renovar) return; S.money-=renovar; shopItens = shuffle(ITEMS.filter(i=>lvl(i.id)<CFG.maxNivel)).slice(0,2).map(i=>i.id); again(); };
@@ -1265,6 +1386,8 @@ const LAB_AJUSTES = [
   {k:'edges',   nome:'Muretas',              ops:[0,2,4,6,8],          fmt:v=>v},
   {k:'clods',   nome:'Torrões no começo',    ops:[0,3,6],              fmt:v=>v},
   {k:'assovio', nome:'Assovio por dia',      ops:[0,1,2,3,99],         fmt:v=>v>90?'∞':v},
+  {k:'ferr',    nome:'Ferramentas',          ops:[0,99],               fmt:v=>v?'∞':'nenhuma'},
+  {k:'rara',    nome:'Pedrinha rara',        ops:[0,.02,.1,.5],        fmt:v=>Math.round(v*100)+'%'},
 ];
 function labPainel(){
   hideCoach(); show('scrMap'); trilha('menu');
@@ -1307,7 +1430,8 @@ function labJoga(){
   S.fiscal=FISCAIS[0]; applyAndar();
   const base=PATHS[LAB.fase], g=LAB.cfg;
   S.up.assovio = g.assovio||0;
-  const p = {...base, forma:g.forma?acharForma(g.forma):null, caverna:!g.forma && !!base.caverna, n:g.n, energy:g.energia-CFG.energy, spawns:g.spawns, torrao:g.torrao, pedra:g.pedra, cores:g.cores, picareta:g.picareta, walls:g.walls, edges:g.edges, clods:g.clods, semEnergia:!LAB.energia};
+  if(g.ferr) for(const f of FERRAMENTAS) S.ferr[f.id]=99;
+  const p = {...base, forma:g.forma?acharForma(g.forma):null, caverna:!g.forma && !!base.caverna, n:g.n, energy:g.energia-CFG.energy, spawns:g.spawns, rara:g.rara??RARA, torrao:g.torrao, pedra:g.pedra, cores:g.cores, picareta:g.picareta, walls:g.walls, edges:g.edges, clods:g.clods, semEnergia:!LAB.energia};
   startDay(p);
   setBanner('Laboratório', `${base.nome} · ${LAB.energia?'com':'sem'} energia`);
   labFerramentas();
@@ -1543,8 +1667,8 @@ function render(){
     }
     el.style.transform=pos(t.x,t.y);
     if(S.phase==='mine'){
-      const look=lookOf(t), key=t.t+':'+look+':'+t.c+':'+t.k;
-      if(el.dataset.key!==key){ el.dataset.key=key; el.firstChild.innerHTML=svgOf(t.t===0?torraoInner():t.k==='p'?pickInner(t.t):pedraInner(t.t,{look,cor:t.c})); }
+      const look=lookOf(t), key=t.t+':'+look+':'+t.c+':'+t.k+':'+t.r;
+      if(el.dataset.key!==key){ el.dataset.key=key; el.firstChild.innerHTML=svgOf(t.t===0?torraoInner():t.k==='p'?pickInner(t.t):pedraInner(t.t,{look,cor:t.c,rara:t.r})); }
     }
   }
   if(S.phase==='mine'){ const on=has('regua')?new Set(fileiras().flat().map(t=>t.id)):new Set(); for(const t of S.tiles) els.get(t.id)?.classList.toggle('line',on.has(t.id)); }
@@ -1555,13 +1679,13 @@ function render(){
   $('#hEnergy').textContent=S.phase==='map' ? (S.saved+S.bonus?'+'+(S.saved+S.bonus):'·') : S.semEnergia ? '∞' : S.energy;
   $('#hEnergyMax').textContent=S.phase==='map' ? (S.saved+S.bonus?'guardada':'energia') : S.semEnergia ? 'até travar' : S.energy>0?`de ${S.energyMax}`:'exausta!';
   $('#enIc').classList.toggle('zero',S.phase==='mine'&&S.energy<=0);
-  renderItems();
+  renderItems(); ferrBar();
 }
 
 function setBanner(title,sub){ if(title!==null) $('#bTitle').textContent=title; $('#bSub').innerHTML=enrich(sub||''); }
 function anim(id,name){ const el=els.get(id); if(!el) return; const f=el.firstChild; f.classList.remove(name); void f.offsetWidth; f.classList.add(name); }
 function shake(level){ const c='shake'+Math.min(level,3); stage.classList.remove('shake1','shake2','shake3'); void stage.offsetWidth; stage.classList.add(c); }
-function popup(big,small,cor){ const p=document.createElement('div'); p.className='popup'; p.style.setProperty('--pc',cor); p.innerHTML=`${big}<small>${small}</small>`; stage.appendChild(p); setTimeout(()=>p.remove(),1000); }
+function popup(big,small,cor){ const p=document.createElement('div'); p.className='popup'; p.style.setProperty('--pc',cor); if(big.length>9) p.style.fontSize=big.length>14?'30px':'38px'; p.innerHTML=`${big}<small>${small}</small>`; stage.appendChild(p); setTimeout(()=>p.remove(),1000); }
 function sparks(t,cor){
   const cx=`calc(${t.x}*(var(--cell) + var(--gap)) + var(--gap) + var(--cell)*.7)`, cy=`calc(${t.y}*(var(--cell) + var(--gap)) + var(--gap) + var(--cell)*.35)`;
   for(let i=0;i<18;i++){
@@ -1660,7 +1784,7 @@ const SFX = {
   esfarelar(){ for(let i=0;i<6;i++) noise({t:Math.random()*.12,f:500+Math.random()*900,d:.05,v:.08,type:'lowpass'}); tone({f:90,to:50,d:.12,v:.12}); },
   fimDia(){ [1568,1319,1175,1047,880,784].forEach((f,i)=>bell({f,t:i*.14,d:.7,v:.06,ratio:5,idx:.8})); },
   cuspe(){ tone({f:300,to:900,d:.07,v:.14,type:'triangle'}); noise({f:2500,to:5000,d:.06,v:.06,q:2}); tone({f:520,to:180,t:.1,d:.06,v:.07}); },
-  comum(o){ const b=o===1?988:1175; tone({f:b,t:.05,d:.06,v:.06,type:'square',lp:4000}); tone({f:b*1.335,t:.11,d:.18,v:.06,type:'square',lp:4000}); },
+  comum(o){ const b=o<=1?988:1175; tone({f:b,t:.05,d:.06,v:.06,type:'square',lp:4000}); tone({f:b*1.335,t:.11,d:.18,v:.06,type:'square',lp:4000}); },
   raro(o){ const l=o-2, n=5+l*4; for(let i=0;i<n;i++) bell({f:1047*Math.pow(2,ESCALA[(n-i)%9]/12),t:.05+i*.055,d:.6,v:.05,idx:1.2}); tone({f:131*Math.pow(2,l/3),to:262*Math.pow(2,l/3),t:.05,d:.35,v:.1}); },
   venda(){ for(let i=0;i<10;i++){ const t=i*.06+Math.random()*.03; tone({f:1975+Math.random()*300,t,d:.05,v:.045,type:'square',lp:5000}); noise({t,f:7000,d:.03,v:.025,type:'highpass'}); } },
   comprar(){ tone({f:520,to:180,d:.06,v:.08}); bell({f:1568,t:.05,d:.5,v:.07,idx:1}); },
@@ -1711,12 +1835,13 @@ function previewDrag(dx,dy){
 }
 addEventListener('pointerdown',e=>{ if(overlayOpen()||e.target.closest('button')||!$('#scrGame').classList.contains('on')) return; touch={x:e.clientX,y:e.clientY}; prev=null; });
 addEventListener('pointermove',e=>{
-  if(!touch || !S || S.phase!=='mine' || overlayOpen() || coachBlock || S.editando) return;
+  if(!touch || !S || S.phase!=='mine' || overlayOpen() || coachBlock || S.editando || S.ferrAtiva) return;
   previewDrag(e.clientX-touch.x, e.clientY-touch.y);
 });
 addEventListener('pointerup',e=>{
   if(!touch) return; const dx=e.clientX-touch.x, dy=e.clientY-touch.y; touch=null;
   const tinha=!!prev;
+  if(S && S.ferrAtiva && S.phase==='mine'){ usarFerramenta(e.clientX,e.clientY); return; }
   if(S && S.editando && S.phase==='mine'){ if(PINCEL.tipo==='mureta'){ labMureta(e.clientX,e.clientY); return; } const c=labCelula(e.clientX,e.clientY); if(c) labPinta(...c); return; }
   if(Math.max(Math.abs(dx),Math.abs(dy))<CONFIRMA){
     clearPreview(true);

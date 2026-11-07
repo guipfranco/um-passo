@@ -68,11 +68,44 @@ Tudo que dá para combinar para criar um nível. Situação de cada coisa:
 | Elemento | O que faz | Situação |
 |---|---|---|
 | Arrastar com prévia | vê o resultado antes de soltar | [jogo] |
-| Assovio | nasce uma pedrinha sem mexer o tabuleiro (passa a vez) | [jogo] na loja · [lab] |
 | Encerrar cedo | guarda a energia | [jogo] |
-| Desfazer | volta um arrasto | [ideia] |
-| Martelada | quebra um torrão ou bloco | [ideia] |
-| Trocar duas vizinhas | uma vez por dia | [ideia] |
+| Assovio | nasce uma pedrinha sem mexer o tabuleiro (passa a vez) | [jogo] melhoria da loja · [lab] |
+
+## 6b. Ferramentas (consumíveis que ficam com você)
+| Ferramenta | O que faz | Situação |
+|---|---|---|
+| Desfazer | volta o último arrasto | [jogo] loja · [lab] ∞ |
+| Picão | quebra um bloco de parede ou uma mureta | [jogo] loja · [lab] ∞ |
+| Escavar | transforma um buraco em casa nova | [jogo] loja · [lab] ∞ |
+| Dinamite | destrói uma pedrinha ou torrão | [jogo] loja · [lab] ∞ |
+| Luva | leva uma pedrinha para outra casa | [jogo] loja · [lab] ∞ |
+| Muro novo | põe um bloco ou mureta onde quiser | [ideia] |
+| Clonar | copia uma pedrinha numa casa vazia | [ideia] |
+| Rebaixar | desce uma pedrinha um nível (para fechar um par) | [ideia] |
+| Trocar duas vizinhas | inverte duas pedrinhas lado a lado | [ideia] |
+| Lupa de bolso | mostra o que uma pedrinha vai cuspir | [ideia] |
+| Ímã | puxa todas as pedrinhas de um nível para um canto | [ideia] |
+
+## 6c. Minérios (o que as pedrinhas cospem)
+| Minério | Valor | Formato | A partir de |
+|---|---|---|---|
+| carvão | $1 | pedra preta | Cascalho |
+| cobre | $2 | pedra laranja com mancha verde | Cascalho |
+| ferro | $5 | lingote | Pedra |
+| prata | $12 | moeda | Rocha |
+| ouro | $30 | pepita | Rocha densa |
+| ametista | $50 | cacho de cristais | Geodo |
+| diamante | $90 | lapidado | Geodo |
+| esmeralda | $150 | corte retangular | Cristalino |
+| rubi | $250 | oval | Geodo real |
+| safira | $400 | gota | Pedra lunar |
+| opala | $650 | furta-cor | Âmbar |
+| fragmento de estrela | $1.000 | estrela | Esmeralda viva |
+| pedra filosofal | $2.000 | orbe com anel | Rubi real |
+
+**Pedrinha rara** (contorno dourado, 1 em 50): cospe como se fosse 2 níveis acima; juntar com rara mantém rara. [jogo] · [lab] ajusta a chance.
+
+Ideias para minérios: **variantes de rocha** com tabela própria (vulcânica cospe rubi e obsidiana; lunar cospe prata e opala), **minério amaldiçoado** (vale muito mas tira energia amanhã), **coleção** (bônus por achar todos os minérios de uma família).
 
 ## 7. Regras do dia (fiscal e lugares)
 | Elemento | O que faz | Situação |
