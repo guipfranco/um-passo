@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#f6ecd9">
-<title>Mina das Pedrinhas</title>
+<title>Ptui!</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
@@ -123,7 +123,7 @@ html,body{min-height:100%;background:#f6ecd9;color:#5a4636;font-family:'Fredoka'
 .logo{display:flex;align-items:flex-end;justify-content:center;height:130px}
 .logo svg{overflow:visible;animation:breathe 3s ease-in-out infinite;transform-origin:50% 90%}
 .logo svg:nth-child(2){animation-delay:-1s}.logo svg:nth-child(3){animation-delay:-2s}.logo svg:nth-child(4){animation-delay:-.5s}
-.title{font-size:46px;line-height:.92;text-align:center;color:#7a5a44;text-shadow:0 4px 0 #d2b98e;font-weight:700}
+.title{font-size:84px;line-height:.9;letter-spacing:-1px;transform:rotate(-4deg);text-align:center;color:#7a5a44;text-shadow:0 4px 0 #d2b98e;font-weight:700}
 .tagline{color:#a08a74;font-size:15px;text-align:center}
 .menuBtns{display:flex;flex-direction:column;gap:14px;width:min(80vw,300px);margin-top:8px}
 .btn.big{font-size:20px;padding:14px 22px}
@@ -152,8 +152,16 @@ html,body{min-height:100%;background:#f6ecd9;color:#5a4636;font-family:'Fredoka'
 .statsBox div{background:#efe1c6;border-radius:14px;padding:8px;text-align:center}
 .statsBox b{display:block;font-size:20px}.statsBox span{font-size:12px;color:#a08a74}
 .panel > .btn{width:100%}
-#coach{position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:60;width:min(94vw,380px);background:#5a4636;color:#fff;border-radius:18px;padding:10px 12px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 0 #3a2c22;animation:fadein .25s}
+#spot{position:fixed;z-index:58;border-radius:20px;box-shadow:0 0 0 4px #ffd98a,0 0 18px 6px #ffd98a99;pointer-events:none;transition:all .25s;animation:spotPulse 1.2s infinite}
+#spot.dim{box-shadow:0 0 0 4px #ffd98a,0 0 0 9999px #3a2c2273}
+#spot.hidden{display:none}
+@keyframes spotPulse{50%{outline:3px solid #ffd98a88;outline-offset:6px}}
+#coach{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);z-index:60;width:min(94vw,380px);background:#5a4636;color:#fff;border-radius:18px;padding:10px 12px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 0 #3a2c22;animation:coachIn .25s}
+@keyframes coachIn{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
 #coach.hidden{display:none}
+#coach[data-arrow=up]::before,#coach[data-arrow=down]::before{content:'';position:absolute;left:var(--ax,50%);margin-left:-11px;border:11px solid transparent}
+#coach[data-arrow=up]::before{top:-21px;border-bottom-color:#5a4636}
+#coach[data-arrow=down]::before{bottom:-21px;border-top-color:#5a4636}
 #coach p{font-size:15px;line-height:1.3;margin:0}
 #coach b{color:#ffd98a}
 #coach .btn{margin-top:8px;padding:7px 18px;font-size:15px}
@@ -165,8 +173,8 @@ html,body{min-height:100%;background:#f6ecd9;color:#5a4636;font-family:'Fredoka'
 <div id="app">
   <section id="scrMenu" class="screen on">
     <div class="logo" id="logo"></div>
-    <h1 class="title">Mina das<br>Pedrinhas</h1>
-    <p class="tagline">junte, canse e veja o que elas cospem</p>
+    <h1 class="title">Ptui!</h1>
+    <p class="tagline">junte as pedrinhas e veja o que elas cospem</p>
     <div class="menuBtns">
       <button class="btn b big" id="mContinue">Continuar</button>
       <button class="btn big" id="mNew">Novo jogo</button>
@@ -201,6 +209,7 @@ html,body{min-height:100%;background:#f6ecd9;color:#5a4636;font-family:'Fredoka'
   </section>
 </div>
 <div id="overlay" class="hidden"><div class="panel" id="panel"></div></div>
+<div id="spot" class="hidden"></div>
 <div id="coach" class="hidden"><div class="cav" id="coachAv"></div><div><p id="coachText"></p><button class="btn b" id="coachOk">Ok</button></div></div>
 
 <script>
@@ -453,7 +462,14 @@ function morning(resume=false){
   render(); renderMap();
   if(S.tut===6){
     S.tut=7;
-    coach('Toda manhã você escolhe <b>por onde cavar</b> no mapa: cada caminho muda o dia. No <b>dia 5</b>, o fiscal cobra a cota (lá em cima). Pague para descer ao próximo andar!', 'Bora!', ()=>{ S.tut=null; localStorage.mina_tut=1; saveGame(); });
+    const fim = ()=>{ S.tut=null; localStorage.mina_tut=1; saveGame(); };
+    setTimeout(()=>coach('Seus <b>itens</b> ficam aqui. Toque num item para ver o que ele faz.', 'Entendi', ()=>{
+      coach('Toda manhã você escolhe <b>por onde cavar</b>. Cada caminho muda o dia.', 'Entendi', ()=>{
+        coach('No topo do mapa está o <b>fiscal</b>: no dia 5 ele cobra a cota.', 'Entendi', ()=>{
+          coach('A cota é este valor. Junte o dinheiro até lá e desça para o próximo andar. Boa mineração!', 'Bora!', fim, pillOf('#hQuota'));
+        }, '.node.fiscal');
+      }, '.mrow.cur');
+    }, '#items'), 350);
     return;
   }
   saveGame();
@@ -545,7 +561,7 @@ function startDay(p, tutorial=false){
   $('#btnEnd').classList.remove('hot'); resetEnd();
   setBanner(`Andar ${S.week} · dia ${S.day}`, S.isFiscal ? `${S.fiscal.em} ${S.fiscal.nome}` : p.nome + (S.usedSaved?` (+${S.usedSaved} de energia guardada)`:''));
   render();
-  if(tutorial) coach('Arraste o dedo <b>para o lado</b> para juntar as duas pedrinhas iguais. ↔');
+  if(tutorial) coach('Arraste o dedo <b>para o lado</b> para juntar as duas pedrinhas iguais. ↔', null, null, '#board');
 }
 
 function rollSpawn(){ return Math.random() < CFG.pedraChance + .25*lvl('picareta') + (S.path?.pedra||0) ? 2 : 1; }
@@ -607,7 +623,7 @@ const anyMove = () => DIRS.some(([dx,dy])=>slide(S.tiles,dx,dy).moved);
 
 function move(dx,dy){
   if(!S || S.phase!=='mine' || overlayOpen() || coachBlock || !$('#scrGame').classList.contains('on')) return;
-  if(S.tut===1 && dy!==0){ coach('Para o <b>lado</b>! Arraste para a esquerda ou para a direita. ↔'); return; }
+  if(S.tut===1 && dy!==0){ coach('Para o <b>lado</b>! Arraste para a esquerda ou para a direita. ↔', null, null, '#board'); return; }
   const r=slide(S.tiles,dx,dy);
   if(!r.moved) return;
   for(const g of r.gone){ const el=els.get(g.id); els.delete(g.id); if(el){ el.style.zIndex=0; el.style.transform=pos(g.x,g.y); setTimeout(()=>el.remove(),120); } }
@@ -630,11 +646,16 @@ function move(dx,dy){
   // tutorial
   if(S.tut===1 && tops.length){
     S.tut=2;
-    coach('Juntou! Duas pedrinhas iguais viram <b>uma maior</b>: Cascalho, Pedra, Rocha, Geodo... Quanto maior a pedrinha, melhor o que ela guarda dentro.', 'Entendi', ()=>{
-      S.tut=3; coach('Cada arrasto gasta <b>1 de energia</b> ⚡ (lá em cima). Continue juntando pedrinhas até a energia acabar.');
-    });
+    const nova = els.get(r.merges[0].id);
+    coach('Juntou! Duas pedrinhas iguais viram <b>esta, maior</b>. Cascalho, Pedra, Rocha, Geodo... Quanto maior, melhor o que ela guarda dentro.', 'Entendi', ()=>{
+      coach('Cada arrasto gasta <b>1 de energia</b>. A sua energia fica aqui.', 'Entendi', ()=>{
+        coach('Esta é a <b>próxima pedrinha</b> que vai entrar no tabuleiro. Agora continue juntando até a energia acabar!', 'Bora', ()=>{
+          S.tut=3; coach('Continue juntando pedrinhas iguais.', null, null, pillOf('#hEnergy'));
+        }, '#nextMini');
+      }, pillOf('#hEnergy'));
+    }, nova);
   } else if(S.tut===3 && S.energy<=0){
-    S.tut=4; coach('Acabou a energia! Agora só nasce <b>torrão</b> 😠: ele não junta com nada e custa dinheiro no fim do dia. Toque em <b>Encerrar o dia</b>.');
+    S.tut=4; coach('Acabou a energia! Agora só nasce <b>torrão</b> 😠: ele não junta com nada e custa dinheiro no fim do dia. Toque aqui para <b>encerrar o dia</b>.', null, null, '#btnEnd');
   }
   if(!anyMove()){ setBanner(null,'não cabe mais nada'); setTimeout(endDay,450); }
 }
@@ -755,7 +776,9 @@ async function endDay(){
   setBanner(`Fim do dia ${S.day}`, S.dayTotal>0 ? `rendeu ${fmt(S.dayTotal)}` : S.dayTotal<0 ? 'a terra deu prejuízo...' : 'dia fraco...');
   $('#btnSkip').style.display='none'; $('#btnSell').style.display='';
   $('#btnSell').textContent = S.dayTotal>=0 ? `Vender ${fmt(S.dayTotal)}` : `Pagar a limpeza (${fmt(S.dayTotal)})`;
-  if(S.tut===5) coach('Cada pedrinha <b>cospe</b> o que tinha dentro: cobre, ferro, prata, ouro, diamante. Pedrinha maior, achado melhor. Toque em <b>Vender</b>.');
+  if(S.tut===5) coach('<b>Ptui!</b> Cada pedrinha cospe o que tinha dentro: cobre, ferro, prata, ouro, diamante. Pedrinha maior, achado melhor. Torrão custa.', 'Legal!', ()=>{
+    coach('Este é o total do dia. Toque em <b>Vender</b> para virar dinheiro.', null, null, '#revealRow');
+  }, '#board');
 }
 const fmt = v => (v<0?'-$':'$')+Math.abs(v);
 
@@ -764,7 +787,7 @@ function sell(){
   S.money=Math.max(0,S.money+S.dayTotal); S.stats.days++; S.stats.best=Math.max(S.stats.best,S.dayTotal); render();
   if(S.dayTotal>0) SFX.venda(); else SFX.esfarelar();
   if(S.isFiscal) return weekEnd();
-  if(S.tut===5){ S.tut=6; coach('Depois de minerar você leva <b>um item</b>. Itens fazem as pedrinhas renderem muito mais. Escolha um!'); }
+  if(S.tut===5){ S.tut=6; coach('Depois de minerar você leva <b>um item</b>. Itens fazem as pedrinhas renderem muito mais. Escolha um!', null, null, 'top'); }
   itemPick(S.path.picks||3, ()=>{ if(S.tut===6) hideCoach(); nextDay(); }, 'Escolha um item');
 }
 
@@ -842,15 +865,37 @@ function gameOver(q){
 }
 
 // ===================== TUTORIAL =====================
-let coachBlock=false;
-function coach(html, okLabel, onOk){
+let coachBlock=false, coachTarget=null, coachTimer=null;
+// alvo: seletor ou elemento que o balão explica ('top' = sem alvo, no alto)
+function coach(html, okLabel, onOk, target){
+  coachTarget = target==='top' ? 'top' : typeof target==='string' ? $(target) : (target||null);
   $('#coachText').innerHTML=html;
   const b=$('#coachOk');
   if(okLabel){ b.style.display=''; b.textContent=okLabel; coachBlock=true; b.onclick=()=>{ hideCoach(); onOk&&onOk(); }; }
   else { b.style.display='none'; coachBlock=false; }
+  $('#spot').classList.toggle('dim', !!okLabel);
   $('#coach').classList.remove('hidden');
+  placeCoach(); clearInterval(coachTimer); coachTimer=setInterval(placeCoach,250);
 }
-function hideCoach(){ $('#coach').classList.add('hidden'); coachBlock=false; }
+function placeCoach(){
+  const c=$('#coach'), sp=$('#spot'), t=coachTarget;
+  if(c.classList.contains('hidden')){ sp.classList.add('hidden'); return; }
+  c.style.top=''; c.style.bottom=''; c.dataset.arrow='';
+  if(t==='top'){ sp.classList.add('hidden'); c.style.top='12px'; c.style.bottom='auto'; return; }
+  if(!t || !t.isConnected){ sp.classList.add('hidden'); c.style.bottom='12px'; return; }
+  const r=t.getBoundingClientRect(), pad=6;
+  sp.classList.remove('hidden');
+  Object.assign(sp.style,{left:(r.left-pad)+'px', top:(r.top-pad)+'px', width:(r.width+2*pad)+'px', height:(r.height+2*pad)+'px'});
+  const h=c.offsetHeight, below=r.bottom+pad+14, above=r.top-pad-14-h;
+  if(below+h < innerHeight-8){ c.style.top=below+'px'; c.style.bottom='auto'; c.dataset.arrow='up'; }
+  else if(above>8){ c.style.top=above+'px'; c.style.bottom='auto'; c.dataset.arrow='down'; }
+  else c.style.bottom='12px';
+  const cl=c.getBoundingClientRect().left;
+  c.style.setProperty('--ax', Math.min(Math.max(r.left+r.width/2-cl, 26), c.offsetWidth-26)+'px');
+}
+addEventListener('resize', placeCoach);
+function hideCoach(){ $('#coach').classList.add('hidden'); $('#spot').classList.add('hidden'); coachBlock=false; coachTarget=null; clearInterval(coachTimer); }
+const pillOf = id => $(id).closest('.pill');
 function startTutorial(){
   S=freshState(); S.char='rola'; S.tut=1; S.fiscal=FISCAIS[0]; S.hist={1:'comum'};
   applyAndar(); startDay(PATHS.comum, true);

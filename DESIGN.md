@@ -1,4 +1,4 @@
-# Mina (nome provisório)
+# Ptui! (nome provisório: Um Passo / Mina)
 
 Puzzle de mineração com cara de Balatro. Você funde rochas no estilo 2048 durante o dia, cada arrasto cansa, e no fim do dia as rochas quebram e revelam o minério, como uma loot box. Vende, melhora o equipamento e tenta pagar a cota da semana.
 
