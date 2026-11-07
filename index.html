@@ -72,7 +72,7 @@ html,body{min-height:100%;background:#f6ecd9;color:#5a4636;font-family:'Fredoka'
 .total{display:flex;justify-content:space-between;align-items:center;background:#efe1c6;border-radius:16px;padding:6px 14px;box-shadow:0 3px 0 #dcc6a0;font-weight:600}
 .total b{font-size:32px;font-weight:700;color:#c48a1e}
 .total b.neg{color:#c0603f}
-.btn{font:700 18px 'Fredoka';border:0;border-radius:999px;padding:11px 22px;color:#fff;background:#c0603f;box-shadow:0 5px 0 #92452b;cursor:pointer;white-space:nowrap}
+.btn{font:700 18px 'Fredoka';transition:background .15s;border:0;border-radius:999px;padding:11px 22px;color:#fff;background:#c0603f;box-shadow:0 5px 0 #92452b;cursor:pointer;white-space:nowrap}
 .btn:active{transform:translateY(3px);box-shadow:0 2px 0 #92452b}
 .btn.g{background:#f2b33d;box-shadow:0 5px 0 #c48a1e;color:#4a3410}
 .btn.dim{background:#d8c4a0;box-shadow:0 5px 0 #bfa97f;color:#7a5a44}
@@ -224,7 +224,7 @@ function startDay(){
   if(S.gift){ addTile(5); S.gift=false; }
   addTile(); addTile();
   $('#mineRow').style.display=''; $('#revealRow').style.display='none';
-  $('#btnEnd').classList.remove('hot');
+  $('#btnEnd').classList.remove('hot'); resetEnd();
   setBanner(`Semana ${S.week} · dia ${S.day} de ${CFG.days}`, S.day===1 ? 'junte pedrinhas iguais' : '');
   render();
 }
@@ -525,7 +525,15 @@ addEventListener('pointerup',e=>{
   if(Math.max(Math.abs(dx),Math.abs(dy))<22) return;
   if(Math.abs(dx)>Math.abs(dy)) move(Math.sign(dx),0); else move(0,Math.sign(dy));
 });
-$('#btnEnd').onclick=endDay;
+// Encerrar exige dois toques enquanto ainda há energia (evita toque sem querer)
+let endArmed=null;
+function resetEnd(){ clearTimeout(endArmed); endArmed=null; $('#btnEnd').textContent='Encerrar o dia'; $('#btnEnd').classList.remove('g'); }
+$('#btnEnd').onclick=()=>{
+  if(S.energy<=0 || endArmed){ resetEnd(); endDay(); return; }
+  $('#btnEnd').textContent=`Confirmar? (sobra ${S.energy}⚡)`;
+  $('#btnEnd').classList.add('g');
+  endArmed=setTimeout(resetEnd,3000);
+};
 $('#btnSkip').onclick=()=>{ S.skip=true; };
 $('#btnSell').onclick=sell;
 $('#btnHelp').onclick=showHelp;
