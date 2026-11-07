@@ -34,6 +34,16 @@ input[type=range]{width:100%;accent-color:#009dff}
 .row{display:flex;gap:8px;align-items:center}
 .pill{font-size:18px;background:#0c1416;border-radius:6px;padding:2px 8px;color:#c9d6d6}
 </style>
+<script>
+// Atualiza sozinho: se o navegador abriu uma cópia antiga (o GitHub Pages guarda por 10 min),
+// busca a versão nova, atualiza o cache e recarrega uma vez.
+(async()=>{try{
+  const u=location.pathname, k='upd:'+u;
+  const [velho,novo]=await Promise.all([fetch(u,{cache:'force-cache'}).then(r=>r.text()), fetch(u,{cache:'reload'}).then(r=>r.text())]);
+  if(velho!==novo && !sessionStorage[k]){ sessionStorage[k]=1; location.reload(); }
+  else sessionStorage.removeItem(k);
+}catch(e){}})();
+</script>
 </head>
 <body>
 <main>
