@@ -169,7 +169,11 @@ body.semHud .hud{display:none}
 .figM .alvo b{font-size:30px;color:#7a5a44;line-height:1}
 .figM .alvo span{font-size:15px;color:#a08a74}
 .figM .fG{width:76px;height:76px;overflow:visible}
-.figM .receita{display:flex;align-items:center;gap:3px;background:#f6ecd9;border-radius:999px;padding:2px 12px}
+.figM .receita{display:flex;align-items:center;gap:4px;background:#f6ecd9;border-radius:14px;padding:4px 12px 3px}
+.pecaN{display:flex;flex-direction:column;align-items:center;min-width:40px}
+.objetivo .pecaN small{display:block;font-size:11px;font-weight:600;color:#a08a74;line-height:1.1;white-space:nowrap;text-transform:none;letter-spacing:0}
+.objetivo .alvo .pecaN small{font-size:14px;color:#7a5a44}
+#bTitle .ico{width:1.1em;height:1.1em}
 .figM .receita svg{width:34px;height:34px;overflow:visible}
 .figM .receita i{font-style:normal;font-weight:700;font-size:16px;color:#a08a74}
 .mTrilha{position:relative;display:flex;flex-direction:column;gap:2px;padding:6px 10px 14px}

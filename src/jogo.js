@@ -82,7 +82,7 @@ let GLOSS=null, GLOSS_RE=null;
 function gloss(){
   if(GLOSS) return;
   GLOSS={};
-  ROCKS.forEach((r,t)=>{ if(t>0) GLOSS[r.n]=icoRock(t); });
+  ROCKS.forEach((r,t)=>{ if(t>0){ GLOSS[r.n]=icoRock(t); GLOSS[plural(r.n)]=icoRock(t); } });
   for(const w of ['torrão','torrões','Torrão','Torrões']) GLOSS[w]=icoRock(0);
   ORES.forEach((o,i)=>{ if(i){ GLOSS[o.n]=icoOre(i); GLOSS[o.n[0].toUpperCase()+o.n.slice(1)]=icoOre(i); } });
   for(const w of ['parede','paredes','Parede','Paredes']) GLOSS[w]=icoSvg(wallInner());
@@ -1145,13 +1145,16 @@ function progresso(o){
 const figSvg = (inner,cls='') => `<svg class="${cls}" viewBox="0 0 100 100">${inner}</svg>`;
 const pedraCor = (t,c) => pedraInner(t, c!=null ? {cor:c} : {});
 function figuraMissao(o){
-  const rec = (a,b,c) => `<div class="receita">${figSvg(a)}<i>+</i>${figSvg(b)}<i>=</i>${figSvg(c)}</div>`;
+  // cada peça com o nome embaixo (noIco: o nome não ganha outro ícone ao lado)
+  const peca = (inner,nome,cls='') => `<div class="pecaN">${figSvg(inner,cls)}<small>${noIco(nome)}</small></div>`;
+  const rec = (a,b,c) => `<div class="receita">${peca(...a)}<i>+</i>${peca(...b)}<i>=</i>${peca(...c)}</div>`;
+  const nomeCor = (t,c) => rockName(t) + (c!=null ? ' '+corNome(c) : '');
   if(o.forme || o.cor!=null){ const t=o.forme||o.t, c=o.cor;
-    return `<div class="figM"><div class="alvo">${figSvg(pedraCor(t,c),'fG')}<b>×${o.n}</b></div>${rec(pedraCor(t-1,c),pedraCor(t-1,c),pedraCor(t,c))}</div>`; }
-  if(o.quebre){ const t=Math.max(1,o.quebre);
-    return `<div class="figM"><div class="alvo">${figSvg(pedraInner(t),'fG')}<b>×${o.n}</b></div>${rec(pedraInner(t),pickInner(t),oreSvg(4,50,52,2.6))}</div>`; }
-  if(o.extraia) return `<div class="figM"><div class="alvo">${figSvg(oreSvg(5,50,52,2.6),'fG')}<b>$${o.extraia}</b></div>${rec(pedraInner(2),pickInner(2),oreSvg(3,50,52,2.6))}</div>`;
-  if(o.total) return `<div class="figM"><div class="alvo">${figSvg(oreSvg(5,50,52,2.6),'fG')}<b>$${o.total}</b></div></div>`;
+    return `<div class="figM"><div class="alvo">${peca(pedraCor(t,c),nomeCor(t,c),'fG')}<b>×${o.n}</b></div>${rec([pedraCor(t-1,c),nomeCor(t-1,c)],[pedraCor(t-1,c),nomeCor(t-1,c)],[pedraCor(t,c),nomeCor(t,c)])}</div>`; }
+  if(o.quebre){ const t=Math.max(1,o.quebre), nome = o.quebre<=1 ? 'pedrinha' : rockName(t);
+    return `<div class="figM"><div class="alvo">${peca(pedraInner(t),nome,'fG')}<b>×${o.n}</b></div>${rec([pedraInner(t),nome],[pickInner(t),'picareta'],[oreSvg(4,50,52,2.6),'minério'])}</div>`; }
+  if(o.extraia) return `<div class="figM"><div class="alvo">${peca(oreSvg(5,50,52,2.6),'minério','fG')}<b>$${o.extraia}</b></div>${rec([pedraInner(2),rockName(2)],[pickInner(2),'picareta'],[oreSvg(3,50,52,2.6),'minério'])}</div>`;
+  if(o.total) return `<div class="figM"><div class="alvo">${peca(oreSvg(5,50,52,2.6),'minério','fG')}<b>$${o.total}</b></div></div>`;
   if(o.arrastos) return `<div class="figM"><div class="alvo"><b>${o.arrastos}</b><span>arrastos</span></div></div>`;
   return '';
 }
@@ -1245,7 +1248,7 @@ function missaoJoga(n){
 // linha do resultado, no fim do dia
 function missaoLinha(){
   const m=MISSOES[S.missao-1], ok=cumpriu(m.obj), p=progresso(m.obj);
-  $('#recLine').innerHTML = ok ? `<b>Missão cumprida!</b> ${estrelasHtml(estrelasPor(m,S.dayTotal))}` : `Faltou: ${objetivoTxt(m.obj)} (${p.din?'$':''}${p.at}/${p.alvo})`;
+  $('#recLine').innerHTML = ok ? `<b>Missão cumprida!</b> ${estrelasHtml(estrelasPor(m,S.dayTotal))}` : enrich(`Faltou: ${objetivoTxt(m.obj)} (${p.din?'$':''}${p.at}/${p.alvo})`);
   $('#btnSell').textContent = 'Continuar';
   render();
 }
