@@ -231,6 +231,11 @@ body.lock{overflow:hidden}
 .fb.on{background:#f2b33d;color:#4a3410;box-shadow:0 3px 0 #c48a1e}
 .fb:disabled{opacity:.4}
 .tile.sel::after{content:'';position:absolute;inset:2px;border-radius:18px;border:4px solid #3f7fe0;pointer-events:none}
+.recLine{text-align:center;font-size:15px;font-weight:600;color:#a08a74;min-height:18px}
+.recLine b{color:#c48a1e}
+.recAtual{font-size:13px;color:#7a5a44;text-align:center;background:#efe1c6;border-radius:12px;padding:6px 10px;margin:0}
+.recAtual b{color:#c48a1e}
+.recs li{margin-bottom:3px}
 .panel h3{font-size:15px;color:#a08a74;margin:6px 0 -4px;text-transform:uppercase;letter-spacing:.04em}
 .edge{position:absolute;z-index:4;background:#6b625a;border:2.5px solid #2e2219;border-radius:8px;box-shadow:0 3px 0 #0003}
 .edge.v{width:12px;height:calc(var(--cell) - 10px);left:calc((var(--ex) + 1)*(var(--cell) + var(--gap)) + var(--gap)/2 - 6px);top:calc(var(--ey)*(var(--cell) + var(--gap)) + var(--gap) + 5px)}
@@ -275,6 +280,7 @@ body.lock{overflow:hidden}
     <div class="wide" id="revealRow" style="display:none;flex-direction:column;gap:12px">
       <div class="total"><span>Total do dia</span><b id="dayTotal">$0</b></div>
       <div class="calc" id="calc"></div>
+      <div class="recLine" id="recLine"></div>
       <div class="row"><button class="btn dim" id="btnFast" style="flex:1">Rápido</button><button class="btn dim" id="btnSkip" style="flex:1">Pular</button><button class="btn g" id="btnSell" style="flex:2;display:none">Vender</button></div>
     </div>
   </section>
@@ -860,12 +866,14 @@ function nodeInfo(key){
     showOverlay(`${disc(f.id,COR_NO.fiscal,'bigDisc')}<h2>Dia do fiscal</h2>
       <p>Cota: <b style="color:#c0603f">$${q}</b>. Você tem <b style="color:#c48a1e">$${S.money}</b>${S.money>=q?' (já dá!)':`, faltam $${q-S.money}`}.</p>
       <div class="cards">${fiscalCard(f)}</div>
+      <p class="recAtual">${recTxt(RECS()[chaveJogo('fiscal')])}</p>
       <button class="btn" id="btnGo">Encarar o fiscal</button><button class="btn dim" id="btnNo">Voltar</button>`);
     $('#btnGo').onclick=()=>{ hideOverlay(); S.trilha[S.day]=S.lane; S.isFiscal=true; startDay(PATHS.comum); };
   } else {
     const [d,l]=key.split(',').map(Number), k=S.mapa.tipos[d-1][l], p=PATHS[k];
     const fm = k==='caverna' && S.mapa.forma ? acharForma(S.mapa.forma[d-1][l]) : null;
     showOverlay(`${fm?formaSvg(fm,150):disc(k,null,'bigDisc')}<h2>${fm?`${p.nome}: ${fm.nome}`:p.nome}</h2><p>${p.desc}</p>
+      ${p.mine?`<p class="recAtual">${recTxt(RECS()[chaveJogo(k, fm?.id)])}</p>`:''}
       <button class="btn b" id="btnGo">${p.mine?'Cavar aqui':'Entrar'}</button><button class="btn dim" id="btnNo">Voltar</button>`);
     $('#btnGo').onclick=()=>{ hideOverlay(); choosePath(k,l); };
   }
@@ -1072,6 +1080,37 @@ function assoviar(){
   if(!anyMove()){ setBanner(null,'não cabe mais nada'); setTimeout(endDay,450); }
 }
 
+// ===================== RECORDES =====================
+// Pontuação de uma fase = quanto o dia rendeu. Recorde por fase:
+// no laboratório, por combinação (fase, formato, energia, personagem e ajustes); no jogo, por caminho e formato.
+const RECS = () => JSON.parse(localStorage.mina_recordes||'{}');
+const chaveLab = () => 'lab|'+JSON.stringify({f:LAB.fase, e:LAB.energia, c:LAB.char, ...LAB.cfg});
+function chaveJogo(k, forma){ return 'jogo|'+k+(forma?':'+forma:''); }
+function chaveFase(){
+  if(S.lab) return chaveLab();
+  return chaveJogo(S.isFiscal ? 'fiscal' : (S.hist[S.day]||'?'), S.forma?.id);
+}
+function nomeLab(){
+  const pre=presetDe(LAB.fase), g=LAB.cfg;
+  const ajust = Object.keys(pre).some(k=>k!=='forma' && g[k]!==pre[k]) || g.ferr || g.assovio || (g.rara!=null && g.rara!==RARA);
+  const fm = g.forma ? acharForma(g.forma)?.nome : null;
+  return `${PATHS[LAB.fase].nome}${fm?' · '+fm:''} · ${LAB.energia?'com':'sem'} energia · ${CHARS[LAB.char].nome}${ajust?' · ajustada':''}`;
+}
+function nomeFase(){
+  if(S.lab) return nomeLab();
+  if(S.isFiscal) return 'Dia do fiscal';
+  const k=S.hist[S.day]; return (PATHS[k]?.nome||k) + (S.forma?': '+S.forma.nome:'');
+}
+function recordeFim(){
+  if(S.tut) return;
+  const k=chaveFase(), r=RECS(), ant=r[k];
+  const novo = S.dayTotal>0 && (!ant || S.dayTotal>ant.total);
+  if(novo){ r[k]={total:S.dayTotal, arrastos:S.moves||0, char:S.char, nome:nomeFase(), quando:Date.now()}; localStorage.mina_recordes=JSON.stringify(r); }
+  $('#recLine').innerHTML = novo ? (ant ? `<b>Novo recorde!</b> antes: $${ant.total}` : '<b>Primeiro recorde desta fase!</b>') : ant ? `Recorde: $${ant.total}` : '';
+  if(novo && ant){ popup('RECORDE!', '$'+S.dayTotal, '#f2b33d'); SFX.pagou(); }
+}
+const recTxt = e => e ? `Recorde: <b>$${e.total}</b> · ${e.arrastos} arrastos · ${CHARS[e.char]?.nome||''}` : 'Sem recorde ainda.';
+
 // ===================== FERRAMENTAS =====================
 const cp = a => a.map(o=>({...o}));
 function foto(){ return {tiles:cp(S.tiles), walls:cp(S.walls), edges:cp(S.edges), energy:S.energy, tired:S.tired, moves:S.moves, extra:S.extra, coroa:S.coroa, assovios:S.assovios}; }
@@ -1162,7 +1201,7 @@ async function endDay(){
   if(!S.semEnergia) S.saved = S.tut ? 0 : Math.min(CFG.guardaMax, sobra);
   $('#mineRow').style.display='none'; $('#revealRow').style.display='flex';
   $('#btnSkip').style.display=''; $('#btnSell').style.display='none';
-  $('#dayTotal').textContent='$0'; $('#dayTotal').classList.remove('neg'); showCalc();
+  $('#dayTotal').textContent='$0'; $('#dayTotal').classList.remove('neg'); showCalc(); $('#recLine').textContent='';
   setBanner(`Fim do dia ${S.day}`, S.saved ? `hora de cuspir! (+${S.saved}⚡ guardada)` : 'hora de cuspir!');
   render(); SFX.fimDia(); abaixar(true); await sleep(700);
 
@@ -1247,6 +1286,7 @@ async function endDay(){
   setBanner(`Fim do dia ${S.day}`, S.dayTotal>0 ? `rendeu ${fmt(S.dayTotal)}` : S.dayTotal<0 ? 'a terra deu prejuízo...' : 'dia fraco...');
   $('#btnSkip').style.display='none'; $('#btnFast').style.display='none'; $('#btnSell').style.display='';
   $('#btnSell').textContent = S.dayTotal>=0 ? `Vender ${fmt(S.dayTotal)}` : `Pagar a limpeza (${fmt(S.dayTotal)})`;
+  recordeFim();
   if(S.tut===5) coach('<b>Ptui!</b> Pedrinha cospe minério, torrão custa.', 'Legal!', ()=>{
     coach('Toque em <b>Vender</b> para embolsar!', null, null, '#revealRow');
   }, '#board');
@@ -1413,16 +1453,19 @@ function labPainel(){
   const fases = LAB_FASES.map(k=>op('fase',k,LAB.fase===k,`<span class="em">${disc(k,null,'discSm')}</span><div><b>${PATHS[k].nome}</b><span>${PATHS[k].desc}</span></div>`)).join('');
   const ajustes = LAB_AJUSTES.filter(a=>(!a.so || LAB.energia) && !(a.sem && LAB.cfg[a.sem])).map(a=>`<div class="ajuste"><span>${a.nome}</span><div class="chips">${(typeof a.ops==='function'?a.ops():a.ops).map(o=>`<button class="chipOp ${LAB.cfg[a.k]===o?'sel':''}" data-aj="${a.k}" data-v='${JSON.stringify(o)}'>${a.fmt(o)}</button>`).join('')}</div></div>`).join('');
   const minhas = JSON.parse(localStorage.mina_formas||'[]');
+  const recs = Object.entries(RECS()).sort((a,b)=>b[1].total-a[1].total).slice(0,12).map(([k,e])=>`<li>${k.startsWith('jogo|')?'<small class="nv">jogo</small> ':''}${e.nome}: <b>$${e.total}</b> <small>(${e.arrastos} arrastos, ${CHARS[e.char]?.nome||''})</small></li>`).join('');
   const hist = LAB.hist.slice(-8).reverse().map(h=>`<li><b>${PATHS[h.fase]?.nome||h.fase}</b> · ${h.energia?'com':'sem'} energia · ${CHARS[h.char].nome}${h.cfg?` · ${h.cfg.n}x${h.cfg.n}, ${h.cfg.spawns}/arrasto`:''}: ${h.arrastos} arrastos, <b>$${h.total}</b></li>`).join('');
   showOverlay(`${disc('lab','#4f7f9a','bigDisc')}<h2>Laboratório</h2>
     <h3>Energia</h3><div class="labRow">${op('energia',1,LAB.energia,'<div><b>Ligada</b></div>')}${op('energia',0,!LAB.energia,'<div><b>Desligada</b><span>até travar</span></div>')}</div>
     <h3>Personagem</h3><div class="labRow">${Object.entries(CHARS).map(([k,c])=>op('char',k,LAB.char===k,`<div><b>${c.em} ${c.nome}</b></div>`)).join('')}</div>
+    <p class="recAtual">${nomeLab()}<br>${recTxt(RECS()[chaveLab()])}</p>
     <button class="btn b" id="labGo">Jogar</button>
     <button class="btn g" id="labBuild">Construir nível (tela vazia ${LAB.cfg.w}x${LAB.cfg.h})</button>
     <h3>Ajustes</h3><div class="ajustes">${ajustes}</div>
     <button class="btn dim" id="labReset">Voltar aos valores da fase</button>
     <h3>Fase (carrega os valores dela)</h3><div class="cards">${fases}</div>
     ${minhas.length?`<h3>Seus níveis</h3><div class="cards">${minhas.map(f=>`<div class="card" style="cursor:default"><span class="em">${formaSvg(f,40)}</span><div><b>${f.nome}</b><span>${fw(f)}x${fh(f)}${f.pecas?.length?`, ${f.pecas.length} pedrinhas`:''}</span></div><button class="pt" data-delf="${f.id}">apagar</button></div>`).join('')}</div>`:''}
+    ${recs?`<h3>Recordes</h3><ol class="labHist recs">${recs}</ol><button class="pt" id="labRecZera">apagar recordes</button>`:''}
     ${hist?`<h3>Últimos resultados</h3><ul class="labHist">${hist}</ul>`:''}
     <button class="btn dim" id="labMenu">Voltar ao menu</button>`);
   const redesenha = () => { labSalva(); const y=$('#panel').scrollTop; labPainel(); $('#panel').scrollTop=y; };
@@ -1436,6 +1479,7 @@ function labPainel(){
   $('#labBuild').onclick=()=>{ LAB.cfg.forma=null; labSalva(); labJoga(); labConstruir(); };
   document.querySelectorAll('[data-delf]').forEach(b=>b.onclick=()=>{ const id=b.dataset.delf; localStorage.mina_formas=JSON.stringify(JSON.parse(localStorage.mina_formas||'[]').filter(f=>f.id!==id)); if(LAB.cfg.forma===id) LAB.cfg.forma=null; redesenha(); });
   $('#labGo').onclick=labJoga;
+  if($('#labRecZera')) $('#labRecZera').onclick=()=>{ localStorage.removeItem('mina_recordes'); redesenha(); };
   $('#labMenu').onclick=()=>{ hideOverlay(); showMenu(); };
 }
 function labJoga(){
@@ -1447,7 +1491,8 @@ function labJoga(){
   if(g.ferr) for(const f of FERRAMENTAS) S.ferr[f.id]=99;
   const p = {...base, forma:g.forma?acharForma(g.forma):null, caverna:!g.forma && !!base.caverna, w:g.w, h:g.h, energy:g.energia-CFG.energy, spawns:g.spawns, rara:g.rara??RARA, torrao:g.torrao, pedra:g.pedra, cores:g.cores, picareta:g.picareta, walls:g.walls, edges:g.edges, clods:g.clods, semEnergia:!LAB.energia};
   startDay(p);
-  setBanner('Laboratório', `${base.nome} · ${LAB.energia?'com':'sem'} energia`);
+  const rec=RECS()[chaveLab()];
+  setBanner('Laboratório', `${base.nome} · ${LAB.energia?'com':'sem'} energia${rec?` · recorde $${rec.total}`:''}`);
   labFerramentas();
 }
 function labFim(){
