@@ -28,10 +28,13 @@ def roda(nav, arq):
     tempo = re.search(r'<!-- tempo: (\d+) -->', arq.read_text(encoding='utf-8'))
     perfil = tempfile.mkdtemp(prefix='ptui_')
     try:
+      try:
         r = subprocess.run([nav, '--headless', '--disable-gpu', '--no-sandbox', '--allow-file-access-from-files', '--force-prefers-reduced-motion',
                             f'--user-data-dir={perfil}', f'--virtual-time-budget={tempo.group(1) if tempo else 30000}',
                             '--dump-dom', arq.as_uri()],
-                           capture_output=True, encoding='utf-8', errors='replace', timeout=600)
+                           capture_output=True, encoding='utf-8', errors='replace', timeout=300)
+      except subprocess.TimeoutExpired:
+        return arq.stem, False, {'log': [], 'errs': ['passou de 5 minutos (travou?)']}
     finally:
         shutil.rmtree(perfil, ignore_errors=True)
     m = re.search(r'<pre id="out"[^>]*>(.*?)</pre>', r.stdout, re.S)

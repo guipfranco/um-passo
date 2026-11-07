@@ -2,6 +2,12 @@
 
 Puzzle de mineração com pedrinhas que cospem minério. Publicado em https://guipfranco.github.io/um-passo/ (laboratório: `?lab`).
 
+## Modos (ordem do menu)
+
+- **Clássico**: fases soltas, cada uma com uma missão e até 3 estrelas. As fases ficam em `src/missoes.js`.
+- **Mineração**: o roguelite (andares, mapa, loja, itens, fiscal).
+- **Laboratório**: testar qualquer regra; dele saem o Editor de níveis e o Catálogo.
+
 ## Montar e publicar
 
 - O código fica em `src/` (`jogo.js` é a lógica; `config.js` os dados; `svg.js` a arte). O HTML e o CSS ficam em `build.py`.

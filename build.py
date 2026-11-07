@@ -3,6 +3,7 @@
 import os
 T = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src') + os.sep
 rd = lambda f: open(T + f, encoding='utf-8').read()
+missoes = rd('missoes.js')
 cfg, svg, logic, helpers, sfx, css, autoupd = rd('config.js'), rd('svg.js'), rd('jogo.js'), rd('helpers.js'), rd('sfx.js'), rd('css.css'), rd('autoupd.html')
 gi = rd('gi.js')
 css = css.replace('width:calc(4*var(--cell) + 5*var(--gap));height:calc(4*var(--cell) + 5*var(--gap))', 'width:calc(var(--w,4)*var(--cell) + (var(--w,4) + 1)*var(--gap));height:calc(var(--h,4)*var(--cell) + (var(--h,4) + 1)*var(--gap))')
@@ -159,6 +160,26 @@ details.sec[open] > summary::after{content:'−'}
 .card .regraPic .ico{width:34px;height:34px;margin:0;flex:none}
 .card .regraPic i{font-style:normal;font-weight:700;font-size:18px;color:#7a5a44}
 .card .regraPic em{font-style:normal;font-size:12px;color:#a08a74;line-height:1.2}
+body.semHud .hud{display:none}
+#quIc.ok{background:#6aa84f}
+.mTrilha{position:relative;display:flex;flex-direction:column;gap:2px;padding:6px 10px 14px}
+.mCaminho{position:absolute;left:0;top:0;pointer-events:none}
+.mCaminho polyline{fill:none;stroke:#7a5a4450;stroke-width:5;stroke-dasharray:1 11;stroke-linecap:round;stroke-linejoin:round}
+.mGrupo{position:relative;z-index:1;display:flex;align-items:center;gap:10px;background:#f6ecd9;border-radius:16px;padding:8px 12px;box-shadow:0 3px 0 #dcc6a0;margin:10px 0 6px}
+.mGrupo b{display:block;font-size:17px;color:#7a5a44}
+.mGrupo span{display:block;font-size:13px;color:#a08a74;line-height:1.2}
+.mLinha{display:flex;padding:0 12% 18px}
+.mNo{position:relative;z-index:1;width:62px;height:62px;border-radius:50%;border:0;background:#f2b33d;box-shadow:0 5px 0 #c48a1e;font:700 24px 'Fredoka';color:#4a3410;cursor:pointer;padding:0}
+.mNo.trava{background:#cdbb9c;box-shadow:0 5px 0 #a8977a;color:#8f7f66;cursor:default}
+.mNo.atual{box-shadow:0 5px 0 #c48a1e,0 0 0 5px #fff;animation:pulsa 1.4s ease-in-out infinite}
+@keyframes pulsa{50%{transform:scale(1.07)}}
+.mNo .estr{position:absolute;left:50%;bottom:-17px;transform:translateX(-50%);font-size:14px;white-space:nowrap}
+.estr i{font-style:normal;color:#cdbb9c}
+.estr i.on{color:#f2b33d;text-shadow:0 1px 0 #c48a1e}
+.estr.grande{display:block;text-align:center;font-size:52px;line-height:1}
+.objetivo{background:#fff3cf;border-radius:14px;padding:8px 12px 10px;text-align:center;font-weight:700;font-size:20px;color:#7a5a44;box-shadow:0 3px 0 #e8cf8f}
+.objetivo small{display:block;font-size:12px;font-weight:600;color:#c48a1e;text-transform:uppercase;letter-spacing:.5px}
+.metas{font-size:13px !important}
 .secBody{display:flex;flex-direction:column;gap:6px;padding-bottom:12px}
 .secBody .card{background:#f6ecd9}
 b.sub{font-size:13px;color:#c48a1e;text-transform:uppercase;letter-spacing:.04em;margin-top:6px}
@@ -182,10 +203,11 @@ body = '''<div id="app">
     <h1 class="title">Ptui!</h1>
     <p class="tagline">junte as pedrinhas e veja o que elas cospem</p>
     <div class="menuBtns">
+      <button class="btn g big" id="mCla">Clássico<small>uma missão em cada fase</small></button>
+      <button class="btn b big" id="mContinue">Continuar</button>
+      <button class="btn big" id="mNew">Mineração<small>desça andar por andar, com loja e itens</small></button>
       <button class="btn big lab" id="mLab">Laboratório<small>teste fases, formatos e itens</small></button>
       <div class="labRow"><button class="btn lab2" id="mEd" style="flex:1">Editor de níveis</button><button class="btn lab2" id="mCat" style="flex:1">Catálogo</button></div>
-      <button class="btn b big" id="mContinue">Continuar</button>
-      <button class="btn big" id="mNew">Novo jogo</button>
       <button class="btn dim big" id="mTut">Como jogar</button>
     </div>
     <div class="menuFoot"><span id="mBest"></span><button class="icon musBtn" id="mSound">♪</button><button class="linkBtn" id="mCred">créditos</button></div>
@@ -194,8 +216,8 @@ body = '''<div id="app">
   <div id="shell" class="hidden">
     <div class="hud wide">
       <div class="pill"><span class="ic en" id="enIc">⚡</span><div><b id="hEnergy"></b><small id="hEnergyMax"></small></div></div>
-      <div class="pill"><span class="ic co">$</span><div><b id="hMoney"></b><small>dinheiro</small></div></div>
-      <div class="pill"><span class="ic qu">!</span><div><b id="hQuota"></b><small id="hQuotaDay"></small></div></div>
+      <div class="pill"><span class="ic co">$</span><div><b id="hMoney"></b><small id="hMoneyLbl">dinheiro</small></div></div>
+      <div class="pill"><span class="ic qu" id="quIc">!</span><div><b id="hQuota"></b><small id="hQuotaDay"></small></div></div>
     </div>
     <div class="top wide"><button class="icon" id="btnPause">☰</button><div class="banner"><div id="bTitle"></div><span id="bSub"></span></div><button class="icon musBtn" id="btnSound">♪</button></div>
     <div class="items wide" id="items"></div>
@@ -292,7 +314,7 @@ addEventListener('pointerup',e=>{
 addEventListener('pointercancel',()=>{ if(touch){ touch=null; clearPreview(true); } });
 // Encerrar exige dois toques enquanto ainda há energia (evita toque sem querer)
 let endArmed=null;
-function resetEnd(){ clearTimeout(endArmed); endArmed=null; $('#btnEnd').textContent=S&&S.semEnergia?'Parar aqui':'Encerrar o dia'; $('#btnEnd').classList.remove('g'); }
+function resetEnd(){ clearTimeout(endArmed); endArmed=null; $('#btnEnd').textContent=S&&S.missao?'Terminar':S&&S.semEnergia?'Parar aqui':'Encerrar o dia'; $('#btnEnd').classList.remove('g'); }
 $('#btnEnd').onclick=()=>{
   if(coachBlock) return;
   if(S.energy<=0 || endArmed){ resetEnd(); endDay(); return; }
@@ -311,6 +333,7 @@ addEventListener('pointerdown',()=>{ if(AC&&AC.state==='suspended') AC.resume();
 $('#mContinue').onclick=loadGame;
 $('#mCred').onclick=credits;
 $('#mLab').onclick=labPainel;
+$('#mCla').onclick=missoesLista;
 $('#mEd').onclick=editorLista;
 $('#mCat').onclick=()=>catalogo(showMenu);
 $('#mNew').onclick=newGameClick;
@@ -343,7 +366,7 @@ html = '''<!doctype html>
 <body>
 ''' + body + '''
 <script>
-''' + cfg + gi + svg + logic + helpers + sfx + ui + '''</script>
+''' + cfg + missoes + gi + svg + logic + helpers + sfx + ui + '''</script>
 </body>
 </html>
 '''

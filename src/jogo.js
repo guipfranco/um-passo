@@ -13,7 +13,7 @@ const sleep = ms => new Promise(r=>setTimeout(r, S.skip ? 0 : ms));
 const lvl = id => S.lv[id]||0;
 const has = id => lvl(id)>0;
 const item = id => ITEMS.find(i=>i.id===id);
-const andar = () => ANDARES[(S.week-1)%ANDARES.length];
+const andar = () => ANDARES[((S.tema||S.week)-1)%ANDARES.length];
 const fiscalHoje = id => S.isFiscal && S.fiscal.id===id;
 const DIRS = [[1,0],[-1,0],[0,1],[0,-1]];
 const wallAt = (x,y) => S.walls.some(w=>w.x===x&&w.y===y);
@@ -126,6 +126,7 @@ function show(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', s.id===id));
   $('#shell').classList.toggle('hidden', id==='scrMenu');
   document.body.classList.toggle('lock', id==='scrGame');
+  document.body.classList.remove('semHud');
   scrollTo(0,0);
 }
 
@@ -140,10 +141,9 @@ function showMenu(){
   hideCoach(); hideOverlay(); show('scrMenu'); trilha('menu');
   const sv = localStorage.mina_save ? JSON.parse(localStorage.mina_save) : null;
   $('#mContinue').style.display = sv ? '' : 'none';
-  if(sv) $('#mContinue').innerHTML = `Continuar<small>andar ${sv.week} · dia ${sv.day} · $${sv.money}</small>`;
+  if(sv) $('#mContinue').innerHTML = `Continuar a mineração<small>andar ${sv.week} · dia ${sv.day} · $${sv.money}</small>`;
   const best = +(localStorage.mina_best||0);
   $('#mBest').textContent = best ? `Recorde: andar ${best} (${ANDARES[(best-1)%ANDARES.length].n})` : '';
-  $('#mNew').innerHTML = localStorage.mina_tut ? 'Novo jogo' : 'Novo jogo';
 }
 function credits(){
   showOverlay(`<h2>Créditos</h2><ul>
@@ -162,7 +162,7 @@ function newGameClick(){
     $('#btnNo').onclick=hideOverlay;
   } else go();
 }
-function saveGame(){ if(S && !S.tut && !S.lab){ const {tiles,walls,edges,...rest}=S; localStorage.mina_save=JSON.stringify({...rest,tiles:[],walls:[],edges:[]}); } }
+function saveGame(){ if(S && !S.tut && !S.lab && !S.missao){ const {tiles,walls,edges,...rest}=S; localStorage.mina_save=JSON.stringify({...rest,tiles:[],walls:[],edges:[]}); } }
 function loadGame(){ S={...freshState(), ...JSON.parse(localStorage.mina_save)}; applyAndar(); morning(true); }
 
 const CHARS = {
@@ -379,7 +379,7 @@ function addTile(t, dir){
   if(dir && S.char==='passinho'){ const [dx,dy]=dir; const e=free.filter(c=>dx===1?c.x===0:dx===-1?c.x===W-1:dy===1?c.y===0:c.y===H-1); if(e.length) free=e; }
   const c=pick(free);
   if(t===undefined){
-    if(S.energy<=0 || (S.path?.torrao && Math.random()<S.path.torrao)) t=0;   // exausta (ou avalanche): torrão
+    if((S.energy<=0 && !S.missao) || (S.path?.torrao && Math.random()<S.path.torrao)) t=0;   // exausta (ou avalanche): torrão
     else { t=S.next; S.next=rollSpawn(); }
   }
   const tile={id:'t'+(nextId++), x:c.x, y:c.y, t};
@@ -444,12 +444,14 @@ const anyMove = () => DIRS.some(([dx,dy])=>slide(S.tiles,dx,dy).moved);
 function move(dx,dy){
   if(!S || S.phase!=='mine' || overlayOpen() || coachBlock || S.editando || S.ferrAtiva || !$('#scrGame').classList.contains('on')) return;
   if(S.tut===1 && dy!==0){ coach('Para o <b>lado</b>! ↔', null, null, '#board'); return; }
+  if(S.missao && !S.semEnergia && S.energy<=0) return; // acabaram os arrastos: a fase já vai terminar
   const r=slide(S.tiles,dx,dy);
   if(!r.moved) return;
   S.undoSnap = foto();
   for(const g of r.gone){ const el=els.get(g.id); els.delete(g.id); if(el){ el.style.zIndex=0; el.style.transform=pos(g.x,g.y); setTimeout(()=>el.remove(),120); } }
   for(const b of r.breaks) quebrar(b);
   S.tiles=r.tiles;
+  if(S.missao) contaMissao(r);
   const wasTired = S.energy<=0;
   S.moves=(S.moves||0)+1;
   if(!S.semEnergia){ if(S.energy>0) S.energy--; else S.tired++; }
@@ -459,10 +461,11 @@ function move(dx,dy){
   SFX.arrastar();
   const tops=r.merges.map(o=>o.t).sort((a,b)=>b-a);
   if(tops.length){ SFX.fundir(tops[0]); if(tops.length>1) setTimeout(()=>SFX.fundir(tops[1]),45); S.stats.maxT=Math.max(S.stats.maxT,tops[0]); }
-  if(S.energy<=0) SFX.torraoCai(); else if(S.energy<=5) SFX.cansado();
+  if(S.missao) avisaMissao();
+  else if(S.energy<=0) SFX.torraoCai(); else if(S.energy<=5) SFX.cansado();
   for(const o of r.merges) anim(o.id,'pop');
   if(has('coroa')){ const n=r.merges.filter(o=>o.t>=5).length; if(n){ const g=n*CORO[lvl('coroa')]; S.coroa+=g; renderItems(); fire('coroa','+×'+String(+g.toFixed(2)).replace('.',','),true); } }
-  if(!wasTired && S.energy<=0){
+  if(!wasTired && S.energy<=0 && !S.missao){
     setBanner(null,`Exausta! Só vem torrão`);
     $('#btnEnd').classList.add('hot');
   } else if(tops.length && tops[0]>=4) setBanner(null,`${rockName(tops[0])}!`);
@@ -478,6 +481,7 @@ function move(dx,dy){
   } else if(S.tut===3 && S.energy<=0){
     S.tut=4; coach('Sem energia, só vem <b>torrão</b> 😠: toque para <b>encerrar o dia</b>.', null, null, '#btnEnd');
   }
+  if(S.missao && !S.semEnergia && S.energy<=0){ setBanner(null,'acabaram os arrastos'); setTimeout(endDay,450); return; }
   if(!anyMove()){ setBanner(null,'não cabe mais nada'); setTimeout(endDay,450); }
 }
 
@@ -533,6 +537,7 @@ function nomeFase(){
 }
 function recordeFim(){
   if(S.tut) return;
+  if(S.missao) return missaoLinha();
   const k=chaveFase(), r=RECS(), ant=r[k];
   const novo = S.dayTotal>0 && (!ant || S.dayTotal>ant.total);
   if(novo){ r[k]={total:S.dayTotal, arrastos:S.moves||0, char:S.char, nome:nomeFase(), quando:Date.now()}; localStorage.mina_recordes=JSON.stringify(r); }
@@ -628,11 +633,11 @@ async function endDay(){
   S.turbo=false; $('#btnFast').style.display='';
   S.phase='reveal'; S.skip=false; S.gain=S.extra||0; S.cost=0; S.mult=1; S.shown=0; S.found=[]; S.clods=0;
   const sobra = Math.max(0,S.energy);
-  if(!S.semEnergia) S.saved = S.tut ? 0 : Math.min(CFG.guardaMax, sobra);
+  if(!S.semEnergia && !S.missao) S.saved = S.tut ? 0 : Math.min(CFG.guardaMax, sobra);
   $('#mineRow').style.display='none'; $('#revealRow').style.display='flex';
   $('#btnSkip').style.display=''; $('#btnSell').style.display='none'; requestAnimationFrame(mostraFim);
   $('#dayTotal').textContent='$0'; $('#dayTotal').classList.remove('neg'); showCalc(); $('#recLine').textContent='';
-  setBanner(`Fim do dia ${S.day}`, S.saved ? `hora de cuspir! (+${S.saved}⚡ guardada)` : 'hora de cuspir!');
+  setBanner(S.missao?`Fase ${S.missao}`:`Fim do dia ${S.day}`, S.saved ? `hora de cuspir! (+${S.saved}⚡ guardada)` : 'hora de cuspir!');
   render(); SFX.fimDia(); abaixar(true); await sleep(700);
 
   const custo = S.semEnergia ? 0 : custoTorrao();
@@ -713,7 +718,7 @@ async function endDay(){
   }
   S.dayTotal = Math.round(S.gain*S.mult) - S.cost;
   S.skip=true; countTo(S.dayTotal); S.skip=false;
-  setBanner(`Fim do dia ${S.day}`, S.dayTotal>0 ? `rendeu ${fmt(S.dayTotal)}` : S.dayTotal<0 ? 'a terra deu prejuízo...' : 'dia fraco...');
+  setBanner(S.missao?`Fase ${S.missao}`:`Fim do dia ${S.day}`, S.dayTotal>0 ? `rendeu ${fmt(S.dayTotal)}` : S.dayTotal<0 ? 'a terra deu prejuízo...' : 'dia fraco...');
   $('#btnSkip').style.display='none'; $('#btnFast').style.display='none'; $('#btnSell').style.display='';
   mostraFim();
   $('#btnSell').textContent = S.dayTotal>=0 ? `Vender ${fmt(S.dayTotal)}` : `Pagar a limpeza (${fmt(S.dayTotal)})`;
@@ -728,6 +733,7 @@ function sell(){
   abaixar(false);
   S.money=Math.max(0,S.money+S.dayTotal); S.stats.days++; S.stats.best=Math.max(S.stats.best,S.dayTotal); render();
   if(S.dayTotal>0) SFX.venda(); else SFX.esfarelar();
+  if(S.missao) return missaoFim();
   if(S.lab) return labFim();
   if(S.isFiscal) return weekEnd();
   if(S.tut===5){ S.tut=6; coach('Escolha um <b>item</b> para render mais!', null, null, 'top'); }
@@ -1108,6 +1114,139 @@ function labCelula(cx,cy){
   return inside(x,y) ? [x,y] : null;
 }
 
+// ===================== CLÁSSICO (FASES COM MISSÃO) =====================
+// As fases e missões ficam em missoes.js. Estrelas guardadas em mina_missoes: {n: {e: estrelas, t: melhor total}}.
+const MISS = () => JSON.parse(localStorage.mina_missoes||'{}');
+const liberada = n => n===1 || (MISS()[n-1]?.e||0) > 0;
+const faseDe = m => m.fase || (m.forma ? 'caverna' : MISSOES_GRUPOS[m.g].fase);
+const charDe = m => m.char || MISSOES_GRUPOS[m.g].char || 'rola';
+const corNome = c => ['roxa','verde','mista'][c];
+const artigo = nome => /a$/.test(nome.split(' ')[0]) ? 'uma' : 'um';
+const plural = nome => nome.split(' ').map(w=>/[aeiouáéíóú]$/i.test(w)?w+'s':/r$/.test(w)?w+'es':/l$/.test(w)?w.slice(0,-1)+'is':w).join(' ');
+const qtd = (n,t) => n===1 ? `${artigo(rockName(t))} ${rockName(t)}` : `${n} ${plural(rockName(t))}`;
+const estrelasHtml = (e, cls='estr') => `<span class="${cls}">${[1,2,3].map(i=>`<i class="${i<=e?'on':''}">★</i>`).join('')}</span>`;
+function objetivoTxt(o){
+  if(o.forme) return `Forme ${qtd(o.n,o.forme)}`;
+  if(o.cor!=null) return `Forme ${qtd(o.n,o.t)} ${corNome(o.cor)}${o.n>1?'s':''}`;
+  if(o.total) return `Renda $${o.total} no fim do dia`;
+  if(o.quebre) return o.quebre<=1 ? `Quebre ${o.n} pedrinha${o.n>1?'s':''} com a picareta` : `Quebre ${qtd(o.n,o.quebre)} com a picareta`;
+  if(o.extraia) return `Extraia $${o.extraia} com a picareta`;
+  if(o.arrastos) return `Faça ${o.arrastos} arrastos sem travar`;
+}
+// quanto da missão já foi feito: {at, alvo, rot (rótulo curto), din (é dinheiro)}
+function progresso(o){
+  if(o.forme) return {at:S.feitas?.[o.forme]||0, alvo:o.n, rot:o.n>1?plural(rockName(o.forme)):rockName(o.forme)};
+  if(o.cor!=null) return {at:S.coresF?.[o.t+':'+o.cor]||0, alvo:o.n, rot:`${rockName(o.t)} ${corNome(o.cor)}`};
+  if(o.total) return {at:S.phase==='mine'?null:S.dayTotal, alvo:o.total, rot:'no fim do dia', din:true};
+  if(o.quebre) return {at:(S.quebras||[]).filter(t=>t>=o.quebre).length, alvo:o.n, rot:'quebradas'};
+  if(o.extraia) return {at:S.extra||0, alvo:o.extraia, rot:'extraído', din:true};
+  if(o.arrastos) return {at:S.moves||0, alvo:o.arrastos, rot:'arrastos'};
+}
+const cumpriu = o => { const p=progresso(o); return p.at!=null && p.at>=p.alvo; };
+const estrelasPor = (m,total) => 1 + (total>=m.estrelas[0]) + (total>=m.estrelas[1]);
+// conta o que a missão pede, a cada arrasto
+function contaMissao(r){
+  for(const o of r.merges){ S.feitas[o.t]=(S.feitas[o.t]||0)+1; if(o.c!=null) S.coresF[o.t+':'+o.c]=(S.coresF[o.t+':'+o.c]||0)+1; }
+  for(const b of r.breaks) S.quebras.push(b.t);
+}
+function avisaMissao(){
+  const m=MISSOES[S.missao-1];
+  if(S.avisou || m.obj.total || !cumpriu(m.obj)) return;
+  S.avisou=true; popup('Missão cumprida!','continue para mais estrelas','#6aa84f'); SFX.pagou();
+  setBanner(null, 'missão cumprida! continue para mais estrelas');
+}
+function hudMissao(){
+  const m=MISSOES[S.missao-1], p=progresso(m.obj), ok=p.at!=null && p.at>=p.alvo;
+  const fim = S.dayTotal!=null && S.phase!=='mine', pic = !!S.path?.picareta;
+  $('#hMoney').textContent = fim ? '$'+S.dayTotal : pic ? '$'+(S.extra||0) : '$'+m.estrelas[1];
+  $('#hMoneyLbl').textContent = fim ? 'rendeu' : pic ? 'extraído' : 'para ★★★';
+  $('#hQuota').textContent = p.din ? (p.at==null ? '$'+p.alvo : `$${Math.min(p.at,p.alvo)}/${p.alvo}`) : `${Math.min(p.at,p.alvo)}/${p.alvo}`;
+  $('#hQuotaDay').textContent = p.rot;
+  $('#quIc').textContent = ok ? '✓' : '★'; $('#quIc').classList.toggle('ok', ok);
+}
+function regrasTxt(m){
+  const fase=faseDe(m), fm=m.forma?acharForma(m.forma):null, n=PATHS[fase].n;
+  const tam = fm ? `${fw(fm)}x${fh(fm)}` : `${m.w||n||4}x${m.h||m.w||n||4}`;
+  return `${PATHS[fase].nome}${fm?': '+fm.nome:''} · ${tam} · ${m.arrastos?m.arrastos+' arrastos':'até travar'} · ${CHARS[charDe(m)].nome}`;
+}
+function missoesLista(){
+  hideOverlay(); hideCoach(); VEIO_DO_EDITOR=false;
+  show('scrMap'); trilha('menu'); document.body.classList.add('semHud');
+  S = {...freshState(), missao:0, phase:'lista'}; S.fiscal=FISCAIS[0]; applyAndar(); clearBoard(); render();
+  const r=MISS(), total=Object.values(r).reduce((a,x)=>a+(x.e||0),0);
+  setBanner('Clássico', `${total} de ${MISSOES.length*3} estrelas`);
+  const atual = (MISSOES.findIndex((m,i)=>!(r[i+1]?.e)) + 1) || MISSOES.length;
+  const lado = ['center','flex-end','center','flex-start'];
+  let html='';
+  MISSOES_GRUPOS.forEach((g,gi)=>{
+    html += `<div class="mGrupo">${disc(g.fase,null,'discSm')}<div><b>${g.nome}</b><span>${g.desc}</span></div></div>`;
+    MISSOES.forEach((m,k)=>{ if(m.g!==gi) return; const n=k+1, lib=liberada(n);
+      html += `<div class="mLinha" style="justify-content:${lado[n%4]}"><button class="mNo ${lib?'':'trava'} ${n===atual?'atual':''}" data-m="${n}" ${lib?'':'disabled'}>${n}${estrelasHtml(r[n]?.e||0)}</button></div>`; });
+  });
+  const mb=$('#mapBody'); mb.style.height='';
+  mb.innerHTML = `<div class="mTrilha">${html}</div>`;
+  // caminho ligando as fases
+  const tr=mb.querySelector('.mTrilha'), base=tr.getBoundingClientRect();
+  const pts=[...tr.querySelectorAll('.mNo')].map(b=>{ const q=b.getBoundingClientRect(); return `${Math.round(q.left+q.width/2-base.left)},${Math.round(q.top+q.height/2-base.top)}`; });
+  tr.insertAdjacentHTML('afterbegin', `<svg class="mCaminho" width="${Math.round(base.width)}" height="${Math.round(base.height)}"><polyline points="${pts.join(' ')}"/></svg>`);
+  tr.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>missaoInfo(+b.dataset.m));
+  mb.querySelector('.mNo.atual')?.scrollIntoView({block:'center'});
+}
+function missaoInfo(n){
+  const m=MISSOES[n-1], fase=faseDe(m), fm=m.forma?acharForma(m.forma):null, b=MISS()[n];
+  const explica=[];
+  if(fase!=='comum' || n===1) explica.push(PATHS[fase].como||PATHS[fase].desc);
+  if(charDe(m)==='passinho') explica.push(COMO_CHAR.passinho);
+  showOverlay(`${fm?formaSvg(fm,110):disc(fase,null,'bigDisc')}<h2>Fase ${n}</h2><p class="andarNome">${m.nome}</p>
+    <div class="objetivo"><small>missão</small>${objetivoTxt(m.obj)}</div>
+    <p class="ajuda">${regrasTxt(m)}</p>
+    ${explica.map(t=>`<p class="ajuda">${t}</p>`).join('')}
+    ${fase==='picareta'?regraPicareta():''}
+    <p class="metas">★ missão · ★★ $${m.estrelas[0]} · ★★★ $${m.estrelas[1]}</p>
+    ${b?`<p class="recAtual">Seu melhor: ${estrelasHtml(b.e)} · $${b.t}</p>`:''}
+    <button class="btn g" id="mJoga">Jogar</button><button class="btn dim" id="mVolta">Voltar</button>`);
+  $('#mJoga').onclick=()=>missaoJoga(n);
+  $('#mVolta').onclick=hideOverlay;
+}
+function missaoJoga(n){
+  const m=MISSOES[n-1], fase=faseDe(m), fm=m.forma?acharForma(m.forma):null;
+  hideOverlay(); VEIO_DO_EDITOR=false;
+  S = {...freshState(), missao:n, tema:MISSOES_GRUPOS[m.g].tema, char:charDe(m), moves:0, extra:0, feitas:{}, coresF:{}, quebras:[], dayTotal:null};
+  S.fiscal=FISCAIS[0];
+  for(const [k,v] of Object.entries(m.itens||{})) S.lv[k]=v;
+  const p = {...PATHS[fase], ...(m.regras||{}), forma:fm, caverna:false, energy:m.arrastos?m.arrastos-CFG.energy:0, semEnergia:!m.arrastos};
+  if(m.w){ p.w=m.w; p.h=m.h||m.w; }
+  applyAndar(); startDay(p);
+  setBanner(`Fase ${n}: ${m.nome}`, objetivoTxt(m.obj));
+  pedeEncaixe();
+}
+// linha do resultado, no fim do dia
+function missaoLinha(){
+  const m=MISSOES[S.missao-1], ok=cumpriu(m.obj), p=progresso(m.obj);
+  $('#recLine').innerHTML = ok ? `<b>Missão cumprida!</b> ${estrelasHtml(estrelasPor(m,S.dayTotal))}` : `Faltou: ${objetivoTxt(m.obj)} (${p.din?'$':''}${p.at}/${p.alvo})`;
+  $('#btnSell').textContent = 'Continuar';
+  render();
+}
+function missaoFim(){
+  const n=S.missao, m=MISSOES[n-1], ok=cumpriu(m.obj), p=progresso(m.obj);
+  if(!ok){
+    SFX.naoDeu();
+    showOverlay(`${disc(faseDe(m),null,'bigDisc')}<h2>Não deu</h2><p>${objetivoTxt(m.obj)}: ${p.din?'$':''}${p.at} de ${p.din?'$':''}${p.alvo}.</p>
+      <button class="btn g" id="mDeNovo">Tentar de novo</button><button class="btn dim" id="mLista">Ver fases</button>`);
+  } else {
+    const e=estrelasPor(m,S.dayTotal), r=MISS(), ant=r[n];
+    r[n]={e:Math.max(e,ant?.e||0), t:Math.max(S.dayTotal,ant?.t||0)}; localStorage.mina_missoes=JSON.stringify(r);
+    SFX.pagou();
+    showOverlay(`<h2>Missão cumprida!</h2>${estrelasHtml(e,'estr grande')}
+      <p>Rendeu <b>$${S.dayTotal}</b>.${e<3?` ${e<2?`★★ com $${m.estrelas[0]} · `:''}★★★ com $${m.estrelas[1]}`:''}</p>
+      ${n<MISSOES.length?'<button class="btn g" id="mProx">Próxima fase</button>':'<p>Você terminou todas as fases!</p>'}
+      <button class="btn dim" id="mDeNovo">Jogar de novo</button><button class="btn dim" id="mLista">Ver fases</button>`);
+    if($('#mProx')) $('#mProx').onclick=()=>{ missoesLista(); missaoInfo(n+1); };
+  }
+  $('#mDeNovo').onclick=()=>missaoJoga(n);
+  $('#mLista').onclick=missoesLista;
+}
+
 // ===================== CATÁLOGO =====================
 // Tudo que existe no jogo, montado a partir dos próprios dados (nunca fica desatualizado).
 function catalogo(volta){
@@ -1266,7 +1405,7 @@ function pauseMenu(){
   $('#pPedras').onclick=()=>pedrapedia(pauseMenu);
   $('#pSound').onclick=()=>{ toggleSound(); hideOverlay(); pauseMenu(); };
   $('#pMusic').onclick=()=>{ toggleMusic(); hideOverlay(); pauseMenu(); };
-  $('#pExit').onclick=()=>{ hideOverlay(); if(VEIO_DO_EDITOR) editorLista(); else if(S.lab) labPainel(); else showMenu(); };
+  $('#pExit').onclick=()=>{ hideOverlay(); if(VEIO_DO_EDITOR) editorLista(); else if(S.missao) missoesLista(); else if(S.lab) labPainel(); else showMenu(); };
 }
 function quickRules(){
   showOverlay(`<h2>Regras rápidas</h2><ul>
@@ -1328,6 +1467,8 @@ function render(){
   $('#hEnergy').textContent=S.phase==='map' ? (S.saved+S.bonus?'+'+(S.saved+S.bonus):'·') : S.semEnergia ? '∞' : S.energy;
   $('#hEnergyMax').textContent=S.phase==='map' ? (S.saved+S.bonus?'guardada':'energia') : S.semEnergia ? 'até travar' : S.energy>0?`de ${S.energyMax}`:'exausta!';
   $('#enIc').classList.toggle('zero',S.phase==='mine'&&S.energy<=0);
+  $('#hMoneyLbl').textContent='dinheiro'; $('#quIc').textContent='!'; $('#quIc').classList.remove('ok');
+  if(S.missao) hudMissao();
   renderItems(); ferrBar();
 }
 
