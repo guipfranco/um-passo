@@ -172,7 +172,7 @@ html,body{min-height:100%;background:#f6ecd9;color:#5a4636;font-family:'Fredoka'
       <button class="btn big" id="mNew">Novo jogo</button>
       <button class="btn dim big" id="mTut">Como jogar</button>
     </div>
-    <div class="menuFoot"><span id="mBest"></span><button class="icon sndBtn" id="mSound">♪</button></div>
+    <div class="menuFoot"><span id="mBest"></span><button class="icon musBtn" id="mSound">♪</button></div>
   </section>
 
   <div id="shell" class="hidden">
@@ -181,7 +181,7 @@ html,body{min-height:100%;background:#f6ecd9;color:#5a4636;font-family:'Fredoka'
       <div class="pill"><span class="ic co">$</span><div><b id="hMoney"></b><small>dinheiro</small></div></div>
       <div class="pill"><span class="ic qu">!</span><div><b id="hQuota"></b><small id="hQuotaDay"></small></div></div>
     </div>
-    <div class="top wide"><button class="icon" id="btnPause">☰</button><div class="banner"><div id="bTitle"></div><span id="bSub"></span></div><button class="icon sndBtn" id="btnSound">♪</button></div>
+    <div class="top wide"><button class="icon" id="btnPause">☰</button><div class="banner"><div id="bTitle"></div><span id="bSub"></span></div><button class="icon musBtn" id="btnSound">♪</button></div>
     <div class="items wide" id="items"></div>
   </div>
 
@@ -395,7 +395,7 @@ function freshState(){
 
 // ===================== MENU =====================
 function showMenu(){
-  hideCoach(); hideOverlay(); show('scrMenu');
+  hideCoach(); hideOverlay(); show('scrMenu'); trilha('menu');
   const sv = localStorage.mina_save ? JSON.parse(localStorage.mina_save) : null;
   $('#mContinue').style.display = sv ? '' : 'none';
   if(sv) $('#mContinue').innerHTML = `Continuar<small>andar ${sv.week} · dia ${sv.day} · $${sv.money}</small>`;
@@ -448,7 +448,7 @@ function morning(resume=false){
     if(S.day<CFG.days){ const avail=Object.keys(PATHS).filter(k=>PATHS[k].from<=S.week && k!=='comum'); S.todayOpts=['comum',...shuffle(avail).slice(0,2)]; }
     else S.todayOpts=['fiscal'];
   }
-  show('scrMap');
+  show('scrMap'); trilha('mapa');
   setBanner(`Andar ${S.week}: ${andar().n}`, S.day===CFG.days ? 'dia do fiscal!' : `dia ${S.day} de ${CFG.days} · escolha o caminho`);
   render(); renderMap();
   if(S.tut===6){
@@ -527,10 +527,10 @@ function toast(text, then){
 // ===================== DIA DE MINA =====================
 function startDay(p, tutorial=false){
   clearBoard(); show('scrGame');
-  S.path=p; S.phase='mine'; S.tired=0; S.next=rollSpawn();
+  S.path=p; S.phase='mine'; trilha(S.isFiscal?'fiscal':'mina'); S.tired=0; S.next=rollSpawn();
   const base = fiscalHoje('apressado') ? 25 : CFG.energy + (p.energy||0);
   S.energy = tutorial ? 10 : base + 8*lvl('folego') + S.saved + S.bonus;
-  S.energyMax = S.energy; S.usedSaved = tutorial ? 0 : S.saved+S.bonus; S.saved=0; S.bonus=0;
+  S.energyMax = S.energy; humor(); S.usedSaved = tutorial ? 0 : S.saved+S.bonus; S.saved=0; S.bonus=0;
   if(p.narrow){ for(let y=0;y<N;y++) S.walls.push({x:3,y}); for(let x=0;x<3;x++) S.walls.push({x,y:3}); }
   if(p.walls){ const cells=shuffle([...Array(16).keys()].map(i=>({x:i%4,y:i/4|0}))); S.walls.push(...cells.slice(0,p.walls)); }
   S.walls.forEach((w,i)=>w.id='w'+i);
@@ -614,6 +614,7 @@ function move(dx,dy){
   S.tiles=r.tiles;
   const wasTired = S.energy<=0;
   if(S.energy>0) S.energy--; else S.tired++;
+  humor();
   addTile(undefined,[dx,dy]);
   render();
   SFX.arrastar();
@@ -678,7 +679,7 @@ async function endDay(){
   $('#btnSkip').style.display=''; $('#btnSell').style.display='none';
   $('#dayTotal').textContent='$0'; $('#dayTotal').classList.remove('neg'); showCalc();
   setBanner(`Fim do dia ${S.day}`, S.saved ? `hora de cuspir! (${S.saved} de energia guardada)` : 'hora de cuspir!');
-  render(); SFX.fimDia(); await sleep(700);
+  render(); SFX.fimDia(); abaixar(true); await sleep(700);
 
   const custo = custoTorrao();
   const maior = [...S.tiles].filter(t=>t.t>0).sort((a,b)=>b.t-a.t)[0];
@@ -759,6 +760,7 @@ async function endDay(){
 const fmt = v => (v<0?'-$':'$')+Math.abs(v);
 
 function sell(){
+  abaixar(false);
   S.money=Math.max(0,S.money+S.dayTotal); S.stats.days++; S.stats.best=Math.max(S.stats.best,S.dayTotal); render();
   if(S.dayTotal>0) SFX.venda(); else SFX.esfarelar();
   if(S.isFiscal) return weekEnd();
@@ -781,6 +783,7 @@ function itemPick(n, then, title){
 }
 let shopStock=[];
 function showMerchant(first=true){
+  if(first){ trilha('mercador'); }
   if(first) shopStock = shuffle(ITEMS.filter(i=>lvl(i.id)<CFG.maxNivel)).slice(0,4).map(i=>i.id);
   const stock = shopStock.filter(id=>lvl(id)<CFG.maxNivel).map(item);
   showOverlay(`<div class="bigEm">🛒</div><h2>Mercador</h2><p>Você tem <b style="color:#c48a1e">$${S.money}</b>. Cota da semana: <b style="color:#c0603f">$${CFG.quota(S.week)}</b>.</p>
@@ -823,7 +826,7 @@ function weekEnd(){
   }
 }
 function gameOver(q){
-  localStorage.removeItem('mina_save');
+  localStorage.removeItem('mina_save'); trilha('fim');
   localStorage.mina_best = Math.max(+(localStorage.mina_best||0), S.week);
   const st=S.stats;
   showOverlay(`<div class="bigEm">🪦</div><h2>Fim da partida</h2><p>O fiscal não perdoou a segunda cota.</p>
@@ -860,12 +863,14 @@ function pauseMenu(){
   showOverlay(`<h2>Pausa</h2>
     <button class="btn b" id="pCont">Continuar</button>
     <button class="btn dim" id="pRules">Regras rápidas</button>
-    <button class="btn dim" id="pSound">${sound?'Desligar o som':'Ligar o som'}</button>
+    <button class="btn dim" id="pMusic">${music?'Desligar a música':'Ligar a música'}</button>
+    <button class="btn dim" id="pSound">${sound?'Desligar os efeitos':'Ligar os efeitos'}</button>
     <button class="btn" id="pExit">Sair para o menu</button>
     ${inDay?'<p style="font-size:13px">Saindo agora, o dia de hoje recomeça quando você voltar.</p>':''}`);
   $('#pCont').onclick=hideOverlay;
   $('#pRules').onclick=quickRules;
   $('#pSound').onclick=()=>{ toggleSound(); hideOverlay(); pauseMenu(); };
+  $('#pMusic').onclick=()=>{ toggleMusic(); hideOverlay(); pauseMenu(); };
   $('#pExit').onclick=()=>{ hideOverlay(); showMenu(); };
 }
 function quickRules(){
@@ -953,14 +958,46 @@ function countTo(v){
 // ===================== SOM =====================
 // Estilo Threes: um som de arrasto e um som de fusão diferente para cada nível.
 let AC=null, BUS=null, NB=null;
-function ac(){
-  if(!sound) return null;
+function ctxAudio(){
   try{
     if(!AC){ AC=new (window.AudioContext||window.webkitAudioContext)(); BUS=AC.createGain(); BUS.gain.value=.9; BUS.connect(AC.destination); }
     if(AC.state==='suspended') AC.resume();
     return AC;
   }catch(e){ return null; }
 }
+function ac(){ return sound ? ctxAudio() : null; }
+
+// ===================== MÚSICA =====================
+// Trilha por tela (todas sintetizadas, vindas do Gabinete). TRIM iguala o volume entre elas.
+const TRILHA = {menu:'lofi-prorroga', mapa:'armorial', mina:'lofi-espera', fiscal:'lofi-segredo', mercador:'bossa', fim:'sofrencia-lofi'};
+const TRIM = {'armorial':.55, 'bossa':.7, 'lofi-prorroga':.95, 'lofi-espera':.95, 'lofi-segredo':1, 'sofrencia-lofi':1.1};
+let music = localStorage.mina_music !== '0', MUS=null, musName=null, musKey=null, musBus=null, musFila=Promise.resolve();
+function trilha(k){ musKey=k; musFila=musFila.then(trocaMusica).catch(e=>console.warn(e)); }
+async function trocaMusica(){
+  const want = music && musKey ? TRILHA[musKey] : null;
+  if(want===musName) return;
+  if(MUS){ MUS.pararMusica(1.2); MUS=null; musName=null; }
+  if(!want) return;
+  const c=ctxAudio(); if(!c) return;
+  const m = await import(`./musica/${want}.js`);
+  musBus = c.createGain(); musBus.gain.value = TRIM[want]||1; musBus.connect(c.destination);
+  m.iniciarMusica(c, musBus); MUS=m; musName=want;
+  humor();
+}
+// a música acompanha o dia: a bateria some com o cansaço, e a fita desafina quando acaba a energia
+function humor(){
+  if(!MUS || musName!=='lofi-espera' || !S) return;
+  const r = Math.max(0, S.energy)/Math.max(1, S.energyMax);
+  MUS.niveis({f:50, o:45, j:18+47*r, c:35+25*r});
+  MUS.tensao(S.energy<=0 ? .5 : 0);
+}
+function abaixar(on){
+  if(!MUS || !musBus) return;
+  musBus.gain.setTargetAtTime((TRIM[musName]||1)*(on?.4:1), AC.currentTime, .3);
+  if(musName==='lofi-espera'){ if(on){ MUS.niveis({f:40,o:20,j:14,c:30}); MUS.tensao(0); } else humor(); }
+}
+function toggleMusic(){ music=!music; localStorage.mina_music=music?'1':'0'; document.querySelectorAll('.musBtn').forEach(b=>b.style.opacity=music?1:.4); trilha(musKey); }
+
 function env(g,T,a,v,d){ g.gain.setValueAtTime(.0001,T); g.gain.exponentialRampToValueAtTime(v,T+a); g.gain.exponentialRampToValueAtTime(.0001,T+a+d); }
 function tone({f=440,to=null,type='sine',t=0,a=.005,d=.15,v=.2,lp=null}={}){
   const c=ac(); if(!c) return; const T=c.currentTime+t, o=c.createOscillator(), g=c.createGain();
@@ -1033,7 +1070,8 @@ $('#btnEnd').onclick=()=>{
 $('#btnSkip').onclick=()=>{ S.skip=true; };
 $('#btnSell').onclick=sell;
 $('#btnPause').onclick=pauseMenu;
-document.querySelectorAll('.sndBtn').forEach(b=>{ b.onclick=toggleSound; b.style.opacity=sound?1:.4; });
+document.querySelectorAll('.musBtn').forEach(b=>{ b.onclick=toggleMusic; b.style.opacity=music?1:.4; });
+addEventListener('pointerdown',()=>{ if(AC&&AC.state==='suspended') AC.resume(); else if(!AC&&music){ ctxAudio(); trilha(musKey); } },{capture:true});
 $('#mContinue').onclick=loadGame;
 $('#mNew').onclick=newGameClick;
 $('#mTut').onclick=()=>{
