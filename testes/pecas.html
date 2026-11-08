@@ -12,7 +12,7 @@ f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEven
    if(!dir) break; w.eval(`move(${dir[0]},${dir[1]})`); await wait(25); } };
  const estado=()=>w.eval(`JSON.stringify(metasDe(MISSOES[S.missao-1]).map(o=>progObj(o)))`);
  try{ w.eval('sound=false; music=false; localStorage.removeItem("mina_missoes"); localStorage.removeItem("mina_cla_save")');
-  for(const k of ['Primeira casa marcada','Terra fofa','Primeira presa','Primeiro carrinho','Uma depois da outra','Duas de uma vez','Sem pressa','Fim da entrada','Quebra-cabeça']){
+  for(const k of ['Primeira casa marcada','Terra fofa','Primeira presa','Primeiro carrinho','Duas de uma vez','Duas de uma vez, de novo','Sem pressa','Fim da entrada','Quebra-cabeça']){
     const n=nome(k); w.eval(`missaoJoga(${n})`); await wait(80);
     const marcas=`alvos=${d.querySelectorAll('.alvoM').length} terra=${d.querySelectorAll('.terraM').length} carrinho=${d.querySelectorAll('.carroM').length} presas=${d.querySelectorAll('.corrente').length}`;
     const hud=`silhuetas=${d.querySelectorAll('#cMis .fila span').length} chips=${d.querySelectorAll('#cMis .chipM').length}`;

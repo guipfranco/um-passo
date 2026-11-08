@@ -250,21 +250,22 @@ function drawFace(c,cx,cy,R,t,seed){const blink=((t+seed*1.73)%4.4)<.13,ex=R*.27
   c.beginPath();c.moveTo(cx-R*.13,cy+R*.2);c.quadraticCurveTo(cx,cy+R*.36,cx+R*.13,cy+R*.2);c.stroke();c.restore();}
 
 // ===================== a escada =====================
-// regra: cada degrau com cor e silhueta próprias, para bater o olho no tabuleiro e saber o nível
+// regra: cada degrau com cor e silhueta próprias, para bater o olho no tabuleiro e saber o nível.
+// k = tamanho na casa: só cresce ao longo da escada (as cinco primeiras são miúdas e ganham um brilho no jogo)
 const tumble=(w,s=0)=>t=>mmul(rotAxis(.3,1,.1,w*t+s),rotAxis(1,.2,0,w*.37*t+s*2));
 const spinY=(per,tilt=.45)=>t=>mmul(rotAxis(1,0,.3,tilt),rotAxis(0,1,0,2*Math.PI*t/per));
 function sparkles(o,S,t){for(let i=0;i<3;i++){const a=Math.max(0,Math.sin(t*2.3+i*2.1));if(a<.05)continue;const x=S*[.28,.7,.56][i],y=S*[.3,.36,.74][i],r=S*.065*a;
   o.fillStyle=`rgba(255,255,255,${a.toFixed(2)})`;o.beginPath();o.moveTo(x,y-r);o.quadraticCurveTo(x,y,x+r,y);o.quadraticCurveTo(x,y,x,y+r);o.quadraticCurveTo(x,y,x-r,y);o.quadraticCurveTo(x,y,x,y-r);o.fill();}}
 function lavaGlow(o,S,t){const c=S/2,g=o.createRadialGradient(c,c,S*.18,c,c,S*.5);g.addColorStop(0,`rgba(255,120,30,${(.4+.14*Math.sin(t*2.2)).toFixed(2)})`);g.addColorStop(1,'rgba(255,90,20,0)');o.fillStyle=g;o.fillRect(0,0,S,S);}
 const LADDER=[
-  {n:'Poeira',src:'gerada',kind:'dust',k:.78},
-  {n:'Gelo',src:'gerado',kind:'shards',k:.85},
-  {n:'Rocha',src:'gerada',kind:'mesh',geom:'lava',sub:3,scale:.8,k:.8,rot:tumble(.7,6),pre:lavaGlow},
-  {n:'Asteroide',src:'NASA · Bennu',kind:'mesh',geom:'bennu',sub:2,scale:.92,k:.74,rot:spinY(6)},
-  {n:'Cometa',src:'ESA · 67P',kind:'comet',geom:'cometa',sub:2,k:1,rot:tumble(.6,5)},
-  {n:'Plutão',src:'NASA',kind:'sphere',tex:'pluto',k:.38,sp:{rScale:.9,speed:.05,tilt:.3,pitch:.2}},
-  {n:'Lua',src:'NASA',kind:'sphere',tex:'lua',k:.46,sp:{rScale:.9,speed:.05,tilt:.1,pitch:.12}},
-  {n:'Mercúrio',src:'Solar System Scope',kind:'sphere',tex:'mercurio',atmo:[255,96,64],k:.58,sp:{rScale:.8,speed:.05,tilt:.05,pitch:.1}},
+  {n:'Poeira',src:'gerada',kind:'dust',k:.53},
+  {n:'Gelo',src:'gerado',kind:'shards',k:.57},
+  {n:'Rocha',src:'gerada',kind:'mesh',geom:'lava',sub:3,scale:.8,k:.49,rot:tumble(.7,6),pre:lavaGlow},
+  {n:'Asteroide',src:'NASA · Bennu',kind:'mesh',geom:'bennu',sub:2,scale:.92,k:.46,rot:spinY(6)},
+  {n:'Cometa',src:'ESA · 67P',kind:'comet',geom:'cometa',sub:2,k:.63,rot:tumble(.6,5)},
+  {n:'Plutão',src:'NASA',kind:'sphere',tex:'pluto',k:.44,sp:{rScale:.9,speed:.05,tilt:.3,pitch:.2}},
+  {n:'Lua',src:'NASA',kind:'sphere',tex:'lua',k:.48,sp:{rScale:.9,speed:.05,tilt:.1,pitch:.12}},
+  {n:'Mercúrio',src:'Solar System Scope',kind:'sphere',tex:'mercurio',atmo:[255,96,64],k:.59,sp:{rScale:.8,speed:.05,tilt:.05,pitch:.1}},
   {n:'Marte',src:'NASA',kind:'sphere',tex:'marte',k:.58,sp:{rScale:.9,speed:.06,tilt:.4,pitch:.25}},
   {n:'Vênus',src:'NASA',kind:'sphere',tex:'venus',atmo:[255,214,140],k:.78,sp:{rScale:.8,speed:.04,tilt:.05,pitch:.1}},
   {n:'Terra',src:'NASA',kind:'sphere',tex:'terra',clouds:'nuvens',atmo:[120,190,255],k:.84,sp:{rScale:.8,speed:.05,tilt:.41,pitch:.22}},

@@ -4,7 +4,7 @@
 // Esta etapa troca o tabuleiro do Clássico: peças viram corpos celestes 3D, e bloco, mureta, terra, torrão,
 // presa, carrinho, picareta e cores ganham os equivalentes do espaço. O motor é o src/espaco.js (objeto ESP).
 (()=>{ const m=location.search.match(/[?&]espaco(?:=(\d))?/); if(m) localStorage.ptui_espaco = m[1]==='0' ? '0' : '1'; })();
-function espacoLigado(){ return localStorage.ptui_espaco==='1'; }
+function espacoLigado(){ return localStorage.ptui_espaco!=='0'; }
 function noEspaco(){ return espacoLigado() && !!(typeof S!=='undefined' && S && (S.missao || S.infinito)); }
 // nome do nível no espaço (null fora do Clássico no espaço)
 function nomeEspaco(t){ if(!ESP || t<1 || !espFig()) return null; return nomeNivelEsp(t); }
@@ -78,6 +78,10 @@ function espAura(c,x,y,u,t,cor){
   if(cor!==2){ ESP.SPR.aura(c,x,y,u,t,cor); return; }
   for(const [k,x0] of [[0,0],[1,x]]){ c.save(); c.beginPath(); c.rect(x0,0,x,c.canvas.height); c.clip(); ESP.SPR.aura(c,x,y,u,t,k); c.restore(); }
 }
+// brilho na cor do nível atrás das peças pequenas (até Plutão), para elas não sumirem no tabuleiro
+function espBrilho(c,x,y,u,t){ const cor=corNivel(t), g=c.createRadialGradient(x,y,0,x,y,u*.46);
+  g.addColorStop(0,cor+'70'); g.addColorStop(.55,cor+'26'); g.addColorStop(1,cor+'00'); c.fillStyle=g; c.beginPath(); c.arc(x,y,u*.46,0,7); c.fill(); }
+const temBrilho = T => T.t>=1 && T.t<=6 && T.k!=='p' && T.c==null;
 function espTile(el,t){
   el._t=t;
   const key=[t.t,t.c,t.k,t.presa?1:0].join(':'); if(el.dataset.ek===key) return; el.dataset.ek=key;
@@ -88,7 +92,8 @@ function espTile(el,t){
     // planeta redondo: vai pela placa de vídeo (camada embaixo); aqui só a aura e a gaiola, com o disco do planeta recortado
     const redondo = T.t>0 && T.k!=='p' && ESP.byName(nomeNivelEsp(T.t)).kind==='sphere' && glAtivo();
     el._gl = redondo;
-    if(redondo){ if(T.c!=null) espAura(c,x,y,u,tm,T.c); if(T.presa) ESP.SPR.gaiola(c,x,y,u,tm,'back'); if(T.c!=null||T.presa) furaPlaneta(c,x,y,u,T); if(T.presa) ESP.SPR.gaiola(c,x,y,u,tm,'front'); return; }
+    if(redondo){ if(temBrilho(T)) espBrilho(c,x,y,u,T.t); if(T.c!=null) espAura(c,x,y,u,tm,T.c); if(T.presa) ESP.SPR.gaiola(c,x,y,u,tm,'back'); if(T.c!=null||T.presa||temBrilho(T)) furaPlaneta(c,x,y,u,T); if(T.presa) ESP.SPR.gaiola(c,x,y,u,tm,'front'); return; }
+    if(temBrilho(T)) espBrilho(c,x,y,u,T.t);
     if(T.c!=null) espAura(c,x,y,u,tm,T.c);
     if(T.presa) ESP.SPR.gaiola(c,x,y,u,tm,'back');
     if(T.t===0) ESP.SPR.lixo(c,x,y,u*.86,tm);

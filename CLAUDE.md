@@ -1,6 +1,6 @@
 # Ptui! (um-passo)
 
-Puzzle de mineração com pedrinhas que cospem minério. Publicado em https://guipfranco.github.io/um-passo/ (laboratório: `?lab`).
+**2048 Stars**: o jogo de juntar peças com a escada de corpos celestes em 3D (Poeira até Galáxia), código em `src/espaco.js` (motor) e `src/espaco_jogo.js` (integração). É o padrão desde 2026-11-08. `?espaco=0` volta ao **Ptui!** antigo, o puzzle de mineração com pedrinhas que cospem minério (fica gravado no aparelho; `?espaco` religa). Publicado em https://guipfranco.github.io/um-passo/ (laboratório: `?lab`).
 
 ## Modos (ordem do menu)
 
