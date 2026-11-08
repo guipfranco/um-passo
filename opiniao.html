@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ptui! · sua opinião sobre o espaço</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#2e2219;--bg:#f6ecd9;--card:#efe1c6;--edge:#dcc6a0;--txt:#5a4636;--sub:#7a5a44;--gold:#f2b33d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:'Fredoka','Trebuchet MS',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+main{max-width:560px;margin:0 auto;padding:18px 14px 110px;display:flex;flex-direction:column;gap:14px}
+h1{margin:4px 0 0;font-size:27px;font-weight:700;color:var(--ink)}
+.intro{margin:6px 0 0;color:var(--sub);font-size:15px;line-height:1.4}
+h3.sec{margin:10px 0 0;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:var(--sub)}
+.card{background:var(--card);border-radius:20px;padding:14px;box-shadow:0 4px 0 var(--edge);display:flex;flex-direction:column;gap:10px}
+.card h2{margin:0;font-size:20px;color:var(--ink);line-height:1.2}
+.card h2 .de{color:var(--sub);font-weight:500}
+.hoje{margin:0;font-size:14px;color:var(--sub);line-height:1.35}
+.card canvas{display:block;border-radius:14px;align-self:center}
+.row{display:flex;gap:6px;flex-wrap:wrap}
+.fb{border:0;border-radius:999px;padding:6px 12px;font-family:inherit;font-weight:600;font-size:13px;background:#f6ecd9;color:var(--txt);box-shadow:0 3px 0 var(--edge);cursor:pointer}
+.fb.on{background:var(--gold);color:#4a3410;box-shadow:0 3px 0 #c48a1e}
+.opb{display:flex;gap:6px}
+.opb button{flex:1;border:0;border-radius:12px;padding:9px 4px;font-family:inherit;font-weight:600;font-size:15px;background:#f6ecd9;color:var(--txt);box-shadow:0 3px 0 var(--edge);cursor:pointer}
+.opb button.on[data-v=bom]{background:#bfe8b0;box-shadow:0 3px 0 #7fb86e}
+.opb button.on[data-v=ajustar]{background:#ffe3a3;box-shadow:0 3px 0 #d9a93a}
+.opb button.on[data-v=trocar]{background:#ffc2b8;box-shadow:0 3px 0 #d9786a}
+.op{display:flex;flex-direction:column;gap:8px}
+.nota,textarea{width:100%;border:2px solid var(--edge);border-radius:12px;padding:8px 10px;font-family:inherit;font-size:14px;background:#fffaf0;color:var(--txt)}
+.gridop{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.mini{padding:10px;gap:7px}
+.mini .pv{background:#231d2e;border-radius:14px;display:flex;justify-content:center;padding:6px 0}
+.mini b{font-size:16px;color:var(--ink)}
+.mini .opb button{padding:7px 2px;font-size:17px}
+.chip{font-size:11px;font-weight:600;background:#0000000f;color:var(--sub);border-radius:999px;padding:1px 7px;align-self:flex-start}
+.note{margin:0;font-size:13px;color:var(--sub)}
+#barra{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;gap:12px;align-items:center;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:#f6ecd9ee;box-shadow:0 -3px 0 var(--edge);z-index:5}
+#barra .fb{font-size:16px;padding:10px 18px}
+#prog{font-size:14px;color:var(--sub)}
+#loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);font-size:18px;color:var(--sub);z-index:9}
+</style>
+</head>
+<body>
+<div id="loading">gerando os planetas…</div>
+<main>
+  <div>
+    <h1>Ptui! · sua opinião</h1>
+    <p class="intro">Para cada item, toque em 👍 gostei, 🔧 ajustar ou 👎 trocar e, se quiser, diga o porquê. No fim, toque em <b>Copiar respostas</b> e cole na conversa. As respostas ficam salvas neste aparelho.</p>
+  </div>
+  <h3 class="sec">O tabuleiro</h3>
+  <div id="itens" style="display:flex;flex-direction:column;gap:14px"></div>
+  <h3 class="sec">A escada, peça por peça</h3>
+  <div id="escada" class="gridop"></div>
+  <section class="card">
+    <h2>Algo mais?</h2>
+    <textarea id="geral" rows="3" placeholder="qualquer outra coisa (opcional)"></textarea>
+  </section>
+  <section class="card" id="saidaBox" hidden>
+    <p class="note">Se não copiou sozinho, segure no texto abaixo e copie:</p>
+    <textarea id="saida" rows="10"></textarea>
+  </section>
+</main>
+<div id="barra"><span id="prog"></span><button class="fb on" id="copiar">Copiar respostas</button></div>
+
+<script src="espaco.js"></script>
+<script>
+'use strict';
+const ITENS=[
+  {id:'fundo',hoje:'chão da gruta',esp:'espaço com nebulosa',txt:'A nebulosa muda de cor a cada mundo. Toque nos nomes para ver.',fundo:true},
+  {id:'casa',hoje:'Casa',esp:'órbita',txt:'Hoje: mancha no chão. No espaço: um disco de luz fraco.',cena:[{o:1},{o:1,p:'Marte'},{o:1}]},
+  {id:'buraco',hoje:'Buraco',esp:'vazio',txt:'Hoje: buraco no chão. No espaço: só o fundo, sem órbita (no meio).',cena:[{o:1,p:'Lua'},{},{o:1,p:'Lua'}]},
+  {id:'bloco',hoje:'Bloco',esp:'estação espacial',txt:'Hoje: a peça que não sai do lugar.',cena:[{o:1,p:'Marte'},{o:1,e:'estacao'},{o:1,p:'Terra'}]},
+  {id:'mureta',hoje:'Mureta',esp:'campo de força',txt:'Hoje: parede fina entre duas casas; nada passa por ela.',cena:[{o:1,p:'Lua'},{o:1,p:'Marte'},{o:1}],campo:[0]},
+  {id:'alvo',hoje:'Casa marcada',esp:'órbita dourada',txt:'Hoje: forme o nível pedido nesta casa. O planeta pedido aparece apagado dentro.',cena:[{o:1,p:'Saturno'},{o:1,e:'alvo',t:'Júpiter'},{o:1,p:'Saturno'}]},
+  {id:'terra',hoje:'Casa de terra',esp:'nebulosa escura',txt:'Hoje: casa coberta de terra para limpar. No espaço: uma nuvem escura que se desfaz.',cena:[{o:1,e:'neb'},{o:1,p:'Marte'},{o:1,e:'neb'}]},
+  {id:'torrao',hoje:'Torrão',esp:'lixo espacial',txt:'Hoje: peça que não junta com nada. No espaço: pedaço de satélite girando.',cena:[{o:1,p:'Lua'},{o:1,e:'lixo'},{o:1,p:'Lua'}]},
+  {id:'presa',hoje:'Pedrinha presa',esp:'gaiola de luz',txt:'Hoje: não se mexe até uma igual juntar nela.',cena:[{o:1,p:'Plutão'},{o:1,p:'Plutão',presa:1},{o:1}]},
+  {id:'carrinho',hoje:'Carrinho',esp:'nave cargueira',txt:'Hoje: leve até ele uma peça do nível pedido. O planeta pedido aparece na escotilha.',cena:[{o:1,p:'Saturno'},{o:1},{o:1,e:'nave',t:'Saturno'}]},
+  {id:'picareta',hoje:'Picareta',esp:'buraco negro',txt:'Hoje: quebra a pedra do mesmo nível. No espaço: engole o planeta da sua cor (aqui, Marte). A meta "Quebre" vira "Engula".',cena:[{o:1,p:'Marte'},{o:1,e:'buraco',cor:'#e0805a'},{o:1,p:'Terra'}]},
+  {id:'cores',hoje:'Cores',esp:'aura roxa ou verde',txt:'Hoje: roxa só junta com roxa, verde com verde.',cena:[{o:1,p:'Vênus',aura:0},{o:1,p:'Vênus',aura:1},{o:1,p:'Vênus',aura:0}]},
+];
+const KEY='ptui_opiniao_v1',OP=JSON.parse(localStorage.getItem(KEY)||'{}'),TODOS=[];
+const $=q=>document.querySelector(q);
+function salva(){localStorage.setItem(KEY,JSON.stringify(OP));prog();}
+function prog(){const n=TODOS.filter(it=>{const o=OP[it.id];return o&&(o.v||(o.n||'').trim());}).length;$('#prog').textContent=`${n} de ${TODOS.length} avaliados`;}
+function widget(id,compact){const w=document.createElement('div');w.className='op';
+  w.innerHTML=`<div class="opb">${[['bom','👍','gostei'],['ajustar','🔧','ajustar'],['trocar','👎','trocar']].map(([v,e,l])=>`<button data-v="${v}" title="${l}">${e}${compact?'':' '+l}</button>`).join('')}</div><input class="nota" placeholder="por quê? (opcional)">`;
+  const bs=w.querySelectorAll('button'),inp=w.querySelector('input');inp.value=(OP[id]||{}).n||'';
+  const pinta=()=>bs.forEach(b=>b.classList.toggle('on',(OP[id]||{}).v===b.dataset.v));pinta();
+  bs.forEach(b=>b.onclick=()=>{const o=OP[id]||(OP[id]={});o.v=o.v===b.dataset.v?null:b.dataset.v;pinta();salva();});
+  inp.oninput=()=>{const o=OP[id]||(OP[id]={});o.n=inp.value;salva();};
+  return w;}
+
+function cena(cv,it,i){const Wc=Math.min(420,cv.parentElement.clientWidth-28),Hc=Math.round(Wc/3*1.04),D=DPR,ctx=disp(cv,Wc,Hc),u=Wc*D/3,cy=Hc*D/2;
+  const F=buildFundo(Wc*D,Hc*D,MUNDOS_ESP[0],{planeta:false,seed:11+i}),X=k=>u*(k+.5);
+  view(cv,t=>{drawFundo(ctx,F,t);
+    it.cena.forEach((c,k)=>{const x=X(k);if(c.o)SPR.orbita(ctx,x,cy,u);if(c.e==='neb')SPR.neb(ctx,x,cy,u,t,k*2);if(c.e==='alvo')SPR.alvo(ctx,x,cy,u,t,c.t);});
+    it.cena.forEach((c,k)=>{const x=X(k);
+      if(c.p){if(c.aura!=null)SPR.aura(ctx,x,cy,u,t,c.aura);drawPeca(ctx,c.p,t,x,cy,u);if(c.presa)SPR.gaiola(ctx,x,cy,u,t);}
+      else if(c.e==='estacao')SPR.estacao(ctx,x,cy,u,t);else if(c.e==='lixo')SPR.lixo(ctx,x,cy,u,t);else if(c.e==='nave')SPR.nave(ctx,x,cy,u,t,c.t);else if(c.e==='buraco')SPR.buraco(ctx,x,cy,u,t,c.cor);});
+    for(const k of it.campo||[]){const x=u*(k+1);SPR.campo(ctx,[x,cy-u*.42],[x,cy+u*.42],t,u);}});}
+
+function fundoCard(cv,chips){const Wc=Math.min(420,cv.parentElement.clientWidth-28),Hc=Math.round(Wc*.62),D=DPR,ctx=disp(cv,Wc,Hc);
+  let F=buildFundo(Wc*D,Hc*D,MUNDOS_ESP[0]);
+  MUNDOS_ESP.forEach((m,i)=>{const b=document.createElement('button');b.className='fb'+(i?'':' on');b.textContent=m.n;
+    b.onclick=()=>{F=buildFundo(Wc*D,Hc*D,m);chips.querySelectorAll('button').forEach((x,j)=>x.classList.toggle('on',j===i));};chips.appendChild(b);});
+  const u=Wc*D/4.2;
+  view(cv,t=>{drawFundo(ctx,F,t);[[.5,.5,'Terra'],[1.6,.5,null],[2.7,.5,'Saturno']].forEach(([gx,gy,n])=>{const x=u*(gx+.25),y=Hc*D*.42;SPR.orbita(ctx,x,y,u);if(n)drawPeca(ctx,n,t,x,y,u);});});}
+
+function monta(){
+  const box=$('#itens');
+  ITENS.forEach((it,i)=>{const s=document.createElement('section');s.className='card';
+    s.innerHTML=`<h2>${it.fundo?'Fundo':it.hoje} <span class="de">→</span> ${it.esp}</h2><p class="hoje">${it.txt}</p><canvas></canvas>${it.fundo?'<div class="row chips"></div>':''}`;
+    box.appendChild(s);const cv=s.querySelector('canvas');
+    if(it.fundo)fundoCard(cv,s.querySelector('.chips'));else cena(cv,it,i);
+    s.appendChild(widget(it.id,false));TODOS.push({id:it.id,grupo:'Tabuleiro',rotulo:`${it.fundo?'Fundo':it.hoje} → ${it.esp}`});});
+  const esc=$('#escada');
+  LADDER.forEach((d,i)=>{const s=document.createElement('section');s.className='card mini';const id='nivel-'+(i+1);
+    s.innerHTML=`<div class="pv"><canvas></canvas></div><b>${i+1} · ${d.n}</b><span class="chip">${d.src}</span>`;esc.appendChild(s);
+    const cv=s.querySelector('canvas'),ctx=disp(cv,120,120);view(cv,t=>{ctx.clearRect(0,0,cv.width,cv.height);drawPeca(ctx,d.n,t,cv.width/2,cv.height/2,cv.width);});
+    s.appendChild(widget(id,true));TODOS.push({id,grupo:'Escada',rotulo:`${i+1} ${d.n}`});});
+  const ger=$('#geral');ger.value=OP._geral||'';ger.oninput=()=>{OP._geral=ger.value;salva();};
+  prog();
+}
+const EMO={bom:'👍 gostei',ajustar:'🔧 ajustar',trocar:'👎 trocar'};
+function texto(){const L=['Opinião sobre o Ptui no espaço'];let g='';
+  for(const it of TODOS){if(it.grupo!==g){g=it.grupo;L.push('',g.toUpperCase());}const o=OP[it.id]||{},n=(o.n||'').trim();
+    L.push(`- ${it.rotulo}: ${o.v?EMO[o.v]:'sem opinião'}${n?` · "${n}"`:''}`);}
+  const ger=(OP._geral||'').trim();if(ger)L.push('','ALGO MAIS',ger);return L.join('\n');}
+$('#copiar').onclick=async()=>{const t=texto(),btn=$('#copiar');$('#saida').value=t;$('#saidaBox').hidden=false;let ok=false;
+  try{await navigator.clipboard.writeText(t);ok=true;}catch(e){const ta=$('#saida');ta.select();try{ok=document.execCommand('copy');}catch(e2){}}
+  btn.textContent=ok?'Copiado! Cole na conversa':'Copie o texto lá embaixo';setTimeout(()=>btn.textContent='Copiar respostas',2600);};
+
+setTimeout(()=>{try{buildTextures();monta();$('#loading').remove();
+  requestAnimationFrame(function loop(ms){const t=ms/1000;for(const v of views)if(v.vis)v.draw(t);requestAnimationFrame(loop);});}
+  catch(err){$('#loading').textContent='erro: '+err.message;console.error(err);}},30);
+</script>
+</body>
+</html>
