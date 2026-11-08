@@ -84,6 +84,7 @@ details.mcard[open] summary::after{content:' ▴'}
 <main>
   <h1>O CAMINHO DA JORNADA</h1>
   <p class="sub" id="gerado"></p>
+  <p class="sub">Proposta de caminho novo: <a href="proposta.html" style="color:#7fe0ff">proposta.html</a></p>
   <p>Como cada mecânica é apresentada, treinada e misturada ao longo das 96 fases. Serve para garantir que cada novidade seja explorada aos poucos, e o suficiente, antes da próxima.</p>
 
   <h2>A REGRA</h2>
@@ -205,7 +206,7 @@ function tituloBloco(b){
     for(const b of blocos.filter(b=>b.g===g)){
       const a=b.fs[0].n, z=b.fs[b.fs.length-1].n, estreia=b.fs.some(f=>f.novas.length), nav=b.fs.reduce((s,f)=>s+avisos[f.n].length,0);
       const tipo = b.tema==='quebra'||b.tema==='final'||b.tema==='basico' ? '' : b.temas.length>1 ? '<span class="k k-mix">mistura</span>' : estreia ? '<span class="k k-novo">estreia</span>' : b.tema==='basico' ? '' : '<span class="k k-treino">treino</span>';
-      h+=`<div class="bl"><div class="fx" style="background:${fundo(b.fs[0])}">${a===z?a:a+'–'+z}</div><div class="co">
+      h+=`<div class="bl"><div class="fx" style="background:${fundo(b.fs[0])}">${a===z?a:a+' a '+z}</div><div class="co">
         <div class="tt">${tituloBloco(b)} ${tipo}</div>
         <div class="ds">${b.fs.map(descFase).join(' · ')}</div>
         ${nav?`<div class="av">⚠ ${nav} aviso${nav>1?'s':''}: ${b.fs.filter(f=>avisos[f.n].length).map(f=>`<a href="#f${f.n}">fase ${f.n}</a>`).join(', ')}</div>`:''}</div></div>`;
