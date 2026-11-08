@@ -6,7 +6,7 @@ rd = lambda f: open(T + f, encoding='utf-8').read()
 missoes = rd('quebracabecas.js') + rd('missoes.js') + rd('missoes_calib.js')
 classico = rd('classico.js')
 # motor do espaço (o mesmo dos rascunhos) fechado num objeto, para os nomes dele não colidirem com os do jogo
-espaco = ('var ESP=(()=>{' + rd('espaco.js') + '\nreturn {buildTextures,preaquece,makePiece,drawPeca,drawPecaVar,pecaImg,buildFundo,drawFundo,SPR,LADDER,MUNDOS_ESP,byName,kDe,ST,objImg,DPR};\n})();\n'
+espaco = ('var ESP=(()=>{' + rd('espaco.js') + '\nreturn {buildTextures,preaquece,makePiece,drawPeca,drawPecaVar,pecaImg,glPronto,glDesenha,buildFundo,drawFundo,SPR,LADDER,MUNDOS_ESP,byName,kDe,ST,objImg,DPR};\n})();\n'
           + rd('espaco_jogo.js'))
 cfg, svg, logic, helpers, sfx, css, autoupd = rd('config.js'), rd('svg.js'), rd('jogo.js'), rd('helpers.js'), rd('sfx.js'), rd('css.css'), rd('autoupd.html')
 gi = rd('gi.js')
@@ -41,6 +41,8 @@ body.espaco .slot svg{display:none}
 body.espaco .slot::before{content:'';position:absolute;inset:6%;border-radius:50%;background:radial-gradient(circle,rgba(12,9,28,.62),rgba(12,9,28,.38) 72%);border:1.5px solid rgba(255,255,255,.14)}
 body.espaco .slot.void::before{display:none}
 body.espaco .tile .face{width:100% !important;height:100% !important;margin:0 !important;position:relative}
+#glPlan{display:none;position:absolute;left:calc(-1*var(--cell));top:calc(-1*var(--cell));width:calc(100% + 2*var(--cell));height:calc(100% + 2*var(--cell));pointer-events:none;z-index:5}
+body.espaco #glPlan{display:block}
 canvas.esp{position:absolute;left:50%;top:50%;width:calc(var(--cell)*var(--kx));height:calc(var(--cell)*var(--ky));transform:translate(-50%,-50%);pointer-events:none}
 body.espaco .edge{background:none;border:0;box-shadow:none}
 body.espaco .etq{background:rgba(12,9,26,.84) !important;border:1px solid rgba(255,255,255,.2);color:#ece3f7;font-family:'Exo 2',sans-serif}

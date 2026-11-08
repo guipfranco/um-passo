@@ -525,3 +525,74 @@ const SPR={
     drawPeca(c,n,t,x,y,u*.4,.55,true);c.drawImage(objImg('portal',S,t),x-S/2,y-S/2);},
   buraco(c,x,y,u,t,cor){bnDraw(c,x,y,u*.15,t,hex(cor).join(','));},
 };
+
+// ===================== PLANETAS PELA PLACA DE VÍDEO (WebGL) =====================
+// No jogo, os planetas redondos do tabuleiro são desenhados por shaders, todos numa camada só: cada pixel é
+// calculado na placa de vídeo, e não mais ponto a ponto no processador. As contas são as mesmas do SphereBody
+// (textura, inclinação do eixo, giro, luz em faixas, nuvens, atmosfera, brilho do Sol, contorno) e dos anéis.
+const GLP={gl:null,cv:null,pe:null,pa:null,buf:null,tex:new Map(),falhou:false,der:false};
+const GLS_V='attribute vec2 a;uniform vec2 c;uniform float h;uniform vec2 tela;uniform float raio;varying vec2 p;'+
+  'void main(){vec2 q=c+a*h;gl_Position=vec4(q.x/tela.x*2.-1.,1.-q.y/tela.y*2.,0.,1.);p=vec2(a.x,-a.y)*h/raio;}';
+const GLS_PREC='#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n';
+const GLS_ESFERA=GLS_PREC+'varying vec2 p;uniform sampler2D tx,nv;uniform float tilt,pitch,giro,giroN,emis,temNuv,atmoOn,glow,glowR,pxR,contW;uniform vec3 L,atmo,cont;'+
+ 'void main(){float r=length(p),aa=1.2/pxR;vec4 o=vec4(0.);'+
+ 'if(atmoOn>.5&&r<1.25){float a=.55*clamp(1.-(r-.92)/.33,0.,1.);o=vec4(atmo*a,a);}'+
+ 'if(glow>.5&&r<glowR){float k=clamp((r-.8)/(glowR-.8),0.,1.);vec3 gc=mix(vec3(1.,.84,.35),vec3(1.,.6,.12),k);float a=.75*pow(1.-k,1.6);o=vec4(gc*a,a);}'+
+ 'if(r<1.){float z=sqrt(max(0.,1.-r*r));vec3 n=vec3(p,z);float ct=cos(tilt),st=sin(tilt),cp=cos(pitch),sp=sin(pitch);'+
+ 'float x1=n.x*ct+n.y*st,y1=-n.x*st+n.y*ct,y2=y1*cp+n.z*sp,z2=-y1*sp+n.z*cp;float lat=asin(clamp(y2,-1.,1.)),lon=atan(x1,z2);'+
+ 'vec2 uv=vec2(lon/6.2831853+.5+giro,.5-lat/3.1415927);vec3 c=texture2D(tx,uv).rgb;'+
+ 'if(temNuv>.5){float na=texture2D(nv,vec2(uv.x-giro+giroN,uv.y)).a;c=mix(c,vec3(1.),na);}'+
+ 'float s;if(emis>.5)s=.72+.36*z;else{float l=dot(n,L);s=.26+.56*smoothstep(-.1,.14,l)+.2*smoothstep(.45,.95,l);float rim=1.-z;s+=.2*rim*rim*rim*smoothstep(0.,.3,l);}'+
+ 'c*=s;float e=contW/pxR;c=mix(c,cont,smoothstep(1.-e-aa,1.-e+aa*.5,r));float a=1.-smoothstep(1.-aa,1.,r);o=vec4(c*a,a)+o*(1.-a);}'+
+ 'gl_FragColor=o;}';
+const GLS_ANEL=(der)=>(der?'#extension GL_OES_standard_derivatives : enable\n':'')+GLS_PREC+'varying vec2 p;uniform float tilt,pitch,lado,pxR,bordas;uniform vec4 b0,b1,b2,b3;uniform vec3 c0,c1,c2,c3,cont;'+
+ 'float banda(float r,vec4 b,float w){return b.z<.5?0.:smoothstep(b.x-w,b.x+w,r)*(1.-smoothstep(b.y-w,b.y+w,r));}'+
+ 'void main(){vec3 n=vec3(-cos(pitch)*sin(tilt),cos(pitch)*cos(tilt),sin(pitch));if(abs(n.z)<.02)discard;'+
+ 'float z=-(n.x*p.x+n.y*p.y)/n.z;if(z*lado<0.)discard;float r=length(vec3(p,z));'+
+ (der?'float w=max(fwidth(r)*.7,.002);':'float w=1./pxR;')+
+ 'vec3 c=vec3(0.);float a=0.,k;k=banda(r,b0,w);c+=c0*k;a+=k;k=banda(r,b1,w);c+=c1*k;a+=k;k=banda(r,b2,w);c+=c2*k;a+=k;k=banda(r,b3,w);c+=c3*k;a+=k;'+
+ 'if(bordas>.5){float lw=w*2.4;float e=max(1.-smoothstep(lw*.5,lw,abs(r-b0.x)),1.-smoothstep(lw*.5,lw,abs(r-b3.y)));c=mix(c,cont,e);a=max(a,e);}'+
+ 'a=clamp(a,0.,1.);gl_FragColor=vec4(c*a,a);}';
+function glCompila(gl,vs,fs){const sh=(t,src)=>{const s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s;};
+  const p=gl.createProgram();gl.attachShader(p,sh(gl.VERTEX_SHADER,vs));gl.attachShader(p,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(p);
+  if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));const u={};const n=gl.getProgramParameter(p,gl.ACTIVE_UNIFORMS);
+  for(let i=0;i<n;i++){const nm=gl.getActiveUniform(p,i).name;u[nm]=gl.getUniformLocation(p,nm);}return {p,u,a:gl.getAttribLocation(p,'a')};}
+// prepara o WebGL no canvas (uma vez); devolve false se o aparelho não tiver
+function glPronto(cv){
+  if(GLP.falhou) return false; if(GLP.gl && GLP.cv===cv) return true;
+  try{const gl=cv.getContext('webgl',{alpha:true,premultipliedAlpha:true,antialias:false});if(!gl)throw new Error('sem webgl');
+    GLP.der=!!gl.getExtension('OES_standard_derivatives');
+    GLP.pe=glCompila(gl,GLS_V,GLS_ESFERA);GLP.pa=glCompila(gl,GLS_V,GLS_ANEL(GLP.der));
+    GLP.buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,GLP.buf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+    gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);GLP.gl=gl;GLP.cv=cv;GLP.tex=new Map();
+    cv.addEventListener('webglcontextlost',e=>{e.preventDefault();GLP.gl=null;GLP.falhou=true;});return true;}
+  catch(e){GLP.falhou=true;console.warn('WebGL indisponível, planetas no desenho antigo:',e.message);return false;}}
+function glTex(nome){const gl=GLP.gl;let t=GLP.tex.get(nome);if(t)return t;const px=TEX[nome].px;
+  t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,TW,TH,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(px.buffer,px.byteOffset,px.byteLength));
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);GLP.tex.set(nome,t);return t;}
+const hex3=h=>hex(h).map(v=>v/255);
+// lista: [{n, x, y, u, id}] com x, y, u em px do canvas (u = lado da casa); desenha os redondos, os maiores primeiro
+function glDesenha(lista,t,L){
+  const gl=GLP.gl,cv=GLP.cv;if(!gl)return false;gl.viewport(0,0,cv.width,cv.height);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.bindBuffer(gl.ARRAY_BUFFER,GLP.buf);
+  const usa=(P,c,h,R)=>{gl.useProgram(P.p);gl.enableVertexAttribArray(P.a);gl.vertexAttribPointer(P.a,2,gl.FLOAT,false,0,0);
+    gl.uniform2f(P.u.c,c[0],c[1]);gl.uniform1f(P.u.h,h);gl.uniform2f(P.u.tela,cv.width,cv.height);gl.uniform1f(P.u.raio,R);gl.uniform1f(P.u.pxR,R);};
+  const ord=lista.filter(it=>byName(it.n).kind==='sphere').sort((a,b)=>kDe(b.n)-kDe(a.n));
+  for(const it of ord){const def=byName(it.n),sp=def.sp,vr=vrDe(it.id);
+    let tilt=(sp.tilt||0)+vr.roll,pitch=clamp((sp.pitch||0)+vr.pitch,-.85,.85);if(def.ring&&Math.abs(pitch)<.24)pitch=pitch<0?-.24:.24;
+    const S=it.u*kDe(it.n)*(it.esc||1),R=S/2*sp.rScale,vel=(sp.speed||.05)*vr.vel,c=[it.x,it.y];
+    const anel=lado=>{const P=GLP.pa,B=def.ring.bands;usa(P,c,R*2.1,R);gl.uniform1f(P.u.tilt,tilt);gl.uniform1f(P.u.pitch,pitch);gl.uniform1f(P.u.lado,lado);
+      gl.uniform1f(P.u.bordas,def.ring.edges?1:0);gl.uniform3fv(P.u.cont,hex3(INK));
+      for(let i=0;i<4;i++){const b=B[i];gl.uniform4f(P.u['b'+i],b?b[0]:0,b?b[1]:0,b?1:0,0);gl.uniform3fv(P.u['c'+i],b?hex3(b[2]):[0,0,0]);}
+      gl.drawArrays(gl.TRIANGLE_STRIP,0,4);};
+    if(def.ring)anel(-1);
+    const P=GLP.pe,h=R*(def.glow?1/sp.rScale:def.atmo?1.27:1.04);usa(P,c,h,R);
+    gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,glTex(def.tex));gl.uniform1i(P.u.tx,0);
+    gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,glTex(def.clouds||def.tex));gl.uniform1i(P.u.nv,1);
+    gl.uniform1f(P.u.tilt,tilt);gl.uniform1f(P.u.pitch,pitch);gl.uniform1f(P.u.giro,-vel*t+vr.fase);gl.uniform1f(P.u.giroN,-vel*1.3*t+vr.fase);
+    gl.uniform1f(P.u.emis,sp.emissive?1:0);gl.uniform1f(P.u.temNuv,def.clouds?1:0);gl.uniform1f(P.u.atmoOn,def.atmo?1:0);gl.uniform3fv(P.u.atmo,def.atmo?def.atmo.map(v=>v/255):[0,0,0]);
+    gl.uniform1f(P.u.glow,def.glow?1:0);gl.uniform1f(P.u.glowR,1/sp.rScale);gl.uniform1f(P.u.contW,ST.outline?Math.max(1.6*DPR,R*.055):0);gl.uniform3fv(P.u.cont,hex3(def.outline||INK));
+    gl.uniform3f(P.u.L,L[0],L[1],L[2]);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+    if(def.ring)anel(1);}
+  return true;}

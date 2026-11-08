@@ -37,7 +37,24 @@ function espLoop(ms){
     if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; }
     const c=cv.getContext('2d'); c.clearRect(0,0,W,H); cv._d(c,W,H,cv._fw?W:cel,t);
   }
+  if(ceu && GLON) glQuadro(t);
 }
+// ---------- planetas redondos pela placa de vídeo (WebGL) ----------
+// uma camada só, dentro do tabuleiro (com uma casa de folga em volta para os anéis e o brilho); se o aparelho
+// não tiver WebGL, GLON fica falso e cada planeta volta a ser pintado no canvas da sua peça
+let GLON=null;
+function glCamada(){ let cv=document.getElementById('glPlan'); if(!cv){ cv=document.createElement('canvas'); cv.id='glPlan'; } if(cv.parentElement!==board) board.prepend(cv); return cv; }
+function glAtivo(){ if(GLON===null){ espInicia(); GLON = !/[?&]semgl\b/.test(location.search) && ESP.glPronto(glCamada()); } return GLON; }
+function glQuadro(t){
+  const cv=glCamada(), gr=cv.getBoundingClientRect(); if(!gr.width) return;
+  const W=Math.round(gr.width*ESP.DPR), H=Math.round(gr.height*ESP.DPR); if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; }
+  const sx=W/gr.width, lista=[];
+  for(const el of board.querySelectorAll('.tile')){ if(!el._gl||!el._t) continue; const fr=el.firstChild.getBoundingClientRect(); if(!fr.width) continue;
+    lista.push({n:nomeNivelEsp(el._t.t), x:(fr.left+fr.width/2-gr.left)*sx, y:(fr.top+fr.height/2-gr.top)*sx, u:fr.width*sx, id:el.dataset.id||'x'}); }
+  ESP.glDesenha(lista,t,ESP.ST.L);
+}
+// recorta o disco do planeta (desenhado embaixo, pela placa de vídeo) do que está no canvas da peça
+function furaPlaneta(c,x,y,u,T){ const R=u*kNivel(T.t)*ESP.byName(nomeNivelEsp(T.t)).sp.rScale/2; c.save(); c.globalCompositeOperation='destination-out'; c.beginPath(); c.arc(x,y,R,0,7); c.fill(); c.restore(); }
 
 // ícone do planeta no meio do texto (uma foto parada, guardada depois da primeira vez)
 const ICO_PL={};
@@ -55,6 +72,10 @@ function espTile(el,t){
   const k = t.t===0||t.k==='p' ? 1 : kNivel(t.t), kk = Math.max(1.15, k + (t.c!=null ? .1 : 0));
   el.style.zIndex = String(10 + Math.round((2 - Math.min(2,k))*10));   // os pequenos ficam por cima dos anéis dos grandes
   espCanvas(f, kk, kk, (c,W,H,u,tm)=>{ const T=el._t, x=W/2, y=H/2;
+    // planeta redondo: vai pela placa de vídeo (camada embaixo); aqui só a aura e a gaiola, com o disco do planeta recortado
+    const redondo = T.t>0 && T.k!=='p' && ESP.byName(nomeNivelEsp(T.t)).kind==='sphere' && glAtivo();
+    el._gl = redondo;
+    if(redondo){ if(T.c!=null) espAura(c,x,y,u,tm,T.c); if(T.presa) ESP.SPR.gaiola(c,x,y,u,tm,'back'); if(T.c!=null||T.presa) furaPlaneta(c,x,y,u,T); if(T.presa) ESP.SPR.gaiola(c,x,y,u,tm,'front'); return; }
     if(T.c!=null) espAura(c,x,y,u,tm,T.c);
     if(T.presa) ESP.SPR.gaiola(c,x,y,u,tm,'back');
     if(T.t===0) ESP.SPR.lixo(c,x,y,u*.86,tm);
