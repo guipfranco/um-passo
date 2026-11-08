@@ -207,7 +207,7 @@ const COMO_FASE_ESP = {
 };
 function regrasEsp(m){
   const fase=faseDe(m), fm=formaDe(m), n=PATHS[fase].n, tam = fm ? `${fw(fm)}x${fh(fm)}` : `${m.w||n||4}x${m.h||m.w||n||4}`;
-  return `${tam} · ${m.arrastos||'?'} arrastos${charDe(m)==='passinho'?' · Passinho':''}${m.regras?.spawns===0?' · não nasce peça nova':''}`;
+  return `${tam} · ${arrastosTxt(m)}${charDe(m)==='passinho'?' · Passinho':''}${m.regras?.spawns===0?' · não nasce peça nova':''}`;
 }
 function explicaEsp(m){
   const fase=faseDe(m), out=[];
@@ -362,7 +362,7 @@ function comoJogarEsp(p){
      <p>Cada junção sobe um degrau. Quanto mais alto, mais pontos.</p>`,
     `<h2>Dois modos</h2>
      <p><b>Clássico:</b> o 4x4 sem fim. Junte até não caber mais nada e bata o seu recorde.</p>
-     <p><b>Jornada:</b> fases com uma missão cada e arrastos contados. Os arrastos que sobram viram estrelas. Cada novidade é explicada na fase em que aparece.</p>`,
+     <p><b>Jornada:</b> fases com uma missão cada. Quanto menos arrastos você usar, mais estrelas. Algumas fases não têm limite de arrastos: só acabam se o tabuleiro encher. Cada novidade é explicada na fase em que aparece.</p>`,
   ];
   const pontos=telas.map((_,i)=>`<i class="${i===p?'on':''}"></i>`).join('');
   showOverlay(telas[p]+`<div class="cjDots">${pontos}</div><div class="cjNav">

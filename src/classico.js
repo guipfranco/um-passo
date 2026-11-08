@@ -58,7 +58,12 @@ function progObj(o){
 const metaFeita = o => { const p=progObj(o); return p.at>=p.alvo; };
 const cumpriu = m => metasDe(m).every(metaFeita);
 const violou = m => objsDe(m).find(o=>o.proibido && (S.maxForm||0)>=o.proibido);
-const estrelasPor = (m,sobra) => 1 + (sobra>=m.estrelas[0]) + (sobra>=m.estrelas[1]);
+// fase livre (sem limite de arrastos): as estrelas vêm dos arrastos usados; tetoEst = máximo de arrastos para ★★ e para ★★★
+const tetoEst = m => [m.arrastos-m.estrelas[0], m.arrastos-m.estrelas[1]];
+const estrelasPor = (m,sobra,usados) => m.livre ? 1 + (usados<=tetoEst(m)[0]) + (usados<=tetoEst(m)[1]) : 1 + (sobra>=m.estrelas[0]) + (sobra>=m.estrelas[1]);
+const arrastosTxt = m => m.livre ? 'sem limite de arrastos' : `${m.arrastos||'?'} arrastos`;
+const metasEstTxt = (m,e=1) => m.livre ? `${e<2?`★★ em até ${tetoEst(m)[0]} arrastos · `:''}★★★ em até ${tetoEst(m)[1]}`
+                                     : `${e<2?`★★ sobrando ${m.estrelas[0]} arrastos · `:''}★★★ sobrando ${m.estrelas[1]}`;
 
 // conta o que as metas pedem e os pontos, a cada arrasto (sem mexer na tela: o robô de calibrar usa)
 function contaMissao(r){
@@ -250,9 +255,17 @@ function montaMissaoHud(m){
 }
 function hudMissao(){
   const m=MISSOES[S.missao-1], tot=m.arrastos||999, sobra=Math.max(0,S.energy), [e2,e3]=m.estrelas||[0,0];
+  const rot=$('#cArr').nextElementSibling;
+  if(m.livre){ const [t2,t3]=tetoEst(m), us=S.moves||0, tr=$('#cTr');
+    $('#cArr').textContent=us; if(rot) rot.textContent='arrastos · sem limite';
+    tr.style.width=Math.max(0,Math.min(1,(t2-us)/t2)*100)+'%'; tr.style.background = us<=t3?'#6aa84f':us<=t2?'#f2b33d':'#c0603f';
+    const s3=$('#cS3'), s2=$('#cS2'), s1=$('#cS1'); s3.style.left=((t2-t3)/t2*100)+'%'; s3.classList.toggle('off', us>t3);
+    s2.style.left='3%'; s2.classList.toggle('off', us>t2); s1.style.display='none';
+  } else { if(rot) rot.textContent='arrastos'; $('#cS1').style.display='';
   $('#cArr').textContent=sobra;
   const tr=$('#cTr'); tr.style.width=Math.max(0,Math.min(1,sobra/tot)*100)+'%'; tr.style.background = sobra>=e3?'#6aa84f':sobra>=e2?'#f2b33d':'#c0603f';
   for(const [id,lim] of [['#cS3',e3],['#cS2',e2],['#cS1',0]]){ const st=$(id); st.style.left=(lim?lim/tot*100:3)+'%'; st.classList.toggle('off', lim>0 && sobra<lim); }
+  }
   $('#cPts').textContent=S.pontos||0;
   const ms=metasDe(m), fila=$('#cMis .fila');
   if(fila){ const p=progObj(ms[0]); fila.querySelectorAll('span').forEach((e,i)=>e.classList.toggle('ok', i<p.at)); }
@@ -265,7 +278,7 @@ function regrasTxt(m){
   const fase=faseDe(m), fm=formaDe(m), n=PATHS[fase].n;
   const tam = fm ? `${fw(fm)}x${fh(fm)}` : `${m.w||n||4}x${m.h||m.w||n||4}`;
   const quebra = (m.regras?.spawns===0) ? ' · não nasce pedrinha' : '';
-  return `${fm&&m.forma?fm.nome:PATHS[fase].nome} · ${tam} · ${m.arrastos||'?'} arrastos · ${CHARS[charDe(m)].nome}${quebra}`;
+  return `${fm&&m.forma?fm.nome:PATHS[fase].nome} · ${tam} · ${arrastosTxt(m)} · ${CHARS[charDe(m)].nome}${quebra}`;
 }
 function formaDe(m){
   if(m.forma) return acharForma(m.forma);
@@ -311,9 +324,10 @@ function missaoInfo(n){
     <p class="ajuda">${E?regrasEsp(m):regrasTxt(m)}</p>
     ${(E?explicaEsp(m):explica).map(t=>`<p class="ajuda">${t}</p>`).join('')}
     ${fase==='picareta'&&!E?regraPicareta():''}
-    <p class="metas">★ cumprir · ★★ sobrando ${m.estrelas[0]} arrastos · ★★★ sobrando ${m.estrelas[1]}</p>
+    ${m.livre?'<p class="ajuda">Sem limite de arrastos: a fase só acaba se o tabuleiro encher. Quanto menos arrastos, mais estrelas.</p>':''}
+    <p class="metas">★ cumprir · ${metasEstTxt(m)}</p>
     ${b?`<p class="recAtual">Seu melhor: ${estrelasHtml(b.e)} · ${b.t} pontos${b.pm?' · medalha do Passinho':''}</p>`:''}
-    ${sv?`<button class="btn g" id="mCont">Continuar (sobram ${sv.st.energy} arrastos)</button><button class="btn dim" id="mJoga">Começar de novo</button>`:'<button class="btn g" id="mJoga">Jogar</button>'}
+    ${sv?`<button class="btn g" id="mCont">Continuar (${m.livre?`${sv.st.moves||0} arrastos usados`:`sobram ${sv.st.energy} arrastos`})</button><button class="btn dim" id="mJoga">Começar de novo</button>`:'<button class="btn g" id="mJoga">Jogar</button>'}
     ${passinho?`<button class="btn dim" id="mPass">${b.pm?'Jogar de novo no Passinho':'Jogar no Passinho (medalha)'}</button>`:''}
     <button class="btn dim" id="mVolta">Voltar</button>`);
   if(tA) espPlanetaGrande($('#espInfo'),tA,'info');
@@ -332,7 +346,7 @@ function missaoJoga(n, opt={}){
        moves:0, extra:0, pontos:0, feitas:{}, coresF:{}, quebras:[], seqI:0, combos:0, soltas:0, maxForm:0};
   S.fiscal=FISCAIS[0];
   for(const [k,v] of Object.entries(m.itens||{})) S.lv[k]=v;
-  const p = {...PATHS[fase], ...(m.regras||{}), forma:fm, caverna:false, energy:(m.arrastos||999)-CFG.energy, semEnergia:false};
+  const p = {...PATHS[fase], ...(m.regras||{}), forma:fm, caverna:false, energy:(m.arrastos||999)-CFG.energy, semEnergia:!!m.livre};
   if(m.w){ p.w=m.w; p.h=m.h||m.w; }
   applyAndar(); startDay(p);
   limpaMarcas(); montaPecasMissao(m);
@@ -349,12 +363,12 @@ function missaoResultado(ok, motivo){
     showOverlay(`${espFig()&&tAlvo(m)?'<canvas id="espRes"></canvas>':disc(faseDe(m),null,'bigDisc')}<h2>Não deu</h2><p>${motivo}</p>${falta.map(t=>`<p>${t}.</p>`).join('')}
       <button class="btn g" id="mDeNovo">Tentar de novo</button><button class="btn dim" id="mLista">Ver fases</button>`);
   } else {
-    const e=estrelasPor(m,sobra), r=MISS(), ant=r[n]||{}, rec=ant.t!=null && S.pontos>ant.t;
+    const e=estrelasPor(m,sobra,S.moves||0), r=MISS(), ant=r[n]||{}, rec=ant.t!=null && S.pontos>ant.t;
     r[n]={...ant, e:Math.max(e,ant.e||0), t:Math.max(S.pontos,ant.t||0)}; if(S.medalha) r[n].pm=true;
     localStorage.mina_missoes=JSON.stringify(r);
     showOverlay(`${espFig()&&tAlvo(m)?'<canvas id="espRes"></canvas>':''}<h2>${S.medalha?'Medalha do Passinho!':'Missão cumprida!'}</h2>${estrelasHtml(e,'estr grande')}
-      <p>Sobraram <b>${sobra}</b> arrastos · <b>${S.pontos}</b> pontos${rec?' (recorde!)':''}</p>
-      ${e<3?`<p class="metas">${e<2?`★★ sobrando ${m.estrelas[0]} · `:''}★★★ sobrando ${m.estrelas[1]}</p>`:''}
+      <p>${m.livre?`Em <b>${S.moves||0}</b> arrastos`:`Sobraram <b>${sobra}</b> arrastos`} · <b>${S.pontos}</b> pontos${rec?' (recorde!)':''}</p>
+      ${e<3?`<p class="metas">${metasEstTxt(m,e)}</p>`:''}
       ${n<MISSOES.length?'<button class="btn g" id="mProx">Próxima fase</button>':'<p>Você terminou todas as fases!</p>'}
       <button class="btn dim" id="mDeNovo">Jogar de novo</button><button class="btn dim" id="mLista">Ver fases</button>`);
     if($('#mProx')) $('#mProx').onclick=()=>{ missoesLista(); missaoInfo(n+1); };
