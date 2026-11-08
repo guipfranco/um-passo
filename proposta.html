@@ -22,44 +22,57 @@ a{color:#7fe0ff}
 ul.lst{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:7px;font-size:14.5px;line-height:1.4;color:#d9d3fb}
 ul.lst b{color:#ffd877}
 .ok ul.lst b{color:#9be8b4}
+details.card summary{cursor:pointer;list-style:none;font:700 14px Orbitron,sans-serif;color:#f4fbff;letter-spacing:.05em}
+details.card summary::-webkit-details-marker{display:none}
+details.card summary::after{content:' ▾';color:#9fe9ff}
+details.card[open] summary::after{content:' ▴'}
 .mec{border-top:1px solid rgba(160,140,255,.15);padding-top:10px;display:flex;flex-direction:column;gap:5px}
-.mec:first-child{border-top:0;padding-top:0}
+.mec:first-of-type{border-top:0}
 .mec canvas{display:block;width:100%;max-width:340px;margin:0 auto}
 .mec b.t{font-size:16px;color:#f1eefc}
 .mec .o{font-size:14.5px;color:#d9d3fb;line-height:1.4}
-.mec .q{font-size:13px;color:#9a91c9}
-.mec .q i{font-style:normal;color:#9fe9ff;font-weight:700}
 .prop{background:#ffc94a;color:#2c1d00;font-weight:800;font-size:11px;border-radius:999px;padding:1px 7px;white-space:nowrap;vertical-align:2px}
 .molde{display:grid;grid-template-columns:repeat(12,1fr);gap:3px}
 .molde div{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font:800 11px 'Exo 2',sans-serif;color:#1a1230}
 .papeis{display:flex;flex-direction:column;gap:5px;font-size:13.5px;color:#cfc8f2}
-.papeis span b{display:inline-block;min-width:44px;color:#9fe9ff}
-svg.serra{width:100%;height:70px;display:block}
+.papeis span b{display:inline-block;min-width:52px;color:#9fe9ff}
+.passos{display:flex;flex-direction:column;gap:7px}
+.passos .fam{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13.5px}
+.passos .fam b{min-width:92px;color:#f1eefc;font-size:14px}
+.passos .st{border-radius:8px;padding:3px 8px;color:#1a1230;font-weight:700;font-size:12.5px}
+.passos .st small{font-weight:800;opacity:.75}
+.passos .st.dep{opacity:.55}
+.mundo{border-top:1px solid rgba(160,140,255,.15);padding-top:9px;display:flex;gap:10px}
+.mundo:first-child{border-top:0;padding-top:0}
+.mundo .nu{flex:none;width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font:900 13px Orbitron,sans-serif;color:#1a1230}
+.mundo .co{display:flex;flex-direction:column;gap:4px;font-size:14px;line-height:1.35;min-width:0}
+.mundo .co b.t{font-size:15.5px;color:#f1eefc}
+.mundo .co .tx{color:#b9b1e6}
+.mundo .co .it{display:flex;gap:7px;align-items:flex-start;font-size:13.5px;color:#d9d3fb}
+.mundo .co .it i{flex:none;width:12px;height:12px;border-radius:3px;margin-top:3px}
+.mundo .co .it span b{color:#9fe9ff;font-weight:700}
 .mapa{display:grid;grid-template-columns:auto repeat(12,1fr);gap:3px;align-items:center}
-.mapa .mn{font-size:11.5px;color:#b9b1e6;padding-right:5px;white-space:nowrap;font-weight:700}
-.mapa div.c{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:800;color:rgba(20,14,40,.75)}
+.mapa .mn{font-size:11px;color:#b9b1e6;padding-right:5px;white-space:nowrap;font-weight:700}
+.mapa div.c{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:rgba(20,14,40,.75)}
 .mapa div.est{box-shadow:inset 0 0 0 2px rgba(255,255,255,.95)}
 .mapa div.fim{outline:2px solid #ffcf7a;outline-offset:-2px}
 .mapa div.dif{outline:2px dashed #ff6b6b;outline-offset:-2px}
+.mapa div.dep{opacity:.5}
+.mapa .sep{grid-column:1/-1;font-size:11.5px;color:#9a91c9;padding:6px 0 2px;font-weight:700;letter-spacing:.05em}
 .temas{display:flex;flex-wrap:wrap;gap:5px 10px;font-size:12.5px;color:#cfc8f2}
 .temas i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-2px}
-.mundo{border-top:1px solid rgba(160,140,255,.15);padding-top:9px;display:flex;gap:10px}
-.mundo .nu{flex:none;width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font:900 14px Orbitron,sans-serif;color:#1a1230}
-.mundo .co{display:flex;flex-direction:column;gap:3px;font-size:14px;line-height:1.35}
-.mundo .co b.t{font-size:15.5px;color:#f1eefc}
-.mundo .co span{color:#b9b1e6}
-.mundo .co span i{font-style:normal;color:#9fe9ff;font-weight:700}
-.mundo .co span.prop{color:#2c1d00}
-.tab{display:grid;gap:2px;font-size:11px}
-.tab div{display:flex;align-items:center;justify-content:center;border-radius:4px;min-height:22px}
-.tab .h{color:#b9b1e6;font-weight:700}
-.tab .r{justify-content:flex-end;padding-right:5px}
-.tab .z{background:rgba(255,255,255,.04)}
-.matriz{display:grid;gap:2px;font-size:10.5px}
-.matriz div{display:flex;align-items:center;justify-content:center;border-radius:4px;min-height:24px;text-align:center}
-.matriz .h{color:#b9b1e6;font-weight:700;font-size:10px;line-height:1.05}
-.matriz .v{writing-mode:vertical-rl;transform:rotate(180deg);min-height:70px;justify-content:flex-start;padding:2px 0}
+.conta{display:grid;grid-template-columns:auto repeat(3,1fr);gap:3px;font-size:13px}
+.conta div{padding:5px 6px;border-radius:6px;text-align:center;background:rgba(255,255,255,.05)}
+.conta .h{background:transparent;color:#b9b1e6;font-weight:700}
+.conta .r{text-align:right;background:transparent;color:#cfc8f2}
+.conta .bom{background:#1f4d36;color:#bff5d2;font-weight:800}
+.conta .mal{background:#5a2330;color:#ffc2c9;font-weight:800}
+.matriz{display:grid;gap:2px;font-size:10px}
+.matriz div{display:flex;align-items:center;justify-content:center;border-radius:4px;min-height:22px;text-align:center}
+.matriz .h{color:#b9b1e6;font-weight:700;font-size:9.5px;line-height:1.05}
+.matriz .v{writing-mode:vertical-rl;transform:rotate(180deg);min-height:78px;justify-content:flex-start;padding:2px 0}
 .matriz .s{background:#3a8f6a;color:#e8fff2;font-weight:800}
+.matriz .d{background:#2a4a5e;color:#bfe9ff;font-weight:800}
 .matriz .n{background:rgba(255,255,255,.05)}
 .matriz .x{background:transparent}
 </style>
@@ -68,54 +81,65 @@ svg.serra{width:100%;height:70px;display:block}
 <main>
   <h1>PROPOSTA DE CAMINHO</h1>
   <p class="sub">Rascunho para discutir. O caminho de hoje está em <a href="caminho.html">caminho.html</a>.</p>
-  <p>Cada mecânica nova pode interagir com todas as anteriores, então o número de fases possíveis cresce muito a cada novidade. A proposta é apresentar menos coisas, mais devagar, escolher de propósito as combinações e não deixar o que foi aprendido sumir.</p>
+  <p>Cada mundo apresenta um passo novo de uma mecânica e explora como ele interage com tudo o que já foi aprendido, sempre buscando uma experiência nova. Quanto mais para a frente, mais misturas cabem, mas uma novidade de cada vez.</p>
 
   <h2>JÁ DECIDIDO</h2>
   <div class="card ok"><ul class="lst">
-    <li><b>120 fases em 10 mundos</b> para começar (dá para crescer para centenas depois).</li>
-    <li><b>A primeira fase difícil fica bem para frente:</b> na 46, o desafio do mundo 4. Antes disso, toda fase é tranquila para uma pessoa comum.</li>
-    <li><b>O lixo espacial vira um bloco fixo que racha</b> com uma junção na casa ao lado. Depois vêm versões mais duras, que pedem 2, 3 junções.</li>
-    <li><b>O que foi aprendido continua voltando</b> nos mundos seguintes (veja "As mecânicas não somem").</li>
+    <li><b>Começar com 120 fases em 10 mundos</b>; dá para crescer para centenas depois.</li>
+    <li><b>Um mundo inteiro para cada passo de uma mecânica.</b> Um passo novo da mesma mecânica (ex.: o lixo que racha, depois da estação) é outro mundo.</li>
+    <li><b>As antigas não só voltam:</b> cada mundo explora como elas interagem com a novidade, cada fase com uma experiência nova.</li>
+    <li><b>Quebra-cabeça e Passinho são jeitos de jogar</b> que aparecem em vários mundos, misturados com o que estiver ali.</li>
+    <li><b>A primeira fase difícil é a 46.</b> Antes disso, toda fase é tranquila para uma pessoa comum.</li>
+    <li><b>O lixo espacial vira um bloco fixo que racha</b> com uma junção ao lado; depois vêm os mais duros, de 2 e 3 junções.</li>
   </ul></div>
 
-  <h2>O QUE É CADA COISA</h2>
-  <div class="card" id="mecs"></div>
+  <details class="card"><summary>O QUE É CADA COISA</summary><div id="mecs" style="display:flex;flex-direction:column;gap:10px"></div></details>
+
+  <h2>OS PASSOS DE CADA MECÂNICA</h2>
+  <div class="card">
+    <p class="sub">Cada passo é um mundo (o número no canto). Os apagados ficam para depois da fase 120.</p>
+    <div class="passos" id="passos"></div>
+  </div>
 
   <h2>COMO FICA CADA MUNDO</h2>
   <div class="card">
-    <p class="sub">Todo mundo segue o mesmo molde de 12 fases. A linha mostra a dificuldade subindo em serrote.</p>
-    <svg class="serra" id="serra" viewBox="0 0 120 40" preserveAspectRatio="none"></svg>
     <div class="molde" id="molde"></div>
     <div class="papeis">
-      <span><b>1 e 2</b> Estreia: só a novidade, pedindo 1, fácil.</span>
+      <span><b>1 e 2</b> Estreia: só a novidade, fácil.</span>
       <span><b>3 e 4</b> Treino: pedir 2, peça maior, tabuleiro maior.</span>
-      <span><b>5</b> Quebra-cabeça com a novidade.</span>
-      <span><b>6</b> Respiro: fase leve, com uma mecânica antiga de lembrança.</span>
-      <span><b>7 e 8</b> Variação: um degrau novo da mesma família, estreia e treino.</span>
-      <span><b>9</b> Mistura: a novidade junto com UMA mecânica antiga, as duas valendo.</span>
-      <span><b>10</b> Desafio: a mais difícil antes do final (de verdade difícil só a partir do mundo 4).</span>
-      <span><b>11</b> Quebra-cabeça mais difícil, com uma lembrança.</span>
-      <span><b>12</b> Final do mundo: o pico, sem limite de arrastos, com uma ou duas lembranças.</span>
+      <span><b>5</b> Quebra-cabeça só com a novidade.</span>
+      <span><b>6 a 10</b> Interações: em cada fase a novidade encontra uma mecânica antiga de um jeito que cria uma experiência nova. Do mundo 5 em diante, pode encontrar duas.</span>
+      <span><b>11</b> Jeito de jogar: quebra-cabeça ou Passinho, com a novidade.</span>
+      <span><b>12</b> Final do mundo: o pico, sem limite de arrastos.</span>
     </div>
   </div>
 
-  <h2>OS MUNDOS</h2>
+  <h2>ATÉ ONDE DÁ PARA MISTURAR</h2>
+  <div class="card">
+    <p>Para uma novidade ser bem apresentada, ela precisa de umas 5 fases sozinha (estreia, treino e um quebra-cabeça), mais algumas fases encontrando as antigas. Se duas ou mais chegam juntas, elas também precisam se encontrar entre si.</p>
+    <div class="conta" id="conta"></div>
+    <p class="sub">Fases necessárias para apresentar direito, contando 5 sozinha e 3 encontros com as antigas para cada novidade, mais 1 fase para cada dupla de novidades. Um mundo tem 12: verde cabe, vermelho não cabe.</p>
+    <ul class="lst">
+      <li><b>Uma novidade por mundo</b> é o que cabe. Com duas de uma vez já seriam umas 17 fases, e a pessoa fica sem tempo de entender cada uma.</li>
+      <li><b>As antigas só crescem:</b> no mundo 3 a novidade pode encontrar 2 antigas; no 6, 5; no 10, 9. Cada mundo escolhe os 5 encontros mais interessantes, e os outros ficam para os mundos seguintes.</li>
+      <li><b>Peças por fase:</b> até o mundo 4, a novidade e no máximo 1 antiga; do 5 em diante, até 2 antigas; do 9 em diante, até 3, sempre num tabuleiro maior (5x5 ou mais) quando forem 3 ou mais coisas.</li>
+    </ul>
+  </div>
+
+  <h2>OS MUNDOS ATÉ A FASE 120</h2>
   <div class="card" id="mundos"></div>
 
-  <h2>O MAPA PROPOSTO</h2>
+  <h2>DEPOIS DA FASE 120</h2>
+  <div class="card" id="depois"></div>
+
+  <h2>O MAPA</h2>
   <div class="card">
-    <p class="sub">Cada quadrado é uma fase na cor do que ensina. Meio a meio = mistura; cantinho de outra cor = lembrança de uma mecânica antiga; branco = quebra-cabeça; contorno branco = estreia; dourado = final; tracejado vermelho = primeira fase difícil.</p>
+    <p class="sub">Cada quadrado é uma fase na cor da novidade do mundo; o canto de outra cor mostra a mecânica antiga que ela encontra; branco = quebra-cabeça; azul-claro = Passinho; contorno branco = estreia; dourado = final; tracejado vermelho = primeira fase difícil.</p>
     <div class="mapa" id="mapa"></div>
     <div class="temas" id="temas"></div>
   </div>
 
-  <h2>AS MECÂNICAS NÃO SOMEM</h2>
-  <div class="card">
-    <p class="sub">Em quantas fases de cada mundo cada mecânica aparece. O 12 é o mundo dela; à direita, as vezes em que ela volta depois.</p>
-    <div class="tab" id="acum"></div>
-  </div>
-
-  <h2>COMBINAÇÕES DE VERDADE</h2>
+  <h2>QUEM ENCONTRA QUEM</h2>
   <div class="card">
     <p class="sub" id="combTxt"></p>
     <div class="matriz" id="matriz"></div>
@@ -125,11 +149,10 @@ svg.serra{width:100%;height:70px;display:block}
   <div class="card"><ul class="lst">
     <li><b>Escada de complexidade (Candy Crush):</b> quem está no começo vê só obstáculos simples; os complexos vêm para quem já passou muitas fases.</li>
     <li><b>Uma novidade tem que merecer o lugar:</b> só entra algo novo com comportamento bem diferente, e só quando o que já existe não dá mais conta de fases boas.</li>
-    <li><b>Dificuldade em serrote, não em rampa:</b> uma fase difícil costuma vir seguida de uma mais leve. O Royal Match segura a primeira fase "difícil" até a 39.</li>
+    <li><b>Dificuldade em serrote:</b> uma fase difícil costuma vir seguida de uma mais leve. O Royal Match segura a primeira fase "difícil" até a 39.</li>
     <li><b>Difícil bom é escolha, não esforço:</b> fases difíceis pedem decidir o que atacar primeiro.</li>
-    <li><b>Obstáculos que quebram com jogada ao lado:</b> a cobertura do Candy Crush some com combinações vizinhas (de 1 a 5 camadas); no Royal Match há obstáculos que caem com 1 combinação ao lado e outros que pedem 8.</li>
+    <li><b>Obstáculos que quebram com jogada ao lado:</b> a cobertura do Candy Crush some com combinações vizinhas (de 1 a 5 camadas).</li>
   </ul></div>
-
   <p class="sub">Referências: <a href="https://www.pocketgamer.biz/crafting-candy-crushs-difficulty-blockers-level-design-ai-and-the-complexity-staircase/">King sobre a escada de complexidade do Candy Crush (PocketGamer.biz)</a> · <a href="https://www.gamigion.com/why-does-royal-match-wait-22-levels-to-introduce-their-first-live-op/">ritmo do começo do Royal Match (Gamigion)</a> · <a href="https://pranaysarepaka.substack.com/p/royal-match-breakdown-part-3">obstáculos do Royal Match</a> · <a href="https://candycrush.fandom.com/wiki/Sachets">cobertura do Candy Crush</a></p>
 </main>
 <script src="src/espaco.js?v=16"></script>
@@ -145,124 +168,155 @@ function cenaBase(c,W,H,n){ const pa=W/n, cy=H/2; c.clearRect(0,0,W,H);
 function peca(c,n,t,x,y,pa,a=1,e=1){ drawPeca(c,n,t,x,y,pa*1.25,a,false,e); }
 function check(c,x,y,pa,a){ if(a<=0) return; c.save(); c.globalAlpha=a; c.strokeStyle='#6fdc8c'; c.lineWidth=pa*.06; c.lineCap='round'; c.beginPath(); c.moveTo(x-pa*.16,y-pa*.42); c.lineTo(x-pa*.04,y-pa*.3); c.lineTo(x+pa*.18,y-pa*.56); c.stroke(); c.restore(); }
 function cruz(c,x,y,pa,a){ if(a<=0) return; c.save(); c.globalAlpha=a; c.strokeStyle='#ff6b6b'; c.lineWidth=pa*.06; c.lineCap='round'; c.beginPath(); c.moveTo(x-pa*.12,y-pa*.56); c.lineTo(x+pa*.12,y-pa*.32); c.moveTo(x+pa*.12,y-pa*.56); c.lineTo(x-pa*.12,y-pa*.32); c.stroke(); c.restore(); }
-// cada cena roda em laço de 3,4 s: o arrasto entre 0,7 e 1,15 s, depois o resultado
 const tempo=t=>{ const s=t%3.4; return {s, k:ease((s-.7)/.45), fim:s>1.15, f:s>3?1-(s-3)/.4:s<.2?s/.2:1, depois:Math.min(1,Math.max(0,(s-1.15)/.3))}; };
 const MECS=[
- {nome:'Estação', o:'Ocupa uma casa e nunca sai do lugar. As peças batem nela e param.', hoje:'mundo 2 (fase 13)', prop:'mundo 2',
+ {nome:'Estação', o:'Ocupa uma casa e nunca sai do lugar. As peças batem nela e param.',
   d:(c,W,H,t)=>{ const {pa,cy,X}=cenaBase(c,W,H,4), T=tempo(t); SPR.estacao(c,X(3),cy,pa,t); peca(c,'Rocha',t,X(0)+(X(2)-X(0))*T.k,cy,pa,T.f); }},
- {nome:'Fluxo de rochas', o:'Uma faixa de rochas entre duas casas. As peças param nela, como numa parede fina.', hoje:'mundo 3 (fase 25)', prop:'mundo 3',
+ {nome:'Fluxo de rochas', o:'Uma faixa de rochas entre duas casas. As peças param nela, como numa parede fina.',
   d:(c,W,H,t)=>{ const {pa,cy,X}=cenaBase(c,W,H,4), T=tempo(t); SPR.rochas(c,[2*pa,cy-pa*.45],[2*pa,cy+pa*.45],t,pa); peca(c,'Rocha',t,X(0)+(X(1)-X(0))*T.k,cy,pa,T.f); }},
- {nome:'Lixo espacial que racha', novo:true, o:'Hoje o lixo anda com as peças e nunca junta, só ocupa espaço. Na proposta ele vira um bloco fixo que racha e some quando acontece uma junção na casa ao lado. Os mais duros pedem 2, 3 junções.', hoje:'mundo 4 (fase 40), como lixo que anda', prop:'mundo 2 (variação)',
+ {nome:'Lixo espacial que racha', novo:true, o:'Bloco fixo que racha e some quando acontece uma junção na casa ao lado. Os mais duros pedem 2, 3 junções.',
   d:(c,W,H,t)=>{ const {pa,cy,X}=cenaBase(c,W,H,4), T=tempo(t), sai=1-T.depois;
     if(sai>0){ c.save(); c.globalAlpha=sai*T.f; c.translate(X(3),cy); if(T.fim) c.rotate(Math.sin(t*40)*.06*sai); SPR.lixo(c,0,0,pa*.86,t); c.restore(); }
     if(!T.fim){ peca(c,'Rocha',t,X(0)+(X(2)-X(0))*T.k,cy,pa,T.f); peca(c,'Rocha',t,X(1)+(X(2)-X(1))*T.k,cy,pa,T.f); }
     else peca(c,'Asteroide',t,X(2),cy,pa,T.f,1+.25*Math.sin(Math.min(1,T.depois*1.5)*Math.PI)); }},
- {nome:'Órbita dourada: levar', o:'Uma casa marcada com um anel dourado. Levar é fazer exatamente o planeta pedido chegar nela e parar em cima.', hoje:'mundo 3 (fase 26)', prop:'mundo 4',
+ {nome:'Órbita dourada: levar', o:'Uma casa marcada com um anel dourado. Levar é fazer exatamente o planeta pedido chegar nela e parar em cima.',
   d:(c,W,H,t)=>{ const {pa,cy,X}=cenaBase(c,W,H,4), T=tempo(t); SPR.alvo(c,X(3),cy,pa,t,'Rocha'); peca(c,'Rocha',t,X(0)+(X(3)-X(0))*T.k,cy,pa,T.f); check(c,X(3),cy,pa,T.depois*T.f); }},
- {nome:'Órbita dourada: formar em cima', o:'Mesma casa marcada, mas agora a junção tem que acontecer em cima dela.', hoje:'mundo 3 (fase 28)', prop:'mundo 4 (variação)',
+ {nome:'Órbita dourada: formar em cima', o:'Mesma casa marcada, mas agora a junção tem que acontecer em cima dela.',
   d:(c,W,H,t)=>{ const {pa,cy,X}=cenaBase(c,W,H,4), T=tempo(t); SPR.alvo(c,X(3),cy,pa,t,'Asteroide');
     if(!T.fim){ peca(c,'Rocha',t,X(1)+(X(3)-X(1))*T.k,cy,pa,T.f); peca(c,'Rocha',t,X(3),cy,pa,T.f); } else peca(c,'Asteroide',t,X(3),cy,pa,T.f); check(c,X(3),cy,pa,T.depois*T.f); }},
- {nome:'Nebulosa', o:'Uma nuvem escura cobre algumas casas. Ela se desfaz quando acontece uma junção em cima dela. A meta é limpar todas.', hoje:'mundo 4 (fase 37)', prop:'mundo 5',
+ {nome:'Nebulosa', o:'Uma nuvem escura cobre algumas casas. Ela se desfaz quando acontece uma junção em cima dela. A meta é limpar todas.',
   d:(c,W,H,t)=>{ const {pa,cy,X}=cenaBase(c,W,H,4), T=tempo(t); if(1-T.depois>0){ c.save(); c.globalAlpha=(1-T.depois)*T.f; SPR.neb(c,X(3),cy,pa,t,2); c.restore(); }
     if(!T.fim){ peca(c,'Gelo',t,X(1)+(X(3)-X(1))*T.k,cy,pa,T.f); peca(c,'Gelo',t,X(3),cy,pa,T.f); } else peca(c,'Rocha',t,X(3),cy,pa,T.f); }},
- {nome:'Planeta preso', o:'Um planeta dentro de uma gaiola de luz: não se mexe. Ele se solta quando um planeta igual se junta com ele.', hoje:'mundo 4 (fase 41)', prop:'mundo 6',
+ {nome:'Planeta preso', o:'Um planeta dentro de uma gaiola de luz: não se mexe. Ele se solta quando um planeta igual se junta com ele.',
   d:(c,W,H,t)=>{ const {pa,cy,X}=cenaBase(c,W,H,4), T=tempo(t);
     if(!T.fim){ SPR.gaiola(c,X(3),cy,pa,t,'back'); peca(c,'Asteroide',t,X(3),cy,pa,T.f); SPR.gaiola(c,X(3),cy,pa,t,'front'); peca(c,'Asteroide',t,X(0)+(X(3)-X(0))*T.k,cy,pa,T.f); }
     else peca(c,'Cometa',t,X(3),cy,pa,T.f); }},
- {nome:'Nave', o:'Uma nave parada numa casa. Leve até ela o planeta pedido (ou maior): ele é recolhido e sai do tabuleiro.', hoje:'mundo 5 (fase 49)', prop:'mundo 7',
+ {nome:'Nave', o:'Uma nave parada numa casa. Leve até ela o planeta pedido (ou maior): ele é recolhido e sai do tabuleiro.',
   d:(c,W,H,t)=>{ const {pa,cy,X}=cenaBase(c,W,H,4), T=tempo(t); SPR.nave(c,X(3),cy,pa,t,'Asteroide'); const e=T.fim?Math.max(0,1-T.depois):1; if(e>0) peca(c,'Asteroide',t,X(0)+(X(3)-X(0))*T.k,cy-(T.fim?pa*.2*T.depois:0),pa,T.f,e); check(c,X(3),cy,pa,T.depois*T.f); }},
- {nome:'Auras (cores)', o:'Cada planeta tem uma aura roxa ou verde e só junta com a mesma cor. Roxa e verde se encostam e não juntam.', hoje:'mundo 6 (fase 61)', prop:'mundo 8',
+ {nome:'Auras (cores)', o:'Cada planeta tem uma aura roxa ou verde e só junta com a mesma cor. Roxa e verde se encostam e não juntam.',
   d:(c,W,H,t)=>{ const {pa,cy,X}=cenaBase(c,W,H,4), T=tempo(t), x1=X(0)+(X(2)-X(0))*T.k, x2=X(2)+(X(3)-X(2))*T.k;
     SPR.aura(c,x1,cy,pa,t,0); peca(c,'Rocha',t,x1,cy,pa,T.f); SPR.aura(c,x2,cy,pa,t,1); peca(c,'Rocha',t,x2,cy,pa,T.f); cruz(c,(X(2)+X(3))/2,cy,pa,T.depois*T.f); }},
- {nome:'Buraco negro', o:'Nascem buracos negros de um tamanho. Quando um encosta num planeta do mesmo tamanho, os dois somem (engolidos). Serve para abrir espaço, e há metas de engolir.', hoje:'mundo 7 (fase 73)', prop:'mundo 9',
+ {nome:'Buraco negro', o:'Nasce com um tamanho. Quando encosta num planeta do mesmo tamanho, os dois somem (engolidos). Abre espaço, e há metas de engolir.',
   d:(c,W,H,t)=>{ const {pa,cy,X}=cenaBase(c,W,H,4), T=tempo(t), a=T.fim?Math.max(0,1-T.depois):1;
     if(a>0){ c.save(); c.globalAlpha=a*T.f; SPR.buraco(c,X(3),cy,pa,t,COR_NIV[2]); c.restore(); peca(c,'Rocha',t,X(0)+(X(3)-X(0))*T.k,cy,pa,T.f*a,a); } }},
- {nome:'Duas de uma vez (combo)', o:'Duas junções no mesmo arrasto.', hoje:'mundo 1 (fase 6)', prop:'mundo 1 (variação)',
+ {nome:'Duas de uma vez (combo)', o:'Duas junções no mesmo arrasto.',
   d:(c,W,H,t)=>{ const {pa,cy,X}=cenaBase(c,W,H,4), T=tempo(t);
     if(!T.fim){ peca(c,'Poeira',t,X(0)+(X(2)-X(0))*T.k,cy,pa,T.f); peca(c,'Poeira',t,X(1)+(X(2)-X(1))*T.k,cy,pa,T.f); peca(c,'Gelo',t,X(2)+(X(3)-X(2))*T.k,cy,pa,T.f); peca(c,'Gelo',t,X(3),cy,pa,T.f); }
     else { peca(c,'Gelo',t,X(2),cy,pa,T.f); peca(c,'Rocha',t,X(3),cy,pa,T.f); } check(c,(X(2)+X(3))/2,cy,pa,T.depois*T.f); }},
- {nome:'Passinho', o:'As peças andam só uma casa por arrasto, em vez de deslizar até o fim. Hoje é o mundo 8 e também um modo de medalha: toda fase cumprida pode ser jogada de novo assim.', hoje:'mundo 8 (fase 85)', prop:'modo de medalha',
+ {nome:'Passinho', o:'As peças andam só uma casa por arrasto, em vez de deslizar até o fim.',
   d:(c,W,H,t)=>{ const {pa,cy,X}=cenaBase(c,W,H,4), s=t%3.4, f=s>3?1-(s-3)/.4:s<.2?s/.2:1, p=ease((s-.6)/.3)+ease((s-1.6)/.3); peca(c,'Rocha',t,X(0)+(X(1)-X(0))*p,cy,pa,f); }},
 ];
-{ const el=document.getElementById('mecs'), w=Math.min(340, el.clientWidth-26);
-  for(const m of MECS){ const d=document.createElement('div'); d.className='mec';
-    d.innerHTML=`<canvas></canvas><b class="t">${m.nome} ${m.novo?'<span class="prop">regra nova</span>':''}</b><div class="o">${m.o}</div><div class="q"><i>Hoje:</i> ${m.hoje} · <i>Na proposta:</i> ${m.prop}</div>`;
-    el.appendChild(d); const cv=d.querySelector('canvas'); cv.width=Math.round(w*DPR); cv.height=Math.round(w/4*DPR); cv.style.height=(w/4)+'px'; CENAS.push([cv,m.d]); }
-  const laco=ms=>{ const t=ms/1000; for(const [cv,d] of CENAS){ const r=cv.getBoundingClientRect(); if(r.bottom<0||r.top>innerHeight) continue; d(cv.getContext('2d'),cv.width,cv.height,t); } requestAnimationFrame(laco); };
+{ const el=document.getElementById('mecs'); let feito=false;
+  const monta=()=>{ if(feito) return; feito=true; const w=Math.min(340, el.clientWidth-4);
+    for(const m of MECS){ const d=document.createElement('div'); d.className='mec';
+      d.innerHTML=`<canvas></canvas><b class="t">${m.nome} ${m.novo?'<span class="prop">regra nova</span>':''}</b><div class="o">${m.o}</div>`;
+      el.appendChild(d); const cv=d.querySelector('canvas'); cv.width=Math.round(w*DPR); cv.height=Math.round(w/4*DPR); cv.style.height=(w/4)+'px'; CENAS.push([cv,m.d]); } };
+  el.closest('details').addEventListener('toggle', e=>{ if(e.target.open) monta(); });
+  const laco=ms=>{ const t=ms/1000; for(const [cv,d] of CENAS){ const r=cv.getBoundingClientRect(); if(!r.width||r.bottom<0||r.top>innerHeight) continue; d(cv.getContext('2d'),cv.width,cv.height,t); } requestAnimationFrame(laco); };
   requestAnimationFrame(laco); }
 
-// ===================== a proposta =====================
-const FAM = {
-  basico:  {n:'Básico',            c:'#8fa0d4', v:'#ff7eb6', vn:'Duas de uma vez (combo)'},
-  estacao: {n:'Estações',          c:'#a9bdd2', v:'#c9cc7a', vn:'Lixo que racha com junção ao lado; depois os mais duros (2, 3 junções)', novo:true},
-  mureta:  {n:'Fluxos de rochas',  c:'#d8925a', v:'#e8b48a', vn:'Tabuleiros com formato e vazios'},
-  orbita:  {n:'Órbitas',           c:'#ffe066', v:'#f5a623', vn:'Formar em cima da órbita'},
-  nebulosa:{n:'Nebulosas',         c:'#3fc9b0', v:'#2a9c88', vn:'Nebulosa dupla: precisa de 2 junções', novo:true},
-  presa:   {n:'Planetas presos',   c:'#5fdcff', v:'#3aa9cc', vn:'Gaiola dupla: precisa de 2 junções para soltar', novo:true},
-  nave:    {n:'Naves',             c:'#7be07b', v:'#4fb84f', vn:'Nave que muda de lugar a cada entrega', novo:true},
-  aura:    {n:'Auras',             c:'#b98aff', v:'#9466e0', vn:'Aura mista: junta com as duas cores'},
-  buraco:  {n:'Buracos negros',    c:'#ea6fd3', v:'#c24fae', vn:'Buraco que cresce: cada planeta engolido faz ele subir um tamanho', novo:true},
+// ===================== passos e mundos =====================
+// cada passo de mecânica é um mundo; cor do passo e a família a que pertence
+const P = {
+  basico:  {n:'Juntar e formar',           c:'#8fa0d4', fam:'Básico'},
+  estacao: {n:'Estação',                   c:'#a9bdd2', fam:'Estações'},
+  orbita1: {n:'Órbita: levar',             c:'#ffe066', fam:'Órbitas'},
+  mureta:  {n:'Fluxo de rochas',           c:'#d8925a', fam:'Fluxos de rochas'},
+  lixo1:   {n:'Lixo que racha',            c:'#c9cc7a', fam:'Estações', novo:true},
+  neb1:    {n:'Nebulosa',                  c:'#3fc9b0', fam:'Nebulosas'},
+  orbita2: {n:'Órbita: formar em cima',    c:'#f5a623', fam:'Órbitas'},
+  presa1:  {n:'Planeta preso',             c:'#5fdcff', fam:'Planetas presos'},
+  nave1:   {n:'Nave',                      c:'#7be07b', fam:'Naves'},
+  aura1:   {n:'Auras',                     c:'#b98aff', fam:'Auras'},
+  buraco1: {n:'Buraco negro',              c:'#ea6fd3', fam:'Buracos negros'},
+  lixo2:   {n:'Lixo duro (2 e 3 junções)', c:'#a3a65a', fam:'Estações', novo:true},
+  neb2:    {n:'Nebulosa dupla',            c:'#2a9c88', fam:'Nebulosas', novo:true},
+  presa2:  {n:'Gaiola dupla',              c:'#3aa9cc', fam:'Planetas presos', novo:true},
+  nave2:   {n:'Nave que muda de lugar',    c:'#4fb84f', fam:'Naves', novo:true},
+  aura2:   {n:'Aura mista',                c:'#9466e0', fam:'Auras'},
+  buraco2: {n:'Buraco que cresce',         c:'#c24fae', fam:'Buracos negros', novo:true},
 };
+const QC='#f1eefc', PAS='#9cc4ff';
+// os mundos: o passo novo, as 5 interações (fases 6 a 10) e o jeito de jogar da fase 11
 const MUNDOS = [
-  {nome:'Entrada',          fam:'basico',   mix:null,      txt:'Juntar, formar, pontos e tabuleiros maiores.'},
-  {nome:'Estações',         fam:'estacao',  mix:'basico',  txt:'O bloco que não sai; depois o lixo que racha.'},
-  {nome:'Fluxos de rochas', fam:'mureta',   mix:'estacao', txt:'As peças param nas rochas; depois os tabuleiros com formato.'},
-  {nome:'Órbitas',          fam:'orbita',   mix:'mureta',  txt:'Levar até a órbita; depois formar em cima dela.'},
-  {nome:'Nebulosas',        fam:'nebulosa', mix:'orbita',  txt:'Desfazer a nebulosa juntando em cima; depois a dupla.'},
-  {nome:'Planetas presos',  fam:'presa',    mix:'nebulosa',txt:'Soltar o planeta preso juntando com ele.'},
-  {nome:'Naves',            fam:'nave',     mix:'mureta',  txt:'Levar planetas até a nave.'},
-  {nome:'Auras',            fam:'aura',     mix:'orbita',  txt:'Cada aura só junta com a sua; depois a aura mista.'},
-  {nome:'Buracos negros',   fam:'buraco',   mix:'aura',    txt:'O buraco negro engole o planeta do mesmo tamanho.'},
-  {nome:'Grande final',     fam:null,       mix:null,      txt:'Revisão: as duplas já treinadas e, no fim, 4 duplas novas.'},
+  {p:'basico', txt:'Juntar, formar, pontos, tabuleiros maiores e duas de uma vez (combo).', jeito:'qc',
+   it:[['basico','Duas de uma vez: estreia'],['basico','Duas de uma vez: treino'],['basico','Pontos no 5x5'],['basico','Formar um Cometa no 5x5'],['basico','Desafio: formar sem deixar o tabuleiro encher']]},
+  {p:'estacao', txt:'O bloco que nunca sai.', jeito:'qc',
+   it:[['basico','Estação no canto: ela vira o seu canto para acumular'],['basico','Estação no meio: as fileiras se partem em duas'],['basico','Duas de uma vez batendo na estação'],['basico','Várias estações formando um desenho no tabuleiro'],['basico','Desafio: tabuleiro 5x5 com estações espalhadas']]},
+  {p:'orbita1', txt:'Levar o planeta pedido até a casa dourada e parar em cima.', jeito:'pas',
+   it:[['estacao','A estação serve de batente: a peça para certinho na órbita ao lado'],['estacao','Órbita cercada de estações: só se chega por um lado'],['basico','Levar e, no mesmo arrasto, fazer duas de uma vez'],['estacao','Duas órbitas, cada uma num canto de estações'],['estacao','Desafio: levar um Cometa passando entre estações']]},
+  {p:'mureta', txt:'Rochas entre as casas: as peças param nelas.', jeito:'qc',
+   it:[['estacao','Estações e rochas juntas desenham corredores'],['orbita1','Órbita atrás das rochas: entrar pelo lado certo'],['orbita1','As rochas como batente para parar na órbita'],['estacao','Labirinto curto de estações e rochas'],['orbita1','Desafio: levar até a órbita no fim do corredor']]},
+  {p:'lixo1', txt:'Bloco fixo que racha com uma junção ao lado.', jeito:'pas',
+   it:[['estacao','Lado a lado: o lixo racha, a estação não. Qual abrir primeiro?'],['orbita1','Órbita atrás do lixo: rachar para abrir o caminho'],['mureta','Lixo no fim do corredor de rochas'],['orbita1','Rachar o lixo para a peça chegar à órbita',['estacao']],['mureta','Desafio: abrir caminho entre rochas e lixo',['estacao']]]},
+  {p:'neb1', txt:'Desfazer a nuvem juntando em cima dela.', jeito:'qc',
+   it:[['estacao','Nebulosa encostada na estação: o batente ajuda a juntar em cima'],['lixo1','A junção que desfaz a nebulosa racha o lixo ao lado'],['orbita1','Órbita coberta: levar até ela não limpa, é preciso juntar antes'],['mureta','Nebulosa no fim do corredor',['estacao']],['lixo1','Desafio: nebulosa atrás de lixo e rochas',['mureta']]]},
+  {p:'orbita2', txt:'A junção tem que acontecer em cima da órbita.', jeito:'pas',
+   it:[['neb1','Formar em cima da órbita coberta: limpa as duas de uma vez'],['lixo1','Formar na órbita ao lado do lixo: racha e cumpre'],['orbita1','Duas órbitas: numa leva, na outra forma'],['mureta','Órbita no fim do corredor',['estacao']],['neb1','Desafio: formar em cima com nebulosa e lixo em volta',['lixo1']]]},
+  {p:'presa1', txt:'Soltar o planeta preso juntando um igual com ele.', jeito:'qc',
+   it:[['orbita1','Soltar o preso e levar até a órbita'],['neb1','Preso coberto de nebulosa: soltar desfaz as duas'],['estacao','Preso entre estações: só um lado chega'],['lixo1','Rachar o lixo para alcançar o preso',['mureta']],['orbita2','Desafio: soltar formando em cima da órbita',['neb1']]]},
+  {p:'nave1', txt:'Levar planetas até a nave, que os recolhe.', jeito:'pas+qc',
+   it:[['presa1','Soltar o preso e mandar para a nave'],['mureta','A nave atrás das rochas'],['lixo1','Abrir caminho até a nave'],['orbita1','Órbita ou nave: escolher o destino de cada peça',['estacao']],['neb1','Desafio: nebulosa no caminho da nave',['presa1','mureta']]]},
+  {p:'aura1', txt:'Cada aura só junta com a sua cor.', jeito:'qc',
+   it:[['orbita2','A órbita pede uma cor'],['nave1','A nave pede uma cor'],['presa1','O preso roxo só solta com roxo'],['neb1','Duas cores para desfazer uma nebulosa',['estacao']],['lixo1','Desafio: rachar o lixo com a cor certa',['orbita1','mureta']]]},
 ];
-const FINAL = [['estacao','mureta'],['orbita','mureta'],['nebulosa','orbita'],['presa','nebulosa'],['nave','mureta'],['aura','orbita'],['buraco','aura'],['estacao','orbita'],['nave','presa'],['nebulosa','estacao'],['orbita','mureta'],['nave','orbita']];
-const PAPEL=['E','E','T','T','Q','R','V','V','M','D','Q','F'];
-const ROTULO={E:'estreia',T:'treino',Q:'quebra-cabeça',R:'respiro',V:'variação',M:'mistura',D:'desafio',F:'final'};
-// lembranças: nas fases 6, 10, 11 e 12 de cada mundo volta uma mecânica antiga, sempre a que está há mais tempo sem aparecer
-const visto={}, LEMB={};
-MUNDOS.forEach((m,g)=>{ if(!m.fam) return; visto[m.fam]=g; if(m.mix) visto[m.mix]=g;
-  const antigas=Object.keys(visto).filter(k=>k!==m.fam && k!=='basico'); LEMB[g]={};
-  for(const i of [5,9,10,11]){ if(!antigas.length) break; antigas.sort((a,b)=>visto[a]-visto[b]); const k=antigas[0]; LEMB[g][i]=k; visto[k]=g+i/100; } });
+const DEPOIS = [
+  ['buraco1','Engole o planeta do mesmo tamanho: abre espaço e tira peças do caminho.','auras, presos, lixo'],
+  ['lixo2','O lixo mais duro, que pede 2 e depois 3 junções ao lado.','nebulosa, órbitas, nave'],
+  ['neb2','Nebulosa que precisa de 2 junções.','órbitas, presos, lixo'],
+  ['presa2','Gaiola dupla: precisa de 2 junções para soltar.','nebulosa, nave, auras'],
+  ['nave2','A nave muda de lugar a cada entrega.','rochas, lixo, órbitas'],
+  ['aura2','A aura mista, que junta com as duas cores.','presos, nave, nebulosa'],
+  ['buraco2','O buraco negro cresce a cada planeta engolido.','auras, lixo duro, nave'],
+];
 const PRIMEIRA_DIFICIL=46;
-{ const S=[2,3,4,6,5,3,5,6,6,8,7,9.5]; const pts=S.map((v,i)=>`${i*10+5},${38-v*3.6}`).join(' ');
-  document.getElementById('serra').innerHTML=`<polyline points="${pts}" fill="none" stroke="#7fe0ff" stroke-width="1.6" vector-effect="non-scaling-stroke"/>`+S.map((v,i)=>`<circle cx="${i*10+5}" cy="${38-v*3.6}" r="1.6" fill="#ffd877"/>`).join(''); }
-document.getElementById('molde').innerHTML=PAPEL.map((p,i)=>{ const c={E:'#ffe066',T:'#ffe066',Q:'#f1eefc',R:'linear-gradient(135deg,#ffe066 72%,#a9bdd2 72%)',V:'#f5a623',M:'linear-gradient(135deg,#ffe066 50%,#d8925a 50%)',D:'#ffe066',F:'#ffcf7a'}[p];
-  return `<div style="background:${c}" title="${ROTULO[p]}">${i+1}</div>`; }).join('');
-document.getElementById('mundos').innerHTML=MUNDOS.map((m,g)=>{ const f=m.fam&&FAM[m.fam], lb=[...new Set(Object.values(LEMB[g]||{}))].map(k=>FAM[k].n);
-  return `<div class="mundo"><div class="nu" style="background:${f?f.c:'#ffcf7a'}">${g+1}</div><div class="co"><b class="t">${m.nome}</b><span>${m.txt}</span>
-    ${f?`<span><i>Variação:</i> ${f.vn} ${f.novo?'<span class="prop">regra nova</span>':''}</span>`:''}
-    ${m.mix?`<span><i>Mistura com:</i> ${FAM[m.mix].n}</span>`:''}
-    ${lb.length?`<span><i>Lembranças:</i> ${lb.join(', ')}</span>`:''}</div></div>`; }).join('');
-{ let h='', n=1; const curto={'Planetas presos':'Presos','Fluxos de rochas':'Fluxos','Buracos negros':'Buracos','Grande final':'Final'};
-  MUNDOS.forEach((m,g)=>{ h+=`<div class="mn">${g+1} ${curto[m.nome]||m.nome}</div>`;
-    PAPEL.forEach((p,i)=>{ let bg, cls='';
-      if(!m.fam){ const [a,b]=FINAL[i]; bg=`linear-gradient(135deg,${FAM[a].c} 50%,${FAM[b].c} 50%)`; if(i===11) cls='fim'; }
-      else { const f=FAM[m.fam], lk=LEMB[g][i], base = p==='Q' ? '#f1eefc' : p==='V' ? f.v : f.c;
-        bg = p==='M' && m.mix ? `linear-gradient(135deg,${f.c} 50%,${FAM[m.mix].c} 50%)` : lk ? `linear-gradient(135deg,${base} 72%,${FAM[lk].c} 72%)` : base;
-        if(i===0 || i===6) cls='est'; if(p==='F') cls='fim'; }
-      if(n===PRIMEIRA_DIFICIL) cls+=' dif';
-      h+=`<div class="c ${cls}" style="background:${bg}" title="fase ${n}: ${ROTULO[p]}">${n++}</div>`; }); });
+// passos de cada família
+{ const fams={}; const ordem=[...MUNDOS.map((m,i)=>[m.p,i+1,false]), ...DEPOIS.map(([p],i)=>[p,MUNDOS.length+i+1,true])];
+  for(const [p,g,dep] of ordem){ const f=P[p].fam; (fams[f]=fams[f]||[]).push([p,g,dep]); }
+  document.getElementById('passos').innerHTML=Object.entries(fams).map(([f,l])=>`<div class="fam"><b>${f}</b>${l.map(([p,g,dep])=>`<span class="st ${dep?'dep':''}" style="background:${P[p].c}"><small>${g}</small> ${P[p].n}</span>`).join('<span style="color:#7f77b3">›</span>')}</div>`).join('')
+    + `<div class="fam"><b>Jeitos de jogar</b><span class="st" style="background:${QC}">Quebra-cabeça <small>desde o mundo 1</small></span><span class="st" style="background:${PAS}">Passinho <small>desde o mundo 3</small></span></div>`; }
+// molde
+document.getElementById('molde').innerHTML=[1,2,3,4,5,6,7,8,9,10,11,12].map(i=>{ const c= i<=4?'#ffe066' : i===5?QC : i<=10?'linear-gradient(135deg,#ffe066 62%,#a9bdd2 62%)' : i===11?`linear-gradient(135deg,${QC} 50%,${PAS} 50%)` : '#ffcf7a'; return `<div style="background:${c}">${i}</div>`; }).join('');
+// até onde dá para misturar
+{ let h='<div class="h"></div><div class="h">1 novidade</div><div class="h">2 de uma vez</div><div class="h">3 de uma vez</div><div class="r">Fases necessárias</div>';
+  for(const k of [1,2,3]){ const v=k*5+k*3+k*(k-1)/2; h+=`<div class="${v<=12?'bom':'mal'}">${v}</div>`; }
+  h+='<div class="r">Mundos de 12 fases</div>'+[1,2,3].map(k=>{ const v=k*5+k*3+k*(k-1)/2; return `<div class="${v<=12?'bom':'mal'}">${(v/12).toFixed(1).replace('.',',')}</div>`; }).join('');
+  document.getElementById('conta').innerHTML=h; }
+// mundos
+const corDe=k=>P[k]?P[k].c:k;
+document.getElementById('mundos').innerHTML=MUNDOS.map((m,g)=>{ const p=P[m.p], a=g*12+1;
+  const jeito={qc:'quebra-cabeça',pas:'Passinho','pas+qc':'quebra-cabeça com Passinho'}[m.jeito];
+  return `<div class="mundo"><div class="nu" style="background:${p.c}">${g+1}</div><div class="co"><b class="t">${p.n} ${p.novo?'<span class="prop">regra nova</span>':''}</b>
+    <span class="tx">Fases ${a} a ${a+11}. ${m.txt}</span>
+    ${m.it.map(([k,txt,mais],i)=>`<div class="it"><i style="background:linear-gradient(135deg,${p.c} 55%,${corDe(k)} 55%)"></i><span><b>${a+5+i}</b> ${txt}${mais?` <span style="color:#9a91c9">(+ ${mais.map(x=>P[x].n).join(', ')})</span>`:''}</span></div>`).join('')}
+    <div class="it"><i style="background:${m.jeito==='pas'?PAS:QC}"></i><span><b>${a+10}</b> ${jeito[0].toUpperCase()+jeito.slice(1)} com ${g===0?'o que foi aprendido':p.n.replace(':','').toLowerCase()}</span></div></div></div>`; }).join('');
+document.getElementById('depois').innerHTML=DEPOIS.map(([p,txt,com],i)=>`<div class="mundo"><div class="nu" style="background:${P[p].c}">${MUNDOS.length+i+1}</div><div class="co"><b class="t">${P[p].n} ${P[p].novo?'<span class="prop">regra nova</span>':''}</b><span class="tx">${txt}</span><span class="tx">Encontros principais: ${com}.</span></div></div>`).join('');
+// mapa
+{ let h='', n=1;
+  const linha=(nome,cel)=>{ h+=`<div class="mn">${nome}</div>`+cel.join(''); };
+  MUNDOS.forEach((m,g)=>{ const p=P[m.p], cel=[];
+    for(let i=0;i<12;i++){ let bg=p.c, cls='';
+      if(i===4) bg=QC; else if(i>=5&&i<=9){ const k=m.it[i-5][0]; bg=`linear-gradient(135deg,${p.c} 62%,${corDe(k)} 62%)`; }
+      else if(i===10) bg = m.jeito==='pas'?PAS : m.jeito==='pas+qc'?`linear-gradient(135deg,${QC} 50%,${PAS} 50%)` : QC;
+      if(i===0) cls='est'; if(i===11) cls='fim'; if(n===PRIMEIRA_DIFICIL) cls+=' dif';
+      cel.push(`<div class="c ${cls}" style="background:${bg}" title="fase ${n}">${n++}</div>`); }
+    linha(`${g+1} ${p.n.replace('Juntar e formar','Entrada').replace('Órbita: formar em cima','Órbita 2').replace('Órbita: levar','Órbita').replace('Fluxo de rochas','Rochas').replace('Lixo que racha','Lixo').replace('Planeta preso','Preso')}`, cel); });
+  h+='<div class="sep">DEPOIS DA 120</div>';
+  DEPOIS.forEach(([p],i)=>{ const cel=[]; for(let j=0;j<12;j++) cel.push(`<div class="c dep" style="background:${j===4||j===10?QC:P[p].c}">${n++}</div>`); linha(`${MUNDOS.length+i+1} ${P[p].n.split(' ')[0]}`, cel); });
   document.getElementById('mapa').innerHTML=h;
-  document.getElementById('temas').innerHTML=Object.values(FAM).map(f=>`<span><i style="background:${f.c}"></i>${f.n}</span>`).join('')+'<span><i style="background:#f1eefc"></i>Quebra-cabeça</span>'; }
-{ const ks=Object.keys(FAM).filter(k=>k!=='basico'), conta={};
-  MUNDOS.forEach((m,g)=>{ const c=conta[g]={};
-    if(m.fam){ c[m.fam]=12; if(m.mix) c[m.mix]=(c[m.mix]||0)+1; for(const k of Object.values(LEMB[g]||{})) c[k]=(c[k]||0)+1; }
-    else for(const [a,b] of FINAL){ c[a]=(c[a]||0)+1; c[b]=(c[b]||0)+1; } });
-  const nome=k=>({'Planetas presos':'Presos','Fluxos de rochas':'Fluxos','Buracos negros':'Buracos'})[FAM[k].n]||FAM[k].n;
-  let h='<div></div>'+MUNDOS.map((m,g)=>`<div class="h">${g+1}</div>`).join('');
-  for(const k of ks){ h+=`<div class="h r">${nome(k)}</div>`;
-    MUNDOS.forEach((m,g)=>{ const v=conta[g][k]; h+= v ? `<div style="background:${FAM[k].c};color:#1a1230;font-weight:800;opacity:${v>=12?1:.82}">${v}</div>` : '<div class="z"></div>'; }); }
-  const el=document.getElementById('acum'); el.style.gridTemplateColumns=`auto repeat(${MUNDOS.length},1fr)`; el.innerHTML=h; }
-{ const ks=Object.keys(FAM).filter(k=>k!=='basico'), onde={};
-  const marca=(a,b,g)=>{ const k=[a,b].sort().join('|'); if(!(k in onde)) onde[k]=g; };
-  MUNDOS.forEach((m,g)=>{ if(m.fam && m.mix && m.mix!=='basico') marca(m.fam,m.mix,g+1); });
-  FINAL.forEach(([a,b])=>marca(a,b,10));
-  const usadas=Object.keys(onde).length, total=ks.length*(ks.length-1)/2;
-  document.getElementById('combTxt').innerHTML=`Lembrança é leve: a mecânica antiga aparece do jeito mais simples, só para não ser esquecida. Combinação de verdade é quando as duas valem como desafio. Das <b>${total}</b> duplas possíveis, a proposta usa <b>${usadas}</b> como combinação de verdade. O número diz em que mundo a dupla aparece pela primeira vez.`;
-  const cab=k=>FAM[k].n.replace('Planetas presos','Presos').replace('Fluxos de rochas','Fluxos').replace('Buracos negros','Buracos');
+  document.getElementById('temas').innerHTML=MUNDOS.map(m=>P[m.p]).map(p=>`<span><i style="background:${p.c}"></i>${p.n}</span>`).join('')+`<span><i style="background:${QC}"></i>Quebra-cabeça</span><span><i style="background:${PAS}"></i>Passinho</span>`; }
+// quem encontra quem (passos dos 10 primeiros mundos)
+{ const ks=MUNDOS.map(m=>m.p).filter(k=>k!=='basico'), onde={};
+  // principal: a novidade do mundo encontra a antiga (verde); de passagem: a terceira mecânica que aparece junto (azul)
+  const tipo={};
+  const marca=(a,b,g,t)=>{ if(a===b||a==='basico'||b==='basico') return; const k=[a,b].sort().join('|'); if(!(k in onde)){ onde[k]=g; tipo[k]=t; } else if(t==='s' && tipo[k]!=='s' && g<=onde[k]){ tipo[k]='s'; } };
+  MUNDOS.forEach((m,g)=>m.it.forEach(([k,,mais])=>{ marca(m.p,k,g+1,'s'); for(const x of mais||[]){ marca(m.p,x,g+1,'d'); marca(k,x,g+1,'d'); } }));
+  const total=ks.length*(ks.length-1)/2, prin=Object.values(tipo).filter(t=>t==='s').length, pas=Object.values(tipo).filter(t=>t==='d').length;
+  document.getElementById('combTxt').innerHTML=`Entre os 9 passos dos mundos 2 a 10 há <b>${total}</b> encontros possíveis. Até a fase 120 a proposta explora <b>${prin}</b> como encontro principal (verde: a novidade do mundo com uma antiga) e <b>${pas}</b> de passagem (azul: uma terceira mecânica que aparece junto). O número diz em que mundo o encontro aparece pela primeira vez; os vazios ficam para depois da 120.`;
+  const cab=k=>P[k].n.replace('Órbita: formar em cima','Órbita 2').replace('Órbita: levar','Órbita').replace('Fluxo de rochas','Rochas').replace('Lixo que racha','Lixo').replace('Planeta preso','Preso');
   let h=`<div class="x"></div>`+ks.slice(0,-1).map(k=>`<div class="h v">${cab(k)}</div>`).join('');
   ks.forEach((a,i)=>{ if(i===0) return; h+=`<div class="h" style="justify-content:flex-end;padding-right:4px">${cab(a)}</div>`;
-    ks.slice(0,-1).forEach((b,j)=>{ if(j>=i){ h+='<div class="x"></div>'; return; } const k=[a,b].sort().join('|'); h+= k in onde ? `<div class="s">${onde[k]}</div>` : '<div class="n"></div>'; }); });
+    ks.slice(0,-1).forEach((b,j)=>{ if(j>=i){ h+='<div class="x"></div>'; return; } const k=[a,b].sort().join('|'); h+= k in onde ? `<div class="${tipo[k]}">${onde[k]}</div>` : '<div class="n"></div>'; }); });
   const mz=document.getElementById('matriz'); mz.style.gridTemplateColumns=`auto repeat(${ks.length-1},1fr)`; mz.innerHTML=h; }
 </script>
 </body>
