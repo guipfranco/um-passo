@@ -42,7 +42,8 @@ f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEven
   // lista: fase 2 liberada; pausa durante a fase volta para a lista
   w.eval('pauseMenu()'); await wait(30); q('#pExit').click(); await wait(80);
   log.push(`lista depois: travadas=${d.querySelectorAll('.mNo.trava').length} atual=${q('.mNo.atual')?.dataset.m} banner=${q('#bSub').textContent}`);
-  w.eval('pauseMenu()'); await wait(30); q('#pExit').click(); await wait(50); log.push('menu='+q('#scrMenu').classList.contains('on')+' save mineração='+!!w.eval('localStorage.mina_save'));
+  // na lista o botão do canto volta direto ao menu (sem a janela de pausa)
+  w.eval('pauseMenu()'); await wait(50); log.push('menu='+q('#scrMenu').classList.contains('on')+' save mineração='+!!w.eval('localStorage.mina_save'));
  }catch(e){errs.push('EXC '+e.message+' '+(e.stack||'').split('\n')[1])}
  out.textContent=JSON.stringify({log,errs},null,1);};
 </script></body>

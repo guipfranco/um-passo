@@ -91,6 +91,10 @@ body.espaco .mapBody::before{display:none}
 body.espaco .mCaminho polyline{stroke:rgba(255,255,255,.35) !important;stroke-dasharray:2 8;stroke-linecap:round;stroke-width:2.5px !important}
 body.espaco .mGrupo{background:rgba(22,17,40,.78);border:1.5px solid rgba(255,255,255,.12);border-radius:18px;box-shadow:0 4px 0 rgba(0,0,0,.35);color:#f3e9d7}
 body.espaco .mGrupo b{color:#f3eefc}
+body.modoInf .hudCla .tr{display:none}
+body.espaco.modoCla #mineRow{display:none !important}
+#mInf{display:none}
+body.espaco #mInf{display:block}
 .espIco{width:42px;height:42px;flex:none;display:block}
 body.espaco .mGrupo span{color:#b9a9d9}
 body.espaco .mNo{background:rgba(26,20,48,.9) !important;border:2px solid rgba(255,255,255,.22) !important;box-shadow:none !important;color:#f3eefc !important;overflow:visible}
@@ -496,9 +500,10 @@ addEventListener('pointerup',e=>{
 addEventListener('pointercancel',()=>{ if(touch){ touch=null; clearPreview(true); } });
 // Encerrar exige dois toques enquanto ainda há energia (evita toque sem querer)
 let endArmed=null;
-function resetEnd(){ clearTimeout(endArmed); endArmed=null; $('#btnEnd').textContent=S&&S.missao?'Recomeçar':S&&S.semEnergia?'Parar aqui':'Encerrar o dia'; $('#btnEnd').classList.remove('g'); }
+function resetEnd(){ clearTimeout(endArmed); endArmed=null; $('#btnEnd').textContent=S&&(S.missao||S.infinito)?'Recomeçar':S&&S.semEnergia?'Parar aqui':'Encerrar o dia'; $('#btnEnd').classList.remove('g'); }
 $('#btnEnd').onclick=()=>{
   if(coachBlock) return;
+  if(S && S.infinito){ if(S.phase==='mine') infinitoJoga(); return; }
   if(S && S.missao){ if(S.phase==='mine') missaoJoga(S.missao); return; }
   if(S.energy<=0 || endArmed){ resetEnd(); endDay(); return; }
   $('#btnEnd').textContent=S.semEnergia?'Confirmar?':`Confirmar? (sobra ${S.energy}⚡)`;

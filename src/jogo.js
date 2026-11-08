@@ -213,7 +213,7 @@ function show(id){
   document.body.classList.toggle('lock', id==='scrGame');
   document.body.classList.toggle('jogo', id==='scrGame');
   if(id!=='scrGame') desenhaCenario();
-  document.body.classList.remove('semHud','modoCla');
+  document.body.classList.remove('semHud','modoCla','modoInf');
   scrollTo(0,0);
 }
 
@@ -536,18 +536,18 @@ function move(dx,dy){
   for(const g of r.gone){ const el=els.get(g.id); els.delete(g.id); if(el){ el.style.zIndex=0; el.style.transform=pos(g.x,g.y); setTimeout(()=>el.remove(),120); } }
   for(const b of r.breaks) quebrar(b);
   S.tiles=r.tiles;
-  if(S.missao){ contaMissao(r); const rc=recolheCarro(); if(rc){ const el=els.get(rc.id); els.delete(rc.id); if(el){ el.style.transform=pos(rc.x,rc.y); el.classList.add('recolhe'); setTimeout(()=>el.remove(),350); } } }
+  if(S.missao||S.infinito){ contaMissao(r); const rc=recolheCarro(); if(rc){ const el=els.get(rc.id); els.delete(rc.id); if(el){ el.style.transform=pos(rc.x,rc.y); el.classList.add('recolhe'); setTimeout(()=>el.remove(),350); } } }
   const wasTired = S.energy<=0;
   S.moves=(S.moves||0)+1;
   if(!S.semEnergia){ if(S.energy>0) S.energy--; else S.tired++; }
   humor();
   for(let i=0;i<(S.path.spawns??1);i++) addTile(undefined,[dx,dy]);
   render();
-  if(S.missao) flutuaPontos(r);
+  if(S.missao||S.infinito) flutuaPontos(r);
   SFX.arrastar();
   const tops=r.merges.map(o=>o.t).sort((a,b)=>b-a);
   if(tops.length){ SFX.fundir(tops[0]); if(tops.length>1) setTimeout(()=>SFX.fundir(tops[1]),45); S.stats.maxT=Math.max(S.stats.maxT,tops[0]); }
-  if(S.missao){}
+  if(S.missao||S.infinito){}
   else if(S.energy<=0) SFX.torraoCai(); else if(S.energy<=5) SFX.cansado();
   for(const o of r.merges) anim(o.id,'pop');
   if(has('coroa')){ const n=r.merges.filter(o=>o.t>=5).length; if(n){ const g=n*CORO[lvl('coroa')]; S.coroa+=g; renderItems(); fire('coroa','+×'+String(+g.toFixed(2)).replace('.',','),true); } }
@@ -568,6 +568,7 @@ function move(dx,dy){
     S.tut=4; coach('Sem energia, só vem <b>torrão</b> 😠: toque para <b>encerrar o dia</b>.', null, null, '#btnEnd');
   }
   if(S.missao){ checaMissao(); return; }
+  if(S.infinito){ checaInfinito(); return; }
   if(!anyMove()){ setBanner(null,'não cabe mais nada'); setTimeout(endDay,450); }
 }
 
@@ -1343,19 +1344,22 @@ function startTutorial(){
 // ===================== PAUSA =====================
 function pauseMenu(){
   if(!S || S.phase==='reveal' || overlayOpen() || S.tut) return;
+  if(S.phase==='lista'){ showMenu(); return; }   // na lista de fases o botão volta direto ao menu
   if(S.lab && S.phase!=='mine') return labPainel();
-  const inDay = S.phase==='mine';
+  const inDay = S.phase==='mine', cla = !!(S.missao||S.infinito), E = espFig();
   showOverlay(`<h2>Pausa</h2>
     <button class="btn b" id="pCont">Continuar</button>
-    <button class="btn dim" id="pRules">Regras rápidas</button>
-    <button class="btn dim" id="pPedras">Pedrinhas</button>
+    ${cla && inDay ? '<button class="btn g" id="pReset">Recomeçar</button>' : ''}
+    ${E ? '' : '<button class="btn dim" id="pRules">Regras rápidas</button><button class="btn dim" id="pPedras">Pedrinhas</button>'}
     <button class="btn dim" id="pMusic">${music?'Desligar a música':'Ligar a música'}</button>
     <button class="btn dim" id="pSound">${sound?'Desligar os efeitos':'Ligar os efeitos'}</button>
-    <button class="btn" id="pExit">Sair para o menu</button>
-    ${inDay?'<p style="font-size:13px">Sair agora recomeça o dia.</p>':''}`);
+    <button class="btn" id="pExit">${S.missao?'Voltar às fases':'Sair para o menu'}</button>
+    ${inDay && !cla?'<p style="font-size:13px">Sair agora recomeça o dia.</p>':''}`);
   $('#pCont').onclick=hideOverlay;
-  $('#pRules').onclick=quickRules;
-  $('#pPedras').onclick=()=>pedrapedia(pauseMenu);
+  // recomeçar a fase (no espaço o botão Recomeçar sai da tela e fica só aqui)
+  if($('#pReset')) $('#pReset').onclick=()=>{ hideOverlay(); if(S.infinito) infinitoJoga(); else missaoJoga(S.missao, S.medalha?{passinho:true}:{}); };
+  if($('#pRules')) $('#pRules').onclick=quickRules;
+  if($('#pPedras')) $('#pPedras').onclick=()=>pedrapedia(pauseMenu);
   $('#pSound').onclick=()=>{ toggleSound(); hideOverlay(); pauseMenu(); };
   $('#pMusic').onclick=()=>{ toggleMusic(); hideOverlay(); pauseMenu(); };
   $('#pExit').onclick=()=>{ hideOverlay(); if(VEIO_DO_EDITOR) editorLista(); else if(S.missao) missoesLista(); else if(S.lab) labPainel(); else showMenu(); };
@@ -1390,7 +1394,7 @@ function renderItems(){
 }
 // etiqueta do Clássico embaixo de cada pedrinha: valor em cima, nome embaixo
 function etiqueta(el,t){
-  const lb = S.missao && t.t>0 && t.k!=='p' ? String(t.t) : '';
+  const lb = (S.missao||S.infinito) && t.t>0 && t.k!=='p' ? String(t.t) : '';
   if(el.dataset.lb===lb) return; el.dataset.lb=lb;
   let e=el.querySelector('.etq');
   if(!lb){ e?.remove(); return; }
@@ -1433,7 +1437,7 @@ function render(){
   $('#hEnergyMax').textContent=S.phase==='map' ? (S.saved+S.bonus?'guardada':'energia') : S.semEnergia ? 'até travar' : S.energy>0?`de ${S.energyMax}`:'exausta!';
   $('#enIc').classList.toggle('zero',S.phase==='mine'&&S.energy<=0);
   $('#hMoneyLbl').textContent='dinheiro'; $('#quIc').textContent='!'; $('#quIc').classList.remove('ok','fig');
-  if(S.missao) hudMissao();
+  if(S.missao) hudMissao(); else if(S.infinito) hudInfinito();
   desenhaMarcas();
   renderItems(); ferrBar();
 }

@@ -34,8 +34,8 @@ const MISSOES = [
   {g:0, nome:'Pontos no 5x5', w:5,  obj:{pontos:250}},
   {g:0, nome:'Quebra-cabeça', ...QC.q1},
   {g:0, nome:'Primeiro Geodo', w:5, obj:{forme:5, n:1}},
-  {g:0, nome:'Sem pressa',          objs:[{forme:4, n:2},{proibido:5}]},
-  {g:0, nome:'Fim da entrada', w:5, chefe:true, objs:[{forme:6, n:1},{pontos:300}]},
+  {g:0, nome:'Sem pressa',          objs:[{forme:4, n:3},{proibido:5}]},
+  {g:0, nome:'Fim da entrada', w:5, chefe:true, objs:[{forme:6, n:1},{pontos:600}]},
   // 2 · Blocos
   {g:1, nome:'A peça que não sai', regras:{walls:1}, obj:{forme:3, n:2}},
   {g:1, nome:'Dois blocos',        regras:{walls:2}, obj:{forme:4, n:1}},
@@ -46,7 +46,7 @@ const MISSOES = [
   {g:1, nome:'Corredor de blocos', mapa:['.....','.....','BB.BB','.....','.....'], obj:{forme:4, n:2}},
   {g:1, nome:'Quebra-cabeça dos blocos', ...QC.q2},
   {g:1, nome:'Coração',   forma:'coracao',   obj:{pontos:300}},
-  {g:1, nome:'Ampulheta', forma:'ampulheta', objs:[{forme:5, n:1},{forme:4, n:2}]},
+  {g:1, nome:'Ampulheta', forma:'ampulheta', objs:[{forme:5, n:1},{forme:4, n:4}]},
   {g:1, nome:'Labirinto curto', w:6, regras:{walls:6}, obj:{forme:5, n:2}},
   {g:1, nome:'Salão dos blocos', w:7, regras:{walls:8}, chefe:true, obj:{forme:7, n:1}},
   // 3 · Muretas e buracos
@@ -73,7 +73,7 @@ const MISSOES = [
   {g:3, nome:'Quebra-cabeça da presa', ...QC.q4},
   {g:3, nome:'Presa na terra', w:5,      objs:[{solte:5, n:1},{terra:6}]},
   {g:3, nome:'Avalanche de terra', fase:'avalanche', w:5, obj:{terra:10}},
-  {g:3, nome:'Cristalino preso', w:5,    objs:[{solte:6, n:1},{forme:7, n:1}]},
+  {g:3, nome:'Cristalino preso', w:5,    objs:[{solte:6, n:1},{forme:8, n:1}]},
   {g:3, nome:'Fim da terra', w:5, chefe:true, objs:[{forme:9, n:1},{terra:6}]},
   // 5 · Carrinho
   {g:4, nome:'Primeiro carrinho',        obj:{carrinho:3, n:2}},

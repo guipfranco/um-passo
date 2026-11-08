@@ -248,7 +248,8 @@ function missoesLista(){
   show('scrMap'); trilha('menu'); document.body.classList.add('semHud');
   S = {...freshState(), missao:0, phase:'lista'}; S.fiscal=FISCAIS[0]; applyAndar(); clearBoard(); render();
   const r=MISS(), total=Object.values(r).reduce((a,x)=>a+(x.e||0),0);
-  setBanner('Clássico', `${total} de ${MISSOES.length*3} estrelas`);
+  setBanner(espFig()?'Jornada':'Clássico', `${total} de ${MISSOES.length*3} estrelas`);
+  $('#btnPause').textContent='‹'; $('#btnPause').title='Voltar ao menu';
   const atual = (MISSOES.findIndex((m,i)=>!(r[i+1]?.e)) + 1) || MISSOES.length;
   const lado = ['center','flex-end','center','flex-start'], E=espFig();
   let html='';
@@ -306,7 +307,7 @@ function missaoJoga(n, opt={}){
   applyAndar(); startDay(p);
   limpaMarcas(); montaPecasMissao(m);
   if(sv) restauraFase(sv.st);
-  document.body.classList.add('modoCla'); montaMissaoHud(m); render();
+  document.body.classList.add('modoCla'); $('#btnPause').textContent='☰'; $('#btnPause').title=''; montaMissaoHud(m); render();
   setBanner(`Fase ${n}: ${nomeFaseCla(n)}${S.medalha?' · Passinho':''}`, metasDe(m).length>1 ? `${metasDe(m).length} metas` : objetivosTxt(m));
   pedeEncaixe();
 }
@@ -331,4 +332,34 @@ function missaoResultado(ok, motivo){
   if($('#espRes')) espPlanetaGrande($('#espRes'),tAlvo(m),ok?'vit':'der');
   $('#mDeNovo').onclick=()=>missaoJoga(n, S.medalha?{passinho:true}:{});
   $('#mLista').onclick=missoesLista;
+}
+
+// ===================== CLÁSSICO SEM FIM =====================
+// Só o tabuleiro 4x4: junta até não caber mais nada. Sem metas e sem limite de arrastos; guarda o recorde de pontos.
+// (No menu do espaço o modo de missões passa a se chamar Jornada e este é o Clássico.)
+const REC_INF = () => +(localStorage.ptui_rec_inf||0);
+function infinitoJoga(){
+  hideOverlay(); hideCoach(); VEIO_DO_EDITOR=false;
+  S = {...freshState(), infinito:true, missao:0, tema:1, char:'rola', moves:0, extra:0, pontos:0, feitas:{}, coresF:{}, quebras:[], seqI:0, combos:0, soltas:0, maxForm:0};
+  S.fiscal=FISCAIS[0];
+  applyAndar(); startDay({...PATHS.comum, forma:null, caverna:false, energy:999-CFG.energy, semEnergia:true, w:4, h:4});
+  limpaMarcas(); document.body.classList.add('modoCla','modoInf'); $('#btnPause').textContent='☰';
+  montaInfinitoHud(); render();
+  setBanner('Clássico', 'junte até não caber mais nada'); pedeEncaixe();
+}
+function montaInfinitoHud(){ $('#cMis').innerHTML=`<div><b id="cRec">${REC_INF()}</b><small>recorde</small></div>`; $('#ptsP').style.display=''; }
+function hudInfinito(){ $('#cArr').textContent=S.moves||0; $('#cPts').textContent=S.pontos||0; const r=$('#cRec'); if(r) r.textContent=Math.max(REC_INF(),S.pontos||0); }
+function checaInfinito(){
+  if(anyMove()) return;
+  S.phase='fimI'; setBanner(null,'não cabe mais nada');
+  const est=S; setTimeout(()=>{ if(S===est && S.phase==='fimI') infinitoFim(); },650);
+}
+function infinitoFim(){
+  const rec=S.pontos>REC_INF(); if(rec) localStorage.ptui_rec_inf=S.pontos;
+  const t=Math.max(1,S.maxForm||1), E=espFig();
+  showOverlay(`${E?'<canvas id="espRes"></canvas>':''}<h2>Fim de jogo</h2><p>Maior peça: ${rockName(t)}</p>
+    <p><b>${S.pontos}</b> pontos${rec?' (recorde!)':''} · <b>${S.moves}</b> arrastos</p>
+    <button class="btn g" id="iDeNovo">Jogar de novo</button><button class="btn dim" id="iMenu">Menu</button>`);
+  if(E) espPlanetaGrande($('#espRes'),t,'vit');
+  $('#iDeNovo').onclick=infinitoJoga; $('#iMenu').onclick=()=>{ hideOverlay(); showMenu(); };
 }

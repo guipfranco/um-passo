@@ -1,5 +1,4 @@
-// Arrastos e estrelas de cada fase do Clássico, calibrados com os robôs (testes/calibrar/classico.html).
-// Para cada fase vale o robô que se saiu melhor: o que segura o canto (sobe alto) ou o que corre para a meta.
+// Arrastos e estrelas de cada fase do Clássico, calibrados com o robô (testes/calibrar/classico.html).
 // fase: [arrastos, sobrando para ★★, sobrando para ★★★]. Os quebra-cabeças usam os valores de quebracabecas.js.
 const CALIB = {
   1:[10,5,6],
@@ -11,8 +10,8 @@ const CALIB = {
   7:[24,10,13],
   8:[65,24,28],
   10:[36,14,15],
-  11:[36,16,19],
-  12:[50,9,12],
+  11:[53,22,26],
+  12:[88,15,16],
   13:[14,5,6],
   14:[17,6,7],
   15:[32,11,12],
@@ -21,7 +20,7 @@ const CALIB = {
   18:[46,15,19],
   19:[33,11,14],
   21:[65,20,22],
-  22:[40,14,16],
+  22:[53,17,19],
   23:[68,24,28],
   24:[147,40,58],
   25:[17,5,6],
@@ -44,7 +43,7 @@ const CALIB = {
   43:[71,16,18],
   45:[92,33,44],
   46:[34,11,14],
-  47:[122,58,77],
+  47:[202,81,92],
   48:[508,193,237],
   49:[21,10,12],
   50:[32,10,14],

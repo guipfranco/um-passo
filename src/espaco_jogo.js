@@ -5,7 +5,7 @@
 // presa, carrinho, picareta e cores ganham os equivalentes do espaço. O motor é o src/espaco.js (objeto ESP).
 (()=>{ const m=location.search.match(/[?&]espaco(?:=(\d))?/); if(m) localStorage.ptui_espaco = m[1]==='0' ? '0' : '1'; })();
 function espacoLigado(){ return localStorage.ptui_espaco==='1'; }
-function noEspaco(){ return espacoLigado() && !!(typeof S!=='undefined' && S && S.missao); }
+function noEspaco(){ return espacoLigado() && !!(typeof S!=='undefined' && S && (S.missao || S.infinito)); }
 // nome do nível no espaço (null fora do Clássico no espaço)
 function nomeEspaco(t){ if(!ESP || t<1 || !espFig()) return null; return nomeNivelEsp(t); }
 function nomeNivelEsp(t){ const L=ESP.LADDER; return L[Math.max(1,Math.min(t,L.length))-1].n; }
@@ -100,7 +100,7 @@ function espTela(){
   return espFig();
 }
 // as figuras de pedrinha viram planetas (metas, receitas, painel, lista)
-function espFig(){ return espacoLigado() && typeof S!=='undefined' && !!S && !!(S.missao || S.phase==='lista'); }
+function espFig(){ return espacoLigado() && typeof S!=='undefined' && !!S && !!(S.missao || S.infinito || S.phase==='lista'); }
 
 // canvas de tamanho fixo (em px de tela), fora do tabuleiro
 function espCanvasFixo(cv, w, h, desenha){
@@ -206,6 +206,9 @@ function espMenu(){
   const on=espTela(), menu=$('#scrMenu'), tag=menu.querySelector('.tagline');
   if(TAG_MINA==null) TAG_MINA=tag.textContent;
   tag.textContent = on ? 'junte poeira até virar galáxia' : TAG_MINA;
+  // no espaço: Jornada (as missões) e Clássico (4x4 sem fim)
+  $('#mCla').innerHTML = on ? 'Jornada<small>uma missão em cada fase</small>' : 'Clássico<small>uma missão em cada fase</small>';
+  if(!$('#mInf')){ const b=document.createElement('button'); b.className='btn b big'; b.id='mInf'; b.innerHTML='Clássico<small>4x4 sem fim, até não caber mais nada</small>'; $('#mCla').after(b); b.onclick=infinitoJoga; }
   if(!on) return;
   if(document.fonts?.load){ document.fonts.load("900 40px Orbitron"); document.fonts.load("700 20px 'Exo 2'"); }
   let lg=$('#logoEsp');
