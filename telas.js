@@ -128,3 +128,62 @@ function telaTamanhos(host){const W=Math.min(420,(host.clientWidth||330)-4),cols
   view(cv,t=>{drawFundo(ctx,F,t);const ord=LADDER.map((d,i)=>[d,i]);for(const [,i] of ord)SPR.orbita(ctx,(i%cols+.5)*u,oy+(Math.floor(i/cols)+.5)*u,u);
     ord.sort((A,B)=>(B[0].k||1)-(A[0].k||1)).forEach(([d,i])=>drawPeca(ctx,d.n,t,(i%cols+.5)*u,oy+(Math.floor(i/cols)+.5)*u,u));
     ctx.font=FONTE(10*DPR,700);ctx.textAlign='left';ctx.textBaseline='top';ord.forEach(([,i])=>{ctx.fillStyle='rgba(242,179,61,.9)';ctx.fillText(i+1,(i%cols)*u+4*DPR,oy+Math.floor(i/cols)*u+3*DPR);});});}
+
+// ---------- menu inicial: 4 opções de fonte e botão ----------
+const MENU_OPC={
+  1:{nome:'Neon',titulo:"900 {px}px Orbitron, sans-serif",tx:'PTUI!',px:80,corpo:"'Exo 2', sans-serif"},
+  2:{nome:'Arredondado moderno',titulo:"400 {px}px Righteous, sans-serif",tx:'Ptui!',px:112,corpo:"Nunito, sans-serif"},
+  3:{nome:'Planetas como botões',titulo:"400 {px}px 'Russo One', sans-serif",tx:'PTUI!',px:84,corpo:"'Exo 2', sans-serif",semOrbita:true},
+  4:{nome:'Painel de nave',titulo:"700 {px}px 'Chakra Petch', sans-serif",tx:'PTUI!',px:96,corpo:"'Chakra Petch', sans-serif"},
+};
+function logoOpc(lx,v,cx,cy,Q,t){const o=MENU_OPC[v],f=o.titulo.replace('{px}',o.px*Q);lx.save();lx.font=f;lx.textAlign='center';lx.textBaseline='middle';
+  if(v===1){lx.fillStyle='#f4fbff';lx.shadowColor='rgba(110,230,255,.95)';lx.shadowBlur=26*Q;lx.fillText(o.tx,cx,cy);lx.shadowColor='rgba(230,100,255,.7)';lx.shadowBlur=10*Q;lx.fillText(o.tx,cx,cy);}
+  else if(v===2){const g=lx.createLinearGradient(0,cy-55*Q,0,cy+55*Q);g.addColorStop(0,'#ffe07a');g.addColorStop(.5,'#ff8a4a');g.addColorStop(1,'#e0508a');lx.shadowColor='rgba(255,140,90,.55)';lx.shadowBlur=24*Q;lx.fillStyle=g;lx.fillText(o.tx,cx,cy);}
+  else if(v===3){const g=lx.createLinearGradient(0,cy-45*Q,0,cy+45*Q);g.addColorStop(0,'#ffffff');g.addColorStop(1,'#c8b8ff');lx.lineJoin='round';lx.lineWidth=9*Q;lx.strokeStyle='#1a1030';lx.strokeText(o.tx,cx,cy);
+    lx.shadowColor='rgba(170,140,255,.6)';lx.shadowBlur=18*Q;lx.fillStyle=g;lx.fillText(o.tx,cx,cy);}
+  else{lx.fillStyle='#ffd36e';lx.shadowColor='rgba(255,200,90,.5)';lx.shadowBlur=14*Q;lx.fillText(o.tx,cx,cy);lx.shadowBlur=0;const w=lx.measureText(o.tx).width/2+22*Q,h=48*Q,k=16*Q;
+    lx.strokeStyle='rgba(120,230,255,.85)';lx.lineWidth=2.5*Q;lx.beginPath();for(const [sx,sy] of [[-1,-1],[1,-1],[1,1],[-1,1]]){const x=cx+sx*w,y=cy+sy*h;lx.moveTo(x,y-sy*k);lx.lineTo(x,y);lx.lineTo(x-sx*k,y);}lx.stroke();
+    lx.font=`500 ${11*Q}px 'Chakra Petch', sans-serif`;lx.fillStyle='rgba(120,230,255,.85)';lx.fillText('SISTEMA · ONLINE'+(Math.floor(t*2)%2?' ▮':''),cx,cy+h+14*Q);}
+  lx.restore();}
+function telaMenuOpc(host,v){const o=MENU_OPC[v],{tela,Q}=telaFrame(host);telaFundo(tela,Q);
+  if(document.fonts&&document.fonts.load)document.fonts.load(o.titulo.replace('{px}','40'));
+  tela.style.fontFamily=o.corpo;
+  const lg=telaCanvas(tela,0,30,TELA_W,330,Q),lx=lg.getContext('2d'),orb=[['Lua',38],['Marte',44],['Saturno',104],['Terra',54],['Júpiter',72]];
+  view(lg,t=>{lx.clearRect(0,0,lg.width,lg.height);const cx=195*Q,cy=(v===3?150:178)*Q,rx=168*Q,ry=50*Q,tl=-.14;
+    if(o.semOrbita){logoOpc(lx,v,cx,cy,Q,t);return;}
+    const ps=orb.map(([n,sz],i)=>{const a=t*.28+i*2*Math.PI/orb.length,x0=Math.cos(a)*rx,y0=Math.sin(a)*ry;return {n,sz,x:cx+x0*Math.cos(tl)-y0*Math.sin(tl),y:cy+x0*Math.sin(tl)+y0*Math.cos(tl),z:Math.sin(a)};});
+    lx.save();lx.translate(cx,cy);lx.rotate(tl);lx.strokeStyle='rgba(255,255,255,.2)';lx.lineWidth=1.5*Q;lx.setLineDash([6*Q,7*Q]);lx.beginPath();lx.ellipse(0,0,rx,ry,0,0,7);lx.stroke();lx.restore();lx.setLineDash([]);
+    const pl=p=>drawPeca(lx,p.n,t,p.x,p.y,p.sz*Q,1,true,.7+.3*(p.z+1)/2);
+    ps.filter(p=>p.z<0).sort((a,b)=>a.z-b.z).forEach(pl);logoOpc(lx,v,cx,cy,Q,t);ps.filter(p=>p.z>=0).sort((a,b)=>a.z-b.z).forEach(pl);});
+  const frase='junte poeira até virar galáxia';
+  if(v===1){telaEl(tela,frase,'left:0;right:0;top:362px;text-align:center;font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:#8fe8ff');
+    const nb=(c,t,s)=>`<div style="border:2px solid ${c};border-radius:14px;padding:11px;text-align:center;background:rgba(10,8,25,.45);box-shadow:0 0 16px ${c}66,inset 0 0 14px ${c}33">
+      <div style="font:700 20px 'Exo 2',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:${c};text-shadow:0 0 10px ${c}">${t}</div>${s?`<div style="font:500 13px 'Exo 2',sans-serif;color:#d8e6f2;margin-top:2px">${s}</div>`:''}</div>`;
+    telaEl(tela,nb('#ffd36e','Clássico','uma missão em cada fase')+nb('#ff8a7a','Mineração','desça andar por andar, com loja e itens')+nb('#6fe0ff','Laboratório','teste fases, formatos e itens')
+      +`<div style="display:flex;gap:12px"><div style="flex:1">${nb('#cfc6ff','Editor')}</div><div style="flex:1">${nb('#cfc6ff','Catálogo')}</div></div>`+nb('#cfc6ff','Como jogar'),'left:34px;right:34px;top:404px;display:flex;flex-direction:column;gap:14px');
+    telaEl(tela,'♪ &nbsp;·&nbsp; créditos',"left:0;right:0;top:792px;text-align:center;color:#8fe8ff;font:500 14px 'Exo 2',sans-serif;letter-spacing:.1em");}
+  else if(v===2){telaEl(tela,frase,'left:0;right:0;top:364px;text-align:center;font:700 18px Nunito,sans-serif;color:#e6dcff');
+    const pb=(g,t,s)=>`<div style="border-radius:999px;padding:13px 18px;text-align:center;background:linear-gradient(135deg,${g});box-shadow:0 8px 22px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.35)">
+      <div style="font:800 21px Nunito,sans-serif;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.25)">${t}</div>${s?`<div style="font:600 13px Nunito,sans-serif;color:#fff;opacity:.85">${s}</div>`:''}</div>`;
+    const sb=t=>`<div style="flex:1;border-radius:999px;padding:11px;text-align:center;background:rgba(255,255,255,.12);font:800 17px Nunito,sans-serif;color:#f1ebff">${t}</div>`;
+    telaEl(tela,pb('#ffcf5a,#ff8a3c','Clássico','uma missão em cada fase')+pb('#ff6a7a,#c43a7a','Mineração','desça andar por andar, com loja e itens')+pb('#5ab0ff,#6a5aff','Laboratório','teste fases, formatos e itens')
+      +`<div style="display:flex;gap:12px">${sb('Editor de níveis')}${sb('Catálogo')}</div><div style="display:flex">${sb('Como jogar')}</div>`,'left:30px;right:30px;top:406px;display:flex;flex-direction:column;gap:14px');
+    telaEl(tela,'♪ &nbsp; créditos','left:0;right:0;top:796px;text-align:center;color:#cdbfe8;font:700 15px Nunito,sans-serif');}
+  else if(v===3){telaEl(tela,frase,"left:0;right:0;top:232px;text-align:center;font:600 16px 'Exo 2',sans-serif;letter-spacing:.06em;color:#cdbfe8");
+    const pc=telaCanvas(tela,0,300,TELA_W,330,Q),px=pc.getContext('2d'),PL=[['Rocha de lava',78,215,96],['Saturno',195,120,200],['Netuno',312,215,104]];
+    view(pc,t=>{px.clearRect(0,0,pc.width,pc.height);px.save();px.strokeStyle='rgba(255,255,255,.16)';px.lineWidth=1.5*Q;px.setLineDash([5*Q,7*Q]);px.beginPath();px.ellipse(195*Q,190*Q,175*Q,60*Q,0,Math.PI*1.02,Math.PI*1.98);px.stroke();px.restore();
+      PL.forEach(([n,x,y,s],i)=>{const by=Math.sin(t*1.4+i*2)*4*Q,g=px.createRadialGradient(x*Q,y*Q+by,0,x*Q,y*Q+by,s*.62*Q);g.addColorStop(0,'rgba(255,255,255,.12)');g.addColorStop(1,'rgba(255,255,255,0)');px.fillStyle=g;px.beginPath();px.arc(x*Q,y*Q+by,s*.62*Q,0,7);px.fill();
+        drawPeca(px,n,t,x*Q,y*Q+by,s*Q,1,true);});});
+    const lb=(x,y,t,s,c)=>telaEl(tela,`<div style="font:700 ${c?22:17}px 'Exo 2',sans-serif;color:${c?'#ffd36e':'#f3e9d7'}">${t}</div><div style="font:500 12px 'Exo 2',sans-serif;color:#b9a9d9;line-height:1.2">${s}</div>`,`left:${x-75}px;width:150px;top:${y}px;text-align:center`);
+    lb(195,486,'Clássico','uma missão em cada fase',1);lb(78,580,'Mineração','andar por andar');lb(312,580,'Laboratório','teste fases e itens');
+    telaEl(tela,'Editor de níveis &nbsp;·&nbsp; Catálogo &nbsp;·&nbsp; Como jogar',"left:0;right:0;top:690px;text-align:center;font:600 15px 'Exo 2',sans-serif;color:#e6dcff");
+    telaEl(tela,'♪ &nbsp;·&nbsp; créditos',"left:0;right:0;top:740px;text-align:center;font:500 14px 'Exo 2',sans-serif;color:#b9a9d9");}
+  else{telaEl(tela,'&gt; '+frase,"left:0;right:0;top:376px;text-align:center;font:500 14px 'Chakra Petch',sans-serif;letter-spacing:.06em;color:#8fe8ff");
+    const cut='clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px)';
+    const hb=(n,c,t,s)=>`<div style="${cut};background:linear-gradient(90deg,${c}33,rgba(14,12,30,.85));border-left:4px solid ${c};padding:10px 14px;display:flex;align-items:center;gap:12px">
+      <div style="font:700 13px 'Chakra Petch',sans-serif;color:${c};opacity:.9">${n}</div><div style="flex:1"><div style="font:700 21px 'Chakra Petch',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#f3eefc">${t}</div>
+      ${s?`<div style="font:500 12.5px 'Chakra Petch',sans-serif;color:#b9b0d8">${s}</div>`:''}</div><div style="font:700 18px 'Chakra Petch',sans-serif;color:${c}">›</div></div>`;
+    telaEl(tela,hb('01','#ffd36e','Clássico','uma missão em cada fase')+hb('02','#ff8a7a','Mineração','desça andar por andar, com loja e itens')+hb('03','#6fe0ff','Laboratório','teste fases, formatos e itens')
+      +`<div style="display:flex;gap:10px"><div style="flex:1">${hb('04','#b9a9ff','Editor')}</div><div style="flex:1">${hb('05','#b9a9ff','Catálogo')}</div></div>`+hb('06','#b9a9ff','Como jogar'),
+      'left:26px;right:26px;top:412px;display:flex;flex-direction:column;gap:11px');
+    telaEl(tela,'[ ♪ ] &nbsp; [ créditos ]',"left:0;right:0;top:796px;text-align:center;font:500 14px 'Chakra Petch',sans-serif;color:#8fe8ff;letter-spacing:.08em");}}

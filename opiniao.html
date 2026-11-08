@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Ptui! · sua opinião sobre o espaço</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Orbitron:wght@700;900&family=Exo+2:wght@500;600;700&family=Righteous&family=Nunito:wght@600;700;800&family=Russo+One&family=Chakra+Petch:wght@500;700&display=swap" rel="stylesheet">
 <style>
 :root{--ink:#2e2219;--bg:#f6ecd9;--card:#efe1c6;--edge:#dcc6a0;--txt:#5a4636;--sub:#7a5a44;--gold:#f2b33d}
 *{box-sizing:border-box}
@@ -73,6 +73,7 @@ h3.sec{margin:10px 0 0;font-size:15px;letter-spacing:.06em;text-transform:upperc
   <h3 class="sec" data-sec="esc">A escada, peça por peça</h3>
   <div id="escada" class="gridop"></div>
   <h3 class="sec" data-sec="telas">As telas</h3>
+  <p class="note" data-sec="telasNota">Dá para misturar as opções do menu: diga na nota, por exemplo "fonte da 2 com os botões da 4".</p>
   <div id="telas" style="display:flex;flex-direction:column;gap:14px"></div>
   <section class="card">
     <h2>Algo mais?</h2>
@@ -101,20 +102,24 @@ const ITENS=[
   {id:'torrao',ver:2,r:2,titulo:'Torrão',esp:'lixo espacial 3D',pedido:'Tem que ser algo 3D.',txt:'Hoje: peça que não junta com nada. Agora é um satélite quebrado em 3D, girando.',cena:[{o:1,p:'Lua'},{o:1,e:'lixo'},{o:1,p:'Lua'}]},
   {id:'presa',ver:2,r:2,titulo:'Pedrinha presa',esp:'gaiola de luz 3D',pedido:'Passar por trás do planeta (feixes atrás dele).',txt:'Hoje: não se mexe até uma igual juntar nela. Agora são 3 anéis de luz que passam por trás e pela frente do planeta.',cena:[{o:1,p:'Plutão'},{o:1,p:'Plutão',presa:1},{o:1}]},
   {id:'carrinho-nave',ver:2,r:2,titulo:'Carrinho',esp:'opção A: nave 3D com raio trator',pedido:'Trocar, por algo 3D.',txt:'Hoje: leve até ele uma peça do nível pedido. A nave flutua e puxa o planeta pedido com o raio.',cena:[{o:1,p:'Saturno'},{o:1},{o:1,e:'nave',t:'Saturno'}]},
-  {id:'carrinho-portal',ver:2,r:2,titulo:'Carrinho',esp:'opção B: portal 3D',pedido:'Trocar, por algo 3D.',txt:'Outra ideia para o carrinho: um portal girando. Leve o planeta pedido até ele.',cena:[{o:1,p:'Saturno'},{o:1},{o:1,e:'portal',t:'Saturno'}]},
+  {id:'carrinho-portal',ver:2,r:2,titulo:'Carrinho',esp:'opção B: portal 3D (não escolhido)',pedido:'Trocar, por algo 3D.',txt:'Outra ideia para o carrinho: um portal girando. Leve o planeta pedido até ele.',cena:[{o:1,p:'Saturno'},{o:1},{o:1,e:'portal',t:'Saturno'}]},
   {id:'picareta',titulo:'Picareta',esp:'buraco negro',txt:'Hoje: quebra a pedra do mesmo nível. No espaço: engole o planeta da sua cor (aqui, Marte). A meta "Quebre" vira "Engula".',cena:[{o:1,p:'Marte'},{o:1,e:'buraco',cor:'#e0805a'},{o:1,p:'Terra'}]},
   {id:'cores',titulo:'Cores',esp:'aura roxa ou verde',txt:'Hoje: roxa só junta com roxa, verde com verde.',cena:[{o:1,p:'Vênus',aura:0},{o:1,p:'Vênus',aura:1},{o:1,p:'Vênus',aura:0}]},
 ];
-const RODADA=3;
+const RODADA=4;
 const ESC_VER={'Cristais':[2,'Mais parecido com a poeira, mas pontudo, e no plural.'],'Cometa':[2,'O giro não combinava com a cauda.'],'Mercúrio':[2,'Mais vermelho que Marte.'],'Sol':[2,'Tirar os raios amarelos de trás.']};
 const TELAS=[
-  {id:'tamanhos',titulo:'Tamanhos',esp:'os grandes bem maiores',pedido:'Maior diferença entre os tamanhos; os maiores realmente maiores.',txt:'Cada nível tem o seu tamanho na casa. Júpiter ocupa a casa inteira; Urano, Saturno, o Sol, a supernova e a galáxia passam da casa. No tabuleiro, os pequenos ficam por cima dos anéis dos vizinhos.',fn:telaTamanhos},
-  {id:'tela-menu',titulo:'Menu inicial',esp:'no espaço',pedido:'Olhar o menu inicial.',txt:'Os planetas giram em órbita em volta do nome, passando por trás e pela frente dele. A frase de baixo vira "junte poeira até virar galáxia".',fn:telaMenu},
-  {id:'tela-mapa',titulo:'Lista de fases',esp:'constelação',txt:'As fases viram estrelas de uma constelação, cada uma com o planeta da sua meta. As trancadas ficam apagadas e a atual brilha em dourado.',fn:telaMapa},
-  {id:'tela-info',titulo:'Informação da fase',esp:'planeta da meta em destaque',txt:'O planeta da meta gira no topo e a receita mostra o que juntar. Os nomes das fases também mudam (Primeira Rocha vira Primeira lava). O texto de hoje fala de energia e minério, que são da Mineração; aqui já vai corrigido.',fn:telaInfo},
-  {id:'tela-jogo',titulo:'Painel e tabuleiro',esp:'vidro escuro sobre o espaço',pedido:'Olhar a HUD.',txt:'Arrastos com as 3 estrelas na barra, a meta com o planeta e os pontos. Embaixo de cada peça, o valor e o nome.',fn:h=>telaJogo(h,'jogo')},
-  {id:'tela-vitoria',titulo:'Fim da fase',esp:'vitória',txt:'O planeta formado aparece grande, soltando poeira de estrelas, e as 3 estrelas acendem uma a uma.',fn:h=>telaJogo(h,'vitoria')},
-  {id:'tela-derrota',titulo:'Fim da fase',esp:'derrota',txt:'O planeta que faltou aparece apagado.',fn:h=>telaJogo(h,'derrota')},
+  {id:'tamanhos',r:3,titulo:'Tamanhos',esp:'os grandes bem maiores',pedido:'Maior diferença entre os tamanhos; os maiores realmente maiores.',txt:'Cada nível tem o seu tamanho na casa. Júpiter ocupa a casa inteira; Urano, Saturno, o Sol, a supernova e a galáxia passam da casa. No tabuleiro, os pequenos ficam por cima dos anéis dos vizinhos.',fn:telaTamanhos},
+  {id:'tela-menu',r:3,titulo:'Menu inicial',esp:'primeira versão',pedido:'Olhar o menu inicial.',txt:'Os planetas giram em órbita em volta do nome, passando por trás e pela frente dele. A frase de baixo vira "junte poeira até virar galáxia".',fn:telaMenu},
+  {id:'menu-1',r:4,titulo:'Menu, opção 1',esp:'neon',pedido:'Não gostei das fontes e dos botões do menu.',txt:'Título em Orbitron com brilho neon; botões vazados com borda acesa, em Exo 2.',fn:h=>telaMenuOpc(h,1)},
+  {id:'menu-2',r:4,titulo:'Menu, opção 2',esp:'arredondado moderno',pedido:'Não gostei das fontes e dos botões do menu.',txt:'Título em Righteous com degradê; botões em pílula com degradê, em Nunito.',fn:h=>telaMenuOpc(h,2)},
+  {id:'menu-3',r:4,titulo:'Menu, opção 3',esp:'planetas como botões',pedido:'Não gostei das fontes e dos botões do menu.',txt:'Cada modo é um planeta que você toca: Saturno é o Clássico, a rocha de lava é a Mineração, Netuno é o Laboratório. Título em Russo One; o resto vira links.',fn:h=>telaMenuOpc(h,3)},
+  {id:'menu-4',r:4,titulo:'Menu, opção 4',esp:'painel de nave',pedido:'Não gostei das fontes e dos botões do menu.',txt:'Tudo em Chakra Petch, como o painel de uma nave: cantos cortados, números e uma faixa de cor em cada botão.',fn:h=>telaMenuOpc(h,4)},
+  {id:'tela-mapa',r:3,titulo:'Lista de fases',esp:'constelação',txt:'As fases viram estrelas de uma constelação, cada uma com o planeta da sua meta. As trancadas ficam apagadas e a atual brilha em dourado.',fn:telaMapa},
+  {id:'tela-info',r:3,titulo:'Informação da fase',esp:'planeta da meta em destaque',txt:'O planeta da meta gira no topo e a receita mostra o que juntar. Os nomes das fases também mudam (Primeira Rocha vira Primeira lava). O texto de hoje fala de energia e minério, que são da Mineração; aqui já vai corrigido.',fn:telaInfo},
+  {id:'tela-jogo',r:3,titulo:'Painel e tabuleiro',esp:'vidro escuro sobre o espaço',pedido:'Olhar a HUD.',txt:'Arrastos com as 3 estrelas na barra, a meta com o planeta e os pontos. Embaixo de cada peça, o valor e o nome.',fn:h=>telaJogo(h,'jogo')},
+  {id:'tela-vitoria',r:3,titulo:'Fim da fase',esp:'vitória',txt:'O planeta formado aparece grande, soltando poeira de estrelas, e as 3 estrelas acendem uma a uma.',fn:h=>telaJogo(h,'vitoria')},
+  {id:'tela-derrota',r:3,titulo:'Fim da fase',esp:'derrota',txt:'O planeta que faltou aparece apagado.',fn:h=>telaJogo(h,'derrota')},
 ];
 const KEY='ptui_opiniao_v1',OP=JSON.parse(localStorage.getItem(KEY)||'{}'),TODOS=[];
 const $=q=>document.querySelector(q);
@@ -164,8 +169,8 @@ function monta(){
     s.appendChild(widget(id,ver,true));TODOS.push({id,el:s,mudou,grupo:'Escada',rotulo:`${i+1} ${d.n}`});});
   const tb=$('#telas');
   TELAS.forEach(it=>{const s=document.createElement('section');s.className='card';
-    s.innerHTML=`<h2>${it.titulo} <span class="de">→</span> ${it.esp}<span class="novo">✨ novo</span></h2>${it.pedido?`<p class="pedido">Você pediu: ${it.pedido}</p>`:''}<p class="hoje">${it.txt}</p><div class="host"></div>`;
-    tb.appendChild(s);it.fn(s.querySelector('.host'));s.appendChild(widget(it.id,1,false));TODOS.push({id:it.id,el:s,mudou:true,grupo:'Telas',rotulo:`${it.titulo} → ${it.esp}`});});
+    s.innerHTML=`<h2>${it.titulo} <span class="de">→</span> ${it.esp}${it.r===RODADA?'<span class="novo">✨ novo</span>':''}</h2>${it.pedido?`<p class="pedido">Você pediu: ${it.pedido}</p>`:''}<p class="hoje">${it.txt}</p><div class="host"></div>`;
+    tb.appendChild(s);it.fn(s.querySelector('.host'));s.appendChild(widget(it.id,1,false));TODOS.push({id:it.id,el:s,mudou:it.r===RODADA,grupo:'Telas',rotulo:`${it.titulo} → ${it.esp}`});});
   const ger=$('#geral');ger.value=OP._geral||'';ger.oninput=()=>{OP._geral=ger.value;salva();};
   localStorage.setItem(KEY,JSON.stringify(OP));
   filtra();
@@ -175,7 +180,7 @@ function filtra(){for(const it of TODOS)it.el.classList.toggle('oculto',soMudou&
   $('#fMudou').classList.toggle('on',soMudou);$('#fTudo').classList.toggle('on',!soMudou);prog();}
 $('#fMudou').onclick=()=>{soMudou=true;filtra();};$('#fTudo').onclick=()=>{soMudou=false;filtra();};
 const EMO={bom:'👍 gostei',ajustar:'🔧 ajustar',trocar:'👎 trocar'};
-function texto(){const L=['Opinião sobre o Ptui no espaço, rodada 3'+(soMudou?' (só o que é novo)':'')];let g='';
+function texto(){const L=['Opinião sobre o Ptui no espaço, rodada 4'+(soMudou?' (só o que é novo)':'')];let g='';
   for(const it of visiveis()){if(it.grupo!==g){g=it.grupo;L.push('',g.toUpperCase());}const o=OP[it.id]||{},n=(o.n||'').trim();
     L.push(`- ${it.rotulo}: ${o.v?EMO[o.v]:'sem opinião'}${n?` · "${n}"`:''}`);}
   const ger=(OP._geral||'').trim();if(ger)L.push('','ALGO MAIS',ger);return L.join('\n');}
