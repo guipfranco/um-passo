@@ -12,7 +12,7 @@ function telaFundo(tela,Q,m=MUNDOS_ESP[0]){const bg=telaCanvas(tela,0,0,TELA_W,T
 function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
 function estrela(c,x,y,r,fill,stroke,lw){c.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,q=i%2?r*.45:r;c.lineTo(x+Math.cos(a)*q,y+Math.sin(a)*q);}c.closePath();
   if(fill){c.fillStyle=fill;c.fill();}if(stroke){c.strokeStyle=stroke;c.lineWidth=lw;c.lineJoin='round';c.stroke();}}
-const FONTE=(px,peso=600)=>`${peso} ${px}px Fredoka, 'Trebuchet MS', sans-serif`;
+const FONTE=(px,peso=600)=>`${peso} ${px}px 'Exo 2', 'Trebuchet MS', sans-serif`;
 // etiqueta embaixo da peça: valor em cima, nome embaixo
 function etiqueta(c,x,y,val,nome,Q){c.save();c.font=FONTE(9.5*Q);const w=Math.max(c.measureText(nome).width,18*Q)+12*Q,h=27*Q;
   c.fillStyle='rgba(12,9,26,.8)';c.strokeStyle='rgba(255,255,255,.18)';c.lineWidth=Q;rr(c,x-w/2,y-h/2,w,h,8*Q);c.fill();c.stroke();
@@ -88,7 +88,7 @@ const JOGO_PECAS={jogo:[[0,0,'Poeira'],[3,1,'Cristais'],[1,3,'Poeira'],[2,2,'Cri
 function telaJogo(host,modo){const {tela,Q}=telaFrame(host);telaFundo(tela,Q);
   const vidro='background:rgba(22,17,40,.72);border:1.5px solid rgba(255,255,255,.12);border-radius:16px;box-shadow:0 4px 0 rgba(0,0,0,.35)';
   const arr=modo==='derrota'?0:modo==='vitoria'?36:10,pct=modo==='derrota'?0:modo==='vitoria'?90:100;
-  telaEl(tela,`<div style="flex:1.7;${vidro};padding:7px 10px;display:flex;gap:8px;align-items:center"><div class="ic" style="width:34px;height:34px;background:#f2b33d;color:#3a2a08;font-size:18px;box-shadow:0 3px 0 #b07a14">➜</div>
+  telaEl(tela,`<div style="flex:1.7;${vidro};padding:7px 10px;display:flex;gap:8px;align-items:center"><div class="ic" style="width:34px;height:34px;border:2px solid #ffd36e;color:#ffd36e;font-size:17px;box-shadow:0 0 10px #ffd36e66;text-shadow:0 0 6px #ffd36e">➜</div>
       <div style="flex:1"><div style="display:flex;justify-content:space-between;align-items:baseline"><b style="font-size:22px">${arr}</b><span class="sub" style="font-size:11px">arrastos</span></div>
       <div class="barra"><i style="width:${pct}%"></i><s style="left:50%">★</s><s style="left:60%">★</s><s style="left:72%">★</s></div></div></div>
     <div style="flex:.75;${vidro};padding:6px;text-align:center"><div style="height:30px"></div><div class="sub" style="font-size:11px">${modo==='vitoria'?'1/1':'0/1'}</div></div>
@@ -111,7 +111,7 @@ function telaJogo(host,modo){const {tela,Q}=telaFrame(host);telaFundo(tela,Q);
       drawPeca(px,'Rocha de lava',t,c,c,pc.width*.72,1,true);}
     else drawPeca(px,'Rocha de lava',t,c,c,pc.width*.62,.3,true);});
   if(modo==='vitoria'){
-    telaEl(tela,'<b style="font-size:30px">Missão cumprida!</b>','left:0;right:0;top:392px;text-align:center');
+    telaEl(tela,'<b style="font-size:23px">Missão cumprida!</b>','left:0;right:0;top:396px;text-align:center');
     const sc=telaCanvas(tela,95,436,200,70,Q),sx=sc.getContext('2d');
     view(sc,t=>{sx.clearRect(0,0,sc.width,sc.height);const ph=t%5;for(let i=0;i<3;i++){const on=ph>.4+i*.45,k=on?Math.min(1,(ph-.4-i*.45)*5):0,s=1+.35*Math.max(0,1-k*1.2)*Math.sin(k*Math.PI);
       const x=(40+i*60)*Q,y=35*Q;estrela(sx,x,y,24*Q*(on?s:1),on?'#f2b33d':null,on?'#2e2219':'rgba(255,255,255,.25)',2.5*Q);}});
@@ -187,3 +187,21 @@ function telaMenuOpc(host,v){const o=MENU_OPC[v],{tela,Q}=telaFrame(host);telaFu
       +`<div style="display:flex;gap:10px"><div style="flex:1">${hb('04','#b9a9ff','Editor')}</div><div style="flex:1">${hb('05','#b9a9ff','Catálogo')}</div></div>`+hb('06','#b9a9ff','Como jogar'),
       'left:26px;right:26px;top:412px;display:flex;flex-direction:column;gap:11px');
     telaEl(tela,'[ ♪ ] &nbsp; [ créditos ]',"left:0;right:0;top:796px;text-align:center;font:500 14px 'Chakra Petch',sans-serif;color:#8fe8ff;letter-spacing:.08em");}}
+
+// ---------- menu final: neon, com Mineração e Laboratório escondidos em dois ícones (easter egg) ----------
+const ICO_PICARETA='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8.5C8 4.5 16 4.5 19.5 8.5"/><path d="M12 6.2L5.5 20"/></svg>';
+const ICO_FRASCO='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6"/><path d="M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M7.5 15h9"/></svg>';
+function telaMenuFinal(host){const {tela,Q}=telaFrame(host);telaFundo(tela,Q);
+  if(document.fonts&&document.fonts.load){document.fonts.load("900 40px Orbitron");document.fonts.load("700 20px 'Exo 2'");}
+  const lg=telaCanvas(tela,0,40,TELA_W,330,Q),lx=lg.getContext('2d'),orb=[['Lua',38],['Marte',44],['Saturno',104],['Terra',54],['Júpiter',72]];
+  view(lg,t=>{lx.clearRect(0,0,lg.width,lg.height);const cx=195*Q,cy=178*Q,rx=168*Q,ry=50*Q,tl=-.14;
+    const ps=orb.map(([n,sz],i)=>{const a=t*.28+i*2*Math.PI/orb.length,x0=Math.cos(a)*rx,y0=Math.sin(a)*ry;return {n,sz,x:cx+x0*Math.cos(tl)-y0*Math.sin(tl),y:cy+x0*Math.sin(tl)+y0*Math.cos(tl),z:Math.sin(a)};});
+    lx.save();lx.translate(cx,cy);lx.rotate(tl);lx.strokeStyle='rgba(255,255,255,.2)';lx.lineWidth=1.5*Q;lx.setLineDash([6*Q,7*Q]);lx.beginPath();lx.ellipse(0,0,rx,ry,0,0,7);lx.stroke();lx.restore();lx.setLineDash([]);
+    const pl=p=>drawPeca(lx,p.n,t,p.x,p.y,p.sz*Q,1,true,.7+.3*(p.z+1)/2);
+    ps.filter(p=>p.z<0).sort((a,b)=>a.z-b.z).forEach(pl);logoOpc(lx,1,cx,cy,Q,t);ps.filter(p=>p.z>=0).sort((a,b)=>a.z-b.z).forEach(pl);});
+  telaEl(tela,'junte poeira até virar galáxia','left:0;right:0;top:384px;text-align:center;font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:#8fe8ff');
+  telaEl(tela,'<div class="bt" style="font-size:24px;padding:16px">Clássico<small>uma missão em cada fase</small></div><div class="bt vidro sm">Como jogar</div>',
+    'left:40px;right:40px;top:446px;display:flex;flex-direction:column;gap:18px');
+  telaEl(tela,'♪ &nbsp;·&nbsp; créditos',"left:0;right:0;top:640px;text-align:center;color:#8fe8ff;font:500 14px 'Exo 2',sans-serif;letter-spacing:.1em");
+  telaEl(tela,`<span title="Mineração">${ICO_PICARETA}</span><span title="Laboratório">${ICO_FRASCO}</span>`,
+    'left:0;right:0;top:790px;display:flex;justify-content:center;gap:30px;color:rgba(207,198,255,.42);filter:drop-shadow(0 0 4px rgba(207,198,255,.35))');}
