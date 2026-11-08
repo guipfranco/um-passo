@@ -54,6 +54,30 @@ ol.regra b{color:#ffd877}
 .prob h4{margin:6px 0 0;font-size:14.5px;color:#ffd877}
 .prob p{font-size:14px}
 .prob a,.fase a{color:#7fe0ff}
+/* mapa geral: 8 mundos x 12 fases, cada casa na cor do que a fase ensina */
+.mapa{display:grid;grid-template-columns:auto repeat(12,1fr);gap:3px;align-items:center}
+.mapa .mn{font-size:11.5px;color:#b9b1e6;padding-right:5px;white-space:nowrap;font-weight:700}
+.mapa a{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:rgba(20,14,40,.75);text-decoration:none}
+.mapa a.final{outline:2px solid #ffcf7a;outline-offset:-2px}
+.mapa a.ini{box-shadow:inset 0 0 0 2px rgba(255,255,255,.9)}
+.temas{display:flex;flex-wrap:wrap;gap:5px 10px;font-size:12.5px;color:#cfc8f2}
+.temas i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-2px}
+/* caminho em blocos */
+.bl{display:flex;gap:9px;align-items:flex-start;border-top:1px solid rgba(160,140,255,.13);padding-top:8px}
+.bl .fx{flex:none;min-width:52px;text-align:center;font:800 12.5px 'Exo 2',sans-serif;border-radius:8px;padding:4px 5px;color:#1a1230}
+.bl .co{display:flex;flex-direction:column;gap:3px}
+.bl .tt{font-weight:700;font-size:15px;color:#f1eefc;display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}
+.bl .ds{font-size:13.5px;color:#b9b1e6;line-height:1.35}
+.bl .av{font-size:12.5px;color:#ffb3a6}
+.bl a{color:#7fe0ff}
+.k{font-size:11px;font-weight:800;border-radius:999px;padding:1px 7px;letter-spacing:.03em}
+.k-novo{background:#ffc94a;color:#2c1d00}.k-treino{background:#1f4d5c;color:#9feaff}.k-mix{background:#3d2a5c;color:#d4b8ff}
+.resumo{font-size:13.5px;color:#cfc8f2;line-height:1.4}
+.resumo b{color:#ffd877}
+details.mcard summary{cursor:pointer;list-style:none;font:700 15px Orbitron,sans-serif;color:#f4fbff;letter-spacing:.04em}
+details.mcard summary::-webkit-details-marker{display:none}
+details.mcard summary::after{content:' ▾';color:#9fe9ff}
+details.mcard[open] summary::after{content:' ▴'}
 </style>
 </head>
 <body>
@@ -71,6 +95,18 @@ ol.regra b{color:#ffd877}
     <li><b>Dificuldade sobe devagar:</b> o robô casual (uma pessoa comum) cumpre pelo menos 80%, e não cai mais de 20 pontos de uma fase para a outra. As fases finais de mundo podem ser o pico.</li>
   </ol></div>
 
+  <h2>O MAPA</h2>
+  <div class="card">
+    <p class="sub">Cada quadrado é uma fase, na cor do que ela ensina. Duas cores = mistura. Contorno branco = estreia de uma mecânica; contorno dourado = final do mundo. Toque numa fase para ver o detalhe.</p>
+    <div class="mapa" id="mapa"></div>
+    <div class="temas" id="temas"></div>
+    <div class="resumo" id="ordem"></div>
+  </div>
+
+  <h2>O CAMINHO EM BLOCOS</h2>
+  <p class="sub">Fases seguidas que ensinam a mesma coisa formam um bloco.</p>
+  <div id="blocos" style="display:flex;flex-direction:column;gap:14px"></div>
+
   <h2>ONDE CADA MECÂNICA APARECE</h2>
   <div class="card">
     <div class="leg"><span><i class="c-est"></i>estreia</span><span><i class="c-solo"></i>sozinha</span><span><i class="c-mix"></i>misturada com outra</span></div>
@@ -82,9 +118,10 @@ ol.regra b{color:#ffd877}
   <div class="card prob" id="probs"></div>
 
   <h2>FASE A FASE</h2>
+  <p class="sub">Toque num mundo para abrir.</p>
   <div id="mundos" style="display:flex;flex-direction:column;gap:14px"></div>
 </main>
-<script src="caminho_dados.js?v=1"></script>
+<script src="caminho_dados.js?v=2"></script>
 <script>
 const {mundos, fases, dificuldade:DIF, gerado} = CAMINHO;
 document.getElementById('gerado').textContent = `Gerado do jogo em ${gerado.split('-').reverse().join('/')}. A dificuldade é a da última calibragem com os robôs.`;
@@ -131,6 +168,51 @@ for(const f of fases){ if(!f.dif){ continue; }
   if(ant && ant.dif.casual-f.dif.casual>20 && f.dif.casual>=80) avisos[f.n].push({tipo:'salto', txt:`Salto de dificuldade: o casual cai de ${ant.dif.casual}% para ${f.dif.casual}%.`});
   ant=f; }
 
+// ---------- visão geral: o tema de cada fase, o mapa e os blocos ----------
+const TEMA = {
+  basico:['#8fa0d4','Formar e pontos'], combo:['#ff7eb6','Combo'], seq:['#c9a0ff','Em ordem'], proibido:['#ff6b6b','Sem formar'],
+  estacao:['#a9bdd2','Estação'], mureta:['#d8925a','Fluxo de rochas'], leve:['#ffe066','Levar à órbita'], alvo:['#f5a623','Formar na órbita'],
+  nebulosa:['#3fc9b0','Nebulosa'], lixo:['#b5b86f','Lixo espacial'], presa:['#5fdcff','Planeta preso'], nave:['#7be07b','Nave'],
+  aura:['#b98aff','Auras'], buraco:['#ea6fd3','Buraco negro'], passinho:['#9cc4ff','Passinho'], quebra:['#f1eefc','Quebra-cabeça'], final:['#ffcf7a','Final do mundo'] };
+for(const f of fases){ const m=f.mec.filter(k=>k!=='pontos');
+  f.temas = f.quebra ? ['quebra'] : f.chefe ? ['final'] : m.length ? m : ['basico']; f.tema=f.temas.join('+'); }
+const fundo = f => f.temas.length===1 ? TEMA[f.temas[0]][0]
+  : `linear-gradient(135deg, ${f.temas.map((k,i,a)=>`${TEMA[k][0]} ${Math.round(i/a.length*100)}% ${Math.round((i+1)/a.length*100)}%`).join(', ')})`;
+const curto = n => ({'Entrada':'Entrada','Estações':'Estações','Rochas e vazios':'Rochas','Nebulosas':'Nebulosa','Naves':'Naves','Auras':'Auras','Buracos negros':'Buracos','Passinho':'Passinho'}[n]||n);
+// mapa
+{ let h=''; mundos.forEach(([nome],g)=>{ h+=`<div class="mn">${g+1} ${curto(nome)}</div>`;
+    for(const f of fases.filter(f=>f.g===g)) h+=`<a href="#f${f.n}" class="${f.chefe?'final':''} ${f.novas.length?'ini':''}" style="background:${fundo(f)}" title="${f.n} ${f.nome}">${f.n}</a>`; });
+  document.getElementById('mapa').innerHTML=h;
+  const usados=[...new Set(fases.flatMap(f=>f.temas))];
+  document.getElementById('temas').innerHTML=Object.entries(TEMA).filter(([k])=>usados.includes(k)).map(([k,[c,n]])=>`<span><i style="background:${c}"></i>${n}</span>`).join(''); }
+// a ordem em que as mecânicas estreiam
+document.getElementById('ordem').innerHTML = '<b>Ordem das novidades:</b> ' + Object.keys(estreia).filter(k=>k!=='pontos').sort((a,b)=>estreia[a]-estreia[b])
+  .map(k=>`${TEMA[k][1]} <a href="#f${estreia[k]}" style="color:#7fe0ff">${estreia[k]}</a>`).join(' → ');
+// blocos: fases seguidas, no mesmo mundo, com o mesmo tema
+const blocos=[]; { let b=null; for(const f of fases){ if(b && b.tema===f.tema && b.g===f.g) b.fs.push(f); else { b={tema:f.tema, temas:f.temas, g:f.g, fs:[f]}; blocos.push(b); } } }
+const descFase = f => f.txt.join(' + ') + (f.w!==4||f.h!==4 ? ` (${f.w}x${f.h}${f.forma?', formato':''})` : f.forma?' (formato)':'');
+function tituloBloco(b){
+  if(b.tema==='basico') return b.fs.every(f=>f.metas.every(m=>m==='pontos')) ? 'Pontos' : b.fs.some(f=>f.metas.includes('pontos')) ? 'Formar e pontos' : 'Formar';
+  if(b.temas.length>1) return 'Mistura: '+b.temas.map(k=>TEMA[k][1]).join(' + ');
+  return TEMA[b.tema][1];
+}
+{ const el=document.getElementById('blocos');
+  mundos.forEach(([nome,desc],g)=>{
+    const fs=fases.filter(f=>f.g===g), novas=[...new Set(fs.flatMap(f=>f.novas))].filter(k=>k!=='pontos');
+    const voltam=[...new Set(fs.flatMap(f=>f.mec))].filter(k=>k!=='pontos' && !novas.includes(k));
+    let h=`<div class="card"><div class="mcard"><h3>${g+1} · ${nome.toUpperCase()}<small>${desc}</small></h3></div>
+      <div class="resumo"><b>Novidades:</b> ${novas.length?novas.map(k=>TEMA[k][1]).join(', '):'nenhuma mecânica nova'}${voltam.length?`<br><b>Voltam:</b> ${voltam.map(k=>TEMA[k][1]).join(', ')}`:''}</div>`;
+    for(const b of blocos.filter(b=>b.g===g)){
+      const a=b.fs[0].n, z=b.fs[b.fs.length-1].n, estreia=b.fs.some(f=>f.novas.length), nav=b.fs.reduce((s,f)=>s+avisos[f.n].length,0);
+      const tipo = b.tema==='quebra'||b.tema==='final'||b.tema==='basico' ? '' : b.temas.length>1 ? '<span class="k k-mix">mistura</span>' : estreia ? '<span class="k k-novo">estreia</span>' : b.tema==='basico' ? '' : '<span class="k k-treino">treino</span>';
+      h+=`<div class="bl"><div class="fx" style="background:${fundo(b.fs[0])}">${a===z?a:a+'–'+z}</div><div class="co">
+        <div class="tt">${tituloBloco(b)} ${tipo}</div>
+        <div class="ds">${b.fs.map(descFase).join(' · ')}</div>
+        ${nav?`<div class="av">⚠ ${nav} aviso${nav>1?'s':''}: ${b.fs.filter(f=>avisos[f.n].length).map(f=>`<a href="#f${f.n}">fase ${f.n}</a>`).join(', ')}</div>`:''}</div></div>`;
+    }
+    el.insertAdjacentHTML('beforeend', h+'</div>');
+  }); }
+
 // trilhas
 const ordem = Object.keys(estreia).sort((a,b)=>estreia[a]-estreia[b]);
 const tr=document.getElementById('trilhas');
@@ -161,7 +243,7 @@ for(const [t,tit] of TIPOS){ const l=fases.filter(f=>avisos[f.n].some(a=>a.tipo=
 const mu=document.getElementById('mundos');
 const cor=v=>v>=95?'#6fdc8c':v>=80?'#f2c14e':v>=50?'#f08a4b':'#e5534b';
 mundos.forEach(([nome,desc],g)=>{
-  let h=`<div class="card mcard"><h3>${g+1} · ${nome.toUpperCase()}<small>${desc}</small></h3>`;
+  let h=`<details class="card mcard" id="m${g}"><summary>${g+1} · ${nome.toUpperCase()}</summary><p class="sub">${desc}</p>`;
   for(const f of fases.filter(f=>f.g===g)){
     const tab=[`${f.w}x${f.h}`]; if(f.forma) tab.push('formato'); if(f.estacoes) tab.push(`${f.estacoes} estaç${f.estacoes>1?'ões':'ão'}`); if(f.muretas) tab.push(`${f.muretas} fluxos de rochas`);
     if(f.nebulosa) tab.push(`nebulosa em ${f.nebulosa} casas`); if(f.presas) tab.push(`${f.presas} pres${f.presas>1?'os':'o'}`); if(f.orbitas) tab.push(`${f.orbitas} órbita${f.orbitas>1?'s':''}`);
@@ -172,9 +254,11 @@ mundos.forEach(([nome,desc],g)=>{
       ${d?`<div class="dif"><span>casual ${d.casual}%</span><div class="barra"><i style="width:${d.casual}%;background:${cor(d.casual)}"></i></div><span>${f.livre?'sem limite':(f.arrastos||'?')+' arrastos'}</span></div>`:`<div class="dif"><span>quebra-cabeça: solução fixa${f.arrastos?' · '+f.arrastos+' arrastos':''}</span></div>`}
       ${avisos[f.n].map(a=>`<div class="aviso">${a.txt}</div>`).join('')}</div>`;
   }
-  mu.insertAdjacentHTML('beforeend', h+'</div>');
+  mu.insertAdjacentHTML('beforeend', h+'</details>');
 });
-if(location.hash) setTimeout(()=>document.querySelector(location.hash)?.scrollIntoView(),50);
+// ao tocar numa fase (no mapa, nas faixas ou nos problemas), abre o mundo dela e rola até lá
+function vaiPara(){ const el=location.hash && document.querySelector(location.hash); if(!el) return; const d=el.closest('details'); if(d) d.open=true; setTimeout(()=>el.scrollIntoView({block:'start'}),30); }
+addEventListener('hashchange', vaiPara); if(location.hash) setTimeout(vaiPara,50);
 </script>
 </body>
 </html>
