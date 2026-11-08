@@ -109,7 +109,7 @@ function telaJogo(host,modo){const {tela,Q}=telaFrame(host);telaFundo(tela,Q);
     if(modo==='vitoria'){px.save();px.globalCompositeOperation='lighter';for(const p of pt){const k=((t*.45*p.v+p.f)%1),d=c*(.35+.62*k);px.fillStyle=`rgba(255,226,150,${((1-k)*.9).toFixed(2)})`;
         const s=(1.5+2*(1-k))*Q;px.fillRect(c+Math.cos(p.a)*d-s/2,c+Math.sin(p.a)*d-s/2,s,s);}px.restore();
       drawPeca(px,'Rocha de lava',t,c,c,pc.width*.72,1,true);}
-    else drawPeca(px,'Rocha de lava',t,c,c,pc.width*.62,.3,true);});
+    else{drawPeca(px,'Rocha de lava',t,c,c,pc.width*.62,.75,true);px.globalCompositeOperation='source-atop';px.fillStyle='rgba(20,14,40,.45)';px.fillRect(0,0,pc.width,pc.height);px.globalCompositeOperation='source-over';}});
   if(modo==='vitoria'){
     telaEl(tela,'<b style="font-size:23px">Missão cumprida!</b>','left:0;right:0;top:396px;text-align:center');
     const sc=telaCanvas(tela,95,436,200,70,Q),sx=sc.getContext('2d');
@@ -119,7 +119,10 @@ function telaJogo(host,modo){const {tela,Q}=telaFrame(host);telaFundo(tela,Q);
       <div class="bt">Próxima fase</div><div class="bt vidro sm">Jogar de novo</div><div class="bt vidro sm">Ver fases</div>`,'left:38px;right:38px;top:520px;display:flex;flex-direction:column;gap:12px');}
   else{
     telaEl(tela,'<b style="font-size:30px">Não deu</b><div class="sub" style="font-size:15px;margin-top:6px">acabaram os arrastos</div>','left:0;right:0;top:396px;text-align:center');
-    telaEl(tela,'Forme 3 <span class="pill">Rochas de lava</span>: 0 de 3','left:0;right:0;top:478px;text-align:center;font-size:16px;color:#ddd3ee');
+    const fr=telaEl(tela,'Forme 3 <span class="pill" style="display:inline-flex;align-items:center;gap:5px;vertical-align:middle"><canvas class="icoMeta" style="width:28px;height:28px;min-width:28px;flex:none;display:block;border-radius:0;margin-left:-6px"></canvas>Rochas de lava</span>: 0 de 3','left:0;right:0;top:478px;text-align:center;font-size:16px;color:#ddd3ee');
+    const mc=fr.querySelector('canvas');mc.width=Math.round(28*Q);mc.height=Math.round(28*Q);const mcx=mc.getContext('2d');
+    view(mc,t=>{const w=mc.width;mcx.clearRect(0,0,w,w);const g=mcx.createRadialGradient(w/2,w/2,0,w/2,w/2,w/2);g.addColorStop(0,'rgba(255,200,150,.55)');g.addColorStop(1,'rgba(255,200,150,.08)');
+      mcx.fillStyle=g;mcx.beginPath();mcx.arc(w/2,w/2,w/2-Q,0,7);mcx.fill();mcx.strokeStyle='rgba(255,210,170,.7)';mcx.lineWidth=1.2*Q;mcx.stroke();drawPeca(mcx,'Rocha de lava',t,w/2,w/2,w*1.05,1,true);});
     telaEl(tela,'<div class="bt">Tentar de novo</div><div class="bt vidro sm">Ver fases</div>','left:38px;right:38px;top:540px;display:flex;flex-direction:column;gap:12px');}}
 
 // ---------- tamanhos: a escada inteira num tabuleiro ----------

@@ -87,8 +87,8 @@ h3.sec{margin:10px 0 0;font-size:15px;letter-spacing:.06em;text-transform:upperc
 </main>
 <div id="barra"><span id="prog"></span><button class="fb on" id="copiar">Copiar respostas</button></div>
 
-<script src="espaco.js?v=5"></script>
-<script src="telas.js?v=5"></script>
+<script src="espaco.js?v=6"></script>
+<script src="telas.js?v=6"></script>
 <script>
 'use strict';
 // ver: sobe quando o item muda; a opinião antiga daquele item é zerada e ele ganha o selo "mudou"
@@ -107,7 +107,7 @@ const ITENS=[
   {id:'picareta',titulo:'Picareta',esp:'buraco negro',txt:'Hoje: quebra a pedra do mesmo nível. No espaço: engole o planeta da sua cor (aqui, Marte). A meta "Quebre" vira "Engula".',cena:[{o:1,p:'Marte'},{o:1,e:'buraco',cor:'#e0805a'},{o:1,p:'Terra'}]},
   {id:'cores',titulo:'Cores',esp:'aura roxa ou verde',txt:'Hoje: roxa só junta com roxa, verde com verde.',cena:[{o:1,p:'Vênus',aura:0},{o:1,p:'Vênus',aura:1},{o:1,p:'Vênus',aura:0}]},
 ];
-const RODADA=5;
+const RODADA=6;
 const ESC_VER={'Cristais':[2,'Mais parecido com a poeira, mas pontudo, e no plural.'],'Cometa':[2,'O giro não combinava com a cauda.'],'Mercúrio':[2,'Mais vermelho que Marte.'],'Sol':[2,'Tirar os raios amarelos de trás.']};
 const TELAS=[
   {id:'tamanhos',r:3,titulo:'Tamanhos',esp:'os grandes bem maiores',pedido:'Maior diferença entre os tamanhos; os maiores realmente maiores.',txt:'Cada nível tem o seu tamanho na casa. Júpiter ocupa a casa inteira; Urano, Saturno, o Sol, a supernova e a galáxia passam da casa. No tabuleiro, os pequenos ficam por cima dos anéis dos vizinhos.',fn:telaTamanhos},
@@ -120,7 +120,7 @@ const TELAS=[
   {id:'tela-info',r:5,ver:2,obs:'No estilo neon do menu, para combinar.',titulo:'Informação da fase',esp:'planeta da meta em destaque',txt:'O planeta da meta gira no topo e a receita mostra o que juntar. Os nomes das fases também mudam (Primeira Rocha vira Primeira lava). O texto de hoje fala de energia e minério, que são da Mineração; aqui já vai corrigido.',fn:telaInfo},
   {id:'tela-jogo',r:5,ver:2,obs:'No estilo neon do menu, para combinar.',titulo:'Painel e tabuleiro',esp:'vidro escuro sobre o espaço',pedido:'Olhar a HUD.',txt:'Arrastos com as 3 estrelas na barra, a meta com o planeta e os pontos. Embaixo de cada peça, o valor e o nome.',fn:h=>telaJogo(h,'jogo')},
   {id:'tela-vitoria',r:5,ver:2,obs:'No estilo neon do menu, para combinar.',titulo:'Fim da fase',esp:'vitória',txt:'O planeta formado aparece grande, soltando poeira de estrelas, e as 3 estrelas acendem uma a uma.',fn:h=>telaJogo(h,'vitoria')},
-  {id:'tela-derrota',r:5,ver:2,obs:'No estilo neon do menu, para combinar.',titulo:'Fim da fase',esp:'derrota',txt:'O planeta que faltou aparece apagado.',fn:h=>telaJogo(h,'derrota')},
+  {id:'tela-derrota',r:6,ver:3,pedido:'Tem que ter o ícone do planeta.',titulo:'Fim da fase',esp:'derrota',txt:'O planeta que faltou aparece em cima, escurecido, e também pequenininho dentro da etiqueta da meta.',fn:h=>telaJogo(h,'derrota')},
 ];
 const KEY='ptui_opiniao_v1',OP=JSON.parse(localStorage.getItem(KEY)||'{}'),TODOS=[];
 const $=q=>document.querySelector(q);
@@ -181,7 +181,7 @@ function filtra(){for(const it of TODOS)it.el.classList.toggle('oculto',soMudou&
   $('#fMudou').classList.toggle('on',soMudou);$('#fTudo').classList.toggle('on',!soMudou);prog();}
 $('#fMudou').onclick=()=>{soMudou=true;filtra();};$('#fTudo').onclick=()=>{soMudou=false;filtra();};
 const EMO={bom:'👍 gostei',ajustar:'🔧 ajustar',trocar:'👎 trocar'};
-function texto(){const L=['Opinião sobre o Ptui no espaço, rodada 5'+(soMudou?' (só o que é novo)':'')];let g='';
+function texto(){const L=['Opinião sobre o Ptui no espaço, rodada 6'+(soMudou?' (só o que é novo)':'')];let g='';
   for(const it of visiveis()){if(it.grupo!==g){g=it.grupo;L.push('',g.toUpperCase());}const o=OP[it.id]||{},n=(o.n||'').trim();
     L.push(`- ${it.rotulo}: ${o.v?EMO[o.v]:'sem opinião'}${n?` · "${n}"`:''}`);}
   const ger=(OP._geral||'').trim();if(ger)L.push('','ALGO MAIS',ger);return L.join('\n');}
