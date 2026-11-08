@@ -68,23 +68,23 @@ function telaInfo(host){const {tela,Q}=telaFrame(host);telaFundo(tela,Q);
   telaEl(tela,'','left:18px;right:18px;top:96px;bottom:44px;background:rgba(26,20,46,.94);border:1.5px solid rgba(255,255,255,.14);border-radius:24px;box-shadow:0 6px 0 rgba(0,0,0,.4)');
   const pc=telaCanvas(tela,115,20,160,160,Q),px=pc.getContext('2d');
   view(pc,t=>{px.clearRect(0,0,pc.width,pc.height);const c=pc.width/2,g=px.createRadialGradient(c,c,0,c,c,c);g.addColorStop(0,'rgba(255,140,60,.35)');g.addColorStop(1,'rgba(255,140,60,0)');px.fillStyle=g;px.fillRect(0,0,pc.width,pc.height);
-    drawPeca(px,'Rocha de lava',t,c,c,pc.width*.9,1,true);});
-  telaEl(tela,`<b style="font-size:30px">Fase 1</b><div><span class="pill">Primeira lava</span></div>`,'left:0;right:0;top:182px;text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center');
+    drawPeca(px,'Rocha',t,c,c,pc.width*.9,1,true);});
+  telaEl(tela,`<b style="font-size:30px">Fase 1</b><div><span class="pill">Primeira rocha</span></div>`,'left:0;right:0;top:182px;text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center');
   const mc=telaCanvas(tela,36,264,318,186,Q),m=mc.getContext('2d');
   view(mc,t=>{const W=mc.width,H=mc.height;m.clearRect(0,0,W,H);m.fillStyle='rgba(255,255,255,.06)';m.strokeStyle='rgba(255,255,255,.1)';m.lineWidth=Q;rr(m,1,1,W-2,H-2,16*Q);m.fill();m.stroke();
     m.textAlign='center';m.textBaseline='middle';m.fillStyle='#f2b33d';m.font=FONTE(12*Q,700);m.fillText('MISSÃO',W/2,16*Q);
-    drawPeca(m,'Rocha de lava',t,W/2-22*Q,66*Q,72*Q,1,true);m.fillStyle='#ece3f7';m.font=FONTE(30*Q,700);m.fillText('×1',W/2+40*Q,66*Q);
-    m.font=FONTE(14*Q,600);m.fillText('Rocha de lava',W/2,108*Q);
-    const rx=[W/2-90*Q,W/2,W/2+90*Q],nm=['Cristais','Cristais','Rocha de lava'];
+    drawPeca(m,'Rocha',t,W/2-22*Q,66*Q,72*Q,1,true);m.fillStyle='#ece3f7';m.font=FONTE(30*Q,700);m.fillText('×1',W/2+40*Q,66*Q);
+    m.font=FONTE(14*Q,600);m.fillText('Rocha',W/2,108*Q);
+    const rx=[W/2-90*Q,W/2,W/2+90*Q],nm=['Gelo','Gelo','Rocha'];
     nm.forEach((n,i)=>{drawPeca(m,n,t,rx[i],144*Q,36*Q,1,true);m.fillStyle='#b9a9d9';m.font=FONTE(10*Q);m.fillText(n,rx[i],172*Q);});
     m.fillStyle='#ece3f7';m.font=FONTE(20*Q,700);m.fillText('+',W/2-45*Q,144*Q);m.fillText('=',W/2+45*Q,144*Q);});
-  telaEl(tela,`<b style="font-size:21px">Forme uma Rocha de lava</b><div class="sub" style="font-size:14px">4x4 · 10 arrastos</div>
+  telaEl(tela,`<b style="font-size:21px">Forme uma Rocha</b><div class="sub" style="font-size:14px">4x4 · 10 arrastos</div>
     <div style="font-size:14.5px;line-height:1.35;color:#ddd3ee">Arraste para juntar peças iguais: duas iguais viram a do nível seguinte.</div>
     <div class="sub" style="font-size:13px">★ cumprir · ★★ sobrando 5 · ★★★ sobrando 6</div>`,'left:34px;right:34px;top:464px;text-align:center;display:flex;flex-direction:column;gap:8px');
   telaEl(tela,'<div class="bt">Jogar</div><div class="bt vidro sm">Voltar</div>','left:36px;right:36px;top:660px;display:flex;flex-direction:column;gap:14px');}
 
 // ---------- jogo: painel de cima, tabuleiro e fim de fase ----------
-const JOGO_PECAS={jogo:[[0,0,'Poeira'],[3,1,'Cristais'],[1,3,'Poeira'],[2,2,'Cristais']],vitoria:[[0,0,'Poeira'],[1,1,'Rocha de lava'],[2,3,'Poeira']],derrota:[[0,0,'Poeira'],[3,0,'Cristais'],[1,1,'Cristais'],[2,2,'Poeira'],[0,3,'Poeira'],[3,3,'Cristais'],[1,2,'Poeira']]};
+const JOGO_PECAS={jogo:[[0,0,'Poeira'],[3,1,'Gelo'],[1,3,'Poeira'],[2,2,'Gelo']],vitoria:[[0,0,'Poeira'],[1,1,'Rocha'],[2,3,'Poeira']],derrota:[[0,0,'Poeira'],[3,0,'Gelo'],[1,1,'Gelo'],[2,2,'Poeira'],[0,3,'Poeira'],[3,3,'Gelo'],[1,2,'Poeira']]};
 function telaJogo(host,modo){const {tela,Q}=telaFrame(host);telaFundo(tela,Q);
   const vidro='background:rgba(22,17,40,.72);border:1.5px solid rgba(255,255,255,.12);border-radius:16px;box-shadow:0 4px 0 rgba(0,0,0,.35)';
   const arr=modo==='derrota'?0:modo==='vitoria'?36:10,pct=modo==='derrota'?0:modo==='vitoria'?90:100;
@@ -94,8 +94,8 @@ function telaJogo(host,modo){const {tela,Q}=telaFrame(host);telaFundo(tela,Q);
     <div style="flex:.75;${vidro};padding:6px;text-align:center"><div style="height:30px"></div><div class="sub" style="font-size:11px">${modo==='vitoria'?'1/1':'0/1'}</div></div>
     <div style="flex:.75;${vidro};padding:6px 10px"><b style="font-size:22px">0</b><div class="sub" style="font-size:11px">pontos</div></div>`,
     'left:10px;right:10px;top:14px;display:flex;gap:8px;height:62px');
-  const mi=telaCanvas(tela,252,18,34,34,Q),mix_=mi.getContext('2d');view(mi,t=>{mix_.clearRect(0,0,mi.width,mi.height);drawPeca(mix_,'Rocha de lava',t,mi.width/2,mi.height/2,mi.width,1,true);});
-  telaEl(tela,`<div class="ic vidro">☰</div><div style="flex:1;${vidro};text-align:center;padding:6px"><b style="font-size:18px">Fase 1: Primeira lava</b><div class="sub" style="font-size:13px">Forme uma Rocha de lava</div></div><div class="ic vidro">♪</div>`,
+  const mi=telaCanvas(tela,252,18,34,34,Q),mix_=mi.getContext('2d');view(mi,t=>{mix_.clearRect(0,0,mi.width,mi.height);drawPeca(mix_,'Rocha',t,mi.width/2,mi.height/2,mi.width,1,true);});
+  telaEl(tela,`<div class="ic vidro">☰</div><div style="flex:1;${vidro};text-align:center;padding:6px"><b style="font-size:18px">Fase 1: Primeira rocha</b><div class="sub" style="font-size:13px">Forme uma Rocha</div></div><div class="ic vidro">♪</div>`,
     'left:10px;right:10px;top:88px;display:flex;gap:8px;align-items:center');
   const bd=telaCanvas(tela,10,160,370,370,Q),b=bd.getContext('2d'),u=bd.width/4,pecas=JOGO_PECAS[modo];
   view(bd,t=>{b.clearRect(0,0,bd.width,bd.height);for(let y=0;y<4;y++)for(let x=0;x<4;x++)SPR.orbita(b,(x+.5)*u,(y+.5)*u,u);
@@ -108,8 +108,8 @@ function telaJogo(host,modo){const {tela,Q}=telaFrame(host);telaFundo(tela,Q);
   view(pc,t=>{px.clearRect(0,0,pc.width,pc.height);const c=pc.width/2;
     if(modo==='vitoria'){px.save();px.globalCompositeOperation='lighter';for(const p of pt){const k=((t*.45*p.v+p.f)%1),d=c*(.35+.62*k);px.fillStyle=`rgba(255,226,150,${((1-k)*.9).toFixed(2)})`;
         const s=(1.5+2*(1-k))*Q;px.fillRect(c+Math.cos(p.a)*d-s/2,c+Math.sin(p.a)*d-s/2,s,s);}px.restore();
-      drawPeca(px,'Rocha de lava',t,c,c,pc.width*.72,1,true);}
-    else{drawPeca(px,'Rocha de lava',t,c,c,pc.width*.62,.75,true);px.globalCompositeOperation='source-atop';px.fillStyle='rgba(20,14,40,.45)';px.fillRect(0,0,pc.width,pc.height);px.globalCompositeOperation='source-over';}});
+      drawPeca(px,'Rocha',t,c,c,pc.width*.72,1,true);}
+    else{drawPeca(px,'Rocha',t,c,c,pc.width*.62,.75,true);px.globalCompositeOperation='source-atop';px.fillStyle='rgba(20,14,40,.45)';px.fillRect(0,0,pc.width,pc.height);px.globalCompositeOperation='source-over';}});
   if(modo==='vitoria'){
     telaEl(tela,'<b style="font-size:23px">Missão cumprida!</b>','left:0;right:0;top:396px;text-align:center');
     const sc=telaCanvas(tela,95,436,200,70,Q),sx=sc.getContext('2d');
@@ -119,9 +119,9 @@ function telaJogo(host,modo){const {tela,Q}=telaFrame(host);telaFundo(tela,Q);
       <div class="bt">Próxima fase</div><div class="bt vidro sm">Jogar de novo</div><div class="bt vidro sm">Ver fases</div>`,'left:38px;right:38px;top:520px;display:flex;flex-direction:column;gap:12px');}
   else{
     telaEl(tela,'<b style="font-size:30px">Não deu</b><div class="sub" style="font-size:15px;margin-top:6px">acabaram os arrastos</div>','left:0;right:0;top:396px;text-align:center');
-    const fr=telaEl(tela,'Forme 3 <span class="pill" style="vertical-align:baseline;margin:0 .2em;padding:.1em .45em .12em .2em"><canvas class="icoMeta" style="width:24px;height:24px;display:inline-block;vertical-align:-6px;margin-right:4px;border-radius:0"></canvas>Rochas de lava</span>: 0 de 3','left:0;right:0;top:478px;text-align:center;font-size:16px;color:#ddd3ee');
+    const fr=telaEl(tela,'Forme 3 <span class="pill" style="vertical-align:baseline;margin:0 .2em;padding:.1em .45em .12em .2em"><canvas class="icoMeta" style="width:24px;height:24px;display:inline-block;vertical-align:-6px;margin-right:4px;border-radius:0"></canvas>Rochas</span>: 0 de 3','left:0;right:0;top:478px;text-align:center;font-size:16px;color:#ddd3ee');
     const mc=fr.querySelector('canvas');mc.width=Math.round(24*Q);mc.height=Math.round(24*Q);const mcx=mc.getContext('2d');
-    view(mc,t=>{const w=mc.width;mcx.clearRect(0,0,w,w);drawPeca(mcx,'Rocha de lava',t,w/2,w/2,w*1.15,1,true);});
+    view(mc,t=>{const w=mc.width;mcx.clearRect(0,0,w,w);drawPeca(mcx,'Rocha',t,w/2,w/2,w*1.15,1,true);});
     telaEl(tela,'<div class="bt">Tentar de novo</div><div class="bt vidro sm">Ver fases</div>','left:38px;right:38px;top:540px;display:flex;flex-direction:column;gap:12px');}}
 
 // ---------- tamanhos: a escada inteira num tabuleiro ----------
@@ -172,7 +172,7 @@ function telaMenuOpc(host,v){const o=MENU_OPC[v],{tela,Q}=telaFrame(host);telaFu
       +`<div style="display:flex;gap:12px">${sb('Editor de níveis')}${sb('Catálogo')}</div><div style="display:flex">${sb('Como jogar')}</div>`,'left:30px;right:30px;top:406px;display:flex;flex-direction:column;gap:14px');
     telaEl(tela,'♪ &nbsp; créditos','left:0;right:0;top:796px;text-align:center;color:#cdbfe8;font:700 15px Nunito,sans-serif');}
   else if(v===3){telaEl(tela,frase,"left:0;right:0;top:232px;text-align:center;font:600 16px 'Exo 2',sans-serif;letter-spacing:.06em;color:#cdbfe8");
-    const pc=telaCanvas(tela,0,300,TELA_W,330,Q),px=pc.getContext('2d'),PL=[['Rocha de lava',78,215,96],['Saturno',195,120,200],['Netuno',312,215,104]];
+    const pc=telaCanvas(tela,0,300,TELA_W,330,Q),px=pc.getContext('2d'),PL=[['Rocha',78,215,96],['Saturno',195,120,200],['Netuno',312,215,104]];
     view(pc,t=>{px.clearRect(0,0,pc.width,pc.height);px.save();px.strokeStyle='rgba(255,255,255,.16)';px.lineWidth=1.5*Q;px.setLineDash([5*Q,7*Q]);px.beginPath();px.ellipse(195*Q,190*Q,175*Q,60*Q,0,Math.PI*1.02,Math.PI*1.98);px.stroke();px.restore();
       PL.forEach(([n,x,y,s],i)=>{const by=Math.sin(t*1.4+i*2)*4*Q,g=px.createRadialGradient(x*Q,y*Q+by,0,x*Q,y*Q+by,s*.62*Q);g.addColorStop(0,'rgba(255,255,255,.12)');g.addColorStop(1,'rgba(255,255,255,0)');px.fillStyle=g;px.beginPath();px.arc(x*Q,y*Q+by,s*.62*Q,0,7);px.fill();
         drawPeca(px,n,t,x*Q,y*Q+by,s*Q,1,true);});});

@@ -87,8 +87,8 @@ h3.sec{margin:10px 0 0;font-size:15px;letter-spacing:.06em;text-transform:upperc
 </main>
 <div id="barra"><span id="prog"></span><button class="fb on" id="copiar">Copiar respostas</button></div>
 
-<script src="src/espaco.js?v=11"></script>
-<script src="telas.js?v=11"></script>
+<script src="src/espaco.js?v=12"></script>
+<script src="telas.js?v=12"></script>
 <script>
 'use strict';
 // ver: sobe quando o item muda; a opinião antiga daquele item é zerada e ele ganha o selo "mudou"
@@ -108,7 +108,7 @@ const ITENS=[
   {id:'cores',titulo:'Cores',esp:'aura roxa ou verde',txt:'Hoje: roxa só junta com roxa, verde com verde.',cena:[{o:1,p:'Vênus',aura:0},{o:1,p:'Vênus',aura:1},{o:1,p:'Vênus',aura:0}]},
 ];
 const RODADA=6;
-const ESC_VER={'Cristais':[2,'Mais parecido com a poeira, mas pontudo, e no plural.'],'Cometa':[2,'O giro não combinava com a cauda.'],'Mercúrio':[2,'Mais vermelho que Marte.'],'Sol':[2,'Tirar os raios amarelos de trás.']};
+const ESC_VER={'Gelo':[2,'Mais parecido com a poeira, mas pontudo, e no plural.'],'Cometa':[2,'O giro não combinava com a cauda.'],'Mercúrio':[2,'Mais vermelho que Marte.'],'Sol':[2,'Tirar os raios amarelos de trás.']};
 const TELAS=[
   {id:'tamanhos',r:3,titulo:'Tamanhos',esp:'os grandes bem maiores',pedido:'Maior diferença entre os tamanhos; os maiores realmente maiores.',txt:'Cada nível tem o seu tamanho na casa. Júpiter ocupa a casa inteira; Urano, Saturno, o Sol, a supernova e a galáxia passam da casa. No tabuleiro, os pequenos ficam por cima dos anéis dos vizinhos.',fn:telaTamanhos},
   {id:'menu-final',r:5,titulo:'Menu inicial',esp:'neon, com dois modos escondidos',pedido:'Usar a opção 1; Mineração e Laboratório só como dois ícones pequenininhos no final, sem nada escrito, como easter egg.',txt:'O Clássico fica sozinho como botão principal, com o Como jogar embaixo. A picareta (Mineração) e o frasco (Laboratório) ficam pequenos e apagados no rodapé. O Editor de níveis e o Catálogo saem do menu e ficam dentro do Laboratório, de onde já saem hoje.',fn:telaMenuFinal},
@@ -117,7 +117,7 @@ const TELAS=[
   {id:'menu-3',r:4,titulo:'Menu, opção 3',esp:'planetas como botões',pedido:'Não gostei das fontes e dos botões do menu.',txt:'Cada modo é um planeta que você toca: Saturno é o Clássico, a rocha de lava é a Mineração, Netuno é o Laboratório. Título em Russo One; o resto vira links.',fn:h=>telaMenuOpc(h,3)},
   {id:'menu-4',r:4,titulo:'Menu, opção 4',esp:'painel de nave',pedido:'Não gostei das fontes e dos botões do menu.',txt:'Tudo em Chakra Petch, como o painel de uma nave: cantos cortados, números e uma faixa de cor em cada botão.',fn:h=>telaMenuOpc(h,4)},
   {id:'tela-mapa',r:5,ver:2,obs:'No estilo neon do menu, para combinar.',titulo:'Lista de fases',esp:'constelação',txt:'As fases viram estrelas de uma constelação, cada uma com o planeta da sua meta. As trancadas ficam apagadas e a atual brilha em dourado.',fn:telaMapa},
-  {id:'tela-info',r:5,ver:2,obs:'No estilo neon do menu, para combinar.',titulo:'Informação da fase',esp:'planeta da meta em destaque',txt:'O planeta da meta gira no topo e a receita mostra o que juntar. Os nomes das fases também mudam (Primeira Rocha vira Primeira lava). O texto de hoje fala de energia e minério, que são da Mineração; aqui já vai corrigido.',fn:telaInfo},
+  {id:'tela-info',r:5,ver:2,obs:'No estilo neon do menu, para combinar.',titulo:'Informação da fase',esp:'planeta da meta em destaque',txt:'O planeta da meta gira no topo e a receita mostra o que juntar. Os nomes das fases também mudam (Primeira Rocha vira Primeira rocha). O texto de hoje fala de energia e minério, que são da Mineração; aqui já vai corrigido.',fn:telaInfo},
   {id:'tela-jogo',r:5,ver:2,obs:'No estilo neon do menu, para combinar.',titulo:'Painel e tabuleiro',esp:'vidro escuro sobre o espaço',pedido:'Olhar a HUD.',txt:'Arrastos com as 3 estrelas na barra, a meta com o planeta e os pontos. Embaixo de cada peça, o valor e o nome.',fn:h=>telaJogo(h,'jogo')},
   {id:'tela-vitoria',r:5,ver:2,obs:'No estilo neon do menu, para combinar.',titulo:'Fim da fase',esp:'vitória',txt:'O planeta formado aparece grande, soltando poeira de estrelas, e as 3 estrelas acendem uma a uma.',fn:h=>telaJogo(h,'vitoria')},
   {id:'tela-derrota',r:6,ver:3,pedido:'Tem que ter o ícone do planeta.',titulo:'Fim da fase',esp:'derrota',txt:'O planeta que faltou aparece em cima, escurecido, e também pequenininho dentro da etiqueta da meta.',fn:h=>telaJogo(h,'derrota')},

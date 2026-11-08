@@ -366,6 +366,8 @@ b.sub{font-size:13px;color:#c48a1e;text-transform:uppercase;letter-spacing:.04em
 .edTxt{width:100%;border:2px solid #dcc6a0;border-radius:12px;font:12px monospace;padding:8px;box-sizing:border-box}
 #app{min-height:100dvh}
 .panel{max-height:100%}
+/* dentro da fase o dedo arrasta as peças em qualquer lugar da tela (o navegador não rola nem cancela o gesto) */
+body.lock:not(.rola){touch-action:none}
 body.rola #scrGame{touch-action:pan-y}
 body.rola #stage{touch-action:none}
 .panel h3{font-size:15px;color:#a08a74;margin:6px 0 -4px;text-transform:uppercase;letter-spacing:.04em}

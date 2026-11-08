@@ -238,7 +238,7 @@ const MUNDOS_NOME_ESP = [
   ['Passinho','Tudo anda uma casa por vez.'],
 ];
 const FASES_NOME_ESP = {
-  1:'Primeira lava', 2:'Três lavas', 3:'Primeiro asteroide', 10:'Primeiro cometa',
+  1:'Primeira rocha', 2:'Três rochas', 3:'Primeiro asteroide', 10:'Primeiro cometa',
   13:'A estação que não sai', 14:'Duas estações', 17:'Estação no meio', 19:'Corredor de estações', 20:'Quebra-cabeça das estações', 24:'Salão das estações',
   26:'Primeira órbita dourada', 28:'Duas órbitas douradas', 32:'Quebra-cabeça das rochas', 36:'Fim das rochas',
   37:'Nebulosa leve', 38:'Mais nebulosa', 39:'Nebulosa e asteroides', 40:'Lixo espacial', 43:'Nebulosa no anel', 45:'Presa na nebulosa',
@@ -247,8 +247,8 @@ const FASES_NOME_ESP = {
   56:'Quebra-cabeça da nave', 57:'Nave de Plutão', 58:'Nave e presa', 59:'Nave no coração', 60:'Fim das naves',
   61:'Aura roxa e verde', 62:'Toda roxa', 63:'Asteroide verde', 64:'Auras no 5x5', 65:'Roxa na órbita', 66:'Em ordem, com aura',
   68:'Quebra-cabeça das auras', 69:'Nebulosa colorida', 70:'Nave colorida', 71:'Plutão roxo', 72:'Fim das auras',
-  73:'Primeiro buraco negro', 74:'Cristais no buraco negro', 75:'Engula a lava', 76:'Pontos de buraco negro', 77:'Buraco negro e órbita',
-  78:'Buraco negro e pontos', 79:'Quebra-cabeça do buraco negro', 80:'Asteroide engolido', 81:'Três lavas engolidas', 82:'Cometa engolido',
+  73:'Primeiro buraco negro', 74:'Gelo no buraco negro', 75:'Engula a rocha', 76:'Pontos de buraco negro', 77:'Buraco negro e órbita',
+  78:'Buraco negro e pontos', 79:'Quebra-cabeça do buraco negro', 80:'Asteroide engolido', 81:'Três rochas engolidas', 82:'Cometa engolido',
   83:'Buraco negro grande', 84:'Netuno',
   88:'Passinho na nebulosa', 89:'Passinho e estações', 91:'Passinho e nave', 96:'Fim da viagem',
 };

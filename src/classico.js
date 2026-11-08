@@ -13,7 +13,7 @@ const objsDe = m => m.objs || [m.obj];
 const metasDe = m => objsDe(m).filter(o=>!o.proibido);
 const corNome = c => ['roxa','verde','mista'][c];
 const artigo = nome => { const w=nome.split(' ')[0]; if(/^(Cometa|Planeta)$/.test(w)) return 'um'; if(/is$/.test(w)) return 'uns'; return /a$/.test(w) ? 'uma' : 'um'; };
-// só as palavras antes de "de" vão para o plural (Rochas de lava); ão vira ões
+// só as palavras antes de "de" vão para o plural (Rochas de gelo); ão vira ões
 const plural = nome => { let para=false; return nome.split(' ').map(w=>{ if(para) return w; if(w==='de'){ para=true; return w; } return /ão$/.test(w)?w.slice(0,-2)+'ões':/[aeiouáéíóú]$/i.test(w)?w+'s':/r$/.test(w)?w+'es':/l$/.test(w)?w.slice(0,-1)+'is':w; }).join(' '); };
 const qtd = (n,t) => n===1 ? `${artigo(rockName(t))} ${rockName(t)}` : `${n} ${plural(rockName(t))}`;
 const estrelasHtml = (e, cls='estr') => `<span class="${cls}">${[1,2,3].map(i=>`<i class="${i<=e?'on':''}">★</i>`).join('')}</span>`;

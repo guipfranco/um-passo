@@ -41,7 +41,7 @@ function gerarTex(fn){const g=mk(GW,GH),gx=g.getContext('2d'),gi=gx.createImageD
     for(let i=0;i<GW;i++){const lon=((i+.5)/GW-.5)*2*Math.PI;const c=fn(cl*Math.sin(lon),sl,cl*Math.cos(lon),lat,lon);const k=(j*GW+i)*4;
       px[k]=c[0];px[k+1]=c[1];px[k+2]=c[2];px[k+3]=c.length>3?c[3]:255;}}
   gx.putImageData(gi,0,0);const big=mk(TW,TH),bx=big.getContext('2d');bx.imageSmoothingEnabled=true;bx.imageSmoothingQuality='high';bx.drawImage(g,0,0,TW,TH);
-  return bx.getImageData(0,0,TW,TH).data;}
+  const dados=bx.getImageData(0,0,TW,TH).data;g.width=g.height=0;big.width=big.height=0;return dados;}
 function craterField(seed,n,amin,amax){const r=rng(seed);return Array.from({length:n},()=>{const a=amin+(amax-amin)*r()*r();return {d:randDir(r),a,cut:Math.cos(a*1.35)};});}
 function craterShade(x,y,z,cr){let m=0;for(const c of cr){const dt=x*c.d[0]+y*c.d[1]+z*c.d[2];if(dt<c.cut)continue;const q=Math.acos(Math.min(1,dt))/c.a;
   if(q<1)m-=.24*(1-q*q*.6);else m+=.2*(1-(q-1)/.35);}return m;}
@@ -258,8 +258,8 @@ function sparkles(o,S,t){for(let i=0;i<3;i++){const a=Math.max(0,Math.sin(t*2.3+
 function lavaGlow(o,S,t){const c=S/2,g=o.createRadialGradient(c,c,S*.18,c,c,S*.5);g.addColorStop(0,`rgba(255,120,30,${(.4+.14*Math.sin(t*2.2)).toFixed(2)})`);g.addColorStop(1,'rgba(255,90,20,0)');o.fillStyle=g;o.fillRect(0,0,S,S);}
 const LADDER=[
   {n:'Poeira',src:'gerada',kind:'dust',k:.78},
-  {n:'Cristais',src:'gerados',kind:'shards',k:.85},
-  {n:'Rocha de lava',src:'gerada',kind:'mesh',geom:'lava',sub:3,scale:.8,k:.8,rot:tumble(.7,6),pre:lavaGlow},
+  {n:'Gelo',src:'gerado',kind:'shards',k:.85},
+  {n:'Rocha',src:'gerada',kind:'mesh',geom:'lava',sub:3,scale:.8,k:.8,rot:tumble(.7,6),pre:lavaGlow},
   {n:'Asteroide',src:'NASA · Bennu',kind:'mesh',geom:'bennu',sub:2,scale:.92,k:.74,rot:spinY(6)},
   {n:'Cometa',src:'ESA · 67P',kind:'comet',geom:'cometa',sub:2,k:1,rot:tumble(.6,5)},
   {n:'Plutão',src:'NASA',kind:'sphere',tex:'pluto',k:.38,sp:{rScale:.9,speed:.05,tilt:.3,pitch:.2}},
@@ -418,7 +418,7 @@ function buildFundo(w,h,m,o={}){const D=DPR,g=mk(w,h),c=g.getContext('2d'),r=rng
         c.globalAlpha=.9;c.drawImage(objImg('rochinha',sz,0,M),ax+(bx-ax)*s+nx*off-sz/2,ay+(by-ay)*s+ny*off-sz/2);c.globalAlpha=1;}
       astro('Lua',w*.84,h*(J?.7:.12),big*.16);
       const rocks=Array.from({length:10},()=>({s:r(),off:(r()-.5)*big*.12,sz:TAM[2+((r()*2)|0)],sp:.006+.01*r(),ax:[r()-.5,r()-.5,r()-.5],w:.4+r()*.8,f:r()*6}));
-      anim=(cx,t)=>{for(const k of rocks){const s=(k.s+t*k.sp)%1,x=ax+(bx-ax)*s+nx*k.off,y=ay+(by-ay)*s+ny*k.off;cx.drawImage(objImg('rochinha',k.sz,t,rotAxis(k.ax[0],k.ax[1],k.ax[2],k.f+t*k.w)),x-k.sz/2,y-k.sz/2);}};}
+      anim=(cx,t)=>{for(const k of rocks){const s=(k.s+t*k.sp)%1,x=ax+(bx-ax)*s+nx*k.off,y=ay+(by-ay)*s+ny*k.off;cx.drawImage(quadroObj('cint'+(k.sz%3),'rochinha',k.sz,k.f+t*k.w,32,TAU,rotRocha(k.sz%3)),x-k.sz/2,y-k.sz/2);}};}
     else if(T==='veu'){astro('Saturno',-w*.02,h*(J?.97:.07),big*(J?.6:.7),.9);}
     else if(T==='pilares'){const gl=c.createRadialGradient(w*.5,h*(J?.85:.6),0,w*.5,h*(J?.85:.6),big*.45);gl.addColorStop(0,`rgba(${m.neb[1]},.35)`);gl.addColorStop(1,`rgba(${m.neb[1]},0)`);c.fillStyle=gl;c.fillRect(0,0,w,h);
       for(const [xc,hh,k] of (J?[[.14,.26,0],[.5,.34,1],[.86,.22,2]]:[[.16,.38,0],[.5,.52,1],[.86,.34,2]])){const S0=Math.round(h*hh);
@@ -451,8 +451,9 @@ function drawFundo(c,F,t){c.drawImage(F.img,0,0);for(const s of F.tw){c.fillStyl
 const pcache={};
 const kDe=n=>byName(n).k||1;
 // imagem da peça num tamanho fixo (o mesmo quadro é reaproveitado); para animar o tamanho, escale no drawImage
+const PASSO=1/30;
 function pecaImg(n,t,sz){sz=Math.max(8,Math.round(sz));const k=n+'|'+sz,P=pcache[k]||(pcache[k]=makePiece(byName(n),sz));
-  if(P._t!==t||P._L!==ST.L||P._o!==ST.outline){P._img=P.draw(t,ST.L,{outline:ST.outline});P._t=t;P._L=ST.L;P._o=ST.outline;}return P._img;}
+  if(P._t===undefined||Math.abs(t-P._t)>=PASSO||P._L!==ST.L||P._o!==ST.outline){P._img=P.draw(t,ST.L,{outline:ST.outline});P._t=t;P._L=ST.L;P._o=ST.outline;}return P._img;}
 // u = lado da casa; a peça sai no tamanho do nível (k). fit = exatamente u. esc = escala extra só no desenho
 function drawPeca(c,n,t,x,y,u,a=1,fit=false,esc=1){const sz=Math.max(8,Math.round(fit?u:u*kDe(n))),img=pecaImg(n,t,sz),d=sz*esc;
   c.globalAlpha=a;c.drawImage(img,x-d/2,y-d/2,d,d);c.globalAlpha=1;}
@@ -460,19 +461,29 @@ function drawPeca(c,n,t,x,y,u,a=1,fit=false,esc=1){const sz=Math.max(8,Math.roun
 const vcache=new Map();
 function vrDe(id){let h=2166136261;for(const ch of String(id)){h^=ch.charCodeAt(0);h=Math.imul(h,16777619);}const r=rng(h>>>0);
   return {roll:(r()-.5)*1.0,pitch:(r()-.5)*.6,fase:r(),vel:.75+.55*r(),dt:r()*40,R0:mmul(mmul(rotAxis(1,0,0,(r()-.5)*1.4),rotAxis(0,0,1,(r()-.5)*1.4)),rotAxis(0,1,0,r()*6.283))};}
+// libera a memória dos canvases de uma peça que saiu do cache
+const libera=P=>{P.out.width=P.out.height=0;if(P.body&&P.body.can)P.body.can.width=P.body.can.height=0;};
 function drawPecaVar(c,n,t,x,y,u,id,a=1){const sz=Math.max(8,Math.round(u*kDe(n))),k=id+'|'+n+'|'+sz;let P=vcache.get(k);
-  if(!P){if(vcache.size>240)vcache.clear();P=makePiece(byName(n),sz,vrDe(id));vcache.set(k,P);}
-  const img=P.draw(t,ST.L,{outline:ST.outline});c.globalAlpha=a;c.drawImage(img,x-sz/2,y-sz/2,sz,sz);c.globalAlpha=1;}
+  if(P){vcache.delete(k);vcache.set(k,P);}   // a mais usada por último fica no fim (as mais velhas saem primeiro)
+  else{P=makePiece(byName(n),sz,vrDe(id));vcache.set(k,P);if(vcache.size>120){for(const [kk,PP] of vcache){if(vcache.size<=100)break;libera(PP);vcache.delete(kk);}}}
+  if(P._t===undefined||Math.abs(t-P._t)>=PASSO||P._L!==ST.L||P._o!==ST.outline){P._img=P.draw(t,ST.L,{outline:ST.outline});P._t=t;P._L=ST.L;P._o=ST.outline;}
+  c.globalAlpha=a;c.drawImage(P._img,x-sz/2,y-sz/2,sz,sz);c.globalAlpha=1;}
 // objetos 3D do tabuleiro (fora da escada)
 const OBJDEF={
   estacao:{kind:'mesh',geom:'estacao',scale:.95,rot:t=>mmul(rotAxis(1,0,.2,.42),rotAxis(0,1,0,t*.55))},
-  lixo:{kind:'mesh',geom:'lixo',scale:.82,rot:tumble(1.1,2)},
+  lixo:{kind:'mesh',geom:'lixo',scale:.82,rot:t=>mmul(rotAxis(1,.3,0,.5),rotAxis(.25,1,.35,t*1.1))},
   rochinha:{kind:'mesh',geom:'rochinha',sub:1,scale:1,rot:tumble(1.5,1)},
   nave:{kind:'mesh',geom:'nave',scale:.95,rot:t=>mmul(rotAxis(1,0,0,.38),rotAxis(0,1,0,-.55+.3*Math.sin(t*.7)))},
   pilar0:{kind:'mesh',geom:'pilar0',sub:2,scale:.98,rot:()=>ID},pilar1:{kind:'mesh',geom:'pilar1',sub:2,scale:.98,rot:()=>ID},pilar2:{kind:'mesh',geom:'pilar2',sub:2,scale:.98,rot:()=>ID},
   portal:{kind:'mesh',geom:'portal',scale:.95,rot:t=>mmul(mmul(rotAxis(0,1,0,.45*Math.sin(t*.5)),rotAxis(1,0,0,.35)),rotAxis(0,0,1,t*.6))},
 };
 const ocache={};
+// objetos que giram em ciclo são filmados uma vez (N quadros) e depois só tocados: quase não custam nada por quadro
+const fcache={};
+function quadroObj(filme,key,S,t,N,per,rot){const k=filme+'|'+S;let F=fcache[k];if(!F)F=fcache[k]=new Array(N);const i=Math.floor(((t%per+per)%per)/per*N)%N;
+  if(!F[i]){const cv=mk(S,S);cv.getContext('2d').drawImage(objImg(key,S,0,rot(i/N*per)),0,0);F[i]=cv;}return F[i];}
+const PER_EST=2*Math.PI/.55,PER_LIXO=2*Math.PI/1.1,PER_NAVE=2*Math.PI/.7,TAU=2*Math.PI;
+const rotRocha=v=>a=>mmul(rotAxis(.3+v*.4,1,.2*v,a),rotAxis(1,.2,0,v*1.3));
 function objImg(key,S,t,M){const k=key+'|'+S,P=ocache[k]||(ocache[k]=makePiece({...OBJDEF[key],seed:1},S));return P.draw(t,ST.L,{outline:ST.outline,M});}
 // os elementos do Clássico, no espaço. x,y = centro da casa; u = lado da casa (px do canvas)
 const SPR={
@@ -493,21 +504,21 @@ const SPR={
       for(const [lw,st] of [[u*.07,`rgba(110,220,255,${back?.12:.25})`],[u*.022,`rgba(200,245,255,${back?.5:.95})`]]){c.strokeStyle=st;c.lineWidth=lw;
         for(const s of segs){if(s.length<2)continue;c.beginPath();s.forEach((q,i)=>i?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1]));c.stroke();}}}
     c.restore();},
-  estacao(c,x,y,u,t){const S=Math.round(u);c.drawImage(objImg('estacao',S,t),x-S/2,y-S/2);},
-  lixo(c,x,y,u,t){const S=Math.round(u);c.drawImage(objImg('lixo',S,t),x-S/2,y-S/2);
+  estacao(c,x,y,u,t){const S=Math.round(u);c.drawImage(quadroObj('estacao','estacao',S,t,60,PER_EST,OBJDEF.estacao.rot),x-S/2,y-S/2);},
+  lixo(c,x,y,u,t){const S=Math.round(u);c.drawImage(quadroObj('lixo','lixo',S,t,48,PER_LIXO,OBJDEF.lixo.rot),x-S/2,y-S/2);
     for(let i=0;i<3;i++){const a=t*1.6+i*2.1;c.fillStyle='#b8bec8';c.beginPath();c.arc(x+Math.cos(a)*u*.38,y+Math.sin(a)*u*.2,u*.018,0,7);c.fill();}},
   // mureta: fluxo de rochas 3D de a até b
   rochas(c,a,b,t,u){const N=6,L=Math.hypot(b[0]-a[0],b[1]-a[1]),px=-(b[1]-a[1])/L,py=(b[0]-a[0])/L,S=Math.round(u*.3);
     c.save();c.lineCap='round';c.strokeStyle='rgba(200,180,150,.12)';c.lineWidth=u*.14;c.beginPath();c.moveTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.stroke();c.restore();
     for(let i=0;i<N;i++){const s=(t*.16+i/N)%1,wob=Math.sin(t*1.3+i*2)*u*.035,x=a[0]+(b[0]-a[0])*s+px*wob,y=a[1]+(b[1]-a[1])*s+py*wob,sz=S*(.6+.4*(((i*37)%10)/10));
-      const M=mmul(rotAxis(.3+i*.2,1,.1*i,t*(1.2+i*.15)+i),rotAxis(1,.2,0,t*.5+i*1.7)),img=objImg('rochinha',S,t,M);
+      const v=i%3,img=quadroObj('rocha'+v,'rochinha',S,t*(1.2+i*.15)+i,32,TAU,rotRocha(v));
       c.globalAlpha=smooth(0,.12,s)*smooth(1,.88,s);c.drawImage(img,x-sz/2,y-sz/2,sz,sz);c.globalAlpha=1;}},
   // carrinho, opção A: nave 3D com raio trator
   nave(c,x,y,u,t,n){const S=Math.round(u*.78),sy=y-u*.2+Math.sin(t*2)*u*.015,top=sy+u*.06,bot=y+u*.4,g=c.createLinearGradient(0,top,0,bot);
     g.addColorStop(0,'rgba(140,235,255,.55)');g.addColorStop(1,'rgba(140,235,255,.04)');
     c.fillStyle=g;c.beginPath();c.moveTo(x-u*.06,top);c.lineTo(x+u*.06,top);c.lineTo(x+u*.27,bot);c.lineTo(x-u*.27,bot);c.closePath();c.fill();
     c.strokeStyle='rgba(200,250,255,.35)';c.lineWidth=u*.012;for(let i=0;i<3;i++){const k=(t*.7+i/3)%1,yy=top+(bot-top)*k,ww=u*(.06+.21*k);c.beginPath();c.moveTo(x-ww,yy);c.lineTo(x+ww,yy);c.stroke();}
-    drawPeca(c,n,t,x,y+u*.2,u*.42,.6,true);c.drawImage(objImg('nave',S,t),x-S/2,sy-S/2);},
+    drawPeca(c,n,t,x,y+u*.2,u*.42,.6,true);c.drawImage(quadroObj('nave','nave',S,t,48,PER_NAVE,OBJDEF.nave.rot),x-S/2,sy-S/2);},
   // carrinho, opção B: portal 3D
   portal(c,x,y,u,t,n){const S=Math.round(u);c.save();c.translate(x,y);const g=c.createRadialGradient(0,0,0,0,0,u*.32);g.addColorStop(0,'rgba(170,240,255,.55)');g.addColorStop(1,'rgba(90,120,255,0)');c.fillStyle=g;c.beginPath();c.arc(0,0,u*.32,0,7);c.fill();
     c.rotate(-t*1.2);c.strokeStyle='rgba(190,240,255,.45)';c.lineWidth=u*.012;for(let k=0;k<3;k++){c.beginPath();for(let i=0;i<=30;i++){const a=i/30*4+k*2.09,r=u*.02+u*.25*i/30;i?c.lineTo(Math.cos(a)*r,Math.sin(a)*r):c.moveTo(Math.cos(a)*r,Math.sin(a)*r);}c.stroke();}c.restore();
