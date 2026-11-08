@@ -218,6 +218,15 @@ body.espaco .tagline{color:#8fe8ff;letter-spacing:.18em;text-transform:uppercase
 body.espaco .menuFoot{color:#8fe8ff}
 body.espaco .linkBtn{color:#8fe8ff}
 body.espaco #ovos{display:flex;justify-content:center;gap:30px;margin-top:6px}
+/* menu do espaço: música e créditos moram em Opções */
+body.espaco .menuFoot{display:none}
+/* Como jogar do espaço */
+.cjCv{display:block;margin:2px auto 6px}
+.cjDots{display:flex;justify-content:center;gap:7px;margin:4px 0 2px}
+.cjDots i{width:7px;height:7px;border-radius:50%;background:rgba(190,170,255,.3)}
+.cjDots i.on{background:#6ee6ff;box-shadow:0 0 8px rgba(110,230,255,.8)}
+.cjNav{display:flex;gap:8px}
+.cjNav .btn{flex:1}
 #ovos button{width:30px;height:30px;padding:4px;border:0;background:none;color:rgba(207,198,255,.42);filter:drop-shadow(0 0 4px rgba(207,198,255,.35));cursor:pointer}
 #ovos svg{width:22px;height:22px;display:block}\n
 .logo{display:flex;align-items:flex-end;justify-content:center;height:130px}
@@ -3807,19 +3816,18 @@ function espPlanetaGrande(cv, t, modo){
 
 // ---------- menu ----------
 const ORB_MENU=[['Lua',38],['Marte',44],['Saturno',104],['Terra',54],['Júpiter',72]];
-function espLogo(c,W,H,t){
-  const Q=W/360, cx=W/2, cy=H*.52, rx=158*Q, ry=46*Q, tl=-.14;
+function espLogo(c,W,H,u,t){
+  const Q=W/360, cx=W/2, cy=H*.5, rx=158*Q, ry=60*Q, tl=-.14;
   const ps=ORB_MENU.map(([n,sz],i)=>{ const a=t*.28+i*2*Math.PI/ORB_MENU.length, x0=Math.cos(a)*rx, y0=Math.sin(a)*ry;
     return {n,sz,x:cx+x0*Math.cos(tl)-y0*Math.sin(tl),y:cy+x0*Math.sin(tl)+y0*Math.cos(tl),z:Math.sin(a)}; });
   c.save(); c.translate(cx,cy); c.rotate(tl); c.strokeStyle='rgba(255,255,255,.2)'; c.lineWidth=1.5*Q; c.setLineDash([6*Q,7*Q]); c.beginPath(); c.ellipse(0,0,rx,ry,0,0,7); c.stroke(); c.restore(); c.setLineDash([]);
   const pl=p=>ESP.drawPeca(c,p.n,t,p.x,p.y,p.sz*Q,1,true,.7+.3*(p.z+1)/2);
-  ps.filter(p=>p.z<0).sort((a,b)=>a.z-b.z).forEach(pl);
-  // nome: 2048 grande e STARS embaixo, espaçado
+  ps.slice().sort((a,b)=>a.z-b.z).forEach(pl);
+  // nome: 2048 grande e STARS embaixo, espaçado (por cima de todos os planetas)
   c.save(); c.textAlign='center'; c.textBaseline='middle'; c.fillStyle='#f4fbff';
   for(const [txt,px,dy,esp] of [['2048',78,-12,0],['STARS',27,40,.42]]){ c.font=`900 ${px*Q}px Orbitron, sans-serif`; if('letterSpacing' in c) c.letterSpacing=(esp*px*Q)+'px';
     c.shadowColor='rgba(110,230,255,.95)'; c.shadowBlur=26*Q; c.fillText(txt,cx+(esp*px*Q)/2,cy+dy*Q); c.shadowColor='rgba(230,100,255,.7)'; c.shadowBlur=10*Q; c.fillText(txt,cx+(esp*px*Q)/2,cy+dy*Q); }
   c.restore();
-  ps.filter(p=>p.z>=0).sort((a,b)=>a.z-b.z).forEach(pl);
 }
 let TAG_MINA=null;
 function espMenu(){
@@ -3832,11 +3840,15 @@ function espMenu(){
   if(!$('#mInf')){ const b=document.createElement('button'); b.className='btn b big'; b.id='mInf'; b.innerHTML='Clássico<small>4x4 sem fim, até não caber mais nada</small>'; b.onclick=infinitoJoga; $('#mCla').after(b); }
   // no espaço o Clássico vem primeiro, depois a Jornada
   const inf=$('#mInf'); if(on) $('#mCla').before(inf); else $('#mCla').after(inf);
+  // Como jogar: no espaço abre o do 2048 Stars; fora dele, o tutorial da mina
+  const tut=$('#mTut'); if(tut.onclick!==comoJogarEsp) TUT_MINA=tut.onclick; tut.onclick = on ? comoJogarEsp : TUT_MINA;
+  if(!$('#mOpc')){ const b=document.createElement('button'); b.className='btn dim big'; b.id='mOpc'; b.textContent='Opções'; b.onclick=espOpcoes; tut.after(b); }
+  $('#mOpc').style.display = on ? '' : 'none';
   if(!on) return;
   if(document.fonts?.load){ document.fonts.load("900 40px Orbitron"); document.fonts.load("700 20px 'Exo 2'"); }
   let lg=$('#logoEsp');
   if(!lg){ lg=document.createElement('canvas'); lg.id='logoEsp'; menu.insertBefore(lg, menu.firstChild); }
-  const w=Math.min(360, innerWidth-16); espCanvasFixo(lg, w, Math.round(w*.7), espLogo);
+  const w=Math.min(360, innerWidth-16); espCanvasFixo(lg, w, Math.round(w*.74), espLogo);
   if(!$('#ovos')){
     const d=document.createElement('div'); d.id='ovos';
     d.innerHTML=`<button id="ovoMina" aria-label="Mineração">${ICO_PICARETA}</button><button id="ovoLab" aria-label="Laboratório">${ICO_FRASCO}</button>`;
@@ -3844,6 +3856,81 @@ function espMenu(){
     $('#ovoMina').onclick=()=>{ if(localStorage.mina_save) loadGame(); else newGameClick(); };
     $('#ovoLab').onclick=labPainel;
   }
+}
+
+// ---------- opções ----------
+let TUT_MINA=null;
+// janela aberta no menu principal: ganha uma entrada no histórico, para o voltar do celular fechar a janela e não sair do jogo
+const noMenu = () => $('#scrMenu').classList.contains('on');
+function janelaMenu(){ if(noMenu()) guardaVolta(); }
+function fechaJanelaMenu(){ hideOverlay(); if(noMenu() && history.state && history.state.ptui) history.back(); }
+function espOpcoes(){
+  janelaMenu();
+  showOverlay(`<h2>Opções</h2>
+    <button class="btn dim" id="oMus">Música: ${music?'ligada':'desligada'}</button>
+    <button class="btn dim" id="oSnd">Efeitos sonoros: ${sound?'ligados':'desligados'}</button>
+    <button class="btn dim" id="oCred">Créditos</button>
+    <button class="btn b" id="oOk">Voltar</button>`);
+  $('#oMus').onclick=()=>{ toggleMusic(); espOpcoes(); };
+  $('#oSnd').onclick=()=>{ toggleSound(); espOpcoes(); };
+  $('#oCred').onclick=()=>{ showOverlay(`<h2>Créditos</h2><ul>
+      <li><b>Jogo:</b> Guilherme Franco.</li>
+      <li><b>Planetas, texturas e cenário:</b> gerados por código, inspirados em imagens da NASA e da ESA.</li>
+      <li><b>Músicas:</b> trilhas do jogo O Gabinete, todas sintetizadas.</li>
+      <li><b>Fontes:</b> Orbitron e Exo 2 (SIL Open Font License).</li>
+    </ul><button class="btn b" id="oVolta">Voltar</button>`); $('#oVolta').onclick=espOpcoes; };
+  $('#oOk').onclick=fechaJanelaMenu;
+}
+
+// ---------- como jogar ----------
+// três telas: o arrasto (animado), a escada inteira e os dois modos
+function cjCasa(c,x,y,pa){ c.beginPath(); c.arc(x,y,pa*.39,0,7); c.fillStyle='rgba(16,12,38,.55)'; c.fill(); c.lineWidth=Math.max(1,pa*.012); c.strokeStyle='rgba(190,170,255,.25)'; c.stroke(); }
+const cjEase = k => k<=0?0:k>=1?1:k*k*(3-2*k);
+function cjArrasto(c,W,H,u,t){
+  const pa=W/4, cy=pa*.5, s=t%3.6, P1=nomeNivelEsp(1), P2=nomeNivelEsp(2), x=i=>(i+.5)*pa, uu=pa*.82;
+  const fade = s>3.2 ? 1-(s-3.2)/.4 : s<.15 ? s/.15 : 1;
+  for(let i=0;i<4;i++) cjCasa(c,x(i),cy,pa);
+  // o dedo: um ponto aceso que corre da direita para a esquerda, em baixo
+  if(s>.2 && s<1.15){ const k=cjEase((s-.2)/.8), fx=W*(.88-.76*k), fy=pa*1.12;
+    const g=c.createLinearGradient(fx,0,Math.min(W,fx+pa*1.4),0); g.addColorStop(0,'rgba(110,230,255,.8)'); g.addColorStop(1,'rgba(110,230,255,0)');
+    c.strokeStyle=g; c.lineWidth=pa*.07; c.lineCap='round'; c.beginPath(); c.moveTo(fx,fy); c.lineTo(Math.min(W*.9,fx+pa*1.4),fy); c.stroke();
+    c.fillStyle='#bff4ff'; c.shadowColor='rgba(110,230,255,.95)'; c.shadowBlur=pa*.2; c.beginPath(); c.arc(fx,fy,pa*.08,0,7); c.fill(); c.shadowBlur=0; }
+  const k=cjEase((s-.55)/.4);
+  if(s<.95){ ESP.drawPeca(c,P1,t,x(1-k),cy,uu,fade); ESP.drawPeca(c,P1,t,x(3-3*k),cy,uu,fade); }
+  else{ const p=s<1.3 ? 1+.35*Math.sin(Math.PI*(s-.95)/.35) : 1;
+    if(s<1.4){ const r=(s-.95)/.45; c.strokeStyle=`rgba(191,244,255,${(1-r).toFixed(2)})`; c.lineWidth=pa*.04; c.beginPath(); c.arc(x(0),cy,pa*(.2+.3*r),0,7); c.stroke(); }
+    ESP.drawPeca(c,P2,t,x(0),cy,uu,fade,false,p); }
+  if(s>1.45) ESP.drawPeca(c,P1,t,x(3),cy,uu,fade,false,cjEase((s-1.45)/.3));
+}
+function cjEscada(c,W,H,u,t){
+  const col=6, pa=W/col, ph=pa*1.36; c.textAlign='center'; c.textBaseline='middle';
+  ESP.LADDER.forEach((d,i)=>{ const x=(i%col+.5)*pa, y=Math.floor(i/col)*ph+pa*.5;
+    ESP.drawPeca(c,d.n,t,x,y,pa*.74,1,true);
+    c.font=`800 ${pa*.15}px 'Exo 2',sans-serif`; c.fillStyle='#f2b33d'; c.fillText(String(2**(i+1)),x,y+pa*.5);
+    c.font=`700 ${pa*(d.n.length>8?.13:.15)}px 'Exo 2',sans-serif`; c.fillStyle='#f1eefc'; c.fillText(d.n,x,y+pa*.69); });
+}
+function comoJogarEsp(p){
+  if(typeof p!=='number') p=0;
+  janelaMenu();
+  const w=Math.min(300, innerWidth-90), ult=2;
+  const telas=[
+    `<h2>Como jogar</h2><canvas id="cjCv" class="cjCv"></canvas>
+     <p>Arraste o dedo para qualquer lado, em qualquer lugar da tela: todas as peças deslizam juntas.</p>
+     <p>Duas iguais que se encontram viram a próxima da escada. A cada arrasto nasce uma peça nova.</p>`,
+    `<h2>A escada</h2><canvas id="cjCv" class="cjCv"></canvas>
+     <p>Cada junção sobe um degrau. Quanto mais alto, mais pontos.</p>`,
+    `<h2>Dois modos</h2>
+     <p><b>Clássico:</b> o 4x4 sem fim. Junte até não caber mais nada e bata o seu recorde.</p>
+     <p><b>Jornada:</b> fases com uma missão cada e arrastos contados. Os arrastos que sobram viram estrelas. Cada novidade é explicada na fase em que aparece.</p>`,
+  ];
+  const pontos=telas.map((_,i)=>`<i class="${i===p?'on':''}"></i>`).join('');
+  showOverlay(telas[p]+`<div class="cjDots">${pontos}</div><div class="cjNav">
+    <button class="btn dim" id="cjAnt">${p?'‹ Voltar':'Fechar'}</button>
+    <button class="btn b" id="cjProx">${p<ult?'Próximo ›':'Jogar'}</button></div>`);
+  const cv=$('#cjCv');
+  if(cv) espCanvasFixo(cv, w, p===0 ? Math.round(w/4*1.3) : Math.round(w/6*(1.36*2+1.36)), p===0 ? cjArrasto : cjEscada);
+  $('#cjAnt').onclick=()=>{ if(p) comoJogarEsp(p-1); else fechaJanelaMenu(); };
+  $('#cjProx').onclick=()=>{ if(p<ult) comoJogarEsp(p+1); else infinitoJoga(); };
 }
 
 // ---------- nomes do espaço (os nomes da mina continuam em missoes.js: os testes acham as fases por eles) ----------

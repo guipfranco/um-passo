@@ -125,6 +125,15 @@ body.espaco .tagline{color:#8fe8ff;letter-spacing:.18em;text-transform:uppercase
 body.espaco .menuFoot{color:#8fe8ff}
 body.espaco .linkBtn{color:#8fe8ff}
 body.espaco #ovos{display:flex;justify-content:center;gap:30px;margin-top:6px}
+/* menu do espaço: música e créditos moram em Opções */
+body.espaco .menuFoot{display:none}
+/* Como jogar do espaço */
+.cjCv{display:block;margin:2px auto 6px}
+.cjDots{display:flex;justify-content:center;gap:7px;margin:4px 0 2px}
+.cjDots i{width:7px;height:7px;border-radius:50%;background:rgba(190,170,255,.3)}
+.cjDots i.on{background:#6ee6ff;box-shadow:0 0 8px rgba(110,230,255,.8)}
+.cjNav{display:flex;gap:8px}
+.cjNav .btn{flex:1}
 #ovos button{width:30px;height:30px;padding:4px;border:0;background:none;color:rgba(207,198,255,.42);filter:drop-shadow(0 0 4px rgba(207,198,255,.35));cursor:pointer}
 #ovos svg{width:22px;height:22px;display:block}\n
 .logo{display:flex;align-items:flex-end;justify-content:center;height:130px}
