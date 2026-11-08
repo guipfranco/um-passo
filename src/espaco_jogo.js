@@ -59,7 +59,7 @@ function espTile(el,t){
     if(T.presa) ESP.SPR.gaiola(c,x,y,u,tm,'back');
     if(T.t===0) ESP.SPR.lixo(c,x,y,u*.86,tm);
     else if(T.k==='p') ESP.SPR.buraco(c,x,y,u,tm,corNivel(T.t));
-    else ESP.drawPeca(c,nomeNivelEsp(T.t),tm,x,y,u);
+    else ESP.drawPecaVar(c,nomeNivelEsp(T.t),tm,x,y,u,el.dataset.id||'x');
     if(T.presa) ESP.SPR.gaiola(c,x,y,u,tm,'front'); });
 }
 // bloco (a peça que não sai): estação espacial
@@ -118,10 +118,13 @@ function planetaInner(t,cor){
   else if(cor===2) anel=`<path d="M50 3 A47 47 0 0 0 50 97" fill="none" stroke="${CORES_AURA[0]}" stroke-width="5" opacity=".85"/><path d="M50 3 A47 47 0 0 1 50 97" fill="none" stroke="${CORES_AURA[1]}" stroke-width="5" opacity=".85"/>`;
   return `${anel}<image href="${urlPlaneta(t)}" x="0" y="0" width="100" height="100"/>`;
 }
-const buracoInner = t => `<ellipse cx="50" cy="56" rx="46" ry="13" fill="none" stroke="${corNivel(t)}" stroke-width="7" opacity=".85"/><circle cx="50" cy="56" r="21" fill="#000" stroke="#ffe6c8" stroke-width="3"/><path d="M4 56 A46 13 0 0 0 96 56" fill="none" stroke="${corNivel(t)}" stroke-width="7"/>`;
+const fotoEsp=(k,f)=>URL_ESP[k]||(espInicia(),URL_ESP[k]=(()=>{const cv=document.createElement('canvas');cv.width=cv.height=160;f(cv.getContext('2d'));return cv.toDataURL();})());
+const buracoInner = t => `<image href="${fotoEsp('b'+t,c=>ESP.SPR.buraco(c,80,80,150,1.3,corNivel(t)))}" x="0" y="0" width="100" height="100"/>`;
+const buracoVetor = t => `<ellipse cx="50" cy="56" rx="46" ry="13" fill="none" stroke="${corNivel(t)}" stroke-width="7" opacity=".85"/><circle cx="50" cy="56" r="21" fill="#000" stroke="#ffe6c8" stroke-width="3"/><path d="M4 56 A46 13 0 0 0 96 56" fill="none" stroke="${corNivel(t)}" stroke-width="7"/>`;
 const lixoInner = () => `<image href="${urlObj('lixo')}" x="0" y="0" width="100" height="100"/>`;
 const estacaoInner = () => `<image href="${urlObj('estacao')}" x="0" y="0" width="100" height="100"/>`;
-const nebInner = () => `<defs><radialGradient id="nebEsp"><stop offset="0" stop-color="#5a3c30" stop-opacity=".95"/><stop offset="1" stop-color="#5a3c30" stop-opacity="0"/></radialGradient></defs><circle cx="50" cy="50" r="47" fill="url(#nebEsp)"/><circle cx="34" cy="40" r="2" fill="#c49a78"/><circle cx="62" cy="58" r="2.4" fill="#c49a78"/><circle cx="56" cy="32" r="1.6" fill="#c49a78"/>`;
+const nebInner = () => `<image href="${fotoEsp('neb',c=>ESP.SPR.neb(c,80,80,170,2,3))}" x="0" y="0" width="100" height="100"/>`;
+const nebVetor = () => `<defs><radialGradient id="nebEsp"><stop offset="0" stop-color="#5a3c30" stop-opacity=".95"/><stop offset="1" stop-color="#5a3c30" stop-opacity="0"/></radialGradient></defs><circle cx="50" cy="50" r="47" fill="url(#nebEsp)"/><circle cx="34" cy="40" r="2" fill="#c49a78"/><circle cx="62" cy="58" r="2.4" fill="#c49a78"/><circle cx="56" cy="32" r="1.6" fill="#c49a78"/>`;
 const naveInner = t => `<path d="M42 52 L58 52 L80 98 L20 98Z" fill="#8cebff" opacity=".35"/><image href="${urlPlaneta(t)}" x="33" y="62" width="34" height="34" opacity=".7"/><image href="${urlObj('nave')}" x="4" y="0" width="92" height="64"/>`;
 const gaiolaInner = () => [0,60,120].map(a=>`<ellipse cx="50" cy="50" rx="47" ry="17" fill="none" stroke="#a6ecff" stroke-width="3" transform="rotate(${a-25} 50 50)"/>`).join('');
 const ICO_PICARETA='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8.5C8 4.5 16 4.5 19.5 8.5"/><path d="M12 6.2L5.5 20"/></svg>';

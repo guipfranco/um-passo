@@ -70,7 +70,7 @@ async function gera(){const w=f.contentWindow, saida={}, log=[];
    const {ini,b}=achou;
    const mapa=[]; for(let y=0;y<sp.h;y++){ let row=''; for(let x=0;x<sp.w;x++) row+= ini.blocos.some(([a,c])=>a===x&&c===y)?'B':'.'; mapa.push(row); }
    const pecas=ini.tiles.filter(t=>!t.presa).map(t=>{ const a=[t.x,t.y,t.t]; if(t.c!=null||t.k) a.push(t.c??null); if(t.k) a.push(t.k); return a; });
-   const q={mapa, pecas, regras:{spawns:0}, obj:sp.obj, arrastos:b.prof+2, estrelas:[1,2]};
+   const q={mapa, pecas, regras:{spawns:0}, obj:sp.obj, arrastos:b.prof+5, estrelas:[2,4]};
    if(ini.muretas.length) q.muretas=ini.muretas;
    if(ini.carro) q.carroPos=ini.carro;
    if(ini.presa) q.presasPos=[ini.presa];
@@ -78,7 +78,7 @@ async function gera(){const w=f.contentWindow, saida={}, log=[];
  }
  const linhas=Object.entries(saida).map(([k,v])=>`  ${k}: ${JSON.stringify(v).replace(/"([a-zA-Z]+)":/g,'$1:').replace(/"/g,"'")},`);
  out.textContent=log.join('\n')+'\n=====\n'+`// Quebra-cabeças do Clássico: não nasce pedrinha nova, então cada um tem uma solução certa.
-// Gerados e conferidos por busca: testes/calibrar/quebracabecas.html (arrastos = menor solução + 2).
+// Gerados e conferidos por busca: testes/calibrar/quebracabecas.html (arrastos = menor solução + 5; ★★★ até 1 a mais que a menor, ★★ até 3 a mais).
 const QC = {
 ${linhas.join('\n')}
 };`;

@@ -6,7 +6,7 @@ rd = lambda f: open(T + f, encoding='utf-8').read()
 missoes = rd('quebracabecas.js') + rd('missoes.js') + rd('missoes_calib.js')
 classico = rd('classico.js')
 # motor do espaço (o mesmo dos rascunhos) fechado num objeto, para os nomes dele não colidirem com os do jogo
-espaco = ('var ESP=(()=>{' + rd('espaco.js') + '\nreturn {buildTextures,preaquece,makePiece,drawPeca,pecaImg,buildFundo,drawFundo,SPR,LADDER,MUNDOS_ESP,byName,kDe,ST,objImg,DPR};\n})();\n'
+espaco = ('var ESP=(()=>{' + rd('espaco.js') + '\nreturn {buildTextures,preaquece,makePiece,drawPeca,drawPecaVar,pecaImg,buildFundo,drawFundo,SPR,LADDER,MUNDOS_ESP,byName,kDe,ST,objImg,DPR};\n})();\n'
           + rd('espaco_jogo.js'))
 cfg, svg, logic, helpers, sfx, css, autoupd = rd('config.js'), rd('svg.js'), rd('jogo.js'), rd('helpers.js'), rd('sfx.js'), rd('css.css'), rd('autoupd.html')
 gi = rd('gi.js')
@@ -71,6 +71,7 @@ body.espaco .estr i.on{color:#ffd36e;text-shadow:0 0 10px #ffd36e}
 body.espaco .pill,body.espaco .banner{background:rgba(22,17,40,.8) !important;border:1.5px solid rgba(255,255,255,.12);box-shadow:0 4px 0 rgba(0,0,0,.35) !important;color:#f3e9d7 !important}
 body.espaco .pill small,body.espaco .banner span,body.espaco .silhP small{color:#b9a9d9 !important}
 body.espaco .banner{font-size:16px}
+body.espaco .banner #bTitle{font-family:'Exo 2',sans-serif !important;font-weight:700;font-size:17px;letter-spacing:.01em}
 body.espaco .banner span{font-size:13px}
 body.espaco .icon{background:rgba(10,8,25,.55) !important;color:#cfc6ff !important;border:2px solid #cfc6ff99 !important;box-shadow:0 0 10px #cfc6ff44 !important}
 body.espaco .hudCla .ic.en{font-size:0;background:transparent !important;border:2px solid #ffd36e;box-shadow:0 0 10px #ffd36e66}
