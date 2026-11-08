@@ -1,6 +1,6 @@
 <body style="margin:0"><script src="robo.js"></script><iframe id="f" src="../../index.html" width="400" height="800" style="border:0"></iframe><pre id="out" style="position:absolute;left:410px;top:0">x</pre>
 <script>
-// Calibra o Clássico: o robô de robo.js (táticas do 2048 + busca expectimax) também
+// Calibra o Clássico com os dois robôs de robo.js (o do canto e o da meta); em cada fase vale o melhor. Eles também
 // corre atrás das metas (casa marcada, terra, presa, carrinho...) joga cada fase sem limite e mede quantos
 // arrastos usa para cumprir. Daí saem os arrastos e as estrelas de cada fase (src/missoes_calib.js).
 // #N            N partidas por fase (padrão 30)
@@ -13,12 +13,12 @@ async function calibra(){ const w=f.contentWindow, log=[], calib={};
  w.eval('sound=false; music=false');
  w.eval(ROBO);
  w.eval(`
-  window.__fase=(n,teto)=>{
+  window.__fase=(n,teto,qual)=>{
     missaoJoga(n); hideOverlay(); const m=MISSOES[n-1]; S.energy=1e9;
     for(let k=0;k<teto;k++){
       if(cumpriu(m)) return {ok:true, usados:k};
       if(violou(m)) return {ok:false, usados:k};
-      const b=ROBO.escolhe(S.tiles,m); if(!b) return {ok:false, usados:k};
+      const b=ROBO[qual](S.tiles,m); if(!b) return {ok:false, usados:k};
       S.tiles=b.r.tiles; contaMissao(b.r); recolheCarro(); S.moves++;
       for(let i=0;i<(S.path.spawns??1);i++) addTile(undefined,b.dir);
     }
@@ -28,16 +28,19 @@ async function calibra(){ const w=f.contentWindow, log=[], calib={};
  const M=JSON.parse(w.eval('JSON.stringify(MISSOES.map(m=>({nome:m.nome,g:m.g,chefe:!!m.chefe,quebra:m.regras?.spawns===0})))'));
  for(let n=Math.max(1,FA); n<=Math.min(M.length,FB); n++){
    const m=M[n-1]; if(m.quebra){ log.push(`${n} ${m.nome}: quebra-cabeça (fica como gerado)`); continue; }
-   const teto = m.chefe ? 5000 : 800, rs=[];
+   const teto = m.chefe ? 5000 : 800;
    const nr = m.chefe ? Math.max(5,Math.round(NR/4)) : NR;
-   for(let k=0;k<nr;k++){ rs.push(JSON.parse(w.eval(`JSON.stringify(__fase(${n},${teto}))`))); if(k%3===2) await new Promise(r=>setTimeout(r,0)); }
-   const ok=rs.filter(r=>r.ok).map(r=>r.usados), pc=Math.round(100*ok.length/nr);
-   if(!ok.length){ log.push(`${n} ${m.nome}: o robô NÃO CUMPRE`); continue; }
-   const u20=q(ok,.2), u50=q(ok,.5), u80=q(ok,.8), fol=m.chefe?1.15:FOLGA[m.g];
+   // joga com os dois robôs; vale o que se saiu melhor (cumpre mais; empatando, usa menos arrastos)
+   const mede=async qual=>{ const rs=[]; for(let k=0;k<nr;k++){ rs.push(JSON.parse(w.eval(`JSON.stringify(__fase(${n},${teto},'${qual}'))`))); if(k%3===2) await new Promise(r=>setTimeout(r,0)); }
+     const ok=rs.filter(r=>r.ok).map(r=>r.usados); return {qual, pc:Math.round(100*ok.length/nr), ok, u50: ok.length?q(ok,.5):1e9}; };
+   const A=await mede('escolhe'), B=await mede('escolheMeta');
+   const R = Math.abs(A.pc-B.pc)>5 ? (A.pc>B.pc?A:B) : (A.u50<=B.u50?A:B);
+   if(!R.ok.length){ log.push(`${n} ${m.nome}: o robô NÃO CUMPRE`); continue; }
+   const ok=R.ok, pc=R.pc, u20=q(ok,.2), u50=q(ok,.5), u80=q(ok,.8), fol=m.chefe?1.15:FOLGA[m.g];
    // a cauda longa (partidas raras e enormes) não pode puxar demais: no máximo ~1,9x a mediana
    const arr=Math.max(u50+5, Math.ceil(Math.min(u80*fol, u50*1.9))), e2=Math.max(1,arr-u50), e3=Math.max(e2+1,arr-u20);
    calib[n]=[arr,e2,e3];
-   log.push(`${n} ${m.nome}: cumpre ${pc}% | usa p20 ${u20} p50 ${u50} p80 ${u80} | arrastos ${arr}, ★★ sobrando ${e2}, ★★★ sobrando ${e3}${pc<70?'  << DIFÍCIL':''}`);
+   log.push(`${n} ${m.nome}: [${R.qual==='escolhe'?'canto':'meta'}] cumpre ${pc}% | usa p20 ${u20} p50 ${u50} p80 ${u80} | arrastos ${arr}, ★★ sobrando ${e2}, ★★★ sobrando ${e3}${pc<70?'  << DIFÍCIL':''}   (canto ${A.pc}% med ${A.u50<1e9?A.u50:'-'}, meta ${B.pc}% med ${B.u50<1e9?B.u50:'-'})`);
  }
  out.textContent=log.join('\n')+'\n=====\n'+JSON.stringify(calib);
 }

@@ -1,5 +1,6 @@
-"""Calibra as fases do Clássico: um robô que joga como quem sabe 2048 (e corre atrás das metas) joga cada fase
-N vezes sem limite e mede quantos arrastos usa para cumprir. Daí saem os arrastos e as estrelas.
+"""Calibra as fases do Clássico: dois robôs (testes/calibrar/robo.js) jogam cada fase N vezes sem limite e medem
+quantos arrastos usam para cumprir: o do canto (táticas do 2048, sobe alto) e o da meta (corre para as metas;
+melhor nas cores, picareta e Passinho). Em cada fase vale o melhor. Daí saem os arrastos e as estrelas.
 
   python testes/calibrar.py [N] [a-b] [--grava]
 

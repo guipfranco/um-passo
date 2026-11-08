@@ -1,4 +1,5 @@
-// Robô que joga como quem sabe 2048, para medir e calibrar (roda dentro do jogo: w.eval(ROBO)).
+// Robôs para medir e calibrar (rodam dentro do jogo: w.eval(ROBO)).
+// ROBO.escolhe: joga como quem sabe 2048 (sobe alto). ROBO.escolheMeta: corre direto para as metas do Clássico.
 // Táticas conhecidas do 2048 (as mesmas que quem joga bem usa):
 //  - a maior no canto, e a fileira em ordem saindo dela ("cobra"): fileiras e colunas monotônicas;
 //  - casas vazias valem muito (tabuleiro cheio não se recupera);
@@ -66,6 +67,24 @@ window.ROBO = (()=>{
       if(v>bs){ bs=v; best={dir:[dx,dy], r}; } }
     if(!best) for(const [dx,dy] of DIRS){ const r=slide(ts,dx,dy); if(r.moved){ best={dir:[dx,dy], r}; break; } }
     return best; }
-  return {escolhe, heur};
+  // robô "da meta": olha 2 lances com poucas amostras, pesa a cobra e corre direto para as metas.
+  // Joga pior para subir alto, mas é melhor nas cores, na picareta e no Passinho (onde segurar o canto atrapalha).
+  let peso={}, pesoWH='';
+  function notaCobra(ts){
+    if(pesoWH!==W+'x'+H){ const ord=[]; for(let y=H-1,k=0;y>=0;y--,k++){ const xs=[...Array(W).keys()]; if(k%2) xs.reverse(); for(const x of xs) ord.push([x,y]); }
+      peso={}; ord.forEach(([x,y],i)=>peso[x+','+y]=Math.pow(2.2,(W*H-i))); pesoWH=W+'x'+H; }
+    let s=0; for(const t of ts) s+=Math.pow(2,t.t)*(peso[t.x+','+t.y]||1); return s*(1+0.08*(W*H-ts.length)); }
+  function melhorMeta(ts,prof,m){ let best=null, bs=-Infinity;
+    for(const [dx,dy] of DIRS){ const r=slide(ts,dx,dy); if(!r.moved) continue;
+      let sc;
+      if(prof<=1) sc=notaCobra(r.tiles);
+      else { const am=vazias(r.tiles).sort(()=>Math.random()-.5).slice(0,3); sc=0;
+        for(const [x,y] of am){ const b=melhorMeta([...r.tiles,{id:'z',x,y,t:1}],prof-1,m); sc+= b ? b.sc : 0; }
+        sc/=Math.max(1,am.length); }
+      if(m){ const g=ganho(r,m); sc = g<0 ? -1e300 : sc*(1+0.6*g); }
+      if(sc>bs){ bs=sc; best={dir:[dx,dy], r, sc}; } }
+    return best; }
+  const escolheMeta = (ts,m) => melhorMeta(ts,2,m);
+  return {escolhe, escolheMeta, heur};
 })();
 `;
