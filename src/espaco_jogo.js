@@ -7,7 +7,7 @@
 function espacoLigado(){ return localStorage.ptui_espaco==='1'; }
 function noEspaco(){ return espacoLigado() && !!(typeof S!=='undefined' && S && S.missao); }
 // nome do nível no espaço (null fora do Clássico no espaço)
-function nomeEspaco(t){ if(!ESP || t<1 || !noEspaco()) return null; return nomeNivelEsp(t); }
+function nomeEspaco(t){ if(!ESP || t<1 || !espFig()) return null; return nomeNivelEsp(t); }
 function nomeNivelEsp(t){ const L=ESP.LADDER; return L[Math.max(1,Math.min(t,L.length))-1].n; }
 const kNivel = t => t<1 ? 1 : ESP.kDe(nomeNivelEsp(t));
 // cor de cada nível (para o disco do buraco negro, que engole o planeta da mesma cor)
@@ -32,9 +32,10 @@ function espLoop(ms){
   const cel=(typeof cellPx==='function'?cellPx():80)*ESP.DPR;
   for(const cv of ESPC){
     if(!cv.isConnected){ ESPC.delete(cv); continue; }
-    const W=Math.max(8,Math.round(cel*cv._kx)), H=Math.max(8,Math.round(cel*cv._ky));
+    if(cv._fw && cv.offsetParent===null) continue;   // canvas fixo escondido (tela fechada): não desenha
+    const W=cv._fw ? Math.round(cv._fw*ESP.DPR) : Math.max(8,Math.round(cel*cv._kx)), H=cv._fh ? Math.round(cv._fh*ESP.DPR) : Math.max(8,Math.round(cel*cv._ky));
     if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; }
-    const c=cv.getContext('2d'); c.clearRect(0,0,W,H); cv._d(c,W,H,cel,t);
+    const c=cv.getContext('2d'); c.clearRect(0,0,W,H); cv._d(c,W,H,cv._fw?W:cel,t);
   }
 }
 
@@ -79,14 +80,142 @@ function espMarca(el,tipo,a){
 let ceu=null, ceuF=null, ceuChave='';
 function ceuDesenha(t){
   if(!ceu){ ceu=document.createElement('canvas'); ceu.id='ceu'; document.body.prepend(ceu); }
-  const w=innerWidth, h=innerHeight, tema=Math.max(1,(S&&S.tema)||1), chave=w+'x'+h+':'+tema;
+  const w=innerWidth, h=innerHeight, tema=Math.max(1,(S&&S.missao&&S.tema)||1), chave=w+'x'+h+':'+tema;
   if(chave!==ceuChave){ ceuChave=chave; ceu.width=w; ceu.height=h; ceuF=ESP.buildFundo(w,h,ESP.MUNDOS_ESP[(tema-1)%ESP.MUNDOS_ESP.length],{jogo:true}); }
   ESP.drawFundo(ceu.getContext('2d'),ceuF,t);
 }
 // chamado no lugar do cenário da mina
 function espCenario(){
-  const on = noEspaco() && $('#scrGame').classList.contains('on');
+  const on = espTela();
   document.body.classList.toggle('espaco', on); document.documentElement.classList.toggle('espaco', on);
   if(on){ $('#cenario').innerHTML=''; espInicia(); }
   return on;
+}
+
+// ---------- telas do Clássico no espaço: menu, lista de fases, informação, resultado ----------
+// o espaço vale no menu, na lista de fases e dentro das fases do Clássico (a Mineração e o Laboratório seguem na mina)
+function espTela(){
+  if(!espacoLigado()) return false;
+  if(document.getElementById('scrMenu')?.classList.contains('on')) return true;
+  return espFig();
+}
+// as figuras de pedrinha viram planetas (metas, receitas, painel, lista)
+function espFig(){ return espacoLigado() && typeof S!=='undefined' && !!S && !!(S.missao || S.phase==='lista'); }
+
+// canvas de tamanho fixo (em px de tela), fora do tabuleiro
+function espCanvasFixo(cv, w, h, desenha){
+  cv.classList.add('espFix'); cv.style.width=w+'px'; cv.style.height=h+'px'; cv._fw=w; cv._fh=h; cv._d=desenha; ESPC.add(cv); espInicia(); return cv;
+}
+
+// fotos paradas para usar dentro dos SVG do jogo
+const URL_ESP={};
+const urlPlaneta = t => URL_ESP['p'+t] || (espInicia(), URL_ESP['p'+t]=ESP.pecaImg(nomeNivelEsp(t),0,160).toDataURL());
+const urlObj = k => URL_ESP[k] || (espInicia(), URL_ESP[k]=ESP.objImg(k,160,0).toDataURL());
+const CORES_AURA=['#a77bdf','#6fbf5a'];
+function planetaInner(t,cor){
+  let anel='';
+  if(cor===0||cor===1) anel=`<circle cx="50" cy="50" r="47" fill="none" stroke="${CORES_AURA[cor]}" stroke-width="5" opacity=".85"/>`;
+  else if(cor===2) anel=`<path d="M50 3 A47 47 0 0 0 50 97" fill="none" stroke="${CORES_AURA[0]}" stroke-width="5" opacity=".85"/><path d="M50 3 A47 47 0 0 1 50 97" fill="none" stroke="${CORES_AURA[1]}" stroke-width="5" opacity=".85"/>`;
+  return `${anel}<image href="${urlPlaneta(t)}" x="0" y="0" width="100" height="100"/>`;
+}
+const buracoInner = t => `<ellipse cx="50" cy="56" rx="46" ry="13" fill="none" stroke="${corNivel(t)}" stroke-width="7" opacity=".85"/><circle cx="50" cy="56" r="21" fill="#000" stroke="#ffe6c8" stroke-width="3"/><path d="M4 56 A46 13 0 0 0 96 56" fill="none" stroke="${corNivel(t)}" stroke-width="7"/>`;
+const lixoInner = () => `<image href="${urlObj('lixo')}" x="0" y="0" width="100" height="100"/>`;
+const estacaoInner = () => `<image href="${urlObj('estacao')}" x="0" y="0" width="100" height="100"/>`;
+const nebInner = () => `<defs><radialGradient id="nebEsp"><stop offset="0" stop-color="#5a3c30" stop-opacity=".95"/><stop offset="1" stop-color="#5a3c30" stop-opacity="0"/></radialGradient></defs><circle cx="50" cy="50" r="47" fill="url(#nebEsp)"/><circle cx="34" cy="40" r="2" fill="#c49a78"/><circle cx="62" cy="58" r="2.4" fill="#c49a78"/><circle cx="56" cy="32" r="1.6" fill="#c49a78"/>`;
+const naveInner = t => `<path d="M42 52 L58 52 L80 98 L20 98Z" fill="#8cebff" opacity=".35"/><image href="${urlPlaneta(t)}" x="33" y="62" width="34" height="34" opacity=".7"/><image href="${urlObj('nave')}" x="4" y="0" width="92" height="64"/>`;
+const gaiolaInner = () => [0,60,120].map(a=>`<ellipse cx="50" cy="50" rx="47" ry="17" fill="none" stroke="#a6ecff" stroke-width="3" transform="rotate(${a-25} 50 50)"/>`).join('');
+const ICO_PICARETA='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8.5C8 4.5 16 4.5 19.5 8.5"/><path d="M12 6.2L5.5 20"/></svg>';
+const ICO_FRASCO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6"/><path d="M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M7.5 15h9"/></svg>';
+
+// nível do planeta da meta principal de uma fase (null quando a meta não é um planeta)
+function tAlvo(m){
+  const o=metasDe(m)[0]||{};
+  return o.forme || (o.cor!=null?o.t:0) || (o.quebre?Math.max(1,o.quebre):0) || (o.seq?o.seq[o.seq.length-1]:0) || o.alvo || o.solte || o.carrinho || null;
+}
+function icoMetaEsp(m){
+  const o=metasDe(m)[0]||{};
+  if(o.pontos) return `<svg class="mPl" viewBox="0 0 100 100"><path d="M50 12 L61 38 L89 40 L67 58 L74 86 L50 71 L26 86 L33 58 L11 40 L39 38Z" fill="#f2b33d" stroke="#2e2219" stroke-width="4" stroke-linejoin="round"/></svg>`;
+  if(o.combo) return `<svg class="mPl" viewBox="0 0 100 100"><text x="50" y="64" text-anchor="middle" font-size="40" font-weight="700" fill="#ece3f7" font-family="Exo 2, sans-serif">2×</text></svg>`;
+  if(o.terra) return `<svg class="mPl" viewBox="0 0 100 100">${nebInner()}</svg>`;
+  const t=tAlvo(m); return t ? `<img class="mPl" data-t="${t}" alt="">` : '';
+}
+// a lista tem muitas fases: o planeta de cada uma só é gerado quando ela aparece na tela
+let ioLista=null;
+function espListaPlanetas(raiz){
+  ioLista?.disconnect();
+  ioLista=new IntersectionObserver(es=>es.forEach(e=>{ if(!e.isIntersecting) return; const im=e.target; ioLista.unobserve(im);
+    (window.requestIdleCallback||setTimeout)(()=>{ im.src=urlPlaneta(+im.dataset.t); }); }),{rootMargin:'200px'});
+  raiz.querySelectorAll('img.mPl[data-t]').forEach(im=>ioLista.observe(im));
+}
+
+// textos do espaço para a janela da fase
+const COMO_ESP = {
+  alvo:'Órbita dourada: forme o planeta pedido em cima dela (maior também vale).',
+  terra:'Nebulosa escura: uma junção em cima desfaz a nuvem.',
+  solte:'Gaiola de luz: o planeta preso não sai do lugar, mas aceita junção. Junte um igual nele para soltar.',
+  carrinho:'Nave: o planeta do tamanho pedido, ou maior, que parar embaixo dela é recolhido.',
+  combo:'Duas junções no mesmo arrasto contam uma vez.',
+  seq:'Em ordem: cada planeta só conta depois do anterior.',
+  proibido:'Se formar o planeta proibido, a fase acaba.',
+};
+const COMO_FASE_ESP = {
+  cores:'Cada peça tem uma aura roxa ou verde: só junta com a mesma cor.',
+  picareta:'Nascem buracos negros: cada um engole o planeta da cor dele.',
+};
+function regrasEsp(m){
+  const fase=faseDe(m), fm=formaDe(m), n=PATHS[fase].n, tam = fm ? `${fw(fm)}x${fh(fm)}` : `${m.w||n||4}x${m.h||m.w||n||4}`;
+  return `${tam} · ${m.arrastos||'?'} arrastos${charDe(m)==='passinho'?' · Passinho':''}${m.regras?.spawns===0?' · não nasce peça nova':''}`;
+}
+function explicaEsp(m){
+  const fase=faseDe(m), out=[];
+  if(n1(m)) out.push('Arraste para juntar peças iguais: duas iguais viram a do nível seguinte.');
+  if(COMO_FASE_ESP[fase]) out.push(COMO_FASE_ESP[fase]);
+  if(charDe(m)==='passinho') out.push(COMO_CHAR.passinho);
+  for(const o of objsDe(m)) for(const k of Object.keys(COMO_ESP)) if(o[k]!==undefined && !out.includes(COMO_ESP[k])) out.push(COMO_ESP[k]);
+  if(m.regras?.spawns===0) out.push('Quebra-cabeça: não nasce peça nova. Pense antes de arrastar.');
+  return out;
+}
+const n1 = m => MISSOES.indexOf(m)===0;
+
+// planeta grande nas janelas (fase, vitória, derrota)
+function espPlanetaGrande(cv, t, modo){
+  const r=ESP.LADDER.length, pt=Array.from({length:46},(_,i)=>({a:i*2.39996,v:.6+((i*37)%10)/10,f:((i*53)%100)/100}));
+  espCanvasFixo(cv,130,130,(c,W,H,u,tm)=>{ const x=W/2,y=H/2, nome=nomeNivelEsp(t);
+    if(modo==='vit'){ c.save(); c.globalCompositeOperation='lighter'; for(const p of pt){ const k=(tm*.45*p.v+p.f)%1, d=W*.5*(.35+.62*k), s=W*.012*(1+1.4*(1-k));
+        c.fillStyle=`rgba(255,226,150,${((1-k)*.9).toFixed(2)})`; c.fillRect(x+Math.cos(p.a)*d-s/2,y+Math.sin(p.a)*d-s/2,s,s); } c.restore();
+      ESP.drawPeca(c,nome,tm,x,y,W*.74,1,true); }
+    else if(modo==='der'){ ESP.drawPeca(c,nome,tm,x,y,W*.7,.75,true); c.globalCompositeOperation='source-atop'; c.fillStyle='rgba(20,14,40,.45)'; c.fillRect(0,0,W,H); c.globalCompositeOperation='source-over'; }
+    else{ const g=c.createRadialGradient(x,y,0,x,y,W/2); g.addColorStop(0,'rgba(255,255,255,.14)'); g.addColorStop(1,'rgba(255,255,255,0)'); c.fillStyle=g; c.fillRect(0,0,W,H); ESP.drawPeca(c,nome,tm,x,y,W*.86,1,true); } });
+}
+
+// ---------- menu ----------
+const ORB_MENU=[['Lua',38],['Marte',44],['Saturno',104],['Terra',54],['Júpiter',72]];
+function espLogo(c,W,H,t){
+  const Q=W/360, cx=W/2, cy=H*.52, rx=158*Q, ry=46*Q, tl=-.14;
+  const ps=ORB_MENU.map(([n,sz],i)=>{ const a=t*.28+i*2*Math.PI/ORB_MENU.length, x0=Math.cos(a)*rx, y0=Math.sin(a)*ry;
+    return {n,sz,x:cx+x0*Math.cos(tl)-y0*Math.sin(tl),y:cy+x0*Math.sin(tl)+y0*Math.cos(tl),z:Math.sin(a)}; });
+  c.save(); c.translate(cx,cy); c.rotate(tl); c.strokeStyle='rgba(255,255,255,.2)'; c.lineWidth=1.5*Q; c.setLineDash([6*Q,7*Q]); c.beginPath(); c.ellipse(0,0,rx,ry,0,0,7); c.stroke(); c.restore(); c.setLineDash([]);
+  const pl=p=>ESP.drawPeca(c,p.n,t,p.x,p.y,p.sz*Q,1,true,.7+.3*(p.z+1)/2);
+  ps.filter(p=>p.z<0).sort((a,b)=>a.z-b.z).forEach(pl);
+  c.save(); c.font=`900 ${74*Q}px Orbitron, sans-serif`; c.textAlign='center'; c.textBaseline='middle'; c.fillStyle='#f4fbff';
+  c.shadowColor='rgba(110,230,255,.95)'; c.shadowBlur=26*Q; c.fillText('PTUI!',cx,cy); c.shadowColor='rgba(230,100,255,.7)'; c.shadowBlur=10*Q; c.fillText('PTUI!',cx,cy); c.restore();
+  ps.filter(p=>p.z>=0).sort((a,b)=>a.z-b.z).forEach(pl);
+}
+let TAG_MINA=null;
+function espMenu(){
+  const on=espTela(), menu=$('#scrMenu'), tag=menu.querySelector('.tagline');
+  if(TAG_MINA==null) TAG_MINA=tag.textContent;
+  tag.textContent = on ? 'junte poeira até virar galáxia' : TAG_MINA;
+  if(!on) return;
+  if(document.fonts?.load){ document.fonts.load("900 40px Orbitron"); document.fonts.load("700 20px 'Exo 2'"); }
+  let lg=$('#logoEsp');
+  if(!lg){ lg=document.createElement('canvas'); lg.id='logoEsp'; menu.insertBefore(lg, menu.firstChild); }
+  const w=Math.min(360, innerWidth-16); espCanvasFixo(lg, w, Math.round(w*.7), espLogo);
+  if(!$('#ovos')){
+    const d=document.createElement('div'); d.id='ovos';
+    d.innerHTML=`<button id="ovoMina" aria-label="Mineração">${ICO_PICARETA}</button><button id="ovoLab" aria-label="Laboratório">${ICO_FRASCO}</button>`;
+    menu.appendChild(d);
+    $('#ovoMina').onclick=()=>{ if(localStorage.mina_save) loadGame(); else newGameClick(); };
+    $('#ovoLab').onclick=labPainel;
+  }
 }

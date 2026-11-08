@@ -127,9 +127,9 @@ function montaPecasMissao(m){
   const sq=objsDe(m).find(o=>o.seq); S.seqAlvo=sq?sq.seq:null;
 }
 const svgAlvo = t => `<svg viewBox="0 0 100 100"><circle class="anel" cx="50" cy="52" r="41" fill="none" stroke-width="5" stroke-dasharray="11 7"/><g class="fantasma" transform="translate(30 31) scale(.42)">${pedraInner(t)}</g></svg>`;
-function svgTerra(x,y){ const r=cnRng(3001+x*71+y*313);
+function svgTerra(x,y){ if(espFig()) return figSvg(nebInner()); const r=cnRng(3001+x*71+y*313);
   return `<svg viewBox="0 0 100 100"><path d="${cnBolha(50,53,40,35,r,.2,9)}" fill="#8a6440"/><path d="${cnBolha(46,49,26,20,r,.25,8)}" fill="#9c7350"/>${[0,1,2,3].map(()=>`<circle cx="${cnF(24+r()*52)}" cy="${cnF(30+r()*40)}" r="${cnF(2+r()*2.5)}" fill="#6b4a2c"/>`).join('')}</svg>`; }
-const svgCarro = t => `<svg viewBox="0 0 100 100"><rect x="9" y="17" width="82" height="68" rx="13" fill="#6d4a30" stroke="#8d969d" stroke-width="6"/><rect x="19" y="27" width="62" height="48" rx="8" fill="#3b2a1e"/><g class="fantasma" transform="translate(31 31) scale(.38)">${pedraInner(t)}</g></svg>`;
+const svgCarro = t => espFig() ? figSvg(naveInner(t)) : `<svg viewBox="0 0 100 100"><rect x="9" y="17" width="82" height="68" rx="13" fill="#6d4a30" stroke="#8d969d" stroke-width="6"/><rect x="19" y="27" width="62" height="48" rx="8" fill="#3b2a1e"/><g class="fantasma" transform="translate(31 31) scale(.38)">${pedraInner(t)}</g></svg>`;
 const svgCorrente = `<svg viewBox="0 0 100 100"><path d="M10 80 q40 24 80 0" stroke="#5f5258" stroke-width="9" fill="none" stroke-linecap="round"/><path d="M10 80 q40 24 80 0" stroke="#a3969b" stroke-width="3" fill="none" stroke-dasharray="7 6"/><path d="M14 72 l-7 12 M86 72 l7 12 M32 88 l-3 10 M68 88 l3 10" stroke="#5f5258" stroke-width="6" stroke-linecap="round"/></svg>`;
 const marcas = new Map();
 function marcaEl(k, cls, x, y, html){
@@ -162,7 +162,7 @@ function iconeObj(o){
   if(o.seq) return figSvg(pedraInner(o.seq[Math.min(S?.seqI||0,o.seq.length-1)]));
   if(o.alvo) return figSvg(`<circle cx="50" cy="52" r="40" fill="none" stroke="#f2b33d" stroke-width="7" stroke-dasharray="11 7"/><g transform="translate(28 30) scale(.45)">${pedraInner(o.alvo)}</g>`);
   if(o.terra) return svgTerra(0,0).replace('<svg','<svg class=""');
-  if(o.solte) return figSvg(pedraInner(o.solte)+svgCorrente.replace(/<\/?svg[^>]*>/g,''));
+  if(o.solte) return figSvg(pedraInner(o.solte)+(espFig()?gaiolaInner():svgCorrente.replace(/<\/?svg[^>]*>/g,'')));
   if(o.carrinho) return svgCarro(o.carrinho);
   if(o.combo) return figSvg(`<text x="50" y="66" text-anchor="middle" font-size="44" font-weight="700" fill="#c48a1e" font-family="Fredoka">2×</text>`);
   if(o.pontos) return figSvg(`<text x="50" y="64" text-anchor="middle" font-size="36" font-weight="700" fill="#c48a1e" font-family="Fredoka">pts</text>`);
@@ -192,8 +192,8 @@ function figuraMissao(m){
     const rec = (a,b,c) => `<div class="receita">${peca(...a)}<i>+</i>${peca(...b)}<i>=</i>${peca(...c)}</div>`;
     if(o.forme || o.cor!=null){ const t=o.forme||o.t, c=o.cor, nm=x=>rockName(x)+(c!=null?' '+corNome(c):'');
       return `<div class="figM"><div class="alvo"><div class="pecaN">${figSvg(pedraCor(t,c),'fG')}<small class="nomeT" style="--c:${rd(t)}">${noIco(nm(t))}</small></div><b>×${o.n}</b></div>${rec([pedraCor(t-1,c),nm(t-1),t-1],[pedraCor(t-1,c),nm(t-1),t-1],[pedraCor(t,c),nm(t),t])}</div>`; }
-    if(o.quebre){ const t=Math.max(1,o.quebre), nome=o.quebre<=1?'pedrinha':rockName(t);
-      return `<div class="figM"><div class="alvo"><div class="pecaN">${figSvg(pedraInner(t),'fG')}<small class="nomeT" style="--c:${rd(t)}">${noIco(nome)}</small></div><b>×${o.n}</b></div>${rec([pedraInner(t),nome,t],[pickInner(t),'picareta'],[oreSvg(4,50,52,2.6),'minério'])}</div>`; }
+    if(o.quebre){ const t=Math.max(1,o.quebre), nome=o.quebre<=1?(espFig()?'peça':'pedrinha'):rockName(t);
+      return `<div class="figM"><div class="alvo"><div class="pecaN">${figSvg(pedraInner(t),'fG')}<small class="nomeT" style="--c:${rd(t)}">${noIco(nome)}</small></div><b>×${o.n}</b></div>${rec([pedraInner(t),nome,t],[pickInner(t),espFig()?'buraco negro':'picareta'],espFig()?['<circle cx="50" cy="50" r="30" fill="none" stroke="#cfc6ff" stroke-width="5" stroke-dasharray="8 7"/>','engolido']:[oreSvg(4,50,52,2.6),'minério'])}</div>`; }
     if(o.pontos) return `<div class="figM"><div class="alvo"><b>${o.pontos}</b><span>pontos</span></div>${rec([pedraInner(2),rockName(2)+' 4',2],[pedraInner(2),rockName(2)+' 4',2],[pedraInner(3),rockName(3)+' +8',3])}</div>`;
     if(sil) return `<div class="figM"><div class="silF">${sil.map(s=>s.replace('<svg','<svg class="fM"')).join(o.seq?'<i>→</i>':'')}</div></div>`;
   }
@@ -248,12 +248,12 @@ function missoesLista(){
   const r=MISS(), total=Object.values(r).reduce((a,x)=>a+(x.e||0),0);
   setBanner('Clássico', `${total} de ${MISSOES.length*3} estrelas`);
   const atual = (MISSOES.findIndex((m,i)=>!(r[i+1]?.e)) + 1) || MISSOES.length;
-  const lado = ['center','flex-end','center','flex-start'];
+  const lado = ['center','flex-end','center','flex-start'], E=espFig();
   let html='';
   MUNDOS.forEach((g,gi)=>{
     html += `<div class="mGrupo">${disc(g.ico||g.fase,null,'discSm')}<div><b>${gi+1} · ${g.nome}</b><span>${g.desc}</span></div></div>`;
     MISSOES.forEach((m,k)=>{ if(m.g!==gi) return; const n=k+1, lib=liberada(n), sv=faseSalva(n);
-      html += `<div class="mLinha" style="justify-content:${lado[n%4]}"><button class="mNo ${lib?'':'trava'} ${n===atual?'atual':''} ${m.chefe?'chefe':''}" data-m="${n}" ${lib?'':'disabled'}>${n}${estrelasHtml(r[n]?.e||0)}${r[n]?.pm?pegada:''}${sv?'<span class="emAndamento">…</span>':''}</button></div>`; });
+      html += `<div class="mLinha" style="justify-content:${lado[n%4]}"><button class="mNo ${lib?'':'trava'} ${n===atual?'atual':''} ${m.chefe?'chefe':''}" data-m="${n}" ${lib?'':'disabled'}>${E?icoMetaEsp(m)+'<span class="mNum">'+n+'</span>':n}${estrelasHtml(r[n]?.e||0)}${r[n]?.pm?pegada:''}${sv?'<span class="emAndamento">…</span>':''}</button></div>`; });
   });
   const mb=$('#mapBody'); mb.style.height='';
   mb.innerHTML = `<div class="mTrilha">${html}</div>`;
@@ -261,6 +261,8 @@ function missoesLista(){
   const pts=[...tr.querySelectorAll('.mNo')].map(b=>{ const q=b.getBoundingClientRect(); return `${Math.round(q.left+q.width/2-base.left)},${Math.round(q.top+q.height/2-base.top)}`; });
   tr.insertAdjacentHTML('afterbegin', `<svg class="mCaminho" width="${Math.round(base.width)}" height="${Math.round(base.height)}"><polyline points="${pts.join(' ')}"/></svg>`);
   tr.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>missaoInfo(+b.dataset.m));
+  if(E) espListaPlanetas(tr);
+  espCenario();
   mb.querySelector('.mNo.atual')?.scrollIntoView({block:'center'});
 }
 function missaoInfo(n){
@@ -270,17 +272,18 @@ function missaoInfo(n){
   if(charDe(m)==='passinho') explica.push(COMO_CHAR.passinho);
   for(const o of objsDe(m)) for(const k of Object.keys(COMO_PECA)) if(o[k]!==undefined && !explica.includes(COMO_PECA[k])) explica.push(COMO_PECA[k]);
   if(m.regras?.spawns===0) explica.push('Quebra-cabeça: não nasce pedrinha nova. Pense antes de arrastar.');
-  const passinho = b?.e && charDe(m)!=='passinho';
-  showOverlay(`${fm?formaSvg(fm,110):disc(fase,null,'bigDisc')}<h2>Fase ${n}</h2><p class="andarNome">${m.nome}${m.chefe?' · fim do mundo':''}</p>
+  const passinho = b?.e && charDe(m)!=='passinho', E=espFig(), tA=E&&tAlvo(m);
+  showOverlay(`${tA?'<canvas id="espInfo"></canvas>':fm?formaSvg(fm,110):disc(fase,null,'bigDisc')}<h2>Fase ${n}</h2><p class="andarNome">${m.nome}${m.chefe?' · fim do mundo':''}</p>
     <div class="objetivo"><small>${objsDe(m).length>1?'metas':'missão'}</small>${figuraMissao(m)}${objsDe(m).length>1?'':objetivosTxt(m)}</div>
-    <p class="ajuda">${regrasTxt(m)}</p>
-    ${explica.map(t=>`<p class="ajuda">${t}</p>`).join('')}
-    ${fase==='picareta'?regraPicareta():''}
+    <p class="ajuda">${E?regrasEsp(m):regrasTxt(m)}</p>
+    ${(E?explicaEsp(m):explica).map(t=>`<p class="ajuda">${t}</p>`).join('')}
+    ${fase==='picareta'&&!E?regraPicareta():''}
     <p class="metas">★ cumprir · ★★ sobrando ${m.estrelas[0]} arrastos · ★★★ sobrando ${m.estrelas[1]}</p>
     ${b?`<p class="recAtual">Seu melhor: ${estrelasHtml(b.e)} · ${b.t} pontos${b.pm?' · medalha do Passinho':''}</p>`:''}
     ${sv?`<button class="btn g" id="mCont">Continuar (sobram ${sv.st.energy} arrastos)</button><button class="btn dim" id="mJoga">Começar de novo</button>`:'<button class="btn g" id="mJoga">Jogar</button>'}
     ${passinho?`<button class="btn dim" id="mPass">${b.pm?'Jogar de novo no Passinho':'Jogar no Passinho (medalha)'}</button>`:''}
     <button class="btn dim" id="mVolta">Voltar</button>`);
+  if(tA) espPlanetaGrande($('#espInfo'),tA,'info');
   $('#mJoga').onclick=()=>missaoJoga(n);
   if($('#mCont')) $('#mCont').onclick=()=>missaoJoga(n,{retoma:true});
   if($('#mPass')) $('#mPass').onclick=()=>missaoJoga(n,{passinho:true});
@@ -310,19 +313,20 @@ function missaoResultado(ok, motivo){
   if(!ok){
     SFX.naoDeu();
     const falta=metasDe(m).filter(o=>!metaFeita(o)).map(o=>{ const p=progObj(o); return `${objetivoTxt(o)}: ${Math.min(p.at,p.alvo)} de ${p.alvo}`; });
-    showOverlay(`${disc(faseDe(m),null,'bigDisc')}<h2>Não deu</h2><p>${motivo}</p>${falta.map(t=>`<p>${t}.</p>`).join('')}
+    showOverlay(`${espFig()&&tAlvo(m)?'<canvas id="espRes"></canvas>':disc(faseDe(m),null,'bigDisc')}<h2>Não deu</h2><p>${motivo}</p>${falta.map(t=>`<p>${t}.</p>`).join('')}
       <button class="btn g" id="mDeNovo">Tentar de novo</button><button class="btn dim" id="mLista">Ver fases</button>`);
   } else {
     const e=estrelasPor(m,sobra), r=MISS(), ant=r[n]||{}, rec=ant.t!=null && S.pontos>ant.t;
     r[n]={...ant, e:Math.max(e,ant.e||0), t:Math.max(S.pontos,ant.t||0)}; if(S.medalha) r[n].pm=true;
     localStorage.mina_missoes=JSON.stringify(r);
-    showOverlay(`<h2>${S.medalha?'Medalha do Passinho!':'Missão cumprida!'}</h2>${estrelasHtml(e,'estr grande')}
+    showOverlay(`${espFig()&&tAlvo(m)?'<canvas id="espRes"></canvas>':''}<h2>${S.medalha?'Medalha do Passinho!':'Missão cumprida!'}</h2>${estrelasHtml(e,'estr grande')}
       <p>Sobraram <b>${sobra}</b> arrastos · <b>${S.pontos}</b> pontos${rec?' (recorde!)':''}</p>
       ${e<3?`<p class="metas">${e<2?`★★ sobrando ${m.estrelas[0]} · `:''}★★★ sobrando ${m.estrelas[1]}</p>`:''}
       ${n<MISSOES.length?'<button class="btn g" id="mProx">Próxima fase</button>':'<p>Você terminou todas as fases!</p>'}
       <button class="btn dim" id="mDeNovo">Jogar de novo</button><button class="btn dim" id="mLista">Ver fases</button>`);
     if($('#mProx')) $('#mProx').onclick=()=>{ missoesLista(); missaoInfo(n+1); };
   }
+  if($('#espRes')) espPlanetaGrande($('#espRes'),tAlvo(m),ok?'vit':'der');
   $('#mDeNovo').onclick=()=>missaoJoga(n, S.medalha?{passinho:true}:{});
   $('#mLista').onclick=missoesLista;
 }

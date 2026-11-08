@@ -45,6 +45,70 @@ canvas.esp{position:absolute;left:50%;top:50%;width:calc(var(--cell)*var(--kx));
 body.espaco .edge{background:none;border:0;box-shadow:none}
 body.espaco .etq{background:rgba(12,9,26,.84) !important;border:1px solid rgba(255,255,255,.2);color:#ece3f7;font-family:'Exo 2',sans-serif}
 body.espaco .etq b{color:#f2b33d}
+/* ---- Clássico no espaço: telas no estilo neon ---- */
+body.espaco{color:#f3e9d7;font-family:'Exo 2',sans-serif}
+body.espaco h2,body.espaco .banner #bTitle,body.espaco .pill b{font-family:Orbitron,'Exo 2',sans-serif;letter-spacing:.02em}
+body.espaco .btn{font-family:'Exo 2',sans-serif !important;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:rgba(10,8,25,.55) !important;color:#ff8a7a !important;border:2px solid #ff8a7a !important;box-shadow:0 0 16px #ff8a7a55,inset 0 0 14px #ff8a7a2a !important;text-shadow:0 0 10px #ff8a7a;border-radius:14px !important}
+body.espaco .btn.g{color:#ffd36e !important;border-color:#ffd36e !important;box-shadow:0 0 16px #ffd36e66,inset 0 0 14px #ffd36e33 !important;text-shadow:0 0 10px #ffd36e}
+body.espaco .btn.b,body.espaco .btn.lab,body.espaco .btn.lab2{color:#6fe0ff !important;border-color:#6fe0ff !important;box-shadow:0 0 16px #6fe0ff55,inset 0 0 14px #6fe0ff2a !important;text-shadow:0 0 10px #6fe0ff}
+body.espaco .btn.dim{color:#cfc6ff !important;border-color:#cfc6ff !important;box-shadow:0 0 12px #cfc6ff44,inset 0 0 10px #cfc6ff22 !important;text-shadow:0 0 8px #cfc6ff}
+body.espaco .btn:active{transform:translateY(2px)}
+body.espaco .btn small{display:block;text-transform:none;letter-spacing:0;font-weight:500;color:#d8e6f2 !important;text-shadow:none}
+body.espaco #overlay{background:rgba(8,6,16,.6)}
+body.espaco .panel{background:rgba(26,20,46,.96);border:1.5px solid rgba(255,255,255,.14);box-shadow:0 6px 0 rgba(0,0,0,.45);color:#f3e9d7}
+body.espaco .panel h2{color:#f3eefc;font-size:26px}
+body.espaco .panel p,body.espaco .ajuda,body.espaco .andarNome,body.espaco .metas,body.espaco .recAtual{color:#cfc4e6 !important;background:none !important}
+body.espaco .andarNome{color:#ece3f7 !important;font-weight:600}
+body.espaco .objetivo{background:rgba(255,255,255,.06);box-shadow:none;border:1px solid rgba(255,255,255,.1);color:#f3eefc}
+body.espaco .objetivo small{color:#f2b33d}
+body.espaco .objetivo .pecaN small,body.espaco .objetivo .alvo .pecaN small{color:#cfc4e6}
+body.espaco .objetivo .pecaN small.nomeT{color:#f3eefc}
+body.espaco .figM .alvo b{color:#f3eefc}
+body.espaco .figM .receita{background:rgba(255,255,255,.04)}
+body.espaco .figM .receita i{color:#cfc4e6}
+body.espaco .estr i{color:rgba(255,255,255,.25)}
+body.espaco .estr i.on{color:#ffd36e;text-shadow:0 0 10px #ffd36e}
+body.espaco .pill,body.espaco .banner{background:rgba(22,17,40,.8) !important;border:1.5px solid rgba(255,255,255,.12);box-shadow:0 4px 0 rgba(0,0,0,.35) !important;color:#f3e9d7 !important}
+body.espaco .pill small,body.espaco .banner span,body.espaco .silhP small{color:#b9a9d9 !important}
+body.espaco .banner{font-size:16px}
+body.espaco .banner span{font-size:13px}
+body.espaco .icon{background:rgba(10,8,25,.55) !important;color:#cfc6ff !important;border:2px solid #cfc6ff99 !important;box-shadow:0 0 10px #cfc6ff44 !important}
+body.espaco .hudCla .ic.en{font-size:0;background:transparent !important;border:2px solid #ffd36e;box-shadow:0 0 10px #ffd36e66}
+body.espaco .hudCla .ic.en::after{content:'➜';font-size:16px;color:#ffd36e;text-shadow:0 0 6px #ffd36e}
+body.espaco .hudCla .tr{background:rgba(255,255,255,.12) !important;box-shadow:none !important}
+body.espaco .hudCla .tr span{color:#fff3c4}
+body.espaco .hudCla .tr span.off{color:rgba(255,255,255,.3)}
+body.espaco .chipM b{color:#ece3f7}
+body.espaco .nomeP b{color:color-mix(in srgb,var(--c) 45%,#ffffff) !important}
+body.espaco .nomeP{background:color-mix(in srgb,var(--f) 22%,rgba(255,255,255,.06))}
+body.espaco #coach{background:rgba(26,20,46,.96);border:1.5px solid rgba(255,255,255,.16);color:#f3e9d7}
+body.espaco #coach p,body.espaco #coach b{color:#f3e9d7}
+body.espaco #coach .cav{display:none}
+canvas.espFix{display:block;margin:0 auto}
+/* lista de fases: constelação */
+body.espaco .mapBody{background:transparent !important;box-shadow:none !important}
+body.espaco .mapBody::before{display:none}
+body.espaco .mCaminho polyline{stroke:rgba(255,255,255,.35) !important;stroke-dasharray:2 8;stroke-linecap:round;stroke-width:2.5px !important}
+body.espaco .mGrupo{background:rgba(22,17,40,.78);border:1.5px solid rgba(255,255,255,.12);border-radius:18px;box-shadow:0 4px 0 rgba(0,0,0,.35);color:#f3e9d7}
+body.espaco .mGrupo b{color:#f3eefc}
+body.espaco .mGrupo span{color:#b9a9d9}
+body.espaco .mNo{background:rgba(26,20,48,.9) !important;border:2px solid rgba(255,255,255,.22) !important;box-shadow:none !important;color:#f3eefc !important;overflow:visible}
+body.espaco .mNo.atual{border-color:#ffd36e !important;box-shadow:0 0 0 4px rgba(242,179,61,.25),0 0 22px rgba(242,179,61,.6) !important}
+body.espaco .mNo.trava .mPl{opacity:.3}
+body.espaco .mNo.chefe{border-color:#ff8a7a !important;box-shadow:0 0 16px #ff8a7a55 !important}
+body.espaco .mNo .mPl{position:absolute;left:12%;top:12%;width:76%;height:76%;object-fit:contain;pointer-events:none}
+body.espaco .mNo .mNum{position:absolute;left:-7px;top:-7px;min-width:22px;height:22px;border-radius:999px;background:#f2b33d;color:#3a2a08;font:700 12px/22px 'Exo 2',sans-serif;border:1.5px solid #2e2219;text-align:center;padding:0 4px}
+body.espaco .mNo.trava .mNum{background:#3a3352;color:#b9a9d9}
+/* menu: só o Clássico e o Como jogar; Mineração e Laboratório viram dois ícones no rodapé */
+#logoEsp,#ovos{display:none}
+body.espaco #logoEsp{display:block}
+body.espaco #logo,body.espaco .title,body.espaco #mNew,body.espaco #mLab,body.espaco .labRow,body.espaco #mContinue,body.espaco #mBest{display:none !important}
+body.espaco .tagline{color:#8fe8ff;letter-spacing:.18em;text-transform:uppercase;font-size:13px}
+body.espaco .menuFoot{color:#8fe8ff}
+body.espaco .linkBtn{color:#8fe8ff}
+body.espaco #ovos{display:flex;justify-content:center;gap:30px;margin-top:6px}
+#ovos button{width:30px;height:30px;padding:4px;border:0;background:none;color:rgba(207,198,255,.42);filter:drop-shadow(0 0 4px rgba(207,198,255,.35));cursor:pointer}
+#ovos svg{width:22px;height:22px;display:block}\n
 .logo{display:flex;align-items:flex-end;justify-content:center;height:130px}
 .logo svg{overflow:visible;animation:breathe 3s ease-in-out infinite;transform-origin:50% 90%}
 .logo svg:nth-child(2){animation-delay:-1s}.logo svg:nth-child(3){animation-delay:-2s}.logo svg:nth-child(4){animation-delay:-.5s}

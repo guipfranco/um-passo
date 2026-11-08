@@ -41,7 +41,7 @@ function gerarTex(fn){const g=mk(GW,GH),gx=g.getContext('2d'),gi=gx.createImageD
     for(let i=0;i<GW;i++){const lon=((i+.5)/GW-.5)*2*Math.PI;const c=fn(cl*Math.sin(lon),sl,cl*Math.cos(lon),lat,lon);const k=(j*GW+i)*4;
       px[k]=c[0];px[k+1]=c[1];px[k+2]=c[2];px[k+3]=c.length>3?c[3]:255;}}
   gx.putImageData(gi,0,0);const big=mk(TW,TH),bx=big.getContext('2d');bx.imageSmoothingEnabled=true;bx.imageSmoothingQuality='high';bx.drawImage(g,0,0,TW,TH);
-  return {px:bx.getImageData(0,0,TW,TH).data};}
+  return bx.getImageData(0,0,TW,TH).data;}
 function craterField(seed,n,amin,amax){const r=rng(seed);return Array.from({length:n},()=>{const a=amin+(amax-amin)*r()*r();return {d:randDir(r),a,cut:Math.cos(a*1.35)};});}
 function craterShade(x,y,z,cr){let m=0;for(const c of cr){const dt=x*c.d[0]+y*c.d[1]+z*c.d[2];if(dt<c.cut)continue;const q=Math.acos(Math.min(1,dt))/c.a;
   if(q<1)m-=.24*(1-q*q*.6);else m+=.2*(1-(q-1)/.35);}return m;}

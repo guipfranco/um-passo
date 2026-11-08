@@ -77,6 +77,7 @@ function oreSvg(o,cx,cy,s=1){
 }
 function clodSvg(cx,cy,s=1){ return `<path d="M${cx-9*s} ${cy+3*s} q-2 -8 5 -10 q4 -6 10 -2 q7 1 5 9 q1 7 -8 7 q-10 1 -12 -4z" fill="#7a5a3c" stroke="${INK}" stroke-width="1.8"/><circle cx="${cx-2*s}" cy="${cy-2*s}" r="${1.2*s}" fill="#5e4329"/><circle cx="${cx+4*s}" cy="${cy+3*s}" r="${1.4*s}" fill="#5e4329"/>`; }
 function torraoInner(){
+  if(espFig()) return lixoInner();
   return `<path d="M18 70 Q14 48 30 40 Q36 26 52 30 Q66 22 76 36 Q90 42 86 62 Q88 80 66 82 Q50 88 34 82 Q16 82 18 70z" fill="#7a5a3c" stroke="${INK}" stroke-width="2.4"/>
     <circle cx="34" cy="50" r="2" fill="#5e4329"/><circle cx="70" cy="70" r="2.4" fill="#5e4329"/><circle cx="62" cy="40" r="1.6" fill="#5e4329"/><circle cx="26" cy="72" r="1.8" fill="#5e4329"/>
     <path d="M70 32 l5 -6 M76 38 l7 -2" stroke="#6b8f3a" stroke-width="2.4" stroke-linecap="round"/>
@@ -85,6 +86,7 @@ function torraoInner(){
 // opt: {face:[olhos,boca], look:[dx,dy], blushBig, sweat}
 // picareta: a cabeça tem a cor da rocha do mesmo nível (é o par que ela quebra)
 function pickInner(t){
+  if(espFig()) return buracoInner(Math.max(1,t));
   const k=Math.min(t,9), s=.78+k*.05, c=rc(t), d=rd(t);
   return `<ellipse cx="50" cy="88" rx="${24*s}" ry="4.5" fill="#0002"/>
     <g transform="translate(50 54) scale(${s}) rotate(-28)">
@@ -109,6 +111,7 @@ function haloSvg(c){
 // 11 Rubi real (coroa grande e bigode) · 12 Meteorito (em chamas, crateras) · 13 Estrela (corpo de estrela, raios)
 // 14 Galáxia (disco em espiral, anel) · 15+ Galáxia com planetas em órbita (um a mais por nível)
 function pedraInner(t, opt={}){
+  if(t>0 && espFig()) return planetaInner(t, opt.cor);   // Clássico no espaço: a figura vira o planeta do nível
   const r=22+Math.min(t,7)*3, cy=58, s=.8+Math.min(t,9)*.05;
   const [em,mm] = opt.face || moodOf(t);
   const [lx,ly] = opt.look || [0,0];

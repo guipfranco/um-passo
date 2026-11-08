@@ -157,7 +157,7 @@ const icoRock = t => icoSvg(t===0 ? torraoInner() : pedraInner(t));
 const icoOre  = o => icoSvg(oreSvg(o,50,52,2.6));
 let GLOSS=null, GLOSS_RE=null, GLOSS_T=null, GLOSS_M=null;   // GLOSS_T: palavra -> nível da pedrinha (para pintar o nome); GLOSS_M: mina ou espaço
 function gloss(){
-  const modo = noEspaco() ? 'e' : 'm';
+  const modo = espFig() ? 'e' : 'm';
   if(GLOSS && GLOSS_M===modo) return;
   GLOSS={}; GLOSS_T={}; GLOSS_M=modo;
   // no espaço os nomes são os dos corpos celestes; o ícone (o planeta) é gerado só quando aparece num texto
@@ -225,7 +225,7 @@ function freshState(){
 
 // ===================== MENU =====================
 function showMenu(){
-  hideCoach(); hideOverlay(); show('scrMenu'); trilha('menu');
+  hideCoach(); hideOverlay(); show('scrMenu'); trilha('menu'); espMenu();
   const sv = localStorage.mina_save ? JSON.parse(localStorage.mina_save) : null;
   $('#mContinue').style.display = sv ? '' : 'none';
   if(sv) $('#mContinue').innerHTML = `Continuar a mineração<small>andar ${sv.week} · dia ${sv.day} · $${sv.money}</small>`;
@@ -1379,6 +1379,7 @@ function lookOf(t){
   return [0,0];
 }
 function wallInner(){
+  if(espFig()) return estacaoInner();
   return `<rect x="6" y="6" width="88" height="88" rx="16" fill="#6b625a" stroke="${INK}" stroke-width="2.4"/>
     <rect x="12" y="10" width="76" height="12" rx="6" fill="#80776e"/>
     <path d="M6 44 h28 l8 10 h52 M52 6 v22 l-8 12 M28 94 v-22 l10 -10 M72 54 v40" stroke="#4e4740" stroke-width="2.6" fill="none" stroke-linejoin="round"/>`;

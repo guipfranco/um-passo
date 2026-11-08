@@ -138,6 +138,70 @@ canvas.esp{position:absolute;left:50%;top:50%;width:calc(var(--cell)*var(--kx));
 body.espaco .edge{background:none;border:0;box-shadow:none}
 body.espaco .etq{background:rgba(12,9,26,.84) !important;border:1px solid rgba(255,255,255,.2);color:#ece3f7;font-family:'Exo 2',sans-serif}
 body.espaco .etq b{color:#f2b33d}
+/* ---- Clássico no espaço: telas no estilo neon ---- */
+body.espaco{color:#f3e9d7;font-family:'Exo 2',sans-serif}
+body.espaco h2,body.espaco .banner #bTitle,body.espaco .pill b{font-family:Orbitron,'Exo 2',sans-serif;letter-spacing:.02em}
+body.espaco .btn{font-family:'Exo 2',sans-serif !important;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:rgba(10,8,25,.55) !important;color:#ff8a7a !important;border:2px solid #ff8a7a !important;box-shadow:0 0 16px #ff8a7a55,inset 0 0 14px #ff8a7a2a !important;text-shadow:0 0 10px #ff8a7a;border-radius:14px !important}
+body.espaco .btn.g{color:#ffd36e !important;border-color:#ffd36e !important;box-shadow:0 0 16px #ffd36e66,inset 0 0 14px #ffd36e33 !important;text-shadow:0 0 10px #ffd36e}
+body.espaco .btn.b,body.espaco .btn.lab,body.espaco .btn.lab2{color:#6fe0ff !important;border-color:#6fe0ff !important;box-shadow:0 0 16px #6fe0ff55,inset 0 0 14px #6fe0ff2a !important;text-shadow:0 0 10px #6fe0ff}
+body.espaco .btn.dim{color:#cfc6ff !important;border-color:#cfc6ff !important;box-shadow:0 0 12px #cfc6ff44,inset 0 0 10px #cfc6ff22 !important;text-shadow:0 0 8px #cfc6ff}
+body.espaco .btn:active{transform:translateY(2px)}
+body.espaco .btn small{display:block;text-transform:none;letter-spacing:0;font-weight:500;color:#d8e6f2 !important;text-shadow:none}
+body.espaco #overlay{background:rgba(8,6,16,.6)}
+body.espaco .panel{background:rgba(26,20,46,.96);border:1.5px solid rgba(255,255,255,.14);box-shadow:0 6px 0 rgba(0,0,0,.45);color:#f3e9d7}
+body.espaco .panel h2{color:#f3eefc;font-size:26px}
+body.espaco .panel p,body.espaco .ajuda,body.espaco .andarNome,body.espaco .metas,body.espaco .recAtual{color:#cfc4e6 !important;background:none !important}
+body.espaco .andarNome{color:#ece3f7 !important;font-weight:600}
+body.espaco .objetivo{background:rgba(255,255,255,.06);box-shadow:none;border:1px solid rgba(255,255,255,.1);color:#f3eefc}
+body.espaco .objetivo small{color:#f2b33d}
+body.espaco .objetivo .pecaN small,body.espaco .objetivo .alvo .pecaN small{color:#cfc4e6}
+body.espaco .objetivo .pecaN small.nomeT{color:#f3eefc}
+body.espaco .figM .alvo b{color:#f3eefc}
+body.espaco .figM .receita{background:rgba(255,255,255,.04)}
+body.espaco .figM .receita i{color:#cfc4e6}
+body.espaco .estr i{color:rgba(255,255,255,.25)}
+body.espaco .estr i.on{color:#ffd36e;text-shadow:0 0 10px #ffd36e}
+body.espaco .pill,body.espaco .banner{background:rgba(22,17,40,.8) !important;border:1.5px solid rgba(255,255,255,.12);box-shadow:0 4px 0 rgba(0,0,0,.35) !important;color:#f3e9d7 !important}
+body.espaco .pill small,body.espaco .banner span,body.espaco .silhP small{color:#b9a9d9 !important}
+body.espaco .banner{font-size:16px}
+body.espaco .banner span{font-size:13px}
+body.espaco .icon{background:rgba(10,8,25,.55) !important;color:#cfc6ff !important;border:2px solid #cfc6ff99 !important;box-shadow:0 0 10px #cfc6ff44 !important}
+body.espaco .hudCla .ic.en{font-size:0;background:transparent !important;border:2px solid #ffd36e;box-shadow:0 0 10px #ffd36e66}
+body.espaco .hudCla .ic.en::after{content:'➜';font-size:16px;color:#ffd36e;text-shadow:0 0 6px #ffd36e}
+body.espaco .hudCla .tr{background:rgba(255,255,255,.12) !important;box-shadow:none !important}
+body.espaco .hudCla .tr span{color:#fff3c4}
+body.espaco .hudCla .tr span.off{color:rgba(255,255,255,.3)}
+body.espaco .chipM b{color:#ece3f7}
+body.espaco .nomeP b{color:color-mix(in srgb,var(--c) 45%,#ffffff) !important}
+body.espaco .nomeP{background:color-mix(in srgb,var(--f) 22%,rgba(255,255,255,.06))}
+body.espaco #coach{background:rgba(26,20,46,.96);border:1.5px solid rgba(255,255,255,.16);color:#f3e9d7}
+body.espaco #coach p,body.espaco #coach b{color:#f3e9d7}
+body.espaco #coach .cav{display:none}
+canvas.espFix{display:block;margin:0 auto}
+/* lista de fases: constelação */
+body.espaco .mapBody{background:transparent !important;box-shadow:none !important}
+body.espaco .mapBody::before{display:none}
+body.espaco .mCaminho polyline{stroke:rgba(255,255,255,.35) !important;stroke-dasharray:2 8;stroke-linecap:round;stroke-width:2.5px !important}
+body.espaco .mGrupo{background:rgba(22,17,40,.78);border:1.5px solid rgba(255,255,255,.12);border-radius:18px;box-shadow:0 4px 0 rgba(0,0,0,.35);color:#f3e9d7}
+body.espaco .mGrupo b{color:#f3eefc}
+body.espaco .mGrupo span{color:#b9a9d9}
+body.espaco .mNo{background:rgba(26,20,48,.9) !important;border:2px solid rgba(255,255,255,.22) !important;box-shadow:none !important;color:#f3eefc !important;overflow:visible}
+body.espaco .mNo.atual{border-color:#ffd36e !important;box-shadow:0 0 0 4px rgba(242,179,61,.25),0 0 22px rgba(242,179,61,.6) !important}
+body.espaco .mNo.trava .mPl{opacity:.3}
+body.espaco .mNo.chefe{border-color:#ff8a7a !important;box-shadow:0 0 16px #ff8a7a55 !important}
+body.espaco .mNo .mPl{position:absolute;left:12%;top:12%;width:76%;height:76%;object-fit:contain;pointer-events:none}
+body.espaco .mNo .mNum{position:absolute;left:-7px;top:-7px;min-width:22px;height:22px;border-radius:999px;background:#f2b33d;color:#3a2a08;font:700 12px/22px 'Exo 2',sans-serif;border:1.5px solid #2e2219;text-align:center;padding:0 4px}
+body.espaco .mNo.trava .mNum{background:#3a3352;color:#b9a9d9}
+/* menu: só o Clássico e o Como jogar; Mineração e Laboratório viram dois ícones no rodapé */
+#logoEsp,#ovos{display:none}
+body.espaco #logoEsp{display:block}
+body.espaco #logo,body.espaco .title,body.espaco #mNew,body.espaco #mLab,body.espaco .labRow,body.espaco #mContinue,body.espaco #mBest{display:none !important}
+body.espaco .tagline{color:#8fe8ff;letter-spacing:.18em;text-transform:uppercase;font-size:13px}
+body.espaco .menuFoot{color:#8fe8ff}
+body.espaco .linkBtn{color:#8fe8ff}
+body.espaco #ovos{display:flex;justify-content:center;gap:30px;margin-top:6px}
+#ovos button{width:30px;height:30px;padding:4px;border:0;background:none;color:rgba(207,198,255,.42);filter:drop-shadow(0 0 4px rgba(207,198,255,.35));cursor:pointer}
+#ovos svg{width:22px;height:22px;display:block}\n
 .logo{display:flex;align-items:flex-end;justify-content:center;height:130px}
 .logo svg{overflow:visible;animation:breathe 3s ease-in-out infinite;transform-origin:50% 90%}
 .logo svg:nth-child(2){animation-delay:-1s}.logo svg:nth-child(3){animation-delay:-2s}.logo svg:nth-child(4){animation-delay:-.5s}
@@ -967,6 +1031,7 @@ function oreSvg(o,cx,cy,s=1){
 }
 function clodSvg(cx,cy,s=1){ return `<path d="M${cx-9*s} ${cy+3*s} q-2 -8 5 -10 q4 -6 10 -2 q7 1 5 9 q1 7 -8 7 q-10 1 -12 -4z" fill="#7a5a3c" stroke="${INK}" stroke-width="1.8"/><circle cx="${cx-2*s}" cy="${cy-2*s}" r="${1.2*s}" fill="#5e4329"/><circle cx="${cx+4*s}" cy="${cy+3*s}" r="${1.4*s}" fill="#5e4329"/>`; }
 function torraoInner(){
+  if(espFig()) return lixoInner();
   return `<path d="M18 70 Q14 48 30 40 Q36 26 52 30 Q66 22 76 36 Q90 42 86 62 Q88 80 66 82 Q50 88 34 82 Q16 82 18 70z" fill="#7a5a3c" stroke="${INK}" stroke-width="2.4"/>
     <circle cx="34" cy="50" r="2" fill="#5e4329"/><circle cx="70" cy="70" r="2.4" fill="#5e4329"/><circle cx="62" cy="40" r="1.6" fill="#5e4329"/><circle cx="26" cy="72" r="1.8" fill="#5e4329"/>
     <path d="M70 32 l5 -6 M76 38 l7 -2" stroke="#6b8f3a" stroke-width="2.4" stroke-linecap="round"/>
@@ -975,6 +1040,7 @@ function torraoInner(){
 // opt: {face:[olhos,boca], look:[dx,dy], blushBig, sweat}
 // picareta: a cabeça tem a cor da rocha do mesmo nível (é o par que ela quebra)
 function pickInner(t){
+  if(espFig()) return buracoInner(Math.max(1,t));
   const k=Math.min(t,9), s=.78+k*.05, c=rc(t), d=rd(t);
   return `<ellipse cx="50" cy="88" rx="${24*s}" ry="4.5" fill="#0002"/>
     <g transform="translate(50 54) scale(${s}) rotate(-28)">
@@ -999,6 +1065,7 @@ function haloSvg(c){
 // 11 Rubi real (coroa grande e bigode) · 12 Meteorito (em chamas, crateras) · 13 Estrela (corpo de estrela, raios)
 // 14 Galáxia (disco em espiral, anel) · 15+ Galáxia com planetas em órbita (um a mais por nível)
 function pedraInner(t, opt={}){
+  if(t>0 && espFig()) return planetaInner(t, opt.cor);   // Clássico no espaço: a figura vira o planeta do nível
   const r=22+Math.min(t,7)*3, cy=58, s=.8+Math.min(t,9)*.05;
   const [em,mm] = opt.face || moodOf(t);
   const [lx,ly] = opt.look || [0,0];
@@ -1231,7 +1298,7 @@ const icoRock = t => icoSvg(t===0 ? torraoInner() : pedraInner(t));
 const icoOre  = o => icoSvg(oreSvg(o,50,52,2.6));
 let GLOSS=null, GLOSS_RE=null, GLOSS_T=null, GLOSS_M=null;   // GLOSS_T: palavra -> nível da pedrinha (para pintar o nome); GLOSS_M: mina ou espaço
 function gloss(){
-  const modo = noEspaco() ? 'e' : 'm';
+  const modo = espFig() ? 'e' : 'm';
   if(GLOSS && GLOSS_M===modo) return;
   GLOSS={}; GLOSS_T={}; GLOSS_M=modo;
   // no espaço os nomes são os dos corpos celestes; o ícone (o planeta) é gerado só quando aparece num texto
@@ -1299,7 +1366,7 @@ function freshState(){
 
 // ===================== MENU =====================
 function showMenu(){
-  hideCoach(); hideOverlay(); show('scrMenu'); trilha('menu');
+  hideCoach(); hideOverlay(); show('scrMenu'); trilha('menu'); espMenu();
   const sv = localStorage.mina_save ? JSON.parse(localStorage.mina_save) : null;
   $('#mContinue').style.display = sv ? '' : 'none';
   if(sv) $('#mContinue').innerHTML = `Continuar a mineração<small>andar ${sv.week} · dia ${sv.day} · $${sv.money}</small>`;
@@ -2453,6 +2520,7 @@ function lookOf(t){
   return [0,0];
 }
 function wallInner(){
+  if(espFig()) return estacaoInner();
   return `<rect x="6" y="6" width="88" height="88" rx="16" fill="#6b625a" stroke="${INK}" stroke-width="2.4"/>
     <rect x="12" y="10" width="76" height="12" rx="6" fill="#80776e"/>
     <path d="M6 44 h28 l8 10 h52 M52 6 v22 l-8 12 M28 94 v-22 l10 -10 M72 54 v40" stroke="#4e4740" stroke-width="2.6" fill="none" stroke-linejoin="round"/>`;
@@ -2640,9 +2708,9 @@ function montaPecasMissao(m){
   const sq=objsDe(m).find(o=>o.seq); S.seqAlvo=sq?sq.seq:null;
 }
 const svgAlvo = t => `<svg viewBox="0 0 100 100"><circle class="anel" cx="50" cy="52" r="41" fill="none" stroke-width="5" stroke-dasharray="11 7"/><g class="fantasma" transform="translate(30 31) scale(.42)">${pedraInner(t)}</g></svg>`;
-function svgTerra(x,y){ const r=cnRng(3001+x*71+y*313);
+function svgTerra(x,y){ if(espFig()) return figSvg(nebInner()); const r=cnRng(3001+x*71+y*313);
   return `<svg viewBox="0 0 100 100"><path d="${cnBolha(50,53,40,35,r,.2,9)}" fill="#8a6440"/><path d="${cnBolha(46,49,26,20,r,.25,8)}" fill="#9c7350"/>${[0,1,2,3].map(()=>`<circle cx="${cnF(24+r()*52)}" cy="${cnF(30+r()*40)}" r="${cnF(2+r()*2.5)}" fill="#6b4a2c"/>`).join('')}</svg>`; }
-const svgCarro = t => `<svg viewBox="0 0 100 100"><rect x="9" y="17" width="82" height="68" rx="13" fill="#6d4a30" stroke="#8d969d" stroke-width="6"/><rect x="19" y="27" width="62" height="48" rx="8" fill="#3b2a1e"/><g class="fantasma" transform="translate(31 31) scale(.38)">${pedraInner(t)}</g></svg>`;
+const svgCarro = t => espFig() ? figSvg(naveInner(t)) : `<svg viewBox="0 0 100 100"><rect x="9" y="17" width="82" height="68" rx="13" fill="#6d4a30" stroke="#8d969d" stroke-width="6"/><rect x="19" y="27" width="62" height="48" rx="8" fill="#3b2a1e"/><g class="fantasma" transform="translate(31 31) scale(.38)">${pedraInner(t)}</g></svg>`;
 const svgCorrente = `<svg viewBox="0 0 100 100"><path d="M10 80 q40 24 80 0" stroke="#5f5258" stroke-width="9" fill="none" stroke-linecap="round"/><path d="M10 80 q40 24 80 0" stroke="#a3969b" stroke-width="3" fill="none" stroke-dasharray="7 6"/><path d="M14 72 l-7 12 M86 72 l7 12 M32 88 l-3 10 M68 88 l3 10" stroke="#5f5258" stroke-width="6" stroke-linecap="round"/></svg>`;
 const marcas = new Map();
 function marcaEl(k, cls, x, y, html){
@@ -2675,7 +2743,7 @@ function iconeObj(o){
   if(o.seq) return figSvg(pedraInner(o.seq[Math.min(S?.seqI||0,o.seq.length-1)]));
   if(o.alvo) return figSvg(`<circle cx="50" cy="52" r="40" fill="none" stroke="#f2b33d" stroke-width="7" stroke-dasharray="11 7"/><g transform="translate(28 30) scale(.45)">${pedraInner(o.alvo)}</g>`);
   if(o.terra) return svgTerra(0,0).replace('<svg','<svg class=""');
-  if(o.solte) return figSvg(pedraInner(o.solte)+svgCorrente.replace(/<\/?svg[^>]*>/g,''));
+  if(o.solte) return figSvg(pedraInner(o.solte)+(espFig()?gaiolaInner():svgCorrente.replace(/<\/?svg[^>]*>/g,'')));
   if(o.carrinho) return svgCarro(o.carrinho);
   if(o.combo) return figSvg(`<text x="50" y="66" text-anchor="middle" font-size="44" font-weight="700" fill="#c48a1e" font-family="Fredoka">2×</text>`);
   if(o.pontos) return figSvg(`<text x="50" y="64" text-anchor="middle" font-size="36" font-weight="700" fill="#c48a1e" font-family="Fredoka">pts</text>`);
@@ -2705,8 +2773,8 @@ function figuraMissao(m){
     const rec = (a,b,c) => `<div class="receita">${peca(...a)}<i>+</i>${peca(...b)}<i>=</i>${peca(...c)}</div>`;
     if(o.forme || o.cor!=null){ const t=o.forme||o.t, c=o.cor, nm=x=>rockName(x)+(c!=null?' '+corNome(c):'');
       return `<div class="figM"><div class="alvo"><div class="pecaN">${figSvg(pedraCor(t,c),'fG')}<small class="nomeT" style="--c:${rd(t)}">${noIco(nm(t))}</small></div><b>×${o.n}</b></div>${rec([pedraCor(t-1,c),nm(t-1),t-1],[pedraCor(t-1,c),nm(t-1),t-1],[pedraCor(t,c),nm(t),t])}</div>`; }
-    if(o.quebre){ const t=Math.max(1,o.quebre), nome=o.quebre<=1?'pedrinha':rockName(t);
-      return `<div class="figM"><div class="alvo"><div class="pecaN">${figSvg(pedraInner(t),'fG')}<small class="nomeT" style="--c:${rd(t)}">${noIco(nome)}</small></div><b>×${o.n}</b></div>${rec([pedraInner(t),nome,t],[pickInner(t),'picareta'],[oreSvg(4,50,52,2.6),'minério'])}</div>`; }
+    if(o.quebre){ const t=Math.max(1,o.quebre), nome=o.quebre<=1?(espFig()?'peça':'pedrinha'):rockName(t);
+      return `<div class="figM"><div class="alvo"><div class="pecaN">${figSvg(pedraInner(t),'fG')}<small class="nomeT" style="--c:${rd(t)}">${noIco(nome)}</small></div><b>×${o.n}</b></div>${rec([pedraInner(t),nome,t],[pickInner(t),espFig()?'buraco negro':'picareta'],espFig()?['<circle cx="50" cy="50" r="30" fill="none" stroke="#cfc6ff" stroke-width="5" stroke-dasharray="8 7"/>','engolido']:[oreSvg(4,50,52,2.6),'minério'])}</div>`; }
     if(o.pontos) return `<div class="figM"><div class="alvo"><b>${o.pontos}</b><span>pontos</span></div>${rec([pedraInner(2),rockName(2)+' 4',2],[pedraInner(2),rockName(2)+' 4',2],[pedraInner(3),rockName(3)+' +8',3])}</div>`;
     if(sil) return `<div class="figM"><div class="silF">${sil.map(s=>s.replace('<svg','<svg class="fM"')).join(o.seq?'<i>→</i>':'')}</div></div>`;
   }
@@ -2761,12 +2829,12 @@ function missoesLista(){
   const r=MISS(), total=Object.values(r).reduce((a,x)=>a+(x.e||0),0);
   setBanner('Clássico', `${total} de ${MISSOES.length*3} estrelas`);
   const atual = (MISSOES.findIndex((m,i)=>!(r[i+1]?.e)) + 1) || MISSOES.length;
-  const lado = ['center','flex-end','center','flex-start'];
+  const lado = ['center','flex-end','center','flex-start'], E=espFig();
   let html='';
   MUNDOS.forEach((g,gi)=>{
     html += `<div class="mGrupo">${disc(g.ico||g.fase,null,'discSm')}<div><b>${gi+1} · ${g.nome}</b><span>${g.desc}</span></div></div>`;
     MISSOES.forEach((m,k)=>{ if(m.g!==gi) return; const n=k+1, lib=liberada(n), sv=faseSalva(n);
-      html += `<div class="mLinha" style="justify-content:${lado[n%4]}"><button class="mNo ${lib?'':'trava'} ${n===atual?'atual':''} ${m.chefe?'chefe':''}" data-m="${n}" ${lib?'':'disabled'}>${n}${estrelasHtml(r[n]?.e||0)}${r[n]?.pm?pegada:''}${sv?'<span class="emAndamento">…</span>':''}</button></div>`; });
+      html += `<div class="mLinha" style="justify-content:${lado[n%4]}"><button class="mNo ${lib?'':'trava'} ${n===atual?'atual':''} ${m.chefe?'chefe':''}" data-m="${n}" ${lib?'':'disabled'}>${E?icoMetaEsp(m)+'<span class="mNum">'+n+'</span>':n}${estrelasHtml(r[n]?.e||0)}${r[n]?.pm?pegada:''}${sv?'<span class="emAndamento">…</span>':''}</button></div>`; });
   });
   const mb=$('#mapBody'); mb.style.height='';
   mb.innerHTML = `<div class="mTrilha">${html}</div>`;
@@ -2774,6 +2842,8 @@ function missoesLista(){
   const pts=[...tr.querySelectorAll('.mNo')].map(b=>{ const q=b.getBoundingClientRect(); return `${Math.round(q.left+q.width/2-base.left)},${Math.round(q.top+q.height/2-base.top)}`; });
   tr.insertAdjacentHTML('afterbegin', `<svg class="mCaminho" width="${Math.round(base.width)}" height="${Math.round(base.height)}"><polyline points="${pts.join(' ')}"/></svg>`);
   tr.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>missaoInfo(+b.dataset.m));
+  if(E) espListaPlanetas(tr);
+  espCenario();
   mb.querySelector('.mNo.atual')?.scrollIntoView({block:'center'});
 }
 function missaoInfo(n){
@@ -2783,17 +2853,18 @@ function missaoInfo(n){
   if(charDe(m)==='passinho') explica.push(COMO_CHAR.passinho);
   for(const o of objsDe(m)) for(const k of Object.keys(COMO_PECA)) if(o[k]!==undefined && !explica.includes(COMO_PECA[k])) explica.push(COMO_PECA[k]);
   if(m.regras?.spawns===0) explica.push('Quebra-cabeça: não nasce pedrinha nova. Pense antes de arrastar.');
-  const passinho = b?.e && charDe(m)!=='passinho';
-  showOverlay(`${fm?formaSvg(fm,110):disc(fase,null,'bigDisc')}<h2>Fase ${n}</h2><p class="andarNome">${m.nome}${m.chefe?' · fim do mundo':''}</p>
+  const passinho = b?.e && charDe(m)!=='passinho', E=espFig(), tA=E&&tAlvo(m);
+  showOverlay(`${tA?'<canvas id="espInfo"></canvas>':fm?formaSvg(fm,110):disc(fase,null,'bigDisc')}<h2>Fase ${n}</h2><p class="andarNome">${m.nome}${m.chefe?' · fim do mundo':''}</p>
     <div class="objetivo"><small>${objsDe(m).length>1?'metas':'missão'}</small>${figuraMissao(m)}${objsDe(m).length>1?'':objetivosTxt(m)}</div>
-    <p class="ajuda">${regrasTxt(m)}</p>
-    ${explica.map(t=>`<p class="ajuda">${t}</p>`).join('')}
-    ${fase==='picareta'?regraPicareta():''}
+    <p class="ajuda">${E?regrasEsp(m):regrasTxt(m)}</p>
+    ${(E?explicaEsp(m):explica).map(t=>`<p class="ajuda">${t}</p>`).join('')}
+    ${fase==='picareta'&&!E?regraPicareta():''}
     <p class="metas">★ cumprir · ★★ sobrando ${m.estrelas[0]} arrastos · ★★★ sobrando ${m.estrelas[1]}</p>
     ${b?`<p class="recAtual">Seu melhor: ${estrelasHtml(b.e)} · ${b.t} pontos${b.pm?' · medalha do Passinho':''}</p>`:''}
     ${sv?`<button class="btn g" id="mCont">Continuar (sobram ${sv.st.energy} arrastos)</button><button class="btn dim" id="mJoga">Começar de novo</button>`:'<button class="btn g" id="mJoga">Jogar</button>'}
     ${passinho?`<button class="btn dim" id="mPass">${b.pm?'Jogar de novo no Passinho':'Jogar no Passinho (medalha)'}</button>`:''}
     <button class="btn dim" id="mVolta">Voltar</button>`);
+  if(tA) espPlanetaGrande($('#espInfo'),tA,'info');
   $('#mJoga').onclick=()=>missaoJoga(n);
   if($('#mCont')) $('#mCont').onclick=()=>missaoJoga(n,{retoma:true});
   if($('#mPass')) $('#mPass').onclick=()=>missaoJoga(n,{passinho:true});
@@ -2823,19 +2894,20 @@ function missaoResultado(ok, motivo){
   if(!ok){
     SFX.naoDeu();
     const falta=metasDe(m).filter(o=>!metaFeita(o)).map(o=>{ const p=progObj(o); return `${objetivoTxt(o)}: ${Math.min(p.at,p.alvo)} de ${p.alvo}`; });
-    showOverlay(`${disc(faseDe(m),null,'bigDisc')}<h2>Não deu</h2><p>${motivo}</p>${falta.map(t=>`<p>${t}.</p>`).join('')}
+    showOverlay(`${espFig()&&tAlvo(m)?'<canvas id="espRes"></canvas>':disc(faseDe(m),null,'bigDisc')}<h2>Não deu</h2><p>${motivo}</p>${falta.map(t=>`<p>${t}.</p>`).join('')}
       <button class="btn g" id="mDeNovo">Tentar de novo</button><button class="btn dim" id="mLista">Ver fases</button>`);
   } else {
     const e=estrelasPor(m,sobra), r=MISS(), ant=r[n]||{}, rec=ant.t!=null && S.pontos>ant.t;
     r[n]={...ant, e:Math.max(e,ant.e||0), t:Math.max(S.pontos,ant.t||0)}; if(S.medalha) r[n].pm=true;
     localStorage.mina_missoes=JSON.stringify(r);
-    showOverlay(`<h2>${S.medalha?'Medalha do Passinho!':'Missão cumprida!'}</h2>${estrelasHtml(e,'estr grande')}
+    showOverlay(`${espFig()&&tAlvo(m)?'<canvas id="espRes"></canvas>':''}<h2>${S.medalha?'Medalha do Passinho!':'Missão cumprida!'}</h2>${estrelasHtml(e,'estr grande')}
       <p>Sobraram <b>${sobra}</b> arrastos · <b>${S.pontos}</b> pontos${rec?' (recorde!)':''}</p>
       ${e<3?`<p class="metas">${e<2?`★★ sobrando ${m.estrelas[0]} · `:''}★★★ sobrando ${m.estrelas[1]}</p>`:''}
       ${n<MISSOES.length?'<button class="btn g" id="mProx">Próxima fase</button>':'<p>Você terminou todas as fases!</p>'}
       <button class="btn dim" id="mDeNovo">Jogar de novo</button><button class="btn dim" id="mLista">Ver fases</button>`);
     if($('#mProx')) $('#mProx').onclick=()=>{ missoesLista(); missaoInfo(n+1); };
   }
+  if($('#espRes')) espPlanetaGrande($('#espRes'),tAlvo(m),ok?'vit':'der');
   $('#mDeNovo').onclick=()=>missaoJoga(n, S.medalha?{passinho:true}:{});
   $('#mLista').onclick=missoesLista;
 }
@@ -2882,7 +2954,7 @@ function gerarTex(fn){const g=mk(GW,GH),gx=g.getContext('2d'),gi=gx.createImageD
     for(let i=0;i<GW;i++){const lon=((i+.5)/GW-.5)*2*Math.PI;const c=fn(cl*Math.sin(lon),sl,cl*Math.cos(lon),lat,lon);const k=(j*GW+i)*4;
       px[k]=c[0];px[k+1]=c[1];px[k+2]=c[2];px[k+3]=c.length>3?c[3]:255;}}
   gx.putImageData(gi,0,0);const big=mk(TW,TH),bx=big.getContext('2d');bx.imageSmoothingEnabled=true;bx.imageSmoothingQuality='high';bx.drawImage(g,0,0,TW,TH);
-  return {px:bx.getImageData(0,0,TW,TH).data};}
+  return bx.getImageData(0,0,TW,TH).data;}
 function craterField(seed,n,amin,amax){const r=rng(seed);return Array.from({length:n},()=>{const a=amin+(amax-amin)*r()*r();return {d:randDir(r),a,cut:Math.cos(a*1.35)};});}
 function craterShade(x,y,z,cr){let m=0;for(const c of cr){const dt=x*c.d[0]+y*c.d[1]+z*c.d[2];if(dt<c.cut)continue;const q=Math.acos(Math.min(1,dt))/c.a;
   if(q<1)m-=.24*(1-q*q*.6);else m+=.2*(1-(q-1)/.35);}return m;}
@@ -3348,7 +3420,7 @@ return {buildTextures,preaquece,makePiece,drawPeca,pecaImg,buildFundo,drawFundo,
 function espacoLigado(){ return localStorage.ptui_espaco==='1'; }
 function noEspaco(){ return espacoLigado() && !!(typeof S!=='undefined' && S && S.missao); }
 // nome do nível no espaço (null fora do Clássico no espaço)
-function nomeEspaco(t){ if(!ESP || t<1 || !noEspaco()) return null; return nomeNivelEsp(t); }
+function nomeEspaco(t){ if(!ESP || t<1 || !espFig()) return null; return nomeNivelEsp(t); }
 function nomeNivelEsp(t){ const L=ESP.LADDER; return L[Math.max(1,Math.min(t,L.length))-1].n; }
 const kNivel = t => t<1 ? 1 : ESP.kDe(nomeNivelEsp(t));
 // cor de cada nível (para o disco do buraco negro, que engole o planeta da mesma cor)
@@ -3373,9 +3445,10 @@ function espLoop(ms){
   const cel=(typeof cellPx==='function'?cellPx():80)*ESP.DPR;
   for(const cv of ESPC){
     if(!cv.isConnected){ ESPC.delete(cv); continue; }
-    const W=Math.max(8,Math.round(cel*cv._kx)), H=Math.max(8,Math.round(cel*cv._ky));
+    if(cv._fw && cv.offsetParent===null) continue;   // canvas fixo escondido (tela fechada): não desenha
+    const W=cv._fw ? Math.round(cv._fw*ESP.DPR) : Math.max(8,Math.round(cel*cv._kx)), H=cv._fh ? Math.round(cv._fh*ESP.DPR) : Math.max(8,Math.round(cel*cv._ky));
     if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; }
-    const c=cv.getContext('2d'); c.clearRect(0,0,W,H); cv._d(c,W,H,cel,t);
+    const c=cv.getContext('2d'); c.clearRect(0,0,W,H); cv._d(c,W,H,cv._fw?W:cel,t);
   }
 }
 
@@ -3420,16 +3493,144 @@ function espMarca(el,tipo,a){
 let ceu=null, ceuF=null, ceuChave='';
 function ceuDesenha(t){
   if(!ceu){ ceu=document.createElement('canvas'); ceu.id='ceu'; document.body.prepend(ceu); }
-  const w=innerWidth, h=innerHeight, tema=Math.max(1,(S&&S.tema)||1), chave=w+'x'+h+':'+tema;
+  const w=innerWidth, h=innerHeight, tema=Math.max(1,(S&&S.missao&&S.tema)||1), chave=w+'x'+h+':'+tema;
   if(chave!==ceuChave){ ceuChave=chave; ceu.width=w; ceu.height=h; ceuF=ESP.buildFundo(w,h,ESP.MUNDOS_ESP[(tema-1)%ESP.MUNDOS_ESP.length],{jogo:true}); }
   ESP.drawFundo(ceu.getContext('2d'),ceuF,t);
 }
 // chamado no lugar do cenário da mina
 function espCenario(){
-  const on = noEspaco() && $('#scrGame').classList.contains('on');
+  const on = espTela();
   document.body.classList.toggle('espaco', on); document.documentElement.classList.toggle('espaco', on);
   if(on){ $('#cenario').innerHTML=''; espInicia(); }
   return on;
+}
+
+// ---------- telas do Clássico no espaço: menu, lista de fases, informação, resultado ----------
+// o espaço vale no menu, na lista de fases e dentro das fases do Clássico (a Mineração e o Laboratório seguem na mina)
+function espTela(){
+  if(!espacoLigado()) return false;
+  if(document.getElementById('scrMenu')?.classList.contains('on')) return true;
+  return espFig();
+}
+// as figuras de pedrinha viram planetas (metas, receitas, painel, lista)
+function espFig(){ return espacoLigado() && typeof S!=='undefined' && !!S && !!(S.missao || S.phase==='lista'); }
+
+// canvas de tamanho fixo (em px de tela), fora do tabuleiro
+function espCanvasFixo(cv, w, h, desenha){
+  cv.classList.add('espFix'); cv.style.width=w+'px'; cv.style.height=h+'px'; cv._fw=w; cv._fh=h; cv._d=desenha; ESPC.add(cv); espInicia(); return cv;
+}
+
+// fotos paradas para usar dentro dos SVG do jogo
+const URL_ESP={};
+const urlPlaneta = t => URL_ESP['p'+t] || (espInicia(), URL_ESP['p'+t]=ESP.pecaImg(nomeNivelEsp(t),0,160).toDataURL());
+const urlObj = k => URL_ESP[k] || (espInicia(), URL_ESP[k]=ESP.objImg(k,160,0).toDataURL());
+const CORES_AURA=['#a77bdf','#6fbf5a'];
+function planetaInner(t,cor){
+  let anel='';
+  if(cor===0||cor===1) anel=`<circle cx="50" cy="50" r="47" fill="none" stroke="${CORES_AURA[cor]}" stroke-width="5" opacity=".85"/>`;
+  else if(cor===2) anel=`<path d="M50 3 A47 47 0 0 0 50 97" fill="none" stroke="${CORES_AURA[0]}" stroke-width="5" opacity=".85"/><path d="M50 3 A47 47 0 0 1 50 97" fill="none" stroke="${CORES_AURA[1]}" stroke-width="5" opacity=".85"/>`;
+  return `${anel}<image href="${urlPlaneta(t)}" x="0" y="0" width="100" height="100"/>`;
+}
+const buracoInner = t => `<ellipse cx="50" cy="56" rx="46" ry="13" fill="none" stroke="${corNivel(t)}" stroke-width="7" opacity=".85"/><circle cx="50" cy="56" r="21" fill="#000" stroke="#ffe6c8" stroke-width="3"/><path d="M4 56 A46 13 0 0 0 96 56" fill="none" stroke="${corNivel(t)}" stroke-width="7"/>`;
+const lixoInner = () => `<image href="${urlObj('lixo')}" x="0" y="0" width="100" height="100"/>`;
+const estacaoInner = () => `<image href="${urlObj('estacao')}" x="0" y="0" width="100" height="100"/>`;
+const nebInner = () => `<defs><radialGradient id="nebEsp"><stop offset="0" stop-color="#5a3c30" stop-opacity=".95"/><stop offset="1" stop-color="#5a3c30" stop-opacity="0"/></radialGradient></defs><circle cx="50" cy="50" r="47" fill="url(#nebEsp)"/><circle cx="34" cy="40" r="2" fill="#c49a78"/><circle cx="62" cy="58" r="2.4" fill="#c49a78"/><circle cx="56" cy="32" r="1.6" fill="#c49a78"/>`;
+const naveInner = t => `<path d="M42 52 L58 52 L80 98 L20 98Z" fill="#8cebff" opacity=".35"/><image href="${urlPlaneta(t)}" x="33" y="62" width="34" height="34" opacity=".7"/><image href="${urlObj('nave')}" x="4" y="0" width="92" height="64"/>`;
+const gaiolaInner = () => [0,60,120].map(a=>`<ellipse cx="50" cy="50" rx="47" ry="17" fill="none" stroke="#a6ecff" stroke-width="3" transform="rotate(${a-25} 50 50)"/>`).join('');
+const ICO_PICARETA='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 8.5C8 4.5 16 4.5 19.5 8.5"/><path d="M12 6.2L5.5 20"/></svg>';
+const ICO_FRASCO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6"/><path d="M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M7.5 15h9"/></svg>';
+
+// nível do planeta da meta principal de uma fase (null quando a meta não é um planeta)
+function tAlvo(m){
+  const o=metasDe(m)[0]||{};
+  return o.forme || (o.cor!=null?o.t:0) || (o.quebre?Math.max(1,o.quebre):0) || (o.seq?o.seq[o.seq.length-1]:0) || o.alvo || o.solte || o.carrinho || null;
+}
+function icoMetaEsp(m){
+  const o=metasDe(m)[0]||{};
+  if(o.pontos) return `<svg class="mPl" viewBox="0 0 100 100"><path d="M50 12 L61 38 L89 40 L67 58 L74 86 L50 71 L26 86 L33 58 L11 40 L39 38Z" fill="#f2b33d" stroke="#2e2219" stroke-width="4" stroke-linejoin="round"/></svg>`;
+  if(o.combo) return `<svg class="mPl" viewBox="0 0 100 100"><text x="50" y="64" text-anchor="middle" font-size="40" font-weight="700" fill="#ece3f7" font-family="Exo 2, sans-serif">2×</text></svg>`;
+  if(o.terra) return `<svg class="mPl" viewBox="0 0 100 100">${nebInner()}</svg>`;
+  const t=tAlvo(m); return t ? `<img class="mPl" data-t="${t}" alt="">` : '';
+}
+// a lista tem muitas fases: o planeta de cada uma só é gerado quando ela aparece na tela
+let ioLista=null;
+function espListaPlanetas(raiz){
+  ioLista?.disconnect();
+  ioLista=new IntersectionObserver(es=>es.forEach(e=>{ if(!e.isIntersecting) return; const im=e.target; ioLista.unobserve(im);
+    (window.requestIdleCallback||setTimeout)(()=>{ im.src=urlPlaneta(+im.dataset.t); }); }),{rootMargin:'200px'});
+  raiz.querySelectorAll('img.mPl[data-t]').forEach(im=>ioLista.observe(im));
+}
+
+// textos do espaço para a janela da fase
+const COMO_ESP = {
+  alvo:'Órbita dourada: forme o planeta pedido em cima dela (maior também vale).',
+  terra:'Nebulosa escura: uma junção em cima desfaz a nuvem.',
+  solte:'Gaiola de luz: o planeta preso não sai do lugar, mas aceita junção. Junte um igual nele para soltar.',
+  carrinho:'Nave: o planeta do tamanho pedido, ou maior, que parar embaixo dela é recolhido.',
+  combo:'Duas junções no mesmo arrasto contam uma vez.',
+  seq:'Em ordem: cada planeta só conta depois do anterior.',
+  proibido:'Se formar o planeta proibido, a fase acaba.',
+};
+const COMO_FASE_ESP = {
+  cores:'Cada peça tem uma aura roxa ou verde: só junta com a mesma cor.',
+  picareta:'Nascem buracos negros: cada um engole o planeta da cor dele.',
+};
+function regrasEsp(m){
+  const fase=faseDe(m), fm=formaDe(m), n=PATHS[fase].n, tam = fm ? `${fw(fm)}x${fh(fm)}` : `${m.w||n||4}x${m.h||m.w||n||4}`;
+  return `${tam} · ${m.arrastos||'?'} arrastos${charDe(m)==='passinho'?' · Passinho':''}${m.regras?.spawns===0?' · não nasce peça nova':''}`;
+}
+function explicaEsp(m){
+  const fase=faseDe(m), out=[];
+  if(n1(m)) out.push('Arraste para juntar peças iguais: duas iguais viram a do nível seguinte.');
+  if(COMO_FASE_ESP[fase]) out.push(COMO_FASE_ESP[fase]);
+  if(charDe(m)==='passinho') out.push(COMO_CHAR.passinho);
+  for(const o of objsDe(m)) for(const k of Object.keys(COMO_ESP)) if(o[k]!==undefined && !out.includes(COMO_ESP[k])) out.push(COMO_ESP[k]);
+  if(m.regras?.spawns===0) out.push('Quebra-cabeça: não nasce peça nova. Pense antes de arrastar.');
+  return out;
+}
+const n1 = m => MISSOES.indexOf(m)===0;
+
+// planeta grande nas janelas (fase, vitória, derrota)
+function espPlanetaGrande(cv, t, modo){
+  const r=ESP.LADDER.length, pt=Array.from({length:46},(_,i)=>({a:i*2.39996,v:.6+((i*37)%10)/10,f:((i*53)%100)/100}));
+  espCanvasFixo(cv,130,130,(c,W,H,u,tm)=>{ const x=W/2,y=H/2, nome=nomeNivelEsp(t);
+    if(modo==='vit'){ c.save(); c.globalCompositeOperation='lighter'; for(const p of pt){ const k=(tm*.45*p.v+p.f)%1, d=W*.5*(.35+.62*k), s=W*.012*(1+1.4*(1-k));
+        c.fillStyle=`rgba(255,226,150,${((1-k)*.9).toFixed(2)})`; c.fillRect(x+Math.cos(p.a)*d-s/2,y+Math.sin(p.a)*d-s/2,s,s); } c.restore();
+      ESP.drawPeca(c,nome,tm,x,y,W*.74,1,true); }
+    else if(modo==='der'){ ESP.drawPeca(c,nome,tm,x,y,W*.7,.75,true); c.globalCompositeOperation='source-atop'; c.fillStyle='rgba(20,14,40,.45)'; c.fillRect(0,0,W,H); c.globalCompositeOperation='source-over'; }
+    else{ const g=c.createRadialGradient(x,y,0,x,y,W/2); g.addColorStop(0,'rgba(255,255,255,.14)'); g.addColorStop(1,'rgba(255,255,255,0)'); c.fillStyle=g; c.fillRect(0,0,W,H); ESP.drawPeca(c,nome,tm,x,y,W*.86,1,true); } });
+}
+
+// ---------- menu ----------
+const ORB_MENU=[['Lua',38],['Marte',44],['Saturno',104],['Terra',54],['Júpiter',72]];
+function espLogo(c,W,H,t){
+  const Q=W/360, cx=W/2, cy=H*.52, rx=158*Q, ry=46*Q, tl=-.14;
+  const ps=ORB_MENU.map(([n,sz],i)=>{ const a=t*.28+i*2*Math.PI/ORB_MENU.length, x0=Math.cos(a)*rx, y0=Math.sin(a)*ry;
+    return {n,sz,x:cx+x0*Math.cos(tl)-y0*Math.sin(tl),y:cy+x0*Math.sin(tl)+y0*Math.cos(tl),z:Math.sin(a)}; });
+  c.save(); c.translate(cx,cy); c.rotate(tl); c.strokeStyle='rgba(255,255,255,.2)'; c.lineWidth=1.5*Q; c.setLineDash([6*Q,7*Q]); c.beginPath(); c.ellipse(0,0,rx,ry,0,0,7); c.stroke(); c.restore(); c.setLineDash([]);
+  const pl=p=>ESP.drawPeca(c,p.n,t,p.x,p.y,p.sz*Q,1,true,.7+.3*(p.z+1)/2);
+  ps.filter(p=>p.z<0).sort((a,b)=>a.z-b.z).forEach(pl);
+  c.save(); c.font=`900 ${74*Q}px Orbitron, sans-serif`; c.textAlign='center'; c.textBaseline='middle'; c.fillStyle='#f4fbff';
+  c.shadowColor='rgba(110,230,255,.95)'; c.shadowBlur=26*Q; c.fillText('PTUI!',cx,cy); c.shadowColor='rgba(230,100,255,.7)'; c.shadowBlur=10*Q; c.fillText('PTUI!',cx,cy); c.restore();
+  ps.filter(p=>p.z>=0).sort((a,b)=>a.z-b.z).forEach(pl);
+}
+let TAG_MINA=null;
+function espMenu(){
+  const on=espTela(), menu=$('#scrMenu'), tag=menu.querySelector('.tagline');
+  if(TAG_MINA==null) TAG_MINA=tag.textContent;
+  tag.textContent = on ? 'junte poeira até virar galáxia' : TAG_MINA;
+  if(!on) return;
+  if(document.fonts?.load){ document.fonts.load("900 40px Orbitron"); document.fonts.load("700 20px 'Exo 2'"); }
+  let lg=$('#logoEsp');
+  if(!lg){ lg=document.createElement('canvas'); lg.id='logoEsp'; menu.insertBefore(lg, menu.firstChild); }
+  const w=Math.min(360, innerWidth-16); espCanvasFixo(lg, w, Math.round(w*.7), espLogo);
+  if(!$('#ovos')){
+    const d=document.createElement('div'); d.id='ovos';
+    d.innerHTML=`<button id="ovoMina" aria-label="Mineração">${ICO_PICARETA}</button><button id="ovoLab" aria-label="Laboratório">${ICO_FRASCO}</button>`;
+    menu.appendChild(d);
+    $('#ovoMina').onclick=()=>{ if(localStorage.mina_save) loadGame(); else newGameClick(); };
+    $('#ovoLab').onclick=labPainel;
+  }
 }
 function setBanner(title,sub){ if(title!==null) $('#bTitle').innerHTML=enrich(title); $('#bSub').innerHTML=enrich(sub||''); }
 function anim(id,name){ const el=els.get(id); if(!el) return; const f=el.firstChild; f.classList.remove(name); void f.offsetWidth; f.classList.add(name); }
