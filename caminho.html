@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2048 Stars · o caminho da Jornada</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html{background:#0b0a18}
+body{margin:0;color:#e6e2ff;font-family:'Exo 2',system-ui,sans-serif;background:radial-gradient(120% 60% at 30% 0%,#2a1652 0%,#120d2a 50%,#0b0a18 100%) fixed}
+main{max-width:560px;margin:0 auto;padding:16px 12px 60px;display:flex;flex-direction:column;gap:14px}
+h1{margin:4px 0 0;font:900 21px Orbitron,sans-serif;letter-spacing:.04em;color:#f4fbff;text-shadow:0 0 14px rgba(110,230,255,.6)}
+h2{margin:14px 0 2px;font:700 14px Orbitron,sans-serif;letter-spacing:.07em;color:#9fe9ff}
+p{margin:0;font-size:15px;line-height:1.45;color:#cfc8f2}
+.sub{font-size:13.5px;color:#9a91c9}
+.card{background:rgba(20,16,44,.78);border:1.5px solid rgba(160,140,255,.22);border-radius:16px;padding:12px 13px;display:flex;flex-direction:column;gap:8px}
+ol.regra{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:15px;line-height:1.4}
+ol.regra b{color:#ffd877}
+.leg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:#b9b1e6}
+.leg i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.c-est{background:#ffc94a}.c-solo{background:#5fdcff}.c-mix{background:#b07cff}.c-nada{background:rgba(255,255,255,.08)}
+.trilha{display:flex;flex-direction:column;gap:3px}
+.trilha .rot{display:flex;justify-content:space-between;gap:8px;font-size:13.5px}
+.trilha .rot b{color:#f1eefc;font-weight:700}
+.trilha .rot span{color:#9a91c9;font-size:12.5px;text-align:right}
+.trilha .rot span.ruim{color:#ff9a8a}
+.fita{display:flex;gap:3px;height:16px}
+.mundo{flex:1;display:flex;gap:1px}
+.mundo a{flex:1;border-radius:2px;display:block}
+.fita.cab .mundo{font-size:10px;color:#8b83bd;justify-content:center;align-items:center;height:14px;letter-spacing:.02em}
+.mcard h3{margin:0;font:700 15px Orbitron,sans-serif;color:#f4fbff;letter-spacing:.04em}
+.mcard h3 small{display:block;font:500 13px 'Exo 2',sans-serif;color:#9a91c9;letter-spacing:0;margin-top:3px}
+.fase{border-top:1px solid rgba(160,140,255,.15);padding-top:9px;display:flex;flex-direction:column;gap:5px;scroll-margin-top:10px}
+.fase:target{background:rgba(95,220,255,.08);border-radius:10px}
+.fase .tit{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
+.fase .num{font:900 14px Orbitron,sans-serif;color:#9fe9ff;min-width:24px}
+.fase .nome{font-weight:700;font-size:15.5px;color:#f1eefc}
+.tag{font-size:11.5px;font-weight:700;border-radius:999px;padding:1px 8px;letter-spacing:.03em}
+.t-chefe{background:#4a2f0c;color:#ffcf7a}.t-qc{background:#203a4d;color:#9fe0ff}.t-livre{background:#1f3d2c;color:#9be8b4}
+.meta{font-size:14.5px;color:#d9d3fb;padding-left:31px;line-height:1.35}
+.chips{display:flex;flex-wrap:wrap;gap:5px;padding-left:31px}
+.chip{font-size:12px;border-radius:7px;padding:2px 7px;background:rgba(255,255,255,.07);color:#cfc8f2}
+.chip.novo{background:#ffc94a;color:#2c1d00;font-weight:800}
+.chip.tab{background:transparent;border:1px solid rgba(255,255,255,.14);color:#a9a1d6}
+.dif{display:flex;align-items:center;gap:8px;padding-left:31px;font-size:12.5px;color:#a9a1d6}
+.barra{flex:1;max-width:150px;height:7px;border-radius:9px;background:rgba(255,255,255,.08);overflow:hidden}
+.barra i{display:block;height:100%;border-radius:9px}
+.aviso{padding-left:31px;font-size:13px;color:#ffb3a6;line-height:1.35}
+.aviso::before{content:'⚠ '}
+.prob{display:flex;flex-direction:column;gap:6px}
+.prob h4{margin:6px 0 0;font-size:14.5px;color:#ffd877}
+.prob p{font-size:14px}
+.prob a,.fase a{color:#7fe0ff}
+</style>
+</head>
+<body>
+<main>
+  <h1>O CAMINHO DA JORNADA</h1>
+  <p class="sub" id="gerado"></p>
+  <p>Como cada mecânica é apresentada, treinada e misturada ao longo das 96 fases. Serve para garantir que cada novidade seja explorada aos poucos, e o suficiente, antes da próxima.</p>
+
+  <h2>A REGRA</h2>
+  <div class="card"><ol class="regra">
+    <li><b>Uma novidade por fase.</b> Nunca duas estreias juntas.</li>
+    <li><b>Estreia sozinha e fácil:</b> só a meta nova, pedindo 1 (uma órbita, uma presa...), sem outra meta e num tabuleiro conhecido.</li>
+    <li><b>Treino:</b> pelo menos 2 fases com a mecânica sozinha, subindo aos poucos (pedir 2, peça maior, outro tamanho ou formato).</li>
+    <li><b>Só então misturar</b>, e com algo que também já foi bem treinado.</li>
+    <li><b>Dificuldade sobe devagar:</b> o robô casual (uma pessoa comum) cumpre pelo menos 80%, e não cai mais de 20 pontos de uma fase para a outra. As fases finais de mundo podem ser o pico.</li>
+  </ol></div>
+
+  <h2>ONDE CADA MECÂNICA APARECE</h2>
+  <div class="card">
+    <div class="leg"><span><i class="c-est"></i>estreia</span><span><i class="c-solo"></i>sozinha</span><span><i class="c-mix"></i>misturada com outra</span></div>
+    <div id="trilhas" class="trilha" style="gap:10px"></div>
+    <p class="sub">Cada risquinho é uma fase (12 por mundo). Toque num risquinho para ver a fase.</p>
+  </div>
+
+  <h2>PROBLEMAS ENCONTRADOS</h2>
+  <div class="card prob" id="probs"></div>
+
+  <h2>FASE A FASE</h2>
+  <div id="mundos" style="display:flex;flex-direction:column;gap:14px"></div>
+</main>
+<script src="caminho_dados.js?v=1"></script>
+<script>
+const {mundos, fases, dificuldade:DIF, gerado} = CAMINHO;
+document.getElementById('gerado').textContent = `Gerado do jogo em ${gerado.split('-').reverse().join('/')}. A dificuldade é a da última calibragem com os robôs.`;
+// mecânicas (o "forme" puro é a base e não conta; tamanho, formato e quebra-cabeça são variações, mostradas à parte)
+const MEC = [
+  ['pontos',   'Pontos',                 f=>f.metas.includes('pontos')],
+  ['combo',    'Duas de uma vez (combo)',f=>f.metas.includes('combo')],
+  ['seq',      'Em ordem',               f=>f.metas.includes('seq')],
+  ['proibido', 'Sem formar uma peça',    f=>f.metas.includes('proibido')],
+  ['estacao',  'Estação (bloco)',        f=>f.estacoes>0],
+  ['mureta',   'Fluxo de rochas (mureta)',f=>f.muretas>0],
+  ['leve',     'Levar até a órbita',     f=>f.metas.includes('leve')],
+  ['alvo',     'Formar na órbita',       f=>f.metas.includes('alvo')],
+  ['nebulosa', 'Nebulosa (desfazer)',    f=>f.nebulosa>0||f.metas.includes('terra')],
+  ['lixo',     'Lixo espacial',          f=>f.lixo>0],
+  ['presa',    'Planeta preso',          f=>f.presas>0||f.metas.includes('solte')],
+  ['nave',     'Nave (levar até ela)',   f=>f.nave||f.metas.includes('carrinho')],
+  ['aura',     'Auras (cores)',          f=>f.auras||f.metas.includes('cor')],
+  ['buraco',   'Buraco negro',           f=>f.buracos||f.metas.includes('quebre')],
+  ['passinho', 'Passinho',               f=>f.passinho],
+];
+const META_DA = {alvo:'alvo', leve:'leve', nebulosa:'terra', presa:'solte', nave:'carrinho', aura:'cor', buraco:'quebre', combo:'combo'};
+const nomeMec = Object.fromEntries(MEC.map(([k,n])=>[k,n]));
+for(const f of fases){ f.mec = MEC.filter(([k,,t])=>t(f)).map(([k])=>k); f.dif = DIF[f.n]; }
+// estreia, sozinha, misturada
+const estreia = {}, solo = {}, avisos = {};
+for(const f of fases){ avisos[f.n]=[];
+  const novas = f.mec.filter(k=>!(k in estreia)); novas.forEach(k=>estreia[k]=f.n); f.novas=novas;
+  if(novas.length>=2) avisos[f.n].push({tipo:'duas', txt:`Duas novidades juntas: ${novas.map(k=>nomeMec[k]).join(' e ')}.`});
+  for(const k of novas){
+    if(f.mec.length>=2) avisos[f.n].push({tipo:'estmix', txt:`${nomeMec[k]} já estreia misturada com ${f.mec.filter(x=>x!==k).map(x=>nomeMec[x]).join(', ')}.`});
+    const mk=META_DA[k], o=mk && f.objs.find(o=>o[mk]!==undefined);
+    if(o && (o.n||1)>=2) avisos[f.n].push({tipo:'estdif', txt:`${nomeMec[k]} já estreia pedindo ${o.n}.`});
+  }
+  if(f.mec.length>=2) for(const k of f.mec){ if(novas.includes(k)) continue; const s=solo[k]||0;
+    if(s<2) avisos[f.n].push({tipo:'cedo', txt:`Mistura ${nomeMec[k]}, que só foi treinada sozinha ${s===0?'nenhuma vez':s===1?'1 vez':s+' vezes'} antes.`}); }
+  if(f.mec.length===1) solo[f.mec[0]]=(solo[f.mec[0]]||0)+1;
+}
+// dificuldade: abaixo de 80% ou queda grande em relação à fase anterior (fora quebra-cabeças)
+let ant=null;
+for(const f of fases){ if(!f.dif){ continue; }
+  if(f.dif.casual<80 && !f.chefe) avisos[f.n].push({tipo:'dificil', txt:`Difícil: o robô casual só cumpre ${f.dif.casual}%.`});
+  if(f.dif.casual<80 && f.chefe) avisos[f.n].push({tipo:'chefe', txt:`Fim de mundo muito difícil: o robô casual cumpre ${f.dif.casual}%${f.dif.med>400?`, e até o forte precisa de uns ${f.dif.med} arrastos`:''}.`});
+  if(ant && ant.dif.casual-f.dif.casual>20 && f.dif.casual>=80) avisos[f.n].push({tipo:'salto', txt:`Salto de dificuldade: o casual cai de ${ant.dif.casual}% para ${f.dif.casual}%.`});
+  ant=f; }
+
+// trilhas
+const ordem = Object.keys(estreia).sort((a,b)=>estreia[a]-estreia[b]);
+const tr=document.getElementById('trilhas');
+const cab=`<div class="fita cab">${mundos.map((m,i)=>`<div class="mundo">${i+1}</div>`).join('')}</div>`;
+tr.insertAdjacentHTML('beforeend', cab);
+for(const k of ordem){
+  const usos=fases.filter(f=>f.mec.includes(k)), mix1=usos.find(f=>f.mec.length>=2 && f.n!==estreia[k]);
+  const antesMix = usos.filter(f=>f.mec.length===1 && (!mix1 || f.n<mix1.n)).length;
+  const ruim = mix1 && antesMix<2;
+  const info = `estreia na ${estreia[k]} · ${usos.length} fase${usos.length>1?'s':''}` + (mix1?` · sozinha ${antesMix}× antes de misturar`:'');
+  let fita='<div class="fita">';
+  for(let g=0; g<mundos.length; g++){ fita+='<div class="mundo">';
+    for(const f of fases.filter(f=>f.g===g)){ const tem=f.mec.includes(k), c=!tem?'c-nada':f.n===estreia[k]?'c-est':f.mec.length===1?'c-solo':'c-mix';
+      fita+=`<a class="${c}" href="#f${f.n}" title="${f.n}"></a>`; }
+    fita+='</div>'; }
+  fita+='</div>';
+  tr.insertAdjacentHTML('beforeend', `<div><div class="rot"><b>${nomeMec[k]}</b><span class="${ruim?'ruim':''}">${info}</span></div>${fita}</div>`);
+}
+
+// problemas, agrupados
+const TIPOS=[['estdif','Estreias que já começam pedindo 2 ou mais'],['estmix','Estreias já misturadas com outra mecânica'],['duas','Duas novidades na mesma fase'],
+  ['cedo','Misturas cedo demais (menos de 2 fases de treino sozinha)'],['dificil','Fases difíceis para uma pessoa comum (casual abaixo de 80%)'],['salto','Saltos de dificuldade'],['chefe','Fins de mundo pesados demais']];
+const pr=document.getElementById('probs');
+for(const [t,tit] of TIPOS){ const l=fases.filter(f=>avisos[f.n].some(a=>a.tipo===t)); if(!l.length) continue;
+  pr.insertAdjacentHTML('beforeend', `<h4>${tit} (${l.length})</h4><p>${l.map(f=>`<a href="#f${f.n}">${f.n} ${f.nome}</a>`).join(' · ')}</p>`); }
+
+// fase a fase
+const mu=document.getElementById('mundos');
+const cor=v=>v>=95?'#6fdc8c':v>=80?'#f2c14e':v>=50?'#f08a4b':'#e5534b';
+mundos.forEach(([nome,desc],g)=>{
+  let h=`<div class="card mcard"><h3>${g+1} · ${nome.toUpperCase()}<small>${desc}</small></h3>`;
+  for(const f of fases.filter(f=>f.g===g)){
+    const tab=[`${f.w}x${f.h}`]; if(f.forma) tab.push('formato'); if(f.estacoes) tab.push(`${f.estacoes} estaç${f.estacoes>1?'ões':'ão'}`); if(f.muretas) tab.push(`${f.muretas} fluxos de rochas`);
+    if(f.nebulosa) tab.push(`nebulosa em ${f.nebulosa} casas`); if(f.presas) tab.push(`${f.presas} pres${f.presas>1?'os':'o'}`); if(f.orbitas) tab.push(`${f.orbitas} órbita${f.orbitas>1?'s':''}`);
+    const d=f.dif;
+    h+=`<div class="fase" id="f${f.n}"><div class="tit"><span class="num">${f.n}</span><span class="nome">${f.nome}</span>${f.chefe?'<span class="tag t-chefe">fim do mundo</span>':''}${f.quebra?'<span class="tag t-qc">quebra-cabeça</span>':''}${f.livre?'<span class="tag t-livre">sem limite</span>':''}</div>
+      ${f.txt.map(t=>`<div class="meta">${t}</div>`).join('')}
+      <div class="chips">${f.mec.map(k=>`<span class="chip ${f.novas.includes(k)?'novo':''}">${f.novas.includes(k)?'NOVO: ':''}${nomeMec[k]}</span>`).join('')}${tab.map(t=>`<span class="chip tab">${t}</span>`).join('')}</div>
+      ${d?`<div class="dif"><span>casual ${d.casual}%</span><div class="barra"><i style="width:${d.casual}%;background:${cor(d.casual)}"></i></div><span>${f.livre?'sem limite':(f.arrastos||'?')+' arrastos'}</span></div>`:`<div class="dif"><span>quebra-cabeça: solução fixa${f.arrastos?' · '+f.arrastos+' arrastos':''}</span></div>`}
+      ${avisos[f.n].map(a=>`<div class="aviso">${a.txt}</div>`).join('')}</div>`;
+  }
+  mu.insertAdjacentHTML('beforeend', h+'</div>');
+});
+if(location.hash) setTimeout(()=>document.querySelector(location.hash)?.scrollIntoView(),50);
+</script>
+</body>
+</html>

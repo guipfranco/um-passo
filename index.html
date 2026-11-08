@@ -795,7 +795,7 @@ const QC = {
 //   {pontos:v}         faça v pontos                           {quebre:t, n}   quebre com a picareta (nível t ou maior)
 //   {seq:[t1,t2..]}    forme nessa ordem                       {combo:n}       duas junções num arrasto, n vezes
 //   {alvo:t, n}        forme o nível t nas n casas marcadas (a junção acontece em cima da casa)
-//   {leve:t, n}        leve uma pedrinha do nível t (ou maior) até cada uma das n casas marcadas (basta parar em cima)    {terra:n}       limpe n casas de terra
+//   {leve:t, n}        leve exatamente uma pedrinha do nível t até cada uma das n casas marcadas (chegando andando; junção ali não vale)    {terra:n}       limpe n casas de terra
 //   {solte:t, n}       solte n pedrinhas presas do nível t     {carrinho:t, n} coloque n pedrinhas (nível t ou maior) no carrinho
 //   {proibido:t}       sem formar o nível t (restrição)
 // livre:true = sem limite de arrastos: só acaba se o tabuleiro encher; as estrelas vêm dos arrastos usados.
@@ -2726,7 +2726,11 @@ function contaMissao(r){
     if(o.solta){ S.soltas=(S.soltas||0)+1; delete o.solta; }
   }
   // casa marcada de levar: basta uma pedrinha do tamanho pedido (ou maior) parar em cima
-  for(const a of S.alvos||[]) if(a.leve && !a.ok && S.tiles.some(t=>t.x===a.x && t.y===a.y && t.t>=a.t && t.k!=='p')) a.ok=true;
+  // casa de levar: vale só se exatamente a peça pedida CHEGAR andando. Junção em cima da casa não conta, nem quando a
+  // peça formada ali fica parada nos arrastos seguintes (a.ocup lembra quem já estava na casa)
+  { const juntou=new Set(r.merges.map(o=>o.id));
+    for(const a of S.alvos||[]) if(a.leve && !a.ok){ const q=S.tiles.find(t=>t.x===a.x && t.y===a.y && t.k!=='p');
+      if(q && q.t===a.t && !juntou.has(q.id) && q.id!==a.ocup) a.ok=true; a.ocup = q ? q.id : null; } }
   espDescobre(r);
   if(r.merges.length>=2) S.combos=(S.combos||0)+1;
   for(const b of r.breaks){ S.quebras.push(b.t); S.pontos+=2*VAL(b.t); }
@@ -2887,7 +2891,7 @@ function figuraMissao(m){
 }
 const COMO_PECA = {
   alvo:'Casa marcada: forme a pedrinha pedida em cima dela, juntando ali (maior também vale).',
-  leve:'Casa marcada: leve até ela uma pedrinha do tamanho pedido (maior também vale). Basta parar em cima.',
+  leve:'Casa marcada: leve até ela exatamente a pedrinha pedida e pare em cima. Juntar em cima da casa não vale.',
   terra:'Casa de terra: uma junção em cima limpa a terra.',
   solte:'Pedrinha presa: não sai do lugar, mas aceita junção. Junte uma igual nela para soltar.',
   carrinho:'Carrinho: pedrinha do tamanho pedido, ou maior, que parar nele é recolhida.',
@@ -3857,7 +3861,7 @@ function espListaPlanetas(raiz){
 // textos do espaço para a janela da fase
 const COMO_ESP = {
   alvo:'Órbita dourada: forme o planeta pedido em cima dela, juntando ali (maior também vale).',
-  leve:'Órbita dourada: leve até ela um planeta do nível pedido (maior também vale). Basta parar em cima.',
+  leve:'Órbita dourada: leve até ela exatamente o planeta pedido e pare em cima. Juntar em cima da órbita não vale.',
   terra:'Nebulosa escura: uma junção em cima desfaz a nuvem.',
   solte:'Gaiola de luz: o planeta preso não sai do lugar, mas aceita junção. Junte um igual nele para soltar.',
   carrinho:'Nave: o planeta do tamanho pedido, ou maior, que parar embaixo dela é recolhido.',

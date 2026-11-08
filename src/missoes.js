@@ -8,7 +8,7 @@
 //   {pontos:v}         faça v pontos                           {quebre:t, n}   quebre com a picareta (nível t ou maior)
 //   {seq:[t1,t2..]}    forme nessa ordem                       {combo:n}       duas junções num arrasto, n vezes
 //   {alvo:t, n}        forme o nível t nas n casas marcadas (a junção acontece em cima da casa)
-//   {leve:t, n}        leve uma pedrinha do nível t (ou maior) até cada uma das n casas marcadas (basta parar em cima)    {terra:n}       limpe n casas de terra
+//   {leve:t, n}        leve exatamente uma pedrinha do nível t até cada uma das n casas marcadas (chegando andando; junção ali não vale)    {terra:n}       limpe n casas de terra
 //   {solte:t, n}       solte n pedrinhas presas do nível t     {carrinho:t, n} coloque n pedrinhas (nível t ou maior) no carrinho
 //   {proibido:t}       sem formar o nível t (restrição)
 // livre:true = sem limite de arrastos: só acaba se o tabuleiro encher; as estrelas vêm dos arrastos usados.

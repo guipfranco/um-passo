@@ -195,7 +195,7 @@ function espListaPlanetas(raiz){
 // textos do espaço para a janela da fase
 const COMO_ESP = {
   alvo:'Órbita dourada: forme o planeta pedido em cima dela, juntando ali (maior também vale).',
-  leve:'Órbita dourada: leve até ela um planeta do nível pedido (maior também vale). Basta parar em cima.',
+  leve:'Órbita dourada: leve até ela exatamente o planeta pedido e pare em cima. Juntar em cima da órbita não vale.',
   terra:'Nebulosa escura: uma junção em cima desfaz a nuvem.',
   solte:'Gaiola de luz: o planeta preso não sai do lugar, mas aceita junção. Junte um igual nele para soltar.',
   carrinho:'Nave: o planeta do tamanho pedido, ou maior, que parar embaixo dela é recolhido.',

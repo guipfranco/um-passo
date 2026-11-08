@@ -55,7 +55,11 @@ window.ROBO = (()=>{
     if(r.merges.length>=2 && os.some(o=>o.combo)) g+=3;
     if(S.carro && r.tiles.some(t=>t.x===S.carro.x&&t.y===S.carro.y&&t.t>=S.carro.t&&t.k!=='p')) g+=6;
     const perto=(x,y,t)=>{ let d=9; for(const q of r.tiles) if(q.t>=t && q.k!=='p' && !q.presa) d=Math.min(d,Math.abs(q.x-x)+Math.abs(q.y-y)); return Math.max(0,2-d*.5); };
-    for(const a of (S.alvos||[])) if(!a.ok){ if(a.leve && r.tiles.some(q=>q.x===a.x&&q.y===a.y&&q.t>=a.t&&q.k!=='p')) g+=6; g+=perto(a.x,a.y,a.leve?a.t:a.t-1); }
+    const juntou=new Set(r.merges.map(o=>o.id));
+    const pertoExato=(x,y,t)=>{ let d=9; for(const q of r.tiles) if(q.t===t && q.k!=='p' && !q.presa) d=Math.min(d,Math.abs(q.x-x)+Math.abs(q.y-y)); return Math.max(0,2-d*.5); };
+    for(const a of (S.alvos||[])) if(!a.ok){
+      if(a.leve){ const q=r.tiles.find(q=>q.x===a.x&&q.y===a.y&&q.k!=='p'); if(q && q.t===a.t && !juntou.has(q.id) && q.id!==a.ocup) g+=6; g+=pertoExato(a.x,a.y,a.t); }
+      else g+=perto(a.x,a.y,a.t-1); }
     if(S.carro) g+=perto(S.carro.x,S.carro.y,S.carro.t-1);
     for(const q of r.tiles) if(q.presa) g+=perto(q.x,q.y,q.t)*.8;
     return g; }

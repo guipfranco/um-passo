@@ -1,0 +1,530 @@
+{
+"1": {
+"forte": 100,
+"med": 5,
+"casual": 100,
+"medCasual": 5
+},
+"2": {
+"forte": 100,
+"med": 12,
+"casual": 100,
+"medCasual": 14
+},
+"3": {
+"forte": 100,
+"med": 10,
+"casual": 100,
+"medCasual": 12
+},
+"4": {
+"forte": 100,
+"med": 22,
+"casual": 100,
+"medCasual": 24
+},
+"5": {
+"forte": 100,
+"med": 19,
+"casual": 100,
+"medCasual": 22
+},
+"6": {
+"forte": 100,
+"med": 11,
+"casual": 100,
+"medCasual": 12
+},
+"7": {
+"forte": 100,
+"med": 18,
+"casual": 100,
+"medCasual": 22
+},
+"8": {
+"forte": 100,
+"med": 41,
+"casual": 100,
+"medCasual": 42
+},
+"10": {
+"forte": 100,
+"med": 22,
+"casual": 100,
+"medCasual": 23
+},
+"11": {
+"forte": 95,
+"med": 32,
+"casual": 100,
+"medCasual": 35
+},
+"12": {
+"forte": 100,
+"med": 72,
+"casual": 100,
+"medCasual": 77
+},
+"13": {
+"forte": 100,
+"med": 9,
+"casual": 100,
+"medCasual": 10
+},
+"14": {
+"forte": 100,
+"med": 10,
+"casual": 100,
+"medCasual": 14
+},
+"15": {
+"forte": 100,
+"med": 21,
+"casual": 100,
+"medCasual": 23
+},
+"16": {
+"forte": 100,
+"med": 34,
+"casual": 100,
+"medCasual": 37
+},
+"17": {
+"forte": 100,
+"med": 23,
+"casual": 100,
+"medCasual": 25
+},
+"18": {
+"forte": 100,
+"med": 31,
+"casual": 100,
+"medCasual": 38
+},
+"19": {
+"forte": 100,
+"med": 21,
+"casual": 100,
+"medCasual": 22
+},
+"21": {
+"forte": 100,
+"med": 46,
+"casual": 100,
+"medCasual": 52
+},
+"22": {
+"forte": 100,
+"med": 35,
+"casual": 100,
+"medCasual": 38
+},
+"23": {
+"forte": 100,
+"med": 44,
+"casual": 100,
+"medCasual": 51
+},
+"24": {
+"forte": 100,
+"med": 108,
+"casual": 100,
+"medCasual": 142
+},
+"25": {
+"forte": 100,
+"med": 15,
+"casual": 100,
+"medCasual": 15
+},
+"26": {
+"forte": 100,
+"med": 12,
+"casual": 100,
+"medCasual": 13
+},
+"27": {
+"forte": 100,
+"med": 28,
+"casual": 100,
+"medCasual": 31
+},
+"28": {
+"forte": 100,
+"med": 27,
+"casual": 100,
+"medCasual": 83
+},
+"29": {
+"forte": 100,
+"med": 45,
+"casual": 100,
+"medCasual": 47
+},
+"30": {
+"forte": 100,
+"med": 34,
+"casual": 95,
+"medCasual": 46
+},
+"31": {
+"forte": 100,
+"med": 17,
+"casual": 100,
+"medCasual": 21
+},
+"33": {
+"forte": 100,
+"med": 56,
+"casual": 85,
+"medCasual": 80
+},
+"34": {
+"forte": 100,
+"med": 82,
+"casual": 70,
+"medCasual": 107
+},
+"35": {
+"forte": 100,
+"med": 43,
+"casual": 90,
+"medCasual": 59
+},
+"36": {
+"forte": 100,
+"med": 175,
+"casual": 80,
+"medCasual": 235
+},
+"37": {
+"forte": 100,
+"med": 22,
+"casual": 100,
+"medCasual": 23
+},
+"38": {
+"forte": 100,
+"med": 64,
+"casual": 100,
+"medCasual": 93
+},
+"39": {
+"forte": 100,
+"med": 25,
+"casual": 100,
+"medCasual": 35
+},
+"40": {
+"forte": 100,
+"med": 27,
+"casual": 85,
+"medCasual": 31
+},
+"41": {
+"forte": 100,
+"med": 14,
+"casual": 100,
+"medCasual": 38
+},
+"42": {
+"forte": 100,
+"med": 57,
+"casual": 100,
+"medCasual": 107
+},
+"43": {
+"forte": 95,
+"med": 55,
+"casual": 65,
+"medCasual": 55
+},
+"45": {
+"forte": 100,
+"med": 59,
+"casual": 100,
+"medCasual": 83
+},
+"46": {
+"forte": 90,
+"med": 27,
+"casual": 25,
+"medCasual": 28
+},
+"47": {
+"forte": 100,
+"med": 131,
+"casual": 100,
+"medCasual": 150
+},
+"48": {
+"forte": 100,
+"med": 290,
+"casual": 100,
+"medCasual": 364
+},
+"49": {
+"forte": 100,
+"med": 11,
+"casual": 100,
+"medCasual": 13
+},
+"50": {
+"forte": 100,
+"med": 22,
+"casual": 100,
+"medCasual": 26
+},
+"51": {
+"forte": 100,
+"med": 44,
+"casual": 100,
+"medCasual": 45
+},
+"52": {
+"forte": 100,
+"med": 48,
+"casual": 85,
+"medCasual": 75
+},
+"53": {
+"forte": 100,
+"med": 34,
+"casual": 100,
+"medCasual": 55
+},
+"54": {
+"forte": 100,
+"med": 76,
+"casual": 100,
+"medCasual": 130
+},
+"55": {
+"forte": 100,
+"med": 53,
+"casual": 100,
+"medCasual": 59
+},
+"57": {
+"forte": 100,
+"med": 50,
+"casual": 95,
+"medCasual": 138
+},
+"58": {
+"forte": 100,
+"med": 60,
+"casual": 100,
+"medCasual": 132
+},
+"59": {
+"forte": 95,
+"med": 160,
+"casual": 95,
+"medCasual": 278
+},
+"60": {
+"forte": 100,
+"med": 622,
+"casual": 40,
+"medCasual": 745
+},
+"61": {
+"forte": 100,
+"med": 16,
+"casual": 100,
+"medCasual": 18
+},
+"62": {
+"forte": 100,
+"med": 20,
+"casual": 100,
+"medCasual": 18
+},
+"63": {
+"forte": 95,
+"med": 24,
+"casual": 85,
+"medCasual": 24
+},
+"64": {
+"forte": 100,
+"med": 57,
+"casual": 75,
+"medCasual": 64
+},
+"65": {
+"forte": 90,
+"med": 56,
+"casual": 45,
+"medCasual": 55
+},
+"66": {
+"forte": 100,
+"med": 29,
+"casual": 70,
+"medCasual": 31
+},
+"67": {
+"forte": 100,
+"med": 28,
+"casual": 100,
+"medCasual": 29
+},
+"69": {
+"forte": 100,
+"med": 56,
+"casual": 45,
+"medCasual": 69
+},
+"70": {
+"forte": 70,
+"med": 65,
+"casual": 45,
+"medCasual": 52
+},
+"71": {
+"forte": 65,
+"med": 108,
+"casual": 5,
+"medCasual": 87
+},
+"72": {
+"forte": 100,
+"med": 1057,
+"casual": 0,
+"medCasual": null
+},
+"73": {
+"forte": 100,
+"med": 5,
+"casual": 100,
+"medCasual": 5
+},
+"74": {
+"forte": 100,
+"med": 13,
+"casual": 100,
+"medCasual": 21
+},
+"75": {
+"forte": 100,
+"med": 24,
+"casual": 100,
+"medCasual": 56
+},
+"76": {
+"forte": 100,
+"med": 71,
+"casual": 100,
+"medCasual": 79
+},
+"77": {
+"forte": 100,
+"med": 47,
+"casual": 80,
+"medCasual": 80
+},
+"78": {
+"forte": 100,
+"med": 56,
+"casual": 100,
+"medCasual": 57
+},
+"80": {
+"forte": 100,
+"med": 179,
+"casual": 100,
+"medCasual": 169
+},
+"81": {
+"forte": 100,
+"med": 76,
+"casual": 100,
+"medCasual": 137
+},
+"82": {
+"forte": 100,
+"med": 275,
+"casual": 60,
+"medCasual": 630
+},
+"83": {
+"forte": 100,
+"med": 207,
+"casual": 100,
+"medCasual": 197
+},
+"84": {
+"forte": 100,
+"med": 1954,
+"casual": 0,
+"medCasual": null
+},
+"85": {
+"forte": 100,
+"med": 8,
+"casual": 100,
+"medCasual": 10
+},
+"86": {
+"forte": 100,
+"med": 13,
+"casual": 100,
+"medCasual": 16
+},
+"87": {
+"forte": 100,
+"med": 19,
+"casual": 95,
+"medCasual": 28
+},
+"88": {
+"forte": 100,
+"med": 20,
+"casual": 100,
+"medCasual": 24
+},
+"89": {
+"forte": 100,
+"med": 29,
+"casual": 100,
+"medCasual": 34
+},
+"90": {
+"forte": 100,
+"med": 43,
+"casual": 95,
+"medCasual": 43
+},
+"91": {
+"forte": 100,
+"med": 45,
+"casual": 100,
+"medCasual": 34
+},
+"93": {
+"forte": 95,
+"med": 61,
+"casual": 100,
+"medCasual": 100
+},
+"94": {
+"forte": 100,
+"med": 60,
+"casual": 45,
+"medCasual": 65
+},
+"95": {
+"forte": 100,
+"med": 77,
+"casual": 100,
+"medCasual": 113
+},
+"96": {
+"forte": 100,
+"med": 521,
+"casual": 40,
+"medCasual": 772
+}
+}

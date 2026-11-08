@@ -77,7 +77,11 @@ function contaMissao(r){
     if(o.solta){ S.soltas=(S.soltas||0)+1; delete o.solta; }
   }
   // casa marcada de levar: basta uma pedrinha do tamanho pedido (ou maior) parar em cima
-  for(const a of S.alvos||[]) if(a.leve && !a.ok && S.tiles.some(t=>t.x===a.x && t.y===a.y && t.t>=a.t && t.k!=='p')) a.ok=true;
+  // casa de levar: vale só se exatamente a peça pedida CHEGAR andando. Junção em cima da casa não conta, nem quando a
+  // peça formada ali fica parada nos arrastos seguintes (a.ocup lembra quem já estava na casa)
+  { const juntou=new Set(r.merges.map(o=>o.id));
+    for(const a of S.alvos||[]) if(a.leve && !a.ok){ const q=S.tiles.find(t=>t.x===a.x && t.y===a.y && t.k!=='p');
+      if(q && q.t===a.t && !juntou.has(q.id) && q.id!==a.ocup) a.ok=true; a.ocup = q ? q.id : null; } }
   espDescobre(r);
   if(r.merges.length>=2) S.combos=(S.combos||0)+1;
   for(const b of r.breaks){ S.quebras.push(b.t); S.pontos+=2*VAL(b.t); }
@@ -238,7 +242,7 @@ function figuraMissao(m){
 }
 const COMO_PECA = {
   alvo:'Casa marcada: forme a pedrinha pedida em cima dela, juntando ali (maior também vale).',
-  leve:'Casa marcada: leve até ela uma pedrinha do tamanho pedido (maior também vale). Basta parar em cima.',
+  leve:'Casa marcada: leve até ela exatamente a pedrinha pedida e pare em cima. Juntar em cima da casa não vale.',
   terra:'Casa de terra: uma junção em cima limpa a terra.',
   solte:'Pedrinha presa: não sai do lugar, mas aceita junção. Junte uma igual nela para soltar.',
   carrinho:'Carrinho: pedrinha do tamanho pedido, ou maior, que parar nele é recolhida.',

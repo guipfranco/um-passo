@@ -40,3 +40,10 @@ if '--grava' in sys.argv:
                    "const CALIB = {\n" + linhas + "\n};\n"
                    "MISSOES.forEach((m,i)=>{ const c=CALIB[i+1]; if(c){ m.arrastos=c[0]; m.estrelas=[c[1],c[2]]; } });\n", encoding='utf-8')
     print(f'\ngravado: {arq} ({len(velho)} fases)')
+    # dificuldade de cada fase (para o desenho do caminho, caminho.html): quanto cada robô cumpre e a mediana de arrastos
+    dif = AQUI / 'calibrar' / 'dificuldade.json'
+    d = json.loads(dif.read_text(encoding='utf-8')) if dif.exists() else {}
+    for l in tabela.splitlines():
+        m2 = re.match(r'(\d+) .*?cumpre (\d+)% \| usa p20 \d+ p50 (\d+) .*casual (\d+)% med (\S+)\)', l)
+        if m2: d[m2.group(1)] = {'forte': int(m2.group(2)), 'med': int(m2.group(3)), 'casual': int(m2.group(4)), 'medCasual': None if m2.group(5) == '-' else int(m2.group(5))}
+    dif.write_text(json.dumps(dict(sorted(d.items(), key=lambda kv: int(kv[0]))), ensure_ascii=False, indent=0), encoding='utf-8')

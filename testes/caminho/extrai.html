@@ -1,0 +1,26 @@
+<body style="margin:0"><iframe id="f" src="../../index.html" width="400" height="800" style="border:0"></iframe><pre id="out" style="position:absolute;left:410px;top:0"></pre>
+<script>
+// Monta cada fase da Jornada dentro do jogo e anota o que ela tem: metas (com o texto do jogo), tamanho, formato,
+// estações, fluxos de rochas, nebulosa, lixo, presas, nave, auras, buracos negros, Passinho, quebra-cabeça, sem limite.
+// Usado por testes/caminho.py, que gera caminho_dados.js para o desenho do caminho (caminho.html).
+const f=document.getElementById('f'), out=document.getElementById('out');
+f.onload=()=>{ try{ extrai(); }catch(e){ out.textContent='ERRO '+e.message+' | '+e.stack; } };
+function extrai(){
+  const w=f.contentWindow; w.eval('sound=false; music=false; localStorage.ptui_espaco="1"');
+  w.eval('missoesLista()');   // no espaço, os textos das metas saem com os nomes dos planetas
+  const fases=JSON.parse(w.eval(`JSON.stringify(MISSOES.map((m,i)=>{
+    const n=i+1; missaoJoga(n); hideOverlay();
+    const os=objsDe(m), P=S.path||{};
+    const txt=os.map(o=>{ try{ return (o.proibido?'Sem formar: ':'')+objetivoTxt(o); }catch(e){ return JSON.stringify(o); } });
+    return { n, g:m.g, nome:nomeFaseCla(n), chefe:!!m.chefe, livre:!!m.livre, arrastos:m.arrastos||null,
+      metas:os.map(o=>Object.keys(o).filter(k=>!['n','t'].includes(k))[0]), objs:os, txt,
+      w:W, h:H, forma:!!(m.forma||m.mapa), estacoes:(S.walls||[]).length, muretas:(S.edges||[]).length,
+      nebulosa:(S.terra&&S.terra.size)||0, lixo:S.tiles.filter(t=>t.t===0).length + (P.clods||0) + (P.torrao?1:0),
+      presas:S.tiles.filter(t=>t.presa).length, nave:!!S.carro, auras:!!P.cores, buracos:!!P.picareta,
+      passinho:S.char==='passinho', quebra:P.spawns===0, orbitas:(S.alvos||[]).length };
+  }))`));
+  const mundos=JSON.parse(w.eval('JSON.stringify(MUNDOS.map((m,i)=>[MUNDOS_NOME_ESP[i]?.[0]||m.nome, MUNDOS_NOME_ESP[i]?.[1]||m.desc]))'));
+  out.textContent=JSON.stringify({mundos, fases});
+}
+</script>
+</body>
