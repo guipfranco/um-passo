@@ -212,7 +212,9 @@ function espMenu(){
   tag.textContent = on ? 'junte poeira até virar galáxia' : TAG_MINA;
   // no espaço: Jornada (as missões) e Clássico (4x4 sem fim)
   $('#mCla').innerHTML = on ? 'Jornada<small>uma missão em cada fase</small>' : 'Clássico<small>uma missão em cada fase</small>';
-  if(!$('#mInf')){ const b=document.createElement('button'); b.className='btn b big'; b.id='mInf'; b.innerHTML='Clássico<small>4x4 sem fim, até não caber mais nada</small>'; $('#mCla').after(b); b.onclick=infinitoJoga; }
+  if(!$('#mInf')){ const b=document.createElement('button'); b.className='btn b big'; b.id='mInf'; b.innerHTML='Clássico<small>4x4 sem fim, até não caber mais nada</small>'; b.onclick=infinitoJoga; $('#mCla').after(b); }
+  // no espaço o Clássico vem primeiro, depois a Jornada
+  const inf=$('#mInf'); if(on) $('#mCla').before(inf); else $('#mCla').after(inf);
   if(!on) return;
   if(document.fonts?.load){ document.fonts.load("900 40px Orbitron"); document.fonts.load("700 20px 'Exo 2'"); }
   let lg=$('#logoEsp');

@@ -493,7 +493,8 @@ addEventListener('pointerup',e=>{
     clearPreview(true);
     // toque (sem arrastar) numa pedrinha: mostra o que ela é e o que pode cuspir
     const el=!tinha && e.target.closest && e.target.closest('.tile');
-    if(el && S && S.phase==='mine'){ const t=S.tiles.find(x=>x.id===el.dataset.id); if(t) tileInfo(t); }
+    // na Jornada e no Clássico tocar na peça não abre mais a ficha dela (só na Mineração e no Laboratório)
+    if(el && S && S.phase==='mine' && !S.missao && !S.infinito){ const t=S.tiles.find(x=>x.id===el.dataset.id); if(t) tileInfo(t); }
     return;
   }
   clearPreview(false);
