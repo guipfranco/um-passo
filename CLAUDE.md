@@ -4,7 +4,7 @@ Puzzle de mineração com pedrinhas que cospem minério. Publicado em https://gu
 
 ## Modos (ordem do menu)
 
-- **Clássico**: fases soltas, cada uma com uma missão e até 3 estrelas. As fases ficam em `src/missoes.js`.
+- **Clássico**: 8 mundos de 12 fases, cada fase com uma ou mais metas e até 3 estrelas (pelos arrastos que sobram). Código em `src/classico.js`; mundos e fases em `src/missoes.js`; arrastos e estrelas em `src/missoes_calib.js` (`python testes/calibrar.py --grava`); quebra-cabeças em `src/quebracabecas.js` (gerados por `testes/calibrar/quebracabecas.html`).
 - **Mineração**: o roguelite (andares, mapa, loja, itens, fiscal).
 - **Laboratório**: testar qualquer regra; dele saem o Editor de níveis e o Catálogo.
 

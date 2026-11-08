@@ -1,0 +1,50 @@
+<!-- tempo: 60000 -->
+<body style="margin:0"><iframe id="f" src="../index.html" width="390" height="760" style="border:0"></iframe><pre id="out" style="position:absolute;left:400px;top:0">x</pre>
+<script>
+// Peças e metas novas do Clássico: casa marcada, terra, presa, carrinho, sequência, duas de uma vez, restrição,
+// várias metas, quebra-cabeça, salvar e continuar a fase, medalha do Passinho.
+const MODE=location.hash.slice(1)||'test';
+f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEventListener('error',e=>errs.push(e.message+' @'+e.lineno));w.addEventListener('unhandledrejection',e=>errs.push('rej '+e.reason));
+ const wait=ms=>new Promise(r=>setTimeout(r,ms)); const q=s=>d.querySelector(s);
+ const nome=k=>w.eval(`MISSOES.findIndex(m=>m.nome===${JSON.stringify(k)})+1`);
+ const joga=async(n)=>{ for(let i=0;i<n && w.eval('S.phase')==='mine';i++){
+   const dir=w.eval(`(()=>{ let b=null,bs=-1; for(const [dx,dy] of DIRS){ const r=slide(S.tiles,dx,dy); if(!r.moved) continue; const s=r.merges.reduce((a,o)=>a+Math.pow(2,o.t),0)+Math.random(); if(s>bs){bs=s;b=[dx,dy];} } return b; })()`);
+   if(!dir) break; w.eval(`move(${dir[0]},${dir[1]})`); await wait(25); } };
+ const estado=()=>w.eval(`JSON.stringify(metasDe(MISSOES[S.missao-1]).map(o=>progObj(o)))`);
+ try{ w.eval('sound=false; music=false; localStorage.removeItem("mina_missoes"); localStorage.removeItem("mina_cla_save")');
+  for(const k of ['Primeira casa marcada','Terra fofa','Primeira presa','Primeiro carrinho','Uma depois da outra','Duas de uma vez','Sem pressa','Fim da entrada','Quebra-cabeça']){
+    const n=nome(k); w.eval(`missaoJoga(${n})`); await wait(80);
+    const marcas=`alvos=${d.querySelectorAll('.alvoM').length} terra=${d.querySelectorAll('.terraM').length} carrinho=${d.querySelectorAll('.carroM').length} presas=${d.querySelectorAll('.corrente').length}`;
+    const hud=`silhuetas=${d.querySelectorAll('#cMis .fila span').length} chips=${d.querySelectorAll('#cMis .chipM').length}`;
+    await joga(12);
+    log.push(`${n} ${k}: ${marcas} ${hud} | depois de jogar: ${estado()} fase=${w.eval('S.phase')} pedrinhas=${w.eval('S.tiles.length')}`);
+    if(w.eval('overlayOpen()')) w.eval('hideOverlay()');
+  }
+  // carrinho recolhe: põe uma Rocha em cima do carrinho e arrasta para longe
+  w.eval(`missaoJoga(${nome('Primeiro carrinho')})`); await wait(60);
+  const rec=w.eval(`(()=>{ const c=S.carro; S.tiles=S.tiles.filter(t=>!(t.x===c.x&&t.y===c.y)); S.tiles.push({id:'zz',x:c.x,y:c.y,t:3}); const t=recolheCarro(); return !!t && S.carro.n===1; })()`);
+  log.push('carrinho recolhe Rocha: '+rec);
+  // presa: não se mexe, mas aceita junção e fica solta
+  w.eval(`missaoJoga(${nome('Primeira presa')})`); await wait(60);
+  const pr=w.eval(`(()=>{ const p=S.tiles.find(t=>t.presa); S.tiles=[p]; const lado=p.x>0?[-1,0]:[1,0]; const x=p.x+lado[0]*-1, y=p.y;
+     const fica=slide([p],1,0).moved===false && slide([p],-1,0).moved===false;
+     const viz=[[1,0],[-1,0],[0,1],[0,-1]].map(([dx,dy])=>[p.x+dx,p.y+dy,dx,dy]).find(([x,y])=>inside(x,y)&&!wallAt(x,y));
+     const r=slide([p,{id:'q',x:viz[0],y:viz[1],t:p.t}],-viz[2],-viz[3]); return fica+' junta='+(r.merges.length===1)+' solta='+(r.tiles[0]&&!r.tiles[0].presa); })()`);
+  log.push('presa parada: '+pr);
+  // salvar e continuar
+  const n2=nome('Mais espaço'); w.eval(`missaoJoga(${n2})`); await wait(60); await joga(6);
+  const antes=w.eval('JSON.stringify([S.tiles.length,S.energy,S.pontos])'); w.eval('missoesLista()'); await wait(80);
+  const marca=!!q(`[data-m="${n2}"] .emAndamento`); w.eval(`missaoInfo(${n2})`); await wait(30); const tem=!!q('#mCont'); q('#mCont')?.click(); await wait(80);
+  log.push(`continuar: marca na lista=${marca} botão=${tem} antes=${antes} depois=${w.eval('JSON.stringify([S.tiles.length,S.energy,S.pontos])')}`);
+  // medalha do Passinho
+  w.eval('localStorage.mina_missoes=JSON.stringify({1:{e:2,t:10}})'); w.eval('missaoInfo(1)'); await wait(30);
+  log.push('botão Passinho: '+!!q('#mPass')); q('#mPass').click(); await wait(60);
+  log.push(`passinho: char=${w.eval('S.char')} medalha=${w.eval('S.medalha')} banner=${q('#bTitle').textContent}`);
+  await joga(30); for(let i=0;i<10 && !w.eval('overlayOpen()');i++) await wait(200);
+  log.push('resultado: '+(q('#panel h2')?.textContent||'-')+' salvo='+w.eval('localStorage.mina_missoes'));
+  // tela de cada fase abre sem erro
+  let ok=0; for(let n=1;n<=96;n++){ w.eval(`missaoInfo(${n})`); if(q('#panel h2')?.textContent==='Fase '+n) ok++; }
+  log.push('aberturas sem erro: '+ok+'/96');
+ }catch(e){errs.push('EXC '+e.message+' '+(e.stack||'').split('\n')[1])}
+ out.textContent=JSON.stringify({log,errs},null,1);};
+</script></body>

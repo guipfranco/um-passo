@@ -1,0 +1,86 @@
+<body style="margin:0"><iframe id="f" src="../../index.html" width="400" height="800" style="border:0"></iframe><pre id="out" style="position:absolute;left:410px;top:0">x</pre>
+<script>
+// Gera os quebra-cabeças do Clássico: tabuleiros sem pedrinha nascendo, conferidos por busca (menor solução).
+// Saída: o conteúdo de src/quebracabecas.js.
+const SPECS = {
+  q1:{w:4,h:4, alvo:5, obj:{forme:5,n:1}, prof:[4,5]},
+  q2:{w:4,h:4, alvo:5, obj:{forme:5,n:1}, blocos:2, prof:[5,6]},
+  q3:{w:4,h:4, alvo:5, obj:{forme:5,n:1}, muretas:3, prof:[5,6]},
+  q4:{w:4,h:4, alvo:4, obj:{solte:4,n:1}, presa:4, prof:[6,7]},
+  q5:{w:4,h:4, alvo:4, obj:{carrinho:4,n:1}, carro:true, prof:[6,7]},
+  q6:{w:4,h:4, alvo:5, obj:{forme:5,n:1}, cores:true, prof:[6,7]},
+  q7:{w:4,h:4, alvo:3, obj:{quebre:3,n:1}, picareta:true, prof:[6,7]},
+  q8:{w:4,h:4, alvo:4, obj:{forme:4,n:1}, passinho:true, prof:[6,8]},
+};
+f.onload=async()=>{ try{ await gera(); }catch(e){ out.textContent='ERRO '+e.message+' | '+e.stack; } };
+async function gera(){const w=f.contentWindow, saida={}, log=[];
+ w.eval('sound=false; music=false');
+ w.eval(`
+  window.__rnd=a=>a[Math.floor(Math.random()*a.length)];
+  window.__prepara=(sp)=>{
+    S={...freshState(), char: sp.passinho?'passinho':'rola', path:{picareta:!!sp.picareta}}; setupBoard(sp.w,sp.h); S.walls=[]; S.edges=[];
+    const cel=[]; for(let y=0;y<sp.h;y++) for(let x=0;x<sp.w;x++) cel.push([x,y]);
+    const sh=a=>a.sort(()=>Math.random()-.5); sh(cel);
+    const usa=()=>cel.pop();
+    const blocos=[]; for(let i=0;i<(sp.blocos||0);i++){ const [x,y]=usa(); blocos.push([x,y]); S.walls.push({x,y,id:'b'+i}); }
+    if(sp.muretas){ const todas=[]; for(let y=0;y<sp.h;y++) for(let x=0;x<sp.w-1;x++) todas.push(['v',x,y]); for(let y=0;y<sp.h-1;y++) for(let x=0;x<sp.w;x++) todas.push(['h',x,y]);
+      for(const [d,x,y] of sh(todas).slice(0,sp.muretas)) S.edges.push({d,x,y,id:'e'+x+y+d}); }
+    let carro=null; if(sp.carro){ const borda=cel.filter(([x,y])=>x===0||y===0||x===sp.w-1||y===sp.h-1); carro=__rnd(borda); cel.splice(cel.findIndex(c=>c[0]===carro[0]&&c[1]===carro[1]),1); }
+    // pedrinhas: parte o alvo em pedaços (soma exata) e põe 0 a 2 pedrinhas de enfeite
+    let pecas=[{t:sp.alvo}];
+    const nPecas=4+Math.floor(Math.random()*4);
+    while(pecas.length<nPecas){ const i=pecas.findIndex(p=>p.t>1 && Math.random()<.6); if(i<0) break; const p=pecas.splice(i,1)[0]; pecas.push({t:p.t-1},{t:p.t-1}); }
+    let presa=null; if(sp.presa){ const [x,y]=usa(); presa=[x,y]; }
+    if(sp.picareta){ // a pedrinha e a picareta do nível pedido, cada uma partida em pedaços
+      pecas=[{t:sp.alvo,k:'r'},{t:sp.alvo,k:'p'}]; while(pecas.length<5){ const i=pecas.findIndex(p=>p.t>1 && Math.random()<.6); if(i<0) break; const p=pecas.splice(i,1)[0]; pecas.push({t:p.t-1,k:p.k},{t:p.t-1,k:p.k}); } }
+    for(let i=0;i<Math.floor(Math.random()*3);i++) pecas.push({t:1+Math.floor(Math.random()*2), k: sp.picareta?__rnd(['r','p']):undefined});
+    if(sp.cores) pecas.forEach(p=>p.c=Math.random()<.15?2:Math.random()<.5?0:1);
+    const tiles=pecas.map((p,i)=>{ const [x,y]=usa(); const t={id:'p'+i,x,y,t:p.t}; if(p.c!=null) t.c=p.c; if(p.k) t.k=p.k; return t; });
+    if(presa) tiles.push({id:'pr',x:presa[0],y:presa[1],t:sp.obj.solte,presa:1});
+    return {tiles, blocos, muretas:S.edges.map(e=>[e.d,e.x,e.y]), carro, presa};
+  };
+  // feito? depois de um arrasto (r) a partir do estado
+  window.__feito=(sp,r,tiles,carro)=>{
+    const o=sp.obj;
+    if(o.forme) return r.merges.some(m=>m.t>=o.forme);
+    if(o.solte) return r.merges.some(m=>m.solta);
+    if(o.quebre) return r.breaks.some(b=>b.t>=o.quebre);
+    if(o.carrinho) return tiles.some(t=>t.x===carro[0]&&t.y===carro[1]&&t.t>=o.carrinho);
+    return false;
+  };
+  window.__chave=ts=>ts.map(t=>t.x+'.'+t.y+'.'+t.t+'.'+(t.c??'')+(t.k||'')+(t.presa?'P':'')).sort().join('|');
+  window.__busca=(sp,ini,maxP)=>{ // menor número de arrastos para cumprir (e quantas soluções nessa profundidade)
+    let nivel=[ini.tiles], visto=new Set([__chave(ini.tiles)]);
+    for(let p=1;p<=maxP;p++){ const prox=[]; let sols=0;
+      for(const ts of nivel) for(const [dx,dy] of DIRS){ const r=slide(ts,dx,dy); if(!r.moved) continue;
+        if(__feito(sp,r,r.tiles,ini.carro)){ sols++; continue; }
+        const k=__chave(r.tiles); if(visto.has(k)) continue; visto.add(k); prox.push(r.tiles); }
+      if(sols) return {prof:p, sols};
+      nivel=prox; if(!nivel.length) return null; }
+    return null; };`);
+ for(const [id,sp] of Object.entries(SPECS)){
+   let achou=null;
+   for(let tent=0; tent<1500 && !achou; tent++){
+     const res=w.eval(`(()=>{ const sp=${JSON.stringify(sp)}; const ini=__prepara(sp); const b=__busca(sp,ini,${sp.prof[1]}); return JSON.stringify({ini,b}); })()`);
+     const {ini,b}=JSON.parse(res); if(!b) continue;
+     if(b.prof>=sp.prof[0] && b.prof<=sp.prof[1] && b.sols<=4) achou={ini,b};
+     if(tent%50===49) await new Promise(r=>setTimeout(r,0));
+   }
+   if(!achou){ log.push(id+': não achei'); continue; }
+   const {ini,b}=achou;
+   const mapa=[]; for(let y=0;y<sp.h;y++){ let row=''; for(let x=0;x<sp.w;x++) row+= ini.blocos.some(([a,c])=>a===x&&c===y)?'B':'.'; mapa.push(row); }
+   const pecas=ini.tiles.filter(t=>!t.presa).map(t=>{ const a=[t.x,t.y,t.t]; if(t.c!=null||t.k) a.push(t.c??null); if(t.k) a.push(t.k); return a; });
+   const q={mapa, pecas, regras:{spawns:0}, obj:sp.obj, arrastos:b.prof+2, estrelas:[1,2]};
+   if(ini.muretas.length) q.muretas=ini.muretas;
+   if(ini.carro) q.carroPos=ini.carro;
+   if(ini.presa) q.presasPos=[ini.presa];
+   saida[id]=q; log.push(`${id}: menor solução ${b.prof} arrastos (${b.sols} jeitos)`);
+ }
+ const linhas=Object.entries(saida).map(([k,v])=>`  ${k}: ${JSON.stringify(v).replace(/"([a-zA-Z]+)":/g,'$1:').replace(/"/g,"'")},`);
+ out.textContent=log.join('\n')+'\n=====\n'+`// Quebra-cabeças do Clássico: não nasce pedrinha nova, então cada um tem uma solução certa.
+// Gerados e conferidos por busca: testes/calibrar/quebracabecas.html (arrastos = menor solução + 2).
+const QC = {
+${linhas.join('\n')}
+};`;
+}
+</script></body>

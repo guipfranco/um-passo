@@ -272,7 +272,7 @@ function startWeek(){
   applyAndar();
   morning();
 }
-function clearBoard(){ for(const el of els.values()) el.remove(); els.clear(); S.tiles=[]; S.walls=[]; S.edges=[]; }
+function clearBoard(){ for(const el of els.values()) el.remove(); els.clear(); S.tiles=[]; S.walls=[]; S.edges=[]; if(typeof limpaMarcas==='function') limpaMarcas(); }
 
 // ===================== MAPA DA SEMANA =====================
 // 3 trilhas paralelas, 4 dias e o fiscal no topo. Cada lugar liga ao da mesma trilha no dia seguinte e,
@@ -479,14 +479,14 @@ function slideOne(tiles,dx,dy){
   const xs=dx===1?[...ix].reverse():ix, ys=dy===1?[...iy].reverse():iy;
   let moved=false; const merges=[], gone=[], breaks=[];
   for(const y of ys) for(const x of xs){
-    const t=grid[y][x]; if(!t||t.wall) continue;
+    const t=grid[y][x]; if(!t||t.wall||t.presa) continue;
     const nx=x+dx, ny=y+dy; if(!inside(nx,ny) || edgeBetween(x,y,nx,ny)) continue;
     const o=grid[ny][nx];
     if(!o){ grid[y][x]=null; grid[ny][nx]=t; t.x=nx; t.y=ny; moved=true; }
     else if(!o.wall && !o.m && o.t===t.t && t.t>0 && corOk(o,t)){
       grid[y][x]=null; t.x=nx; t.y=ny; moved=true;
       if(o.k && t.k && o.k!==t.k){ grid[ny][nx]=null; gone.push(t,o); breaks.push({x:nx,y:ny,t:o.t,r:o.r||t.r}); }
-      else { o.t++; o.c=corJunta(o,t); if(t.r) o.r=1; o.m=true; gone.push(t); merges.push(o); }
+      else { o.t++; o.c=corJunta(o,t); if(t.r) o.r=1; o.m=true; if(o.presa){ o.presa=0; o.solta=1; } gone.push(t); merges.push(o); }
     }
   }
   return {tiles:ts.filter(t=>!gone.includes(t)).map(({m,...t})=>t), moved, merges, gone, breaks};
@@ -501,7 +501,7 @@ function slide(tiles,dx,dy){
   const xs=dx===1?[...ix].reverse():ix, ys=dy===1?[...iy].reverse():iy;
   let moved=false; const merges=[], gone=[], breaks=[];
   for(const y of ys) for(const x of xs){
-    const t=grid[y][x]; if(!t||t.wall) continue;
+    const t=grid[y][x]; if(!t||t.wall||t.presa) continue;
     let cx=x, cy=y, merged=false;
     while(true){
       const nx=cx+dx, ny=cy+dy; if(!inside(nx,ny) || edgeBetween(cx,cy,nx,ny)) break;
@@ -510,7 +510,7 @@ function slide(tiles,dx,dy){
       if(!o.wall && !o.m && o.t===t.t && t.t>0 && corOk(o,t)){
         grid[cy][cx]=null; t.x=nx; t.y=ny; merged=true;
         if(o.k && t.k && o.k!==t.k){ grid[ny][nx]=null; gone.push(t,o); breaks.push({x:nx,y:ny,t:o.t,r:o.r||t.r}); }
-        else { o.t++; o.c=corJunta(o,t); if(t.r) o.r=1; o.m=true; gone.push(t); merges.push(o); }
+        else { o.t++; o.c=corJunta(o,t); if(t.r) o.r=1; o.m=true; if(o.presa){ o.presa=0; o.solta=1; } gone.push(t); merges.push(o); }
       }
       break;
     }
@@ -531,12 +531,12 @@ function move(dx,dy){
   for(const g of r.gone){ const el=els.get(g.id); els.delete(g.id); if(el){ el.style.zIndex=0; el.style.transform=pos(g.x,g.y); setTimeout(()=>el.remove(),120); } }
   for(const b of r.breaks) quebrar(b);
   S.tiles=r.tiles;
-  if(S.missao) contaMissao(r);
+  if(S.missao){ contaMissao(r); const rc=recolheCarro(); if(rc){ const el=els.get(rc.id); els.delete(rc.id); if(el){ el.style.transform=pos(rc.x,rc.y); el.classList.add('recolhe'); setTimeout(()=>el.remove(),350); } } }
   const wasTired = S.energy<=0;
   S.moves=(S.moves||0)+1;
   if(!S.semEnergia){ if(S.energy>0) S.energy--; else S.tired++; }
   humor();
-  for(let i=0;i<(S.path.spawns||1);i++) addTile(undefined,[dx,dy]);
+  for(let i=0;i<(S.path.spawns??1);i++) addTile(undefined,[dx,dy]);
   render();
   if(S.missao) flutuaPontos(r);
   SFX.arrastar();
@@ -1195,170 +1195,6 @@ function labCelula(cx,cy){
   return inside(x,y) ? [x,y] : null;
 }
 
-// ===================== CLÁSSICO (FASES COM MISSÃO) =====================
-// As fases ficam em missoes.js. Cada fase tem uma missão e um limite de arrastos, e acaba assim que a missão é
-// cumprida. Estrelas pelos arrastos que sobraram; pontos como no 2048 (juntar soma o valor da pedrinha nova).
-// Guardado em mina_missoes: {n: {e: melhores estrelas, t: mais pontos}}.
-const MISS = () => JSON.parse(localStorage.mina_missoes||'{}');
-const liberada = n => n===1 || (MISS()[n-1]?.e||0) > 0;
-const faseDe = m => m.fase || (m.forma ? 'caverna' : MISSOES_GRUPOS[m.g].fase);
-const charDe = m => m.char || MISSOES_GRUPOS[m.g].char || 'rola';
-const corNome = c => ['roxa','verde','mista'][c];
-const artigo = nome => /a$/.test(nome.split(' ')[0]) ? 'uma' : 'um';
-const plural = nome => nome.split(' ').map(w=>/[aeiouáéíóú]$/i.test(w)?w+'s':/r$/.test(w)?w+'es':/l$/.test(w)?w.slice(0,-1)+'is':w).join(' ');
-const qtd = (n,t) => n===1 ? `${artigo(rockName(t))} ${rockName(t)}` : `${n} ${plural(rockName(t))}`;
-const estrelasHtml = (e, cls='estr') => `<span class="${cls}">${[1,2,3].map(i=>`<i class="${i<=e?'on':''}">★</i>`).join('')}</span>`;
-const VAL = t => t>0 ? 2**t : 0;   // Cascalho 2, Pedra 4, Rocha 8, Rocha densa 16... (Rubi real = 2048)
-function objetivoTxt(o){
-  if(o.forme) return `Forme ${qtd(o.n,o.forme)}`;
-  if(o.cor!=null) return `Forme ${qtd(o.n,o.t)} ${corNome(o.cor)}${o.n>1?'s':''}`;
-  if(o.pontos) return `Faça ${o.pontos} pontos`;
-  if(o.quebre) return o.quebre<=1 ? `Quebre ${o.n} pedrinha${o.n>1?'s':''} com a picareta` : `Quebre ${qtd(o.n,o.quebre)} com a picareta`;
-  return '';
-}
-// quanto da missão já foi feito: {at, alvo, rot (rótulo curto)}
-function progresso(o){
-  if(o.forme) return {at:S.feitas?.[o.forme]||0, alvo:o.n, rot:o.n>1?plural(rockName(o.forme)):rockName(o.forme)};
-  if(o.cor!=null) return {at:S.coresF?.[o.t+':'+o.cor]||0, alvo:o.n, rot:`${o.n>1?plural(rockName(o.t)):rockName(o.t)} ${corNome(o.cor)}${o.n>1?'s':''}`};
-  if(o.pontos) return {at:S.pontos||0, alvo:o.pontos, rot:'pontos'};
-  if(o.quebre) return {at:(S.quebras||[]).filter(t=>t>=o.quebre).length, alvo:o.n, rot:'quebradas'};
-  return {at:0, alvo:1, rot:''};
-}
-const figSvg = (inner,cls='') => `<svg class="${cls}" viewBox="0 0 100 100">${inner}</svg>`;
-const pedraCor = (t,c) => pedraInner(t, c!=null ? {cor:c} : {});
-function figuraMissao(o){
-  // cada peça com o nome embaixo (noIco: o nome não ganha outro ícone ao lado)
-  const peca = (inner,nome,cls='',t=null) => `<div class="pecaN">${figSvg(inner,cls)}<small ${t!=null?`class="nomeT" style="--c:${rd(t)}"`:''}>${noIco(nome)}</small></div>`;
-  const rec = (a,b,c) => `<div class="receita">${peca(...a)}<i>+</i>${peca(...b)}<i>=</i>${peca(...c)}</div>`;
-  const nomeCor = (t,c) => rockName(t) + (c!=null ? ' '+corNome(c) : '');
-  if(o.forme || o.cor!=null){ const t=o.forme||o.t, c=o.cor;
-    return `<div class="figM"><div class="alvo">${peca(pedraCor(t,c),nomeCor(t,c),'fG',t)}<b>×${o.n}</b></div>${rec([pedraCor(t-1,c),nomeCor(t-1,c),'',t-1],[pedraCor(t-1,c),nomeCor(t-1,c),'',t-1],[pedraCor(t,c),nomeCor(t,c),'',t])}</div>`; }
-  if(o.quebre){ const t=Math.max(1,o.quebre), nome = o.quebre<=1 ? 'pedrinha' : rockName(t);
-    return `<div class="figM"><div class="alvo">${peca(pedraInner(t),nome,'fG',t)}<b>×${o.n}</b></div>${rec([pedraInner(t),nome,'',t],[pickInner(t),'picareta'],[oreSvg(4,50,52,2.6),'minério'])}</div>`; }
-  if(o.pontos) return `<div class="figM"><div class="alvo"><b>${o.pontos}</b><span>pontos</span></div>${rec([pedraInner(2),rockName(2)+' 4','',2],[pedraInner(2),rockName(2)+' 4','',2],[pedraInner(3),rockName(3)+' +8','',3])}</div>`;
-  return '';
-}
-// figura de cada silhueta da missão, no painel de cima
-function iconeMissao(o){
-  if(o.forme || o.cor!=null) return figSvg(pedraCor(o.forme||o.t, o.cor));
-  if(o.quebre) return figSvg(pedraInner(Math.max(1,o.quebre)));
-  return '';
-}
-const cumpriu = o => { const p=progresso(o); return p.at>=p.alvo; };
-const estrelasPor = (m,sobra) => 1 + (sobra>=m.estrelas[0]) + (sobra>=m.estrelas[1]);
-// conta o que a missão pede e os pontos, a cada arrasto (sem mexer na tela: o robô de calibrar usa)
-function contaMissao(r){
-  for(const o of r.merges){ S.feitas[o.t]=(S.feitas[o.t]||0)+1; if(o.c!=null) S.coresF[o.t+':'+o.c]=(S.coresF[o.t+':'+o.c]||0)+1; }
-  for(const b of r.breaks) S.quebras.push(b.t);
-  for(const o of r.merges) if(o.k!=='p') S.pontos+=VAL(o.t);
-  for(const b of r.breaks) S.pontos+=2*VAL(b.t);
-}
-function flutuaPontos(r){
-  const f=(x,y,v)=>{ const el=document.createElement('div'); el.className='flut'; el.textContent='+'+v; el.style.transform=pos(x,y); board.appendChild(el); setTimeout(()=>el.remove(),950); };
-  for(const o of r.merges) if(o.k!=='p') f(o.x,o.y,VAL(o.t));
-  for(const b of r.breaks) f(b.x,b.y,2*VAL(b.t));
-}
-// depois de cada arrasto: cumpriu, acabaram os arrastos ou travou
-function checaMissao(){
-  const m=MISSOES[S.missao-1];
-  const acaba=(ok,txt,motivo)=>{ S.phase='fimM'; setBanner(null,txt); if(ok) SFX.pagou(); setTimeout(()=>missaoResultado(ok,motivo), ok?800:650); };
-  if(cumpriu(m.obj)) return acaba(true,'missão cumprida!');
-  if(S.energy<=0) return acaba(false,'acabaram os arrastos','Acabaram os arrastos.');
-  if(!anyMove()) return acaba(false,'não cabe mais nada','Não cabia mais nada no tabuleiro.');
-}
-// painel de cima do Clássico: arrastos com as estrelas, silhuetas da missão e pontos
-function montaMissaoHud(m){
-  const p=progresso(m.obj), ic=iconeMissao(m.obj);
-  $('#cMis').innerHTML = ic && p.alvo<=4 ? `<div class="fila">${Array.from({length:p.alvo},()=>`<span>${ic}</span>`).join('')}</div><small>${noIco(p.rot)}</small>` : `<b id="cMisN"></b><small>${p.rot}</small>`;
-  $('#ptsP').style.display = m.obj.pontos ? 'none' : '';
-}
-function hudMissao(){
-  const m=MISSOES[S.missao-1], tot=m.arrastos, sobra=Math.max(0,S.energy), [e2,e3]=m.estrelas;
-  $('#cArr').textContent=sobra;
-  const tr=$('#cTr'); tr.style.width=Math.max(0,sobra/tot*100)+'%'; tr.style.background = sobra>=e3?'#6aa84f':sobra>=e2?'#f2b33d':'#c0603f';
-  for(const [id,lim] of [['#cS3',e3],['#cS2',e2],['#cS1',0]]){ const st=$(id); st.style.left=(lim?lim/tot*100:3)+'%'; st.classList.toggle('off', lim>0 && sobra<lim); }
-  $('#cPts').textContent=S.pontos||0;
-  const p=progresso(m.obj), fila=$('#cMis .fila');
-  if(fila) fila.querySelectorAll('span').forEach((e,i)=>e.classList.toggle('ok', i<p.at));
-  else if($('#cMisN')) $('#cMisN').textContent=`${Math.min(p.at,p.alvo)}/${p.alvo}`;
-}
-function regrasTxt(m){
-  const fase=faseDe(m), fm=m.forma?acharForma(m.forma):null, n=PATHS[fase].n;
-  const tam = fm ? `${fw(fm)}x${fh(fm)}` : `${m.w||n||4}x${m.h||m.w||n||4}`;
-  return `${PATHS[fase].nome}${fm?': '+fm.nome:''} · ${tam} · ${m.arrastos} arrastos · ${CHARS[charDe(m)].nome}`;
-}
-function missoesLista(){
-  hideOverlay(); hideCoach(); VEIO_DO_EDITOR=false;
-  show('scrMap'); trilha('menu'); document.body.classList.add('semHud');
-  S = {...freshState(), missao:0, phase:'lista'}; S.fiscal=FISCAIS[0]; applyAndar(); clearBoard(); render();
-  const r=MISS(), total=Object.values(r).reduce((a,x)=>a+(x.e||0),0);
-  setBanner('Clássico', `${total} de ${MISSOES.length*3} estrelas`);
-  const atual = (MISSOES.findIndex((m,i)=>!(r[i+1]?.e)) + 1) || MISSOES.length;
-  const lado = ['center','flex-end','center','flex-start'];
-  let html='';
-  MISSOES_GRUPOS.forEach((g,gi)=>{
-    html += `<div class="mGrupo">${disc(g.fase,null,'discSm')}<div><b>${g.nome}</b><span>${g.desc}</span></div></div>`;
-    MISSOES.forEach((m,k)=>{ if(m.g!==gi) return; const n=k+1, lib=liberada(n);
-      html += `<div class="mLinha" style="justify-content:${lado[n%4]}"><button class="mNo ${lib?'':'trava'} ${n===atual?'atual':''}" data-m="${n}" ${lib?'':'disabled'}>${n}${estrelasHtml(r[n]?.e||0)}</button></div>`; });
-  });
-  const mb=$('#mapBody'); mb.style.height='';
-  mb.innerHTML = `<div class="mTrilha">${html}</div>`;
-  // caminho ligando as fases
-  const tr=mb.querySelector('.mTrilha'), base=tr.getBoundingClientRect();
-  const pts=[...tr.querySelectorAll('.mNo')].map(b=>{ const q=b.getBoundingClientRect(); return `${Math.round(q.left+q.width/2-base.left)},${Math.round(q.top+q.height/2-base.top)}`; });
-  tr.insertAdjacentHTML('afterbegin', `<svg class="mCaminho" width="${Math.round(base.width)}" height="${Math.round(base.height)}"><polyline points="${pts.join(' ')}"/></svg>`);
-  tr.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>missaoInfo(+b.dataset.m));
-  mb.querySelector('.mNo.atual')?.scrollIntoView({block:'center'});
-}
-function missaoInfo(n){
-  const m=MISSOES[n-1], fase=faseDe(m), fm=m.forma?acharForma(m.forma):null, b=MISS()[n];
-  const explica=[];
-  if(fase!=='comum' || n===1) explica.push(PATHS[fase].como||PATHS[fase].desc);
-  if(charDe(m)==='passinho') explica.push(COMO_CHAR.passinho);
-  showOverlay(`${fm?formaSvg(fm,110):disc(fase,null,'bigDisc')}<h2>Fase ${n}</h2><p class="andarNome">${m.nome}</p>
-    <div class="objetivo"><small>missão</small>${figuraMissao(m.obj)}${objetivoTxt(m.obj)}</div>
-    <p class="ajuda">${regrasTxt(m)}</p>
-    ${explica.map(t=>`<p class="ajuda">${t}</p>`).join('')}
-    ${fase==='picareta'?regraPicareta():''}
-    <p class="metas">★ cumprir · ★★ sobrando ${m.estrelas[0]} arrastos · ★★★ sobrando ${m.estrelas[1]}</p>
-    ${b?`<p class="recAtual">Seu melhor: ${estrelasHtml(b.e)} · ${b.t} pontos</p>`:''}
-    <button class="btn g" id="mJoga">Jogar</button><button class="btn dim" id="mVolta">Voltar</button>`);
-  $('#mJoga').onclick=()=>missaoJoga(n);
-  $('#mVolta').onclick=hideOverlay;
-}
-function missaoJoga(n){
-  const m=MISSOES[n-1], fase=faseDe(m), fm=m.forma?acharForma(m.forma):null;
-  hideOverlay(); VEIO_DO_EDITOR=false;
-  S = {...freshState(), missao:n, tema:MISSOES_GRUPOS[m.g].tema, char:charDe(m), moves:0, extra:0, pontos:0, feitas:{}, coresF:{}, quebras:[]};
-  S.fiscal=FISCAIS[0];
-  for(const [k,v] of Object.entries(m.itens||{})) S.lv[k]=v;
-  const p = {...PATHS[fase], ...(m.regras||{}), forma:fm, caverna:false, energy:m.arrastos-CFG.energy, semEnergia:false};
-  if(m.w){ p.w=m.w; p.h=m.h||m.w; }
-  applyAndar(); startDay(p);
-  document.body.classList.add('modoCla'); montaMissaoHud(m); render();
-  setBanner(`Fase ${n}: ${m.nome}`, objetivoTxt(m.obj));
-  pedeEncaixe();
-}
-function missaoResultado(ok, motivo){
-  const n=S.missao, m=MISSOES[n-1], p=progresso(m.obj), sobra=Math.max(0,S.energy);
-  if(!ok){
-    SFX.naoDeu();
-    showOverlay(`${disc(faseDe(m),null,'bigDisc')}<h2>Não deu</h2><p>${motivo}</p><p>${objetivoTxt(m.obj)}: ${Math.min(p.at,p.alvo)} de ${p.alvo}.</p>
-      <button class="btn g" id="mDeNovo">Tentar de novo</button><button class="btn dim" id="mLista">Ver fases</button>`);
-  } else {
-    const e=estrelasPor(m,sobra), r=MISS(), ant=r[n], rec=!ant || S.pontos>(ant.t||0);
-    r[n]={e:Math.max(e,ant?.e||0), t:Math.max(S.pontos,ant?.t||0)}; localStorage.mina_missoes=JSON.stringify(r);
-    showOverlay(`<h2>Missão cumprida!</h2>${estrelasHtml(e,'estr grande')}
-      <p>Sobraram <b>${sobra}</b> arrastos · <b>${S.pontos}</b> pontos${rec&&ant?' (recorde!)':''}</p>
-      ${e<3?`<p class="metas">${e<2?`★★ sobrando ${m.estrelas[0]} · `:''}★★★ sobrando ${m.estrelas[1]}</p>`:''}
-      ${n<MISSOES.length?'<button class="btn g" id="mProx">Próxima fase</button>':'<p>Você terminou todas as fases!</p>'}
-      <button class="btn dim" id="mDeNovo">Jogar de novo</button><button class="btn dim" id="mLista">Ver fases</button>`);
-    if($('#mProx')) $('#mProx').onclick=()=>{ missoesLista(); missaoInfo(n+1); };
-  }
-  $('#mDeNovo').onclick=()=>missaoJoga(n);
-  $('#mLista').onclick=missoesLista;
-}
-
 // ===================== CATÁLOGO =====================
 // Tudo que existe no jogo, montado a partir dos próprios dados (nunca fica desatualizado).
 function catalogo(volta){
@@ -1579,7 +1415,7 @@ function render(){
       const look=lookOf(t), key=t.t+':'+look+':'+t.c+':'+t.k+':'+t.r;
       if(el.dataset.key!==key){ el.dataset.key=key; el.firstChild.innerHTML=svgOf(t.t===0?torraoInner():t.k==='p'?pickInner(t.t):pedraInner(t.t,{look,cor:t.c,rara:t.r})); }
     }
-    etiqueta(el,t);
+    etiqueta(el,t); presaMarca(el,t);
   }
   if(S.phase==='mine'){ const on=has('regua')?new Set(fileiras().flat().map(t=>t.id)):new Set(); for(const t of S.tiles) els.get(t.id)?.classList.toggle('line',on.has(t.id)); }
   const q=CFG.quota(S.week);
@@ -1591,6 +1427,7 @@ function render(){
   $('#enIc').classList.toggle('zero',S.phase==='mine'&&S.energy<=0);
   $('#hMoneyLbl').textContent='dinheiro'; $('#quIc').textContent='!'; $('#quIc').classList.remove('ok','fig');
   if(S.missao) hudMissao();
+  desenhaMarcas();
   renderItems(); ferrBar();
 }
 

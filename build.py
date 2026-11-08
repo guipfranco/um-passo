@@ -3,7 +3,8 @@
 import os
 T = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src') + os.sep
 rd = lambda f: open(T + f, encoding='utf-8').read()
-missoes = rd('missoes.js')
+missoes = rd('quebracabecas.js') + rd('missoes.js') + rd('missoes_calib.js')
+classico = rd('classico.js')
 cfg, svg, logic, helpers, sfx, css, autoupd = rd('config.js'), rd('svg.js'), rd('jogo.js'), rd('helpers.js'), rd('sfx.js'), rd('css.css'), rd('autoupd.html')
 gi = rd('gi.js')
 css = css.replace('width:calc(4*var(--cell) + 5*var(--gap));height:calc(4*var(--cell) + 5*var(--gap))', 'width:calc(var(--w,4)*var(--cell) + (var(--w,4) + 1)*var(--gap));height:calc(var(--h,4)*var(--cell) + (var(--h,4) + 1)*var(--gap))')
@@ -194,6 +195,35 @@ body:not(.semHud).modoCla .hudCla{display:flex}
 @keyframes popS{40%{transform:scale(1.4)}}
 .silhP small,.silhP b{text-align:center}
 .hudCla .ptsP{flex:.8}
+#board .tile{z-index:2}
+.marcaM{position:absolute;left:0;top:0;width:var(--cell);height:var(--cell);z-index:1;pointer-events:none}
+.marcaM svg{width:100%;height:100%;overflow:visible}
+.alvoM .anel{stroke:#f2b33d}
+.alvoM .fantasma{opacity:.4}
+.alvoM.ok .anel{stroke:#6aa84f;stroke-dasharray:none}
+.alvoM.ok .fantasma{opacity:0}
+.terraM.some{animation:terraSai .45s forwards}
+@keyframes terraSai{to{opacity:0;scale:1.3}}
+.carroM .fantasma{opacity:.45}
+.corrente{position:absolute;inset:0;pointer-events:none;z-index:1}
+.corrente svg{width:100%;height:100%;overflow:visible}
+.corrente.solta{animation:soltaC .4s forwards}
+@keyframes soltaC{to{opacity:0;translate:0 25%}}
+.tile.recolhe{transition:transform .2s,opacity .3s,scale .3s;opacity:0;scale:.3}
+.chipsM{display:flex;gap:4px}
+.chipM{display:flex;flex-direction:column;align-items:center;min-width:32px}
+.chipM svg{width:26px;height:26px;overflow:visible}
+.chipM b{font-size:12px;line-height:1;color:#7a5a44}
+.chipM.ok b{color:#6aa84f}
+.metasM{display:flex;flex-direction:column;gap:6px;margin:6px 0 4px;text-align:left}
+.metasM div{display:flex;align-items:center;gap:8px;font-size:16px}
+.metasM svg.fP{width:36px;height:36px;flex:none;overflow:visible}
+.silF{display:flex;align-items:center;justify-content:center;gap:6px;margin:4px 0 6px}
+.silF svg.fM{width:54px;height:54px;overflow:visible}
+.silF i{font-style:normal;font-weight:700;color:#a08a74}
+.mNo .pegada{position:absolute;right:-6px;top:-6px;width:22px;height:22px;background:#f6ecd9;border-radius:50%;padding:3px;box-shadow:0 1px 0 #0003}
+.mNo .emAndamento{position:absolute;left:-6px;top:-6px;background:#6d93a8;color:#fff;border-radius:999px;font-size:13px;line-height:1;padding:3px 6px}
+.mNo.chefe{width:74px;height:74px;font-size:27px;background:#e0804a;box-shadow:0 5px 0 #a8552c;color:#fff}
 body.modoCla .tile .face{width:84%;height:84%;margin:0 auto}
 .etq{position:absolute;left:50%;bottom:-9%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;background:color-mix(in srgb,var(--c) 72%,#2e2219);color:#fff;border-radius:calc(var(--cell)*.12);padding:1px calc(var(--cell)*.07) 2px;line-height:1;pointer-events:none;white-space:nowrap;box-shadow:0 1px 0 #0003;z-index:2}
 .etq{animation:etqIn .3s ease-out}
@@ -436,7 +466,7 @@ html = '''<!doctype html>
 <body>
 ''' + body + '''
 <script>
-''' + cfg + missoes + gi + svg + logic + helpers + sfx + ui + '''</script>
+''' + cfg + missoes + gi + svg + logic + classico + helpers + sfx + ui + '''</script>
 </body>
 </html>
 '''
