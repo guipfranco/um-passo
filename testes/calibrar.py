@@ -1,6 +1,7 @@
 """Calibra as fases do Clássico: dois robôs (testes/calibrar/robo.js) jogam cada fase N vezes sem limite e medem
 quantos arrastos usam para cumprir: o do canto (táticas do 2048, sobe alto) e o da meta (corre para as metas;
-melhor nas cores, picareta e Passinho). Em cada fase vale o melhor. Daí saem os arrastos e as estrelas.
+melhor nas cores, picareta e Passinho); vale o melhor dos dois. Um terceiro, o casual, joga como uma pessoa comum
+(olha só um arrasto e às vezes erra). O limite de arrastos vem do casual; ★★ é a mediana dele e ★★★ a do melhor.
 
   python testes/calibrar.py [N] [a-b] [--grava]
 
@@ -8,7 +9,7 @@ melhor nas cores, picareta e Passinho). Em cada fase vale o melhor. Daí saem os
   a-b      só as fases de a até b
   --grava  grava src/missoes_calib.js (mantém as fases que não foram recalibradas)
 
-Fases que o robô cumpre em menos de 70% das vezes aparecem marcadas como DIFÍCIL.
+Fases que o robô casual cumpre em menos de 80% das vezes aparecem marcadas como DIFÍCIL.
 Os quebra-cabeças não passam por aqui: testes/calibrar/quebracabecas.html gera e confere.
 """
 import html, json, os, pathlib, re, shutil, subprocess, sys, tempfile

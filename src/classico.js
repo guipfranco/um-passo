@@ -91,13 +91,36 @@ function flutuaPontos(r){
 // depois de cada arrasto: cumpriu, formou o proibido, acabaram os arrastos ou travou
 function checaMissao(){
   const m=MISSOES[S.missao-1];
-  const est=S, acaba=(ok,txt,motivo)=>{ S.phase='fimM'; localStorage.removeItem('mina_cla_save'); setBanner(null,txt); if(ok) SFX.pagou();
+  const est=S, acaba=(ok,txt,motivo)=>{ S.phase='fimM'; localStorage.removeItem('mina_cla_save'); anotaPartida(ok, motivo); setBanner(null,txt); if(ok) SFX.pagou();
     setTimeout(()=>{ if(S===est && S.phase==='fimM') missaoResultado(ok,motivo); }, ok?800:650); };   // só se ainda estiver nessa fase
   const v=violou(m); if(v) return acaba(false,'não podia!',`Você formou ${artigo(rockName(v.proibido))} ${rockName(v.proibido)}.`);
   if(cumpriu(m)) return acaba(true,'missão cumprida!');
   if(S.energy<=0) return acaba(false,'acabaram os arrastos','Acabaram os arrastos.');
   if(!anyMove()) return acaba(false,'não cabe mais nada','Não cabia mais nada no tabuleiro.');
   salvaFase();
+}
+
+// ---------- partidas anotadas no próprio aparelho (nada sai dele): Laboratório > Dados das partidas ----------
+// cada fim de fase: [fase, venceu (1/0), arrastos usados, arrastos que sobraram, Passinho (1/0), dia]; guarda as 1500 últimas
+const PARTIDAS = () => JSON.parse(localStorage.ptui_partidas||'[]');
+function anotaPartida(ok, motivo){
+  try{ const a=PARTIDAS(); a.push([S.missao, ok?1:0, S.moves||0, Math.max(0,S.energy||0), S.medalha?1:0, new Date().toISOString().slice(0,10)]);
+    localStorage.ptui_partidas=JSON.stringify(a.slice(-1500)); }catch(e){}
+}
+function dadosPartidas(volta){
+  const a=PARTIDAS(), por={};
+  for(const [n,ok,us] of a){ const p=por[n]||(por[n]={t:0,v:0,us:[]}); p.t++; if(ok){ p.v++; p.us.push(us); } }
+  const med=v=>{ if(!v.length) return '-'; const s=[...v].sort((x,y)=>x-y); return s[Math.floor(s.length/2)]; };
+  const linhas=Object.keys(por).map(Number).sort((x,y)=>x-y).map(n=>{ const p=por[n]; return `Fase ${n}: ${p.v} de ${p.t} vencidas, mediana ${med(p.us)} arrastos (limite ${MISSOES[n-1]?.arrastos??'?'})`; });
+  const texto='2048 Stars, partidas da Jornada\n'+(linhas.join('\n')||'nenhuma partida ainda')+'\n\nbruto: '+JSON.stringify(a);
+  showOverlay(`<h2>Dados das partidas</h2><p>Ficam só neste aparelho. Copie e mande por mensagem.</p>
+    <textarea id="dpTxt" readonly style="width:100%;height:180px;font-size:12px"></textarea>
+    <button class="btn b" id="dpCopia">Copiar</button><button class="btn dim" id="dpVolta">Voltar</button>`);
+  $('#dpTxt').value=texto;
+  $('#dpCopia').onclick=()=>{ const ok=()=>{ $('#dpCopia').textContent='Copiado!'; };
+    if(navigator.clipboard) navigator.clipboard.writeText(texto).then(ok,()=>{ $('#dpTxt').select(); document.execCommand('copy'); ok(); });
+    else { $('#dpTxt').select(); document.execCommand('copy'); ok(); } };
+  $('#dpVolta').onclick=volta;
 }
 
 // ---------- fase em andamento: salvar e continuar ----------

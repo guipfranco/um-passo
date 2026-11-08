@@ -7,6 +7,7 @@
 //  - pedrinha alta solta pelo tabuleiro custa.
 // Busca: expectimax (como a IA do nneonneo): olha o próximo arrasto, todas as casas onde pode nascer a
 // pedrinha nova (Cascalho 90%, Pedra 10%) e o arrasto seguinte. Pesos da heurística do nneonneo/2048-ai.
+// ROBO.escolheCasual: joga como uma pessoa comum (ver lá embaixo); é ele que define o limite de arrastos.
 // Além disso, corre atrás das metas do Clássico (casa marcada, terra, presa, carrinho...).
 const ROBO = `
 window.ROBO = (()=>{
@@ -85,6 +86,14 @@ window.ROBO = (()=>{
       if(sc>bs){ bs=sc; best={dir:[dx,dy], r, sc}; } }
     return best; }
   const escolheMeta = (ts,m) => melhorMeta(ts,2,m);
-  return {escolhe, escolheMeta, heur};
+  // robô "casual": como uma pessoa que não planeja muito. Olha só este arrasto (não pensa onde nasce a próxima),
+  // gosta de juntar e de deixar casas vazias, corre para a meta e, 1 vez em 5, arrasta para outro lado sem pensar.
+  // Nunca faz o que a fase proíbe (isso a pessoa lê na regra).
+  function escolheCasual(ts,m){ const ops=[];
+    for(const [dx,dy] of DIRS){ const r=slide(ts,dx,dy); if(!r.moved) continue; const g=ganho(r,m); if(g<-1e8) continue; ops.push({dir:[dx,dy], r, sc:heur(r.tiles)+g*4000}); }
+    if(!ops.length){ for(const [dx,dy] of DIRS){ const r=slide(ts,dx,dy); if(r.moved) return {dir:[dx,dy], r}; } return null; }
+    if(Math.random()<.2) return ops[Math.floor(Math.random()*ops.length)];
+    return ops.reduce((a,b)=>b.sc>a.sc?b:a); }
+  return {escolhe, escolheMeta, escolheCasual, heur};
 })();
 `;

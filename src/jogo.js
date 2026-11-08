@@ -1028,6 +1028,7 @@ function labPainel(){
     ${hist?sec('hist','Últimos resultados',`<ul class="labHist">${hist}</ul>`):''}
     <button class="btn dim" id="labReset">Voltar às regras da fase</button>
     <div class="labRow"><button class="btn dim" id="labEd" style="flex:1">Editor de níveis</button><button class="btn dim" id="labCat" style="flex:1">Catálogo</button></div>
+    <button class="btn dim" id="labDados">Dados das partidas</button>
     <button class="btn dim" id="labMenu">Voltar ao menu</button>`);
   const redesenha = () => { labSalva(); const y=$('#panel').scrollTop; labPainel(); $('#panel').scrollTop=y; };
   document.querySelectorAll('[data-fase]').forEach(b=>b.onclick=()=>{ LAB.fase=b.dataset.fase; LAB.cfg={...presetDe(LAB.fase), rara:g.rara, ferr:g.ferr}; redesenha(); });
@@ -1046,6 +1047,7 @@ function labPainel(){
   $('#labMenu').onclick=()=>{ hideOverlay(); showMenu(); };
   $('#labEd').onclick=editorLista;
   $('#labCat').onclick=()=>catalogo(labPainel);
+  $('#labDados').onclick=()=>dadosPartidas(labPainel);
 }
 // pedrinha + picareta do mesmo nível = minério na hora
 function regraPicareta(){

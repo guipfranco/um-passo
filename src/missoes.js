@@ -61,7 +61,7 @@ const MISSOES = [
   {g:2, nome:'Quebra-cabeça das muretas', ...QC.q3},
   {g:2, nome:'Ilhas',       forma:'ilhas',    obj:{forme:6, n:1}},
   {g:2, nome:'Janela',      forma:'janela',   obj:{alvo:5, n:1}},
-  {g:2, nome:'Quartos',     forma:'quartos',  objs:[{seq:[5,6]},{pontos:400}]},
+  {g:2, nome:'Quartos',     forma:'quartos',  alvosPos:[[1,1],[2,2]], obj:{alvo:4, n:2}},
   {g:2, nome:'Fim das muretas', w:5, regras:{edges:6}, chefe:true, obj:{forme:8, n:1}},
   // 4 · Terra
   {g:3, nome:'Terra fofa',               obj:{terra:4}},

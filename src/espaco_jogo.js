@@ -252,11 +252,16 @@ function espMenu(){
   if(TAG_MINA==null) TAG_MINA=tag.textContent;
   tag.textContent = on ? 'junte poeira até virar galáxia' : TAG_MINA;
   document.title = on ? '2048 Stars' : 'Ptui!';
-  // no espaço: Jornada (as missões) e Clássico (4x4 sem fim)
-  $('#mCla').innerHTML = on ? 'Jornada<small>uma missão em cada fase</small>' : 'Clássico<small>uma missão em cada fase</small>';
+  // no espaço: Novo jogo (vai ao mapa), Continuar (só para quem já tem progresso) e Clássico (4x4 sem fim)
+  $('#mCla').innerHTML = on ? 'Novo jogo<small>a jornada, fase a fase</small>' : 'Clássico<small>uma missão em cada fase</small>';
+  $('#mCla').onclick = on ? novoJogoEsp : missoesLista;
+  if(!$('#mSegue')){ const b=document.createElement('button'); b.className='btn b big'; b.id='mSegue'; b.textContent='Continuar'; b.onclick=continuarEsp; $('#mCla').after(b); }
+  const tem=temProgresso(), r=MISS(), est=Object.values(r).reduce((a,x)=>a+(x.e||0),0);
+  $('#mSegue').style.display = on && tem ? '' : 'none';
+  if(on && tem) $('#mSegue').innerHTML = `Continuar<small>fase ${faseAtual()} · ${est} ${est===1?'estrela':'estrelas'}</small>`;
   if(!$('#mInf')){ const b=document.createElement('button'); b.className='btn b big'; b.id='mInf'; b.innerHTML='Clássico<small>4x4 sem fim, até não caber mais nada</small>'; b.onclick=infinitoJoga; $('#mCla').after(b); }
-  // no espaço o Clássico vem primeiro, depois a Jornada
-  const inf=$('#mInf'); if(on) $('#mCla').before(inf); else $('#mCla').after(inf);
+  // o Clássico vem depois do Novo jogo e do Continuar
+  $('#mSegue').after($('#mInf'));
   // Como jogar: no espaço abre o do 2048 Stars; fora dele, o tutorial da mina
   const tut=$('#mTut'); if(tut.onclick!==comoJogarEsp) TUT_MINA=tut.onclick; tut.onclick = on ? comoJogarEsp : TUT_MINA;
   if(!$('#mOpc')){ const b=document.createElement('button'); b.className='btn dim big'; b.id='mOpc'; b.textContent='Opções'; b.onclick=espOpcoes; tut.after(b); }
@@ -273,6 +278,25 @@ function espMenu(){
     $('#ovoMina').onclick=()=>{ if(localStorage.mina_save) loadGame(); else newGameClick(); };
     $('#ovoLab').onclick=labPainel;
   }
+}
+
+// ---------- novo jogo e continuar ----------
+const temProgresso = () => Object.keys(MISS()).length>0 || !!localStorage.mina_cla_save;
+function faseAtual(){ const r=MISS(); return (MISSOES.findIndex((m,i)=>!(r[i+1]?.e)) + 1) || MISSOES.length; }
+// sem progresso, vai direto ao mapa; com progresso, pergunta antes de apagar tudo
+function novoJogoEsp(){
+  if(!temProgresso()){ missoesLista(); return; }
+  janelaMenu();
+  showOverlay(`<h2>Começar do zero?</h2><p>Suas estrelas e as fases liberadas serão apagadas.</p>
+    <button class="btn g" id="nZera">Começar do zero</button><button class="btn dim" id="nVolta">Voltar</button>`);
+  $('#nZera').onclick=()=>{ localStorage.removeItem('mina_missoes'); localStorage.removeItem('mina_cla_save'); hideOverlay(); missoesLista(); };
+  $('#nVolta').onclick=fechaJanelaMenu;
+}
+// fase pela metade: volta nela; senão abre o mapa já com a próxima fase
+function continuarEsp(){
+  const sv=JSON.parse(localStorage.mina_cla_save||'null');
+  if(sv && MISSOES[sv.n-1]){ missoesLista(); missaoJoga(sv.n,{retoma:true}); return; }
+  missoesLista(); missaoInfo(faseAtual());
 }
 
 // ---------- opções ----------
