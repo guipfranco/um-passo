@@ -121,8 +121,7 @@ function telaJogo(host,modo){const {tela,Q}=telaFrame(host);telaFundo(tela,Q);
     telaEl(tela,'<b style="font-size:30px">Não deu</b><div class="sub" style="font-size:15px;margin-top:6px">acabaram os arrastos</div>','left:0;right:0;top:396px;text-align:center');
     const fr=telaEl(tela,'Forme 3 <span class="pill" style="display:inline-flex;align-items:center;gap:5px;vertical-align:middle"><canvas class="icoMeta" style="width:28px;height:28px;min-width:28px;flex:none;display:block;border-radius:0;margin-left:-6px"></canvas>Rochas de lava</span>: 0 de 3','left:0;right:0;top:478px;text-align:center;font-size:16px;color:#ddd3ee');
     const mc=fr.querySelector('canvas');mc.width=Math.round(28*Q);mc.height=Math.round(28*Q);const mcx=mc.getContext('2d');
-    view(mc,t=>{const w=mc.width;mcx.clearRect(0,0,w,w);const g=mcx.createRadialGradient(w/2,w/2,0,w/2,w/2,w/2);g.addColorStop(0,'rgba(255,200,150,.55)');g.addColorStop(1,'rgba(255,200,150,.08)');
-      mcx.fillStyle=g;mcx.beginPath();mcx.arc(w/2,w/2,w/2-Q,0,7);mcx.fill();mcx.strokeStyle='rgba(255,210,170,.7)';mcx.lineWidth=1.2*Q;mcx.stroke();drawPeca(mcx,'Rocha de lava',t,w/2,w/2,w*1.05,1,true);});
+    view(mc,t=>{const w=mc.width;mcx.clearRect(0,0,w,w);drawPeca(mcx,'Rocha de lava',t,w/2,w/2,w*1.15,1,true);});
     telaEl(tela,'<div class="bt">Tentar de novo</div><div class="bt vidro sm">Ver fases</div>','left:38px;right:38px;top:540px;display:flex;flex-direction:column;gap:12px');}}
 
 // ---------- tamanhos: a escada inteira num tabuleiro ----------
