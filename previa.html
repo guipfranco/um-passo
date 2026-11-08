@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2048 Stars · prévia para o WhatsApp (rascunho)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b141a;color:#e9edef;font-family:'Exo 2',system-ui,sans-serif}
+main{max-width:460px;margin:0 auto;padding:16px 10px 40px;display:flex;flex-direction:column;gap:18px}
+h1{margin:4px 4px 0;font:900 19px Orbitron,sans-serif;letter-spacing:.04em;color:#f4fbff}
+.intro{margin:0 4px;font-size:14.5px;line-height:1.4;color:#aebac1}
+.op h2{margin:0 4px 6px;font:700 15px 'Exo 2',sans-serif;color:#7fe0ff}
+.chat{background:#0b141a url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Ccircle cx='8' cy='9' r='1' fill='%23ffffff10'/%3E%3Ccircle cx='28' cy='27' r='1.2' fill='%23ffffff0c'/%3E%3C/svg%3E");border-radius:14px;padding:10px 8px;display:flex;flex-direction:column;align-items:flex-end}
+.bolha{background:#005c4b;border-radius:10px 2px 10px 10px;padding:4px;max-width:92%;width:330px;font-family:system-ui,Roboto,sans-serif}
+.card{background:#025144;border-radius:7px;overflow:hidden}
+.card canvas{display:block;width:100%;aspect-ratio:1200/630}
+.card .tx{padding:7px 9px 8px}
+.card b{display:block;font-size:14.5px;color:#e9edef;font-weight:600}
+.card p{margin:2px 0 0;font-size:13px;color:#c5d0d4;line-height:1.3}
+.card small{display:block;margin-top:3px;font-size:12px;color:#8fa9a2}
+.link{padding:6px 6px 2px;font-size:14px;color:#53bdeb;word-break:break-all}
+.hora{text-align:right;font-size:11px;color:#9fc3bb;padding:0 4px 2px}
+.nota{margin:0 4px;font-size:13px;color:#8696a0}
+</style>
+</head>
+<body>
+<main>
+  <h1>PRÉVIA NO WHATSAPP</h1>
+  <p class="intro">Rascunho: quatro opções de como o link aparece quando alguém manda no WhatsApp. Cada uma tem imagem, título e frase própria; dá para misturar (a imagem de uma com a frase de outra).</p>
+  <div id="ops"></div>
+  <p class="nota">A imagem final sai em 1200x630, o tamanho que o WhatsApp mostra grande em cima do link.</p>
+</main>
+<script src="src/espaco.js?v=15"></script>
+<script>
+buildTextures();
+const OPS = [
+  {id:'A', nome:'A · Logo com planetas em órbita', titulo:'2048 Stars', frase:'Junte poeira até virar galáxia. Um 2048 com planetas em 3D.', desenha:opA},
+  {id:'B', nome:'B · Tabuleiro em jogo', titulo:'2048 Stars · jogue no navegador', frase:'Arraste, junte as iguais e veja a poeira virar planeta, estrela e galáxia.', desenha:opB},
+  {id:'C', nome:'C · A escada inteira', titulo:'2048 Stars', frase:'Da poeira à galáxia em 18 degraus. Até onde você chega?', desenha:opC},
+  {id:'D', nome:'D · Um planeta gigante', titulo:'2048 Stars', frase:'O 2048 no espaço: 96 fases e um modo sem fim. De graça, sem instalar.', desenha:opD},
+];
+// ---------- peças de desenho ----------
+function ceu(c,W,H,seed=3){
+  c.fillStyle='#0b0a18'; c.fillRect(0,0,W,H);
+  for(const [x,y,r,cor] of [[.3,.62,.75,'rgba(150,70,220,.55)'],[.78,.3,.55,'rgba(40,110,200,.35)'],[.1,.15,.4,'rgba(220,80,180,.25)']]){
+    const g=c.createRadialGradient(W*x,H*y,0,W*x,H*y,W*r); g.addColorStop(0,cor); g.addColorStop(1,'rgba(0,0,0,0)'); c.fillStyle=g; c.fillRect(0,0,W,H); }
+  const r=rng(seed); for(let i=0;i<260;i++){ const a=.25+.75*r(), s=(r()<.08?2.6:1.3)*W/1200; c.fillStyle=`rgba(255,255,255,${a.toFixed(2)})`; c.fillRect(r()*W,r()*H,s,s); }
+}
+function neon(c,txt,x,y,px,esp=0,cor='#f4fbff'){
+  c.save(); c.textAlign='center'; c.textBaseline='middle'; c.fillStyle=cor; c.font=`900 ${px}px Orbitron, sans-serif`;
+  if('letterSpacing' in c) c.letterSpacing=(esp*px)+'px'; const dx=esp*px/2;
+  c.shadowColor='rgba(110,230,255,.95)'; c.shadowBlur=px*.33; c.fillText(txt,x+dx,y); c.shadowColor='rgba(230,100,255,.7)'; c.shadowBlur=px*.13; c.fillText(txt,x+dx,y); c.restore();
+}
+function logo(c,x,y,k){ neon(c,'2048',x,y-12*k,78*k); neon(c,'STARS',x,y+40*k,27*k,.42); }
+function texto(c,txt,x,y,px,cor='#9fe9ff',esp=.18){ c.save(); c.textAlign='center'; c.textBaseline='middle'; c.font=`700 ${px}px 'Exo 2', sans-serif`; if('letterSpacing' in c) c.letterSpacing=(esp*px)+'px'; c.fillStyle=cor; c.fillText(txt,x+esp*px/2,y); c.restore(); }
+function casa(c,x,y,pa){ c.beginPath(); c.arc(x,y,pa*.39,0,7); c.fillStyle='rgba(16,12,38,.6)'; c.fill(); c.lineWidth=Math.max(1,pa*.012); c.strokeStyle='rgba(190,170,255,.28)'; c.stroke(); }
+const COR=['#d9c49a','#7fdcf0','#ff7a1e','#909cb2','#bfefff','#e9c3a0'];
+function peca(c,t,x,y,u,id){ if(t<=6){ const g=c.createRadialGradient(x,y,0,x,y,u*.46); g.addColorStop(0,COR[t-1]+'70'); g.addColorStop(.55,COR[t-1]+'26'); g.addColorStop(1,COR[t-1]+'00'); c.fillStyle=g; c.beginPath(); c.arc(x,y,u*.46,0,7); c.fill(); }
+  drawPecaVar(c,LADDER[t-1].n,2.2,x,y,u,id); }
+// ---------- as quatro opções ----------
+function opA(c,W,H){ ceu(c,W,H,5); const k=W/360*.62, cx=W/2, cy=H*.5, rx=158*k*1.25, ry=60*k*1.1, tl=-.14;
+  const pl=[['Lua',38],['Marte',44],['Saturno',104],['Terra',54],['Júpiter',72]].map(([n,sz],i)=>{ const a=.9+i*2*Math.PI/5, x0=Math.cos(a)*rx, y0=Math.sin(a)*ry;
+    return {n,sz,x:cx+x0*Math.cos(tl)-y0*Math.sin(tl),y:cy+x0*Math.sin(tl)+y0*Math.cos(tl),z:Math.sin(a)}; });
+  c.save(); c.translate(cx,cy); c.rotate(tl); c.strokeStyle='rgba(255,255,255,.22)'; c.lineWidth=2*k; c.setLineDash([7*k,8*k]); c.beginPath(); c.ellipse(0,0,rx,ry,0,0,7); c.stroke(); c.restore(); c.setLineDash([]);
+  pl.sort((a,b)=>a.z-b.z).forEach(p=>drawPeca(c,p.n,2.2,p.x,p.y,p.sz*k*1.15,1,true,.75+.25*(p.z+1)/2));
+  logo(c,cx,cy-8*k,k*1.05); texto(c,'JUNTE POEIRA ATÉ VIRAR GALÁXIA',cx,H*.9,W*.026); }
+function opB(c,W,H){ ceu(c,W,H,8); const B=H*.86, x0=W*.06, y0=(H-B)/2, pa=B/4;
+  const TAB=[[1,2,3,0],[4,3,5,2],[6,7,8,9],[12,11,10,1]];
+  for(let j=0;j<4;j++) for(let i=0;i<4;i++) casa(c,x0+(i+.5)*pa,y0+(j+.5)*pa,pa);
+  for(let j=0;j<4;j++) for(let i=0;i<4;i++){ const t=TAB[j][i]; if(t) peca(c,t,x0+(i+.5)*pa,y0+(j+.5)*pa,pa*.8,'b'+i+j); }
+  const k=W/360*.5, cx=x0+B+(W-x0-B)/2; logo(c,cx,H*.42,k); texto(c,'JUNTE POEIRA',cx,H*.68,W*.03); texto(c,'ATÉ VIRAR GALÁXIA',cx,H*.76,W*.03); }
+function opC(c,W,H){ ceu(c,W,H,11); const k=W/360*.5; logo(c,W/2,H*.25,k);
+  const fila=[1,3,5,6,8,11,13,16,18], n=fila.length;
+  // tamanho só cresce ao longo da fila (cada peça cabe exatamente no seu quadrado)
+  fila.forEach((t,i)=>{ const f=i/(n-1), x=W*(.065+.87*f), u=W*(.055+.085*f), y=H*.64;
+    if(t<=6){ const g=c.createRadialGradient(x,y,0,x,y,u*.6); g.addColorStop(0,COR[t-1]+'70'); g.addColorStop(1,COR[t-1]+'00'); c.fillStyle=g; c.beginPath(); c.arc(x,y,u*.6,0,7); c.fill(); }
+    drawPeca(c,LADDER[t-1].n,2.2,x,y,u,1,true); });
+  texto(c,'DA POEIRA À GALÁXIA',W/2,H*.91,W*.026); }
+function opD(c,W,H){ ceu(c,W,H,2); drawPeca(c,'Saturno',2.2,W*.74,H*.52,H*1.05,1,true);
+  const k=W/360*.55, cx=W*.3; logo(c,cx,H*.42,k); texto(c,'O 2048 NO ESPAÇO',cx,H*.7,W*.03); }
+// ---------- monta a página ----------
+const ops=document.getElementById('ops');
+for(const o of OPS){ const d=document.createElement('div'); d.className='op';
+  d.innerHTML=`<h2>${o.nome}</h2><div class="chat"><div class="bolha"><div class="card"><canvas width="1200" height="630" id="cv${o.id}"></canvas><div class="tx"><b>${o.titulo}</b><p>${o.frase}</p><small>guipfranco.github.io</small></div></div><div class="link">https://guipfranco.github.io/um-passo/</div><div class="hora">21:04 ✓✓</div></div></div>`;
+  ops.appendChild(d); }
+Promise.all([document.fonts.load("900 40px Orbitron"),document.fonts.load("700 20px 'Exo 2'")]).then(()=>{ for(const o of OPS){ const cv=document.getElementById('cv'+o.id); o.desenha(cv.getContext('2d'),1200,630); } });
+</script>
+</body>
+</html>
