@@ -48,6 +48,7 @@ function baseCasa(x,y){ const r=cnRng(1009+x*131+y*977);
   return `<svg viewBox="0 0 100 100"><path class="base" d="${cnBolha(50+(r()-.5)*5,52+(r()-.5)*5,42+r()*5,38+r()*5,r,.17,8)}"/><path class="brilho" d="M20 77 q30 17 60 0"/></svg>`; }
 function desenhaCenario(){
   const el=$('#cenario'); if(!el) return;
+  if(espCenario()) return;   // Clássico no espaço: o céu é desenhado por espaco_jogo.js
   if(!$('#scrGame').classList.contains('on')){ el.innerHTML=''; return; }
   const k=temaCenario(), T=TEMAS[k], bs=document.body.style;
   bs.setProperty('--base',T.base); bs.setProperty('--baseOp',T.baseOp); bs.setProperty('--brilho',T.brilho); bs.setProperty('--vazio',T.vazio); bs.setProperty('--cenBg',T.bg);
@@ -1395,10 +1396,10 @@ function render(){
   board.querySelectorAll('.slot').forEach(sl=>sl.classList.toggle('void', S.walls.some(w=>w.v && w.x==sl.dataset.x && w.y==sl.dataset.y)));
   for(const w of S.walls){
     if(w.v) continue;
-    if(!els.has(w.id)){ const el=document.createElement('div'); el.className='tile'; el.style.transform=pos(w.x,w.y); el.innerHTML=`<div class="face">${svgOf(wallInner())}</div>`; board.appendChild(el); els.set(w.id,el); }
+    if(!els.has(w.id)){ const el=document.createElement('div'); el.className='tile'; el.style.transform=pos(w.x,w.y); if(noEspaco()) espParede(el); else el.innerHTML=`<div class="face">${svgOf(wallInner())}</div>`; board.appendChild(el); els.set(w.id,el); }
   }
   for(const e of (S.edges||[])){
-    if(!els.has(e.id)){ const el=document.createElement('div'); el.className='edge '+e.d; el.style.setProperty('--ex',e.x); el.style.setProperty('--ey',e.y); board.appendChild(el); els.set(e.id,el); }
+    if(!els.has(e.id)){ const el=document.createElement('div'); el.className='edge '+e.d; el.style.setProperty('--ex',e.x); el.style.setProperty('--ey',e.y); board.appendChild(el); els.set(e.id,el); if(noEspaco()) espMureta(el,e.d); }
   }
   for(const t of S.tiles){
     let el=els.get(t.id);
@@ -1411,7 +1412,8 @@ function render(){
       el.firstChild.addEventListener('animationend',e=>{ if(e.target===el.firstChild && e.animationName!=='crumble') el.firstChild.classList.remove(e.animationName); });
     }
     el.style.transform=pos(t.x,t.y);
-    if(S.phase==='mine'){
+    if(S.phase==='mine' && noEspaco()) espTile(el,t);
+    else if(S.phase==='mine'){
       const look=lookOf(t), key=t.t+':'+look+':'+t.c+':'+t.k+':'+t.r;
       if(el.dataset.key!==key){ el.dataset.key=key; el.firstChild.innerHTML=svgOf(t.t===0?torraoInner():t.k==='p'?pickInner(t.t):pedraInner(t.t,{look,cor:t.c,rara:t.r})); }
     }

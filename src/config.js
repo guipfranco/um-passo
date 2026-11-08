@@ -85,7 +85,7 @@ const DROPS = {
 };
 const RARA = 0.02;   // chance de uma pedrinha nascer rara (cospe como 2 níveis acima)
 // nome de qualquer nível (acima do 14: Galáxia 2, Galáxia 3...)
-const rockName = t => t<ROCKS.length ? ROCKS[t].n : `Galáxia ${t-ROCKS.length+2}`;
+const rockName = t => (typeof nomeEspaco==='function' && nomeEspaco(t)) || (t<ROCKS.length ? ROCKS[t].n : `Galáxia ${t-ROCKS.length+2}`);
 // acima do nível 14 o valor dobra a cada nível
 const bonusNivel = t => t>14 ? Math.pow(2,t-14) : 1;
 

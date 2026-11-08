@@ -12,8 +12,9 @@ const charDe = m => m.char || mundoDe(m).char || 'rola';
 const objsDe = m => m.objs || [m.obj];
 const metasDe = m => objsDe(m).filter(o=>!o.proibido);
 const corNome = c => ['roxa','verde','mista'][c];
-const artigo = nome => /a$/.test(nome.split(' ')[0]) ? 'uma' : 'um';
-const plural = nome => nome.split(' ').map(w=>/[aeiouáéíóú]$/i.test(w)?w+'s':/r$/.test(w)?w+'es':/l$/.test(w)?w.slice(0,-1)+'is':w).join(' ');
+const artigo = nome => { const w=nome.split(' ')[0]; if(/^(Cometa|Planeta)$/.test(w)) return 'um'; if(/is$/.test(w)) return 'uns'; return /a$/.test(w) ? 'uma' : 'um'; };
+// só as palavras antes de "de" vão para o plural (Rochas de lava); ão vira ões
+const plural = nome => { let para=false; return nome.split(' ').map(w=>{ if(para) return w; if(w==='de'){ para=true; return w; } return /ão$/.test(w)?w.slice(0,-2)+'ões':/[aeiouáéíóú]$/i.test(w)?w+'s':/r$/.test(w)?w+'es':/l$/.test(w)?w.slice(0,-1)+'is':w; }).join(' '); };
 const qtd = (n,t) => n===1 ? `${artigo(rockName(t))} ${rockName(t)}` : `${n} ${plural(rockName(t))}`;
 const estrelasHtml = (e, cls='estr') => `<span class="${cls}">${[1,2,3].map(i=>`<i class="${i<=e?'on':''}">★</i>`).join('')}</span>`;
 const VAL = t => t>0 ? 2**t : 0;   // Cascalho 2, Pedra 4, Rocha 8, Rocha densa 16... (Rubi real = 2048)
@@ -139,13 +140,15 @@ function marcaEl(k, cls, x, y, html){
 function desenhaMarcas(){
   if(!S?.missao){ limpaMarcas(); return; }
   const vivos=new Set();
-  for(const a of S.alvos||[]){ const k='a'+a.x+','+a.y; vivos.add(k); marcaEl(k,'alvoM',a.x,a.y,svgAlvo(a.t)).classList.toggle('ok',a.ok); }
-  for(const c of S.terra||[]){ const k='t'+c; vivos.add(k); const [x,y]=c.split(',').map(Number); marcaEl(k,'terraM',x,y,svgTerra(x,y)); }
-  if(S.carro){ vivos.add('c'); marcaEl('c','carroM',S.carro.x,S.carro.y,svgCarro(S.carro.t)); }
+  const E=noEspaco(), esp=(m,tipo,a)=>{ if(E && !m._esp){ m._esp=1; espMarca(m,tipo,a); } return m; };
+  for(const a of S.alvos||[]){ const k='a'+a.x+','+a.y; vivos.add(k); esp(marcaEl(k,'alvoM',a.x,a.y,E?'':svgAlvo(a.t)),'alvo',a).classList.toggle('ok',a.ok); }
+  for(const c of S.terra||[]){ const k='t'+c; vivos.add(k); const [x,y]=c.split(',').map(Number); esp(marcaEl(k,'terraM',x,y,E?'':svgTerra(x,y)),'terra',{x,y}); }
+  if(S.carro){ vivos.add('c'); esp(marcaEl('c','carroM',S.carro.x,S.carro.y,E?'':svgCarro(S.carro.t)),'carro',S.carro); }
   for(const [k,el] of marcas) if(!vivos.has(k)){ marcas.delete(k); if(k[0]==='t'){ el.classList.add('some'); setTimeout(()=>el.remove(),450); } else el.remove(); }
 }
 function limpaMarcas(){ for(const el of marcas.values()) el.remove(); marcas.clear(); }
 function presaMarca(el,t){
+  if(noEspaco()){ el.querySelector('.corrente')?.remove(); return; }   // no espaço a gaiola de luz é desenhada junto do planeta
   const tem=!!el.querySelector('.corrente');
   if(t.presa && !tem){ const c=document.createElement('div'); c.className='corrente'; c.innerHTML=svgCorrente; el.appendChild(c); }
   else if(!t.presa && tem){ const c=el.querySelector('.corrente'); c.classList.add('solta'); setTimeout(()=>c.remove(),400); }

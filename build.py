@@ -5,6 +5,9 @@ T = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src') + os.sep
 rd = lambda f: open(T + f, encoding='utf-8').read()
 missoes = rd('quebracabecas.js') + rd('missoes.js') + rd('missoes_calib.js')
 classico = rd('classico.js')
+# motor do espaço (o mesmo dos rascunhos) fechado num objeto, para os nomes dele não colidirem com os do jogo
+espaco = ('var ESP=(()=>{' + rd('espaco.js') + '\nreturn {buildTextures,preaquece,makePiece,drawPeca,pecaImg,buildFundo,drawFundo,SPR,LADDER,MUNDOS_ESP,byName,kDe,ST,objImg,DPR};\n})();\n'
+          + rd('espaco_jogo.js'))
 cfg, svg, logic, helpers, sfx, css, autoupd = rd('config.js'), rd('svg.js'), rd('jogo.js'), rd('helpers.js'), rd('sfx.js'), rd('css.css'), rd('autoupd.html')
 gi = rd('gi.js')
 css = css.replace('width:calc(4*var(--cell) + 5*var(--gap));height:calc(4*var(--cell) + 5*var(--gap))', 'width:calc(var(--w,4)*var(--cell) + (var(--w,4) + 1)*var(--gap));height:calc(var(--h,4)*var(--cell) + (var(--h,4) + 1)*var(--gap))')
@@ -28,6 +31,20 @@ css_extra = r'''
 @keyframes fadein{from{opacity:0;transform:translateY(8px)}}
 @media (prefers-reduced-motion: reduce){.screen{animation:none}}
 #scrMenu{min-height:92vh;justify-content:center;gap:14px}
+/* Clássico no espaço (?espaco): céu, órbitas no lugar das casas e canvas das peças */
+#ceu{position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:-1;pointer-events:none;display:none}
+body.espaco #ceu{display:block}
+html.espaco{background:#0b0a18}
+body.espaco{background:transparent !important}
+body.espaco #cenario{display:none}
+body.espaco .slot svg{display:none}
+body.espaco .slot::before{content:'';position:absolute;inset:6%;border-radius:50%;background:radial-gradient(circle,rgba(12,9,28,.62),rgba(12,9,28,.38) 72%);border:1.5px solid rgba(255,255,255,.14)}
+body.espaco .slot.void::before{display:none}
+body.espaco .tile .face{width:100% !important;height:100% !important;margin:0 !important;position:relative}
+canvas.esp{position:absolute;left:50%;top:50%;width:calc(var(--cell)*var(--kx));height:calc(var(--cell)*var(--ky));transform:translate(-50%,-50%);pointer-events:none}
+body.espaco .edge{background:none;border:0;box-shadow:none}
+body.espaco .etq{background:rgba(12,9,26,.84) !important;border:1px solid rgba(255,255,255,.2);color:#ece3f7;font-family:'Exo 2',sans-serif}
+body.espaco .etq b{color:#f2b33d}
 .logo{display:flex;align-items:flex-end;justify-content:center;height:130px}
 .logo svg{overflow:visible;animation:breathe 3s ease-in-out infinite;transform-origin:50% 90%}
 .logo svg:nth-child(2){animation-delay:-1s}.logo svg:nth-child(3){animation-delay:-2s}.logo svg:nth-child(4){animation-delay:-.5s}
@@ -460,13 +477,13 @@ html = '''<!doctype html>
 <title>Ptui!</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Exo+2:wght@500;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
 ''' + autoupd + '<style>' + css + css_extra + '''</style>
 </head>
 <body>
 ''' + body + '''
 <script>
-''' + cfg + missoes + gi + svg + logic + classico + helpers + sfx + ui + '''</script>
+''' + cfg + missoes + gi + svg + logic + classico + espaco + helpers + sfx + ui + '''</script>
 </body>
 </html>
 '''
