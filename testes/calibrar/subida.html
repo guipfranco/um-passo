@@ -1,6 +1,6 @@
-<body style="margin:0"><iframe id="f" src="../../index.html" width="400" height="800" style="border:0"></iframe><pre id="out" style="position:absolute;left:410px;top:0">x</pre>
+<body style="margin:0"><script src="robo.js"></script><iframe id="f" src="../../index.html" width="400" height="800" style="border:0"></iframe><pre id="out" style="position:absolute;left:410px;top:0">x</pre>
 <script>
-// Até onde se chega jogando bem: robô "cobra" (segura a maior no canto e as fileiras em ordem), olhando 2 lances.
+// Até onde se chega jogando bem: robô de robo.js (táticas do 2048 + busca expectimax).
 // #N:tamanho  ex.: #20:4 (20 partidas no 4x4)
 const [N, TAM] = (location.hash.slice(1)||'20:4').split(':').map(Number);
 f.onload=async()=>{const w=f.contentWindow, log=[];
@@ -26,15 +26,16 @@ f.onload=async()=>{const w=f.contentWindow, log=[];
     return best; };
   window.__partida=(tam)=>{
     LAB.cfg={...presetDe('comum'), w:tam, h:tam}; labJoga(); for(const el of els.values()) el.remove(); els.clear();
-    S.tiles=[]; addTile(); addTile(); S.energy=1e9; __prepPeso();
+    S.tiles=[]; addTile(); addTile(); S.energy=1e9;
     const prim={}; let n=0;
     for(;n<6000;n++){
-      const b=__melhor(S.tiles,2); if(!b) break;
+      const b=ROBO.escolhe(S.tiles,null); if(!b) break;
       S.tiles=b.r.tiles; for(const o of b.r.merges) if(prim[o.t]==null) prim[o.t]=n+1;
       addTile(undefined,b.dir);
     }
     return {prim, arrastos:n, max:Math.max(...S.tiles.map(t=>t.t))};
   };`);
+ w.eval(ROBO);
  const t0=performance.now(), rs=[];
  for(let k=0;k<N;k++){ rs.push(w.eval(`__partida(${TAM})`)); await new Promise(r=>setTimeout(r,0)); }
  const nomes=w.eval('JSON.stringify(ROCKS.map(r=>r.n))'), R=JSON.parse(nomes);

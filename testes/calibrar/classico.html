@@ -1,6 +1,6 @@
-<body style="margin:0"><iframe id="f" src="../../index.html" width="400" height="800" style="border:0"></iframe><pre id="out" style="position:absolute;left:410px;top:0">x</pre>
+<body style="margin:0"><script src="robo.js"></script><iframe id="f" src="../../index.html" width="400" height="800" style="border:0"></iframe><pre id="out" style="position:absolute;left:410px;top:0">x</pre>
 <script>
-// Calibra o Clássico: um robô que joga como quem sabe 2048 (segura a maior no canto, olha 2 lances) e também
+// Calibra o Clássico: o robô de robo.js (táticas do 2048 + busca expectimax) também
 // corre atrás das metas (casa marcada, terra, presa, carrinho...) joga cada fase sem limite e mede quantos
 // arrastos usa para cumprir. Daí saem os arrastos e as estrelas de cada fase (src/missoes_calib.js).
 // #N            N partidas por fase (padrão 30)
@@ -11,46 +11,14 @@ const FOLGA = [1.5, 1.35, 1.2, 1.2, 1.2, 1.2, 1.2, 1.2];   // mais folga nos pri
 f.onload=async()=>{ try{ await calibra(); }catch(e){ out.textContent='ERRO '+e.message+' | '+e.stack; } };
 async function calibra(){ const w=f.contentWindow, log=[], calib={};
  w.eval('sound=false; music=false');
+ w.eval(ROBO);
  w.eval(`
-  window.__peso={};
-  window.__prepPeso=()=>{ const ord=[]; for(let y=H-1,k=0;y>=0;y--,k++){ const xs=[...Array(W).keys()]; if(k%2) xs.reverse(); for(const x of xs) ord.push([x,y]); }
-    __peso={}; ord.forEach(([x,y],i)=>__peso[x+','+y]=Math.pow(2.2,(W*H-i))); };
-  window.__nota=ts=>{ let s=0; for(const t of ts) s+=Math.pow(2,t.t)*(__peso[t.x+','+t.y]||1); return s*(1+0.08*(W*H-ts.length)); };
-  window.__ganho=(r,m)=>{ let g=0; const os=objsDe(m);
-    for(const o of r.merges){
-      if((S.alvos||[]).some(a=>!a.ok&&a.x===o.x&&a.y===o.y&&o.t>=a.t)) g+=6;
-      if(S.terra?.has(o.x+','+o.y)) g+=3;
-      if(o.solta) g+=6;
-      for(const ob of os){ if(ob.proibido && o.t>=ob.proibido) return -1e6;
-        if((ob.forme&&o.t===ob.forme)||(ob.cor!=null&&o.t===ob.t&&o.c===ob.cor)) g+=4;
-        if(ob.seq && S.seqI<ob.seq.length && o.t>=ob.seq[S.seqI]) g+=4; }
-    }
-    for(const b of r.breaks) for(const ob of os) if(ob.quebre && b.t>=ob.quebre) g+=5;
-    if(r.merges.length>=2 && os.some(o=>o.combo)) g+=3;
-    if(S.carro && r.tiles.some(t=>t.x===S.carro.x&&t.y===S.carro.y&&t.t>=S.carro.t&&t.k!=='p')) g+=6;
-    // aproxima do alvo e do carrinho a pedrinha que serve (ou a que falta uma junção para servir)
-    const perto=(x,y,t)=>{ let d=9; for(const q of r.tiles) if(q.t>=t && q.k!=='p' && !q.presa) d=Math.min(d,Math.abs(q.x-x)+Math.abs(q.y-y)); return Math.max(0,2-d*.5); };
-    for(const a of (S.alvos||[])) if(!a.ok) g+=perto(a.x,a.y,a.t-1);
-    if(S.carro) g+=perto(S.carro.x,S.carro.y,S.carro.t-1);
-    for(const q of r.tiles) if(q.presa) g+=perto(q.x,q.y,q.t)*.8;
-    return g; };
-  window.__melhor=(ts,prof,m)=>{ let best=null, bs=-Infinity;
-    for(const [dx,dy] of DIRS){ const r=slide(ts,dx,dy); if(!r.moved) continue;
-      let sc;
-      if(prof<=1) sc=__nota(r.tiles);
-      else { const occ=new Set(r.tiles.map(t=>t.x+','+t.y)), vaz=[]; for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(!occ.has(x+','+y)&&!wallAt(x,y)) vaz.push([x,y]);
-        const am=vaz.sort(()=>Math.random()-.5).slice(0,3); sc=0;
-        for(const [x,y] of am){ const b=__melhor([...r.tiles,{id:'z',x,y,t:1}],prof-1,m); sc+= b ? b.sc : 0; }
-        sc/=Math.max(1,am.length); }
-      if(m){ const g=__ganho(r,m); sc = g<0 ? -1e300 : sc*(1+0.6*g); }
-      if(sc>bs){ bs=sc; best={dir:[dx,dy], r, sc}; } }
-    return best; };
   window.__fase=(n,teto)=>{
-    missaoJoga(n); hideOverlay(); const m=MISSOES[n-1]; S.energy=1e9; __prepPeso();
+    missaoJoga(n); hideOverlay(); const m=MISSOES[n-1]; S.energy=1e9;
     for(let k=0;k<teto;k++){
       if(cumpriu(m)) return {ok:true, usados:k};
       if(violou(m)) return {ok:false, usados:k};
-      const b=__melhor(S.tiles,2,m); if(!b) return {ok:false, usados:k};
+      const b=ROBO.escolhe(S.tiles,m); if(!b) return {ok:false, usados:k};
       S.tiles=b.r.tiles; contaMissao(b.r); recolheCarro(); S.moves++;
       for(let i=0;i<(S.path.spawns??1);i++) addTile(undefined,b.dir);
     }
@@ -61,7 +29,7 @@ async function calibra(){ const w=f.contentWindow, log=[], calib={};
  for(let n=Math.max(1,FA); n<=Math.min(M.length,FB); n++){
    const m=M[n-1]; if(m.quebra){ log.push(`${n} ${m.nome}: quebra-cabeça (fica como gerado)`); continue; }
    const teto = m.chefe ? 5000 : 800, rs=[];
-   const nr = m.chefe ? Math.max(8,Math.round(NR/3)) : NR;
+   const nr = m.chefe ? Math.max(5,Math.round(NR/4)) : NR;
    for(let k=0;k<nr;k++){ rs.push(JSON.parse(w.eval(`JSON.stringify(__fase(${n},${teto}))`))); if(k%3===2) await new Promise(r=>setTimeout(r,0)); }
    const ok=rs.filter(r=>r.ok).map(r=>r.usados), pc=Math.round(100*ok.length/nr);
    if(!ok.length){ log.push(`${n} ${m.nome}: o robô NÃO CUMPRE`); continue; }

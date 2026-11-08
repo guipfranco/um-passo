@@ -129,12 +129,12 @@ const PROGS = [
    contra:['Quem escolhe um caminho não vê o outro sem voltar.','O mundo final precisa funcionar para quem veio pelos dois lados.']},
 ];
 
-// arrastos medianos para chegar a cada pedrinha, jogando bem (robô do canto; testes/calibrar/subida.html)
+// arrastos medianos para chegar a cada pedrinha, jogando bem (robô de testes/calibrar/robo.js; medido em testes/calibrar/subida.html)
 // [nível, 3x3, 4x4, 5x5]  "(nn%)" = só essa parte das partidas chega; null = ninguém chega
-const SUB = [[3,'4','5','5'],[4,'10','10','10'],[5,'19','21','22'],[6,'35','41','41'],[7,'67 (73%)','73','85'],[8,'123 (5%)','141','145'],
-  [9,null,'262 (95%)','308'],[10,null,'514 (75%)','643'],[11,null,'1.023 (18%)','1.262'],[12,null,null,'2.595 (84%)'],[13,null,null,'4.648 (56%)'],[14,null,null,null]];
+const SUB = [[3,'8','9','8'],[4,'14','15','15'],[5,'23','25','22'],[6,'38','44','43'],[7,'67','79','86'],[8,'125 (73%)','138','170'],
+  [9,'237 (10%)','258','295'],[10,null,'523','558'],[11,null,'975','1.064'],[12,null,'1.931 (60%)','1.974'],[13,null,'3.825 (10%)','3.931'],[14,null,null,null]];
 const NOMES=['','Cascalho','Pedra','Rocha','Rocha densa','Geodo','Cristalino','Geodo real','Pedra lunar','Âmbar','Esmeralda viva','Rubi real','Meteorito','Estrela','Galáxia'];
-const subRow = ([t,a,b,c]) => `<tr class="${t<=5?'hoje':''}"><td>${ico(P(t))} <b>${NOMES[t]}</b> <span class="sub">${2**t}</span></td>${[a,b,c].map(v=>`<td>${v??'<span class="sub">o robô não chegou</span>'}</td>`).join('')}<td class="sub">${Math.ceil(2**t/2.2).toLocaleString('pt-BR')}</td></tr>`;
+const subRow = ([t,a,b,c]) => `<tr class="${t<=5?'hoje':''}"><td>${ico(P(t))} <b>${NOMES[t]}</b> <span class="sub">${2**t}</span></td>${[a,b,c].map(v=>`<td>${v??'<span class="sub">não chegou</span>'}</td>`).join('')}<td class="sub">${Math.ceil(2**t/2.2).toLocaleString('pt-BR')}</td></tr>`;
 const SUBIDAS = [
   {nome:'A · Todas as pedrinhas, em qualquer ordem', escolhida:true, desc:'Ao longo dos mundos, as missões passam por todas as pedrinhas, do Cascalho ao Rubi real, mas sem fila: cada mundo usa uma faixa de pedrinhas em vários tipos de missão (casa marcada, carrinho, terra, metas juntas...), e pedrinhas já vistas voltam em missões novas. O Meteorito e a Estrela ficam como desafios bem difíceis.',
    pros:'Explora a coleção inteira sem ficar repetitivo: o que muda é o tipo de missão.', contra:'Precisa de mais tipos de missão prontos para ter variedade de verdade.'},
@@ -193,13 +193,13 @@ document.getElementById('m').innerHTML = `
     <li>As fases são curtas (8 a 45 arrastos) e não tem fase grande para fechar um grupo.</li>
   </ul></section>
   <section><h2>Até onde dá para subir</h2>
-    <p>Medi com um robô que joga como quem pegou o jeito do 2048 (segura a maior no canto e as fileiras em ordem), sem limite de arrastos, até travar. O jogo nasce Cascalho (2) em 90% das vezes e Pedra (4) em 10%, igual ao 2048.</p>
+    <p>Medi com um robô que usa as táticas de quem joga bem 2048: a maior no canto, a fileira em ordem saindo dela ("cobra"), casas vazias e juntas possíveis valendo muito. Ele pensa como a IA mais conhecida do 2048 (do nneonneo): olha o próximo arrasto, todas as casas onde a pedrinha nova pode nascer e o arrasto seguinte, e mais longe quando o tabuleiro aperta. Joga sem limite, até travar. O jogo nasce Cascalho (2) em 90% das vezes e Pedra (4) em 10%, igual ao 2048.</p>
     <details open style="margin-top:8px"><summary>Arrastos até a primeira de cada pedrinha</summary><div><table><tr><th>Pedrinha</th><th>3x3</th><th>4x4</th><th>5x5</th><th>mínimo</th></tr>${SUB.map(subRow).join('')}</table></div></details>
     <ul style="margin-top:8px">
       <li><b>Hoje as missões ficam no começo</b> (fundo amarelo): vão até o Geodo, que é o arrasto ~20 de uma partida que no 4x4 dura uns 770.</li>
       <li><b>Cada pedrinha nova pede o dobro de arrastos.</b> O Rubi real (o 2048) fica perto de 1.000.</li>
-      <li><b>O tamanho do tabuleiro é um teto.</b> Para o robô, o 3x3 trava por volta do Geodo real, o 4x4 vai até a Esmeralda viva (às vezes o Rubi real) e o 5x5 chega no Meteorito e na Estrela.</li>
-      <li><b>Quem joga muito vai mais longe que o robô</b>: você já chegou no Meteorito (4.096) num 4x4. Então dá para pedir até o Rubi real no 4x4, e deixar o Meteorito e a Estrela como desafios bem difíceis.</li>
+      <li><b>O tamanho do tabuleiro é um teto.</b> O 3x3 trava por volta da Pedra lunar (às vezes o Âmbar); o 4x4 chega sempre no Rubi real, no Meteorito em 60% das partidas e na Estrela em 10%; o 5x5 chega na Estrela. A Galáxia pede mais de 7.400 arrastos (a medida parou em 6.000).</li>
+      <li><b>O robô agora joga perto de quem joga muito</b>: como você, ele chega no Meteorito (4.096) num 4x4. Então dá para pedir o Rubi real no 4x4, e deixar o Meteorito e a Estrela como desafios bem difíceis.</li>
     </ul>
   </section>
   <section style="display:flex;flex-direction:column;gap:10px"><h2>Progressões só de subida</h2>
