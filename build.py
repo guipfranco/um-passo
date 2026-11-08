@@ -569,8 +569,21 @@ html = '''<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#f6ecd9">
+<meta name="theme-color" content="#0b0a18">
 <title>2048 Stars</title>
+<meta name="description" content="O 2048 no espaço: 96 fases e um modo sem fim. De graça, sem instalar.">
+<!-- prévia do link (WhatsApp e afins); a imagem sai de previa.html, opção D -->
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:url" content="https://guipfranco.github.io/um-passo/">
+<meta property="og:title" content="2048 Stars">
+<meta property="og:description" content="O 2048 no espaço: 96 fases e um modo sem fim. De graça, sem instalar.">
+<meta property="og:image" content="https://guipfranco.github.io/um-passo/previa.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="2048 Stars: o nome do jogo em neon ao lado de Saturno">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Exo+2:wght@500;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
