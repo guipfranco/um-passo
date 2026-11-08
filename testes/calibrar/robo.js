@@ -43,7 +43,7 @@ window.ROBO = (()=>{
   // quanto um arrasto adianta as metas do Clássico (0 fora do Clássico)
   function ganho(r,m){ if(!m) return 0; let g=0; const os=objsDe(m);
     for(const o of r.merges){
-      if((S.alvos||[]).some(a=>!a.ok&&a.x===o.x&&a.y===o.y&&o.t>=a.t)) g+=6;
+      if((S.alvos||[]).some(a=>!a.ok&&!a.leve&&a.x===o.x&&a.y===o.y&&o.t>=a.t)) g+=6;
       if(S.terra?.has(o.x+','+o.y)) g+=3;
       if(o.solta) g+=6;
       for(const ob of os){ if(ob.proibido && o.t>=ob.proibido) return -1e9;
@@ -54,7 +54,7 @@ window.ROBO = (()=>{
     if(r.merges.length>=2 && os.some(o=>o.combo)) g+=3;
     if(S.carro && r.tiles.some(t=>t.x===S.carro.x&&t.y===S.carro.y&&t.t>=S.carro.t&&t.k!=='p')) g+=6;
     const perto=(x,y,t)=>{ let d=9; for(const q of r.tiles) if(q.t>=t && q.k!=='p' && !q.presa) d=Math.min(d,Math.abs(q.x-x)+Math.abs(q.y-y)); return Math.max(0,2-d*.5); };
-    for(const a of (S.alvos||[])) if(!a.ok) g+=perto(a.x,a.y,a.t-1);
+    for(const a of (S.alvos||[])) if(!a.ok){ if(a.leve && r.tiles.some(q=>q.x===a.x&&q.y===a.y&&q.t>=a.t&&q.k!=='p')) g+=6; g+=perto(a.x,a.y,a.leve?a.t:a.t-1); }
     if(S.carro) g+=perto(S.carro.x,S.carro.y,S.carro.t-1);
     for(const q of r.tiles) if(q.presa) g+=perto(q.x,q.y,q.t)*.8;
     return g; }

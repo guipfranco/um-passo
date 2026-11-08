@@ -133,7 +133,7 @@ const ICO_FRASCO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 // nível do planeta da meta principal de uma fase (null quando a meta não é um planeta)
 function tAlvo(m){
   const o=metasDe(m)[0]||{};
-  return o.forme || (o.cor!=null?o.t:0) || (o.quebre?Math.max(1,o.quebre):0) || (o.seq?o.seq[o.seq.length-1]:0) || o.alvo || o.solte || o.carrinho || null;
+  return o.forme || (o.cor!=null?o.t:0) || (o.quebre?Math.max(1,o.quebre):0) || (o.seq?o.seq[o.seq.length-1]:0) || o.alvo || o.leve || o.solte || o.carrinho || null;
 }
 function icoMetaEsp(m){
   const o=metasDe(m)[0]||{};
@@ -153,7 +153,8 @@ function espListaPlanetas(raiz){
 
 // textos do espaço para a janela da fase
 const COMO_ESP = {
-  alvo:'Órbita dourada: forme o planeta pedido em cima dela (maior também vale).',
+  alvo:'Órbita dourada: forme o planeta pedido em cima dela, juntando ali (maior também vale).',
+  leve:'Órbita dourada: leve até ela um planeta do nível pedido (maior também vale). Basta parar em cima.',
   terra:'Nebulosa escura: uma junção em cima desfaz a nuvem.',
   solte:'Gaiola de luz: o planeta preso não sai do lugar, mas aceita junção. Junte um igual nele para soltar.',
   carrinho:'Nave: o planeta do tamanho pedido, ou maior, que parar embaixo dela é recolhido.',
@@ -258,13 +259,14 @@ const nomeMundoCla = gi => espFig() ? MUNDOS_NOME_ESP[gi] : [MUNDOS[gi].nome, MU
 // textos das metas que mudam no espaço (null: usa o texto de sempre)
 function objetivoEsp(o){
   if(o.quebre) return o.quebre<=1 ? `Engula ${o.n} peça${o.n>1?'s':''} com o buraco negro` : `Engula ${qtd(o.n,o.quebre)} com o buraco negro`;
+  if(o.leve) return (o.n||1)>1 ? `Leve ${artigo(rockName(o.leve))} ${rockName(o.leve)} até cada órbita dourada` : `Leve ${artigo(rockName(o.leve))} ${rockName(o.leve)} até a órbita dourada`;
   if(o.alvo) return (o.n||1)>1 ? `Forme ${artigo(rockName(o.alvo))} ${rockName(o.alvo)} em cada órbita dourada` : `Forme ${artigo(rockName(o.alvo))} ${rockName(o.alvo)} na órbita dourada`;
   if(o.terra) return `Desfaça a nebulosa de ${o.terra} casas`;
   if(o.carrinho) return `Leve ${qtd(o.n,o.carrinho)} até a nave`;
   return null;
 }
 function rotuloEsp(o){
-  if(o.quebre) return 'engolidas'; if(o.alvo) return 'órbitas douradas'; if(o.carrinho) return 'na nave'; if(o.terra) return 'nebulosa desfeita';
+  if(o.quebre) return 'engolidas'; if(o.alvo) return 'órbitas douradas'; if(o.leve) return 'na órbita dourada'; if(o.carrinho) return 'na nave'; if(o.terra) return 'nebulosa desfeita';
   return null;
 }
 // ícone de cada mundo no cabeçalho da lista de fases

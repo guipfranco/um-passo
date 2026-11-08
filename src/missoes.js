@@ -7,7 +7,8 @@
 //   {forme:t, n}       forme n pedrinhas do nível t            {cor:c, t, n}   na cor c (0 roxa, 1 verde)
 //   {pontos:v}         faça v pontos                           {quebre:t, n}   quebre com a picareta (nível t ou maior)
 //   {seq:[t1,t2..]}    forme nessa ordem                       {combo:n}       duas junções num arrasto, n vezes
-//   {alvo:t, n}        forme o nível t nas n casas marcadas    {terra:n}       limpe n casas de terra
+//   {alvo:t, n}        forme o nível t nas n casas marcadas (a junção acontece em cima da casa)
+//   {leve:t, n}        leve uma pedrinha do nível t (ou maior) até cada uma das n casas marcadas (basta parar em cima)    {terra:n}       limpe n casas de terra
 //   {solte:t, n}       solte n pedrinhas presas do nível t     {carrinho:t, n} coloque n pedrinhas (nível t ou maior) no carrinho
 //   {proibido:t}       sem formar o nível t (restrição)
 // Mapa: w/h, forma (formato pronto), mapa/muretas/pecas (montado), regras {walls, edges, spawns...}, fase, char.
@@ -51,9 +52,9 @@ const MISSOES = [
   {g:1, nome:'Salão dos blocos', w:7, regras:{walls:8}, chefe:true, obj:{forme:7, n:1}},
   // 3 · Muretas e buracos
   {g:2, nome:'Corredor',                obj:{forme:4, n:1}},
-  {g:2, nome:'Primeira casa marcada', fase:'comum', obj:{alvo:3, n:1}},
+  {g:2, nome:'Primeira casa marcada', fase:'comum', obj:{leve:3, n:1}},
   {g:2, nome:'Zigue-zague', forma:'zigue',    obj:{forme:5, n:1}},
-  {g:2, nome:'Duas marcas', w:5, fase:'comum', obj:{alvo:4, n:2}},
+  {g:2, nome:'Duas marcas', w:5, fase:'comum', obj:{alvo:3, n:2}},
   {g:2, nome:'Serpente',    forma:'serpente', obj:{pontos:250}},
   {g:2, nome:'Rio',         forma:'rio',      objs:[{alvo:4, n:1},{forme:5, n:1}]},
   {g:2, nome:'Escada',      forma:'escada',   obj:{combo:4}},

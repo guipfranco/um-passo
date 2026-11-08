@@ -31,6 +31,7 @@ function objetivoTxt(o){
   if(o.quebre) return o.quebre<=1 ? `Quebre ${o.n} pedrinha${o.n>1?'s':''} com a picareta` : `Quebre ${qtd(o.n,o.quebre)} com a picareta`;
   if(o.seq) return `Forme, nessa ordem: ${listaE(o.seq.map(t=>rockName(t)))}`;
   if(o.combo) return `Faça duas junções num arrasto só, ${o.combo} ${o.combo>1?'vezes':'vez'}`;
+  if(o.leve) return (o.n||1)>1 ? `Leve ${artigo(rockName(o.leve))} ${rockName(o.leve)} até cada casa marcada` : `Leve ${artigo(rockName(o.leve))} ${rockName(o.leve)} até a casa marcada`;
   if(o.alvo) return (o.n||1)>1 ? `Forme ${artigo(rockName(o.alvo))} ${rockName(o.alvo)} em cada casa marcada` : `Forme ${artigo(rockName(o.alvo))} ${rockName(o.alvo)} na casa marcada`;
   if(o.terra) return `Limpe a terra das ${o.terra} casas`;
   if(o.solte) return (o.n||1)>1 ? `Solte as ${o.n} ${plural(rockName(o.solte))} presas` : `Solte ${artigo(rockName(o.solte))==='uma'?'a':'o'} ${rockName(o.solte)} pres${artigo(rockName(o.solte))==='uma'?'a':'o'}`;
@@ -47,7 +48,8 @@ function progObj(o){
   if(o.quebre) return {at:(S.quebras||[]).filter(t=>t>=o.quebre).length, alvo:o.n};
   if(o.seq) return {at:S.seqI||0, alvo:o.seq.length};
   if(o.combo) return {at:S.combos||0, alvo:o.combo};
-  if(o.alvo) return {at:(S.alvos||[]).filter(a=>a.ok).length, alvo:(S.alvos||[]).length||o.n||1};
+  if(o.alvo) return {at:(S.alvos||[]).filter(a=>a.ok&&!a.leve).length, alvo:(S.alvos||[]).filter(a=>!a.leve).length||o.n||1};
+  if(o.leve) return {at:(S.alvos||[]).filter(a=>a.ok&&a.leve).length, alvo:(S.alvos||[]).filter(a=>a.leve).length||o.n||1};
   if(o.terra) return {at:(S.terraTot||0)-(S.terra?.size||0), alvo:S.terraTot||o.terra};
   if(o.solte) return {at:S.soltas||0, alvo:S.presasTot||o.n||1};
   if(o.carrinho) return {at:S.carro?.n||0, alvo:o.n};
@@ -65,10 +67,12 @@ function contaMissao(r){
     if(o.k!=='p') S.pontos+=VAL(o.t);
     S.maxForm=Math.max(S.maxForm||0,o.t);
     if(S.seqAlvo && S.seqI<S.seqAlvo.length && o.t>=S.seqAlvo[S.seqI]) S.seqI++;
-    const a=(S.alvos||[]).find(a=>!a.ok && a.x===o.x && a.y===o.y && o.t>=a.t); if(a) a.ok=true;
+    const a=(S.alvos||[]).find(a=>!a.ok && !a.leve && a.x===o.x && a.y===o.y && o.t>=a.t); if(a) a.ok=true;
     S.terra?.delete(o.x+','+o.y);
     if(o.solta){ S.soltas=(S.soltas||0)+1; delete o.solta; }
   }
+  // casa marcada de levar: basta uma pedrinha do tamanho pedido (ou maior) parar em cima
+  for(const a of S.alvos||[]) if(a.leve && !a.ok && S.tiles.some(t=>t.x===a.x && t.y===a.y && t.t>=a.t && t.k!=='p')) a.ok=true;
   if(r.merges.length>=2) S.combos=(S.combos||0)+1;
   for(const b of r.breaks){ S.quebras.push(b.t); S.pontos+=2*VAL(b.t); }
 }
@@ -121,6 +125,7 @@ function montaPecasMissao(m){
     const fixo=(lista,i)=>{ const q=lista?.[i]; if(!q) return null; usados.add(q[0]+','+q[1]); return {x:q[0],y:q[1]}; };   // posições fixas (quebra-cabeças)
     if(o.carrinho){ const c=fixo(m.carroPos&&[m.carroPos],0)||pega(borda); if(c) S.carro={x:c.x,y:c.y,t:o.carrinho,n:0}; }
     if(o.alvo) for(let i=0;i<(o.n||1);i++){ const c=fixo(m.alvosPos,i)||pega(); if(c) S.alvos.push({x:c.x,y:c.y,t:o.alvo,ok:false}); }
+    if(o.leve) for(let i=0;i<(o.n||1);i++){ const c=fixo(m.alvosPos,i)||pega(); if(c) S.alvos.push({x:c.x,y:c.y,t:o.leve,ok:false,leve:true}); }
     if(o.solte) for(let i=0;i<(o.n||1);i++){ const c=fixo(m.presasPos,i)||pega(); if(c){ S.tiles.push({id:'t'+(nextId++),x:c.x,y:c.y,t:o.solte,presa:1}); S.presasTot++; } }
   }
   for(const o of objsDe(m)) if(o.terra){ const ocup=new Set(usados); usados.clear(); if(S.carro) usados.add(S.carro.x+','+S.carro.y);
@@ -161,6 +166,7 @@ function iconeObj(o){
   if(o.cor!=null) return figSvg(pedraCor(o.t,o.cor));
   if(o.quebre) return figSvg(pedraInner(Math.max(1,o.quebre)));
   if(o.seq) return figSvg(pedraInner(o.seq[Math.min(S?.seqI||0,o.seq.length-1)]));
+  if(o.leve) return iconeObj({alvo:o.leve});
   if(o.alvo) return figSvg(`<circle cx="50" cy="52" r="40" fill="none" stroke="#f2b33d" stroke-width="7" stroke-dasharray="11 7"/><g transform="translate(28 30) scale(.45)">${pedraInner(o.alvo)}</g>`);
   if(o.terra) return svgTerra(0,0).replace('<svg','<svg class=""');
   if(o.solte) return figSvg(pedraInner(o.solte)+(espFig()?gaiolaInner():svgCorrente.replace(/<\/?svg[^>]*>/g,'')));
@@ -175,14 +181,14 @@ function silhuetas(o){
   const p=progObj(o), n=p.alvo;
   if(n>4 || n<1) return null;
   if(o.seq) return o.seq.map(t=>figSvg(pedraInner(t)));
-  if(o.forme||o.cor!=null||o.quebre||o.alvo||o.solte||o.carrinho) return Array.from({length:n},()=>iconeObj(o));
+  if(o.forme||o.cor!=null||o.quebre||o.alvo||o.leve||o.solte||o.carrinho) return Array.from({length:n},()=>iconeObj(o));
   return null;
 }
 function rotulo(o){
   if(espFig()){ const e=rotuloEsp(o); if(e) return e; }
   if(o.forme) return o.n>1?plural(rockName(o.forme)):rockName(o.forme);
   if(o.cor!=null) return `${o.n>1?plural(rockName(o.t)):rockName(o.t)} ${corNome(o.cor)}${o.n>1?'s':''}`;
-  if(o.quebre) return 'quebradas'; if(o.seq) return 'nessa ordem'; if(o.alvo) return 'casas marcadas';
+  if(o.quebre) return 'quebradas'; if(o.seq) return 'nessa ordem'; if(o.alvo) return 'casas marcadas'; if(o.leve) return 'na casa marcada';
   if(o.solte) return 'soltas'; if(o.carrinho) return 'no carrinho'; if(o.terra) return 'terra limpa';
   if(o.combo) return 'duas de uma vez'; if(o.pontos) return 'pontos'; return '';
 }
@@ -202,7 +208,8 @@ function figuraMissao(m){
   return `<div class="metasM">${objsDe(m).map(o=>`<div>${iconeObj(o).replace('<svg','<svg class="fP"')}<span>${objetivoTxt(o)}</span></div>`).join('')}</div>`;
 }
 const COMO_PECA = {
-  alvo:'Casa marcada: forme a pedrinha pedida em cima dela (maior também vale).',
+  alvo:'Casa marcada: forme a pedrinha pedida em cima dela, juntando ali (maior também vale).',
+  leve:'Casa marcada: leve até ela uma pedrinha do tamanho pedido (maior também vale). Basta parar em cima.',
   terra:'Casa de terra: uma junção em cima limpa a terra.',
   solte:'Pedrinha presa: não sai do lugar, mas aceita junção. Junte uma igual nela para soltar.',
   carrinho:'Carrinho: pedrinha do tamanho pedido, ou maior, que parar nele é recolhida.',
