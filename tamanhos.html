@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2048 Stars · tamanho das peças (rascunho)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html{background:#0b0a18}
+body{margin:0;color:#e8e4ff;font-family:'Exo 2',system-ui,sans-serif;-webkit-tap-highlight-color:transparent;
+  background:radial-gradient(120% 80% at 30% 55%,#3a1f6e 0%,#1a1236 45%,#0b0a18 80%) fixed}
+main{max-width:460px;margin:0 auto;padding:16px 12px 48px;display:flex;flex-direction:column;gap:14px}
+h1{margin:2px 0 0;font:900 21px Orbitron,sans-serif;letter-spacing:.04em;color:#f4fbff;text-shadow:0 0 14px rgba(110,230,255,.7)}
+p{margin:0;font-size:15px;line-height:1.4;color:#c9c2ee}
+.ops{display:flex;gap:6px;flex-wrap:wrap}
+.op{flex:1 1 0;min-width:0;border:1.5px solid rgba(140,200,255,.35);border-radius:14px;padding:8px 6px;background:rgba(20,16,44,.7);color:#d8d2ff;
+  font:700 14px 'Exo 2',sans-serif;cursor:pointer;line-height:1.15}
+.op small{display:block;font-weight:400;font-size:11.5px;color:#a49bd6;margin-top:2px}
+.op.on{border-color:#6ee6ff;background:rgba(40,90,140,.45);color:#fff;box-shadow:0 0 12px rgba(110,230,255,.45)}
+.tg{display:flex;align-items:center;gap:8px;font-size:14.5px;color:#d8d2ff;cursor:pointer;user-select:none}
+.tg i{width:40px;height:22px;border-radius:999px;background:#2a2450;position:relative;flex:none;border:1.5px solid rgba(140,200,255,.35)}
+.tg i:after{content:'';position:absolute;top:2px;left:2px;width:15px;height:15px;border-radius:50%;background:#8f86c4;transition:.15s}
+.tg.on i{background:#1d6a86}.tg.on i:after{left:20px;background:#bff4ff}
+.desc{font-size:14px;color:#bfb7ea;min-height:2.8em}
+h2{margin:6px 0 0;font:700 13px Orbitron,sans-serif;letter-spacing:.08em;color:#9fe9ff}
+canvas{display:block;width:100%}
+.nota{font-size:13px;color:#9a91c9}
+</style>
+</head>
+<body>
+<main>
+  <h1>TAMANHO DAS PEÇAS</h1>
+  <p>Rascunho. Troque entre as opções e compare; o tabuleiro e a escada mudam juntos.</p>
+  <div class="ops" id="ops"></div>
+  <div class="tg" id="tg"><i></i>Brilho de cor atrás das pequenas (até Plutão)</div>
+  <div class="desc" id="desc"></div>
+  <h2>NO TABULEIRO</h2>
+  <canvas id="tab"></canvas>
+  <h2>A ESCADA INTEIRA</h2>
+  <canvas id="esc"></canvas>
+  <p class="nota">Do Netuno para cima nada muda em nenhuma opção.</p>
+</main>
+<script src="src/espaco.js?v=14"></script>
+<script>
+buildTextures(); preaquece();
+const ORIG = Object.fromEntries(LADDER.map(d=>[d.n,d.k]));
+const OPCOES = [
+  {id:'hoje', nome:'Hoje', sub:'como está',
+   desc:'Poeira, Gelo, Rocha, Asteroide e Cometa ficam maiores que Plutão e a Lua: o tamanho encolhe no meio da escada.', k:{}},
+  {id:'a', nome:'A · só cresce', sub:'pequenas bem pequenas',
+   desc:'O tamanho só cresce ao longo da escada. As cinco primeiras viram miudezas (uns 30% da casa) e Plutão cresce um pouco. Os planetas grandes continuam iguais.',
+   k:{'Poeira':.53,'Gelo':.57,'Rocha':.49,'Asteroide':.46,'Cometa':.63,'Plutão':.44,'Lua':.48,'Mercúrio':.59}},
+  {id:'b', nome:'B · meio-termo', sub:'curva contínua',
+   desc:'Também só cresce, mas ninguém fica muito pequeno: as primeiras encolhem pouco e Plutão, Lua, Mercúrio, Marte, Vênus e Terra crescem para fechar a curva.',
+   k:{'Poeira':.80,'Gelo':.83,'Rocha':.70,'Asteroide':.65,'Cometa':.88,'Plutão':.59,'Lua':.62,'Mercúrio':.73,'Marte':.68,'Vênus':.80,'Terra':.86}},
+];
+const COR = ['#d9c49a','#7fdcf0','#ff7a1e','#909cb2','#bfefff','#e9c3a0','#cfd3dc','#c0342a','#e0805a','#f2d08a','#43a0e6','#4f86ec','#9fdde4','#e8c98a','#d9a07a','#ffd84a','#c08aff','#9a77c9'];
+const NOMES = LADDER.map(d=>d.n);
+let atual = OPCOES[1], brilho = false;
+function aplica(o){ atual=o; for(const d of LADDER) d.k = o.k[d.n] ?? ORIG[d.n];
+  for(const b of document.querySelectorAll('.op')) b.classList.toggle('on', b.dataset.id===o.id);
+  document.getElementById('desc').textContent = o.desc; }
+const ops = document.getElementById('ops');
+for(const o of OPCOES){ const b=document.createElement('button'); b.className='op'; b.dataset.id=o.id; b.innerHTML=`${o.nome}<small>${o.sub}</small>`; b.onclick=()=>aplica(o); ops.appendChild(b); }
+const tg = document.getElementById('tg'); tg.onclick=()=>{ brilho=!brilho; tg.classList.toggle('on',brilho); };
+aplica(OPCOES[1]);
+
+// um tabuleiro típico de meio de partida (nível por casa; 0 = vazia)
+const TAB = [[9,7,6,5],[1,4,3,2],[2,1,0,4],[0,3,1,0]];
+const ESC = Array.from({length:18},(_,i)=>i+1);
+function prepara(cv, alturaPorLargura){ const r=cv.getBoundingClientRect(), W=Math.round(r.width*DPR), H=Math.round(r.width*alturaPorLargura*DPR);
+  if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; cv.style.height=(r.width*alturaPorLargura)+'px'; } return cv.getContext('2d'); }
+function casa(c,x,y,pa){ c.beginPath(); c.arc(x,y,pa*.39,0,7); c.fillStyle='rgba(16,12,38,.55)'; c.fill(); c.lineWidth=Math.max(1,pa*.012); c.strokeStyle='rgba(190,170,255,.22)'; c.stroke(); }
+function aura(c,t,x,y,u){ if(!brilho||t>6) return; const g=c.createRadialGradient(x,y,0,x,y,u*.46); g.addColorStop(0,COR[t-1]+'70'); g.addColorStop(.55,COR[t-1]+'26'); g.addColorStop(1,COR[t-1]+'00');
+  c.fillStyle=g; c.beginPath(); c.arc(x,y,u*.46,0,7); c.fill(); }
+function etiqueta(c,t,x,y,pa){ const w=pa*.42,h=pa*.29,r=h*.3; c.beginPath(); c.roundRect(x-w/2,y-h/2,w,h,r); c.fillStyle='rgba(22,18,44,.92)'; c.fill();
+  c.lineWidth=Math.max(1,pa*.01); c.strokeStyle='rgba(190,170,255,.3)'; c.stroke(); c.textAlign='center'; c.textBaseline='middle';
+  const num=String(2**t); c.font=`800 ${pa*(num.length>3?.11:.14)}px 'Exo 2',sans-serif`; c.fillStyle='#f2b33d'; c.fillText(num,x,y-h*.2);
+  const nm=NOMES[t-1]; c.font=`700 ${pa*(nm.length>7?.075:.088)}px 'Exo 2',sans-serif`; c.fillStyle='#f1eefc'; c.fillText(nm,x,y+h*.24); }
+function quadro(){
+  const t = performance.now()/1000;
+  { const cv=document.getElementById('tab'), c=prepara(cv,1), pa=cv.width/4; c.clearRect(0,0,cv.width,cv.height);
+    for(let j=0;j<4;j++) for(let i=0;i<4;i++) casa(c,(i+.5)*pa,(j+.5)*pa,pa);
+    const pecas=[]; for(let j=0;j<4;j++) for(let i=0;i<4;i++){ const n=TAB[j][i]; if(n) pecas.push([n,(i+.5)*pa,(j+.5)*pa,'t'+i+j]); }
+    for(const [n,x,y,id] of pecas){ const u=pa*.8; aura(c,n,x,y,u); drawPecaVar(c,NOMES[n-1],t,x,y,u,id); }
+    for(const [n,x,y] of pecas) etiqueta(c,n,x,y+pa*.3,pa); }
+  { const cv=document.getElementById('esc'), col=6, c=prepara(cv,3*1.32/col), pa=cv.width/col, ph=pa*1.32; c.clearRect(0,0,cv.width,cv.height);
+    ESC.forEach((n,k)=>{ const x=(k%col+.5)*pa, y=Math.floor(k/col)*ph+pa*.5; casa(c,x,y,pa); });
+    ESC.forEach((n,k)=>{ const x=(k%col+.5)*pa, y=Math.floor(k/col)*ph+pa*.5, u=pa*.8; aura(c,n,x,y,u); drawPecaVar(c,NOMES[n-1],t,x,y,u,'e'+k); });
+    c.textAlign='center'; c.textBaseline='middle';
+    ESC.forEach((n,k)=>{ const x=(k%col+.5)*pa, y=Math.floor(k/col)*ph+pa*1.06; c.font=`700 ${pa*.15}px 'Exo 2',sans-serif`; c.fillStyle='#f1eefc'; c.fillText(NOMES[n-1],x,y);
+      c.font=`600 ${pa*.12}px 'Exo 2',sans-serif`; c.fillStyle='#9fe9ff'; c.fillText(Math.round(LADDER[n-1].k/ORIG[NOMES[n-1]]*100)+'%',x,y+pa*.17); }); }
+  requestAnimationFrame(quadro);
+}
+document.fonts.ready.then(()=>requestAnimationFrame(quadro));
+</script>
+</body>
+</html>

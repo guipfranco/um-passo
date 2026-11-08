@@ -286,7 +286,7 @@ const FASES_NOME_ESP = {
   46:'Tempestade de nebulosa', 47:'Plutão preso', 48:'Fim das nebulosas',
   49:'Primeira nave', 50:'Nave de asteroides', 51:'Nave e pontos', 52:'Nave na cruz', 53:'Nave e órbita', 54:'Nave na nebulosa', 55:'Nave cheia',
   56:'Quebra-cabeça da nave', 57:'Nave de Plutão', 58:'Nave e presa', 59:'Nave no coração', 60:'Fim das naves',
-  61:'Aura roxa e verde', 62:'Toda roxa', 63:'Asteroide verde', 64:'Auras no 5x5', 65:'Roxa na órbita', 66:'Em ordem, com aura',
+  61:'Aura roxa e verde', 62:'Toda roxa', 63:'Asteroide verde', 64:'Auras no 5x5', 65:'Roxa na órbita', 66:'Uma de cada aura',
   68:'Quebra-cabeça das auras', 69:'Nebulosa colorida', 70:'Nave colorida', 71:'Plutão roxo', 72:'Fim das auras',
   73:'Primeiro buraco negro', 74:'Gelo no buraco negro', 75:'Engula a rocha', 76:'Pontos de buraco negro', 77:'Buraco negro e órbita',
   78:'Buraco negro e pontos', 79:'Quebra-cabeça do buraco negro', 80:'Asteroide engolido', 81:'Três rochas engolidas', 82:'Cometa engolido',

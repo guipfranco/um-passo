@@ -95,7 +95,7 @@ const MISSOES = [
   {g:5, nome:'Verde densa',              obj:{cor:1, t:4, n:1}},
   {g:5, nome:'Cores no 5x5', w:5,        obj:{pontos:300}},
   {g:5, nome:'Roxa marcada', w:5,        objs:[{alvo:4, n:1},{cor:0, t:4, n:1}]},
-  {g:5, nome:'Em ordem, com cor',        objs:[{seq:[4,5]},{cor:1, t:4, n:1}]},
+  {g:5, nome:'Uma de cada cor',          objs:[{cor:0, t:4, n:1},{cor:1, t:4, n:1}]},
   {g:5, nome:'Duas de uma vez', w:5,     obj:{combo:5}},
   {g:5, nome:'Quebra-cabeça das cores', ...QC.q6},
   {g:5, nome:'Terra colorida', w:5,      objs:[{terra:8},{cor:1, t:5, n:1}]},
