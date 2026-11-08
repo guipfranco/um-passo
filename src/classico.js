@@ -78,6 +78,7 @@ function contaMissao(r){
   }
   // casa marcada de levar: basta uma pedrinha do tamanho pedido (ou maior) parar em cima
   for(const a of S.alvos||[]) if(a.leve && !a.ok && S.tiles.some(t=>t.x===a.x && t.y===a.y && t.t>=a.t && t.k!=='p')) a.ok=true;
+  espDescobre(r);
   if(r.merges.length>=2) S.combos=(S.combos||0)+1;
   for(const b of r.breaks){ S.quebras.push(b.t); S.pontos+=2*VAL(b.t); }
 }

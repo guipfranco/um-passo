@@ -119,8 +119,10 @@ function espMarca(el,tipo,a){
 let ceu=null, ceuF=null, ceuChave='';
 function ceuDesenha(t){
   if(!ceu){ ceu=document.createElement('canvas'); ceu.id='ceu'; document.body.prepend(ceu); }
-  const w=innerWidth, h=innerHeight, tema=Math.max(1,(S&&S.missao&&S.tema)||1), chave=w+'x'+h+':'+tema;
-  if(chave!==ceuChave){ ceuChave=chave; ceu.width=w; ceu.height=h; ceuF=ESP.buildFundo(w,h,ESP.MUNDOS_ESP[(tema-1)%ESP.MUNDOS_ESP.length],{jogo:true}); }
+  // no menu, céu sem planeta de fundo: os planetas aparecem conforme a pessoa descobre (em volta do nome)
+  const menu=!!document.getElementById('scrMenu')?.classList.contains('on');
+  const w=innerWidth, h=innerHeight, tema=Math.max(1,(S&&S.missao&&S.tema)||1), chave=w+'x'+h+':'+tema+(menu?':menu':'');
+  if(chave!==ceuChave){ ceuChave=chave; ceu.width=w; ceu.height=h; ceuF=ESP.buildFundo(w,h,ESP.MUNDOS_ESP[(tema-1)%ESP.MUNDOS_ESP.length],{jogo:true,planeta:!menu}); }
   ESP.drawFundo(ceu.getContext('2d'),ceuF,t);
 }
 // chamado no lugar do cenário da mina
@@ -223,7 +225,8 @@ const n1 = m => MISSOES.indexOf(m)===0;
 // planeta grande nas janelas (fase, vitória, derrota)
 function espPlanetaGrande(cv, t, modo){
   const r=ESP.LADDER.length, pt=Array.from({length:46},(_,i)=>({a:i*2.39996,v:.6+((i*37)%10)/10,f:((i*53)%100)/100}));
-  espCanvasFixo(cv,130,130,(c,W,H,u,tm)=>{ const x=W/2,y=H/2, nome=nomeNivelEsp(t);
+  const lado = innerHeight<600 ? 70 : innerHeight<720 ? 92 : 130;   // tela baixa: planeta menor, para a janela caber sem rolar
+  espCanvasFixo(cv,lado,lado,(c,W,H,u,tm)=>{ const x=W/2,y=H/2, nome=nomeNivelEsp(t);
     if(modo==='vit'){ c.save(); c.globalCompositeOperation='lighter'; for(const p of pt){ const k=(tm*.45*p.v+p.f)%1, d=W*.5*(.35+.62*k), s=W*.012*(1+1.4*(1-k));
         c.fillStyle=`rgba(255,226,150,${((1-k)*.9).toFixed(2)})`; c.fillRect(x+Math.cos(p.a)*d-s/2,y+Math.sin(p.a)*d-s/2,s,s); } c.restore();
       ESP.drawPeca(c,nome,tm,x,y,W*.74,1,true); }
@@ -232,20 +235,57 @@ function espPlanetaGrande(cv, t, modo){
 }
 
 // ---------- menu ----------
-const ORB_MENU=[['Lua',38],['Marte',44],['Saturno',104],['Terra',54],['Júpiter',72]];
+// ---------- descobertas: o céu do menu mostra só o que a pessoa já formou ----------
+// ptui_desc = maior nível já formado no espaço. Sem registro ainda, parte das fases já cumpridas.
+function DESC(){
+  if(localStorage.ptui_desc==null){ let mx=1; const r=MISS(); for(const k of Object.keys(r)){ const m=MISSOES[k-1]; const t=m&&r[k].e&&tAlvo(m); if(t>mx) mx=t; } localStorage.ptui_desc=mx; }
+  return +localStorage.ptui_desc||1;
+}
+function espDescobre(r){ if(!espacoLigado()) return; let mx=0; for(const o of r.merges) if(o.t>mx) mx=o.t; if(mx>DESC()) localStorage.ptui_desc=Math.min(mx,ESP.LADDER.length); }
+
+// cinturão de pedras em volta do nome (a Poeira, o 2): está lá desde o começo
+let CINTO=null;
+function cinto(){ if(CINTO) return CINTO; let s=12345;
+  const r=()=>{ s=(s+0x6D2B79F5)|0; let q=Math.imul(s^s>>>15,1|s); q=q+Math.imul(q^q>>>7,61|q)^q; return ((q^q>>>14)>>>0)/4294967296; };
+  const cores=['#8a7a68','#a8957c','#6f6355','#c9b08a','#d9c49a','#5d5248'];
+  CINTO=Array.from({length:200},()=>{ const g=(r()+r()+r())/3-.5, pedra=r()<.13;
+    return {a:r()*6.2832, dr:g*.34, dy:(r()-.5)*.12, s:pedra?2.4+2.4*r():.8+1.2*r(), pedra, c:cores[Math.floor(r()*cores.length)], v:.85+.3*r(),
+      forma:Array.from({length:6},()=>.7+.3*r()), rot:r()*6.28, gira:(r()-.5)*1.4}; });
+  return CINTO; }
+function pedrinha(c,x,y,R,p,t){ c.save(); c.translate(x,y); c.rotate(p.rot+p.gira*t); c.beginPath();
+  p.forma.forEach((k,i)=>{ const a=i/6*6.2832; i?c.lineTo(Math.cos(a)*R*k,Math.sin(a)*R*k):c.moveTo(Math.cos(a)*R*k,Math.sin(a)*R*k); }); c.closePath();
+  c.fillStyle=p.c; c.fill(); c.fillStyle='rgba(255,240,215,.28)'; c.beginPath(); c.arc(-R*.25,-R*.25,R*.45,0,7); c.fill(); c.restore(); }
+// tamanho de cada nível na órbita do menu (px numa tela de 360)
+const TAM_ORB=[0,0,30,32,34,42,36,40,42,44,50,54,58,92,104,78,82,92,98];
 function espLogo(c,W,H,u,t){
-  const Q=W/360, cx=W/2, cy=H*.5, rx=158*Q, ry=60*Q, tl=-.14;
-  const ps=ORB_MENU.map(([n,sz],i)=>{ const a=t*.28+i*2*Math.PI/ORB_MENU.length, x0=Math.cos(a)*rx, y0=Math.sin(a)*ry;
-    return {n,sz,x:cx+x0*Math.cos(tl)-y0*Math.sin(tl),y:cy+x0*Math.sin(tl)+y0*Math.cos(tl),z:Math.sin(a)}; });
-  c.save(); c.translate(cx,cy); c.rotate(tl); c.strokeStyle='rgba(255,255,255,.2)'; c.lineWidth=1.5*Q; c.setLineDash([6*Q,7*Q]); c.beginPath(); c.ellipse(0,0,rx,ry,0,0,7); c.stroke(); c.restore(); c.setLineDash([]);
-  const pl=p=>ESP.drawPeca(c,p.n,t,p.x,p.y,p.sz*Q,1,true,.7+.3*(p.z+1)/2);
-  ps.slice().sort((a,b)=>a.z-b.z).forEach(pl);
-  // nome: 2048 grande e STARS embaixo, espaçado (por cima de todos os planetas)
+  const Q=Math.min(W/360, H/266), cx=W/2, cy=H*.5, rx=158*Q, ry=60*Q, tl=-.14, ct=Math.cos(tl), st=Math.sin(tl);
+  const lugar=(a,f=1,dy=0)=>{ const x0=Math.cos(a)*rx*f, y0=Math.sin(a)*ry*f+dy*ry; return [cx+x0*ct-y0*st, cy+x0*st+y0*ct]; };
+  // o que já foi descoberto, do Gelo para cima (no máximo os 6 maiores)
+  const d=DESC(), niveis=[]; for(let k=d;k>=2&&niveis.length<6;k--) niveis.push(k);
+  const corpos=niveis.map((k,i)=>{ const a=t*.22+i*2*Math.PI/niveis.length, [x,y]=lugar(a); return {n:nomeNivelEsp(k), sz:TAM_ORB[k]*Q, x, y, z:Math.sin(a)}; });
+  const pedras=cinto().map(p=>{ const a=p.a+t*.1*p.v, [x,y]=lugar(a,1+p.dr,p.dy); return {p,x,y,z:Math.sin(a)}; });
+  const poe=(lado)=>{ // lado<0: atrás do nome (metade de cima da órbita); lado>0: na frente (metade de baixo)
+    for(const q of pedras){ if((q.z<0)!==(lado<0)) continue; const k=.72+.4*(q.z+1)/2;
+      c.globalAlpha=.5+.5*(q.z+1)/2; if(q.p.pedra) pedrinha(c,q.x,q.y,q.p.s*Q*k,q.p,t); else { c.fillStyle=q.p.c; c.beginPath(); c.arc(q.x,q.y,q.p.s*Q*k,0,7); c.fill(); } }
+    c.globalAlpha=1;
+    corpos.filter(b=>(b.z<0)===(lado<0)).sort((a,b)=>a.z-b.z).forEach(b=>ESP.drawPeca(c,b.n,t,b.x,b.y,b.sz,1,true,.72+.28*(b.z+1)/2)); };
+  poe(-1);
+  // nome: 2048 grande e STARS embaixo, espaçado
   c.save(); c.textAlign='center'; c.textBaseline='middle'; c.fillStyle='#f4fbff';
   for(const [txt,px,dy,esp] of [['2048',78,-12,0],['STARS',27,40,.42]]){ c.font=`900 ${px*Q}px Orbitron, sans-serif`; if('letterSpacing' in c) c.letterSpacing=(esp*px*Q)+'px';
     c.shadowColor='rgba(110,230,255,.95)'; c.shadowBlur=26*Q; c.fillText(txt,cx+(esp*px*Q)/2,cy+dy*Q); c.shadowColor='rgba(230,100,255,.7)'; c.shadowBlur=10*Q; c.fillText(txt,cx+(esp*px*Q)/2,cy+dy*Q); }
   c.restore();
+  poe(1);
 }
+// o menu inteiro cabe na tela: o desenho do nome encolhe o quanto precisar (os botões ficam do tamanho certo para o dedo)
+function ajustaMenu(){
+  const menu=$('#scrMenu'), lg=$('#logoEsp'); if(!lg || !menu.classList.contains('on') || !document.body.classList.contains('espaco')) return;
+  const vis=[...menu.children].filter(e=>e.offsetParent!==null); if(!vis.length) return;
+  const alto=vis[vis.length-1].getBoundingClientRect().bottom-vis[0].getBoundingClientRect().top, resto=alto-lg.offsetHeight;
+  const w=Math.min(360, innerWidth-16), h=Math.round(Math.max(110, Math.min(w*.74, innerHeight-28-resto)));
+  if(Math.abs(h-(lg._fh||0))>1) espCanvasFixo(lg, w, h, espLogo);
+}
+addEventListener('resize', ()=>requestAnimationFrame(ajustaMenu));
 let TAG_MINA=null;
 function espMenu(){
   const on=espTela(), menu=$('#scrMenu'), tag=menu.querySelector('.tagline');
@@ -270,7 +310,8 @@ function espMenu(){
   if(document.fonts?.load){ document.fonts.load("900 40px Orbitron"); document.fonts.load("700 20px 'Exo 2'"); }
   let lg=$('#logoEsp');
   if(!lg){ lg=document.createElement('canvas'); lg.id='logoEsp'; menu.insertBefore(lg, menu.firstChild); }
-  const w=Math.min(360, innerWidth-16); espCanvasFixo(lg, w, Math.round(w*.74), espLogo);
+  const w=Math.min(360, innerWidth-16); if(!lg._fh) espCanvasFixo(lg, w, Math.round(w*.74), espLogo);
+  requestAnimationFrame(ajustaMenu); document.fonts?.ready?.then(()=>requestAnimationFrame(ajustaMenu));
   if(!$('#ovos')){
     const d=document.createElement('div'); d.id='ovos';
     d.innerHTML=`<button id="ovoMina" aria-label="Mineração">${ICO_PICARETA}</button><button id="ovoLab" aria-label="Laboratório">${ICO_FRASCO}</button>`;

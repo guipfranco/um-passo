@@ -405,7 +405,8 @@ function buildFundo(w,h,m,o={}){const D=DPR,g=mk(w,h),c=g.getContext('2d'),r=rng
   for(let i=0;i<12;i++){const x=w*r(),y=h*r(),rad=big*(.06+.12*r()),gr=c.createRadialGradient(x,y,0,x,y,rad);gr.addColorStop(0,'rgba(6,4,14,.4)');gr.addColorStop(1,'rgba(6,4,14,0)');c.fillStyle=gr;c.fillRect(x-rad,y-rad,rad*2,rad*2);}
   const nst=Math.round(w*h/(D*D)/450),cols=['255,255,255','190,215,255','255,236,200'];
   for(let i=0;i<nst;i++){const x=w*r(),y=h*r(),sz=(.4+1.3*r()*r())*D;c.fillStyle=`rgba(${cols[(r()*3)|0]},${(.25+.65*r()).toFixed(2)})`;c.fillRect(x,y,sz,sz);}
-  const glint=(x,y,l,a=.7)=>{c.strokeStyle=`rgba(255,255,255,${a})`;c.lineWidth=D*.8;c.beginPath();c.moveTo(x-l,y);c.lineTo(x+l,y);c.moveTo(x,y-l);c.lineTo(x,y+l);c.stroke();};
+  // estrela mais forte: um ponto de luz redondo e suave (a cruz parecia mira)
+  const glint=(x,y,l,a=.7)=>{const R=l*.55,g=c.createRadialGradient(x,y,0,x,y,R);g.addColorStop(0,`rgba(255,255,255,${a})`);g.addColorStop(.3,`rgba(225,236,255,${(a*.3).toFixed(2)})`);g.addColorStop(1,'rgba(225,236,255,0)');c.fillStyle=g;c.beginPath();c.arc(x,y,R,0,7);c.fill();};
   for(let i=0;i<Math.max(2,nst/40);i++)glint(w*r(),h*r(),(4+6*r())*D);
   let anim=null;
   if(marco){const T=m.tipo;

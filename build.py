@@ -125,6 +125,24 @@ body.espaco .tagline{color:#8fe8ff;letter-spacing:.18em;text-transform:uppercase
 body.espaco .menuFoot{color:#8fe8ff}
 body.espaco .linkBtn{color:#8fe8ff}
 body.espaco #ovos{display:flex;justify-content:center;gap:30px;margin-top:6px}
+/* telas baixas: tudo cabe sem rolar (o nome do menu encolhe pelo ajustaMenu) */
+@media (max-height:760px){
+  body.espaco #scrMenu{gap:8px}
+  body.espaco .menuBtns{gap:9px;margin-top:2px}
+  body.espaco .btn.big{padding:9px 18px;font-size:17px}
+  body.espaco .panel .btn{padding-top:9px;padding-bottom:9px}
+}
+@media (max-height:640px){
+  body.espaco .btn.big{padding:6px 14px;font-size:15px}
+  body.espaco .btn.big small{font-size:11px}
+  body.espaco .menuBtns{gap:7px}
+  body.espaco #scrMenu .tagline{display:none}
+  body.espaco .panel .btn{padding-top:7px;padding-bottom:7px}
+  body.espaco .panel h2{margin:2px 0;font-size:24px}
+  body.espaco .panel{gap:6px}
+  body.espaco .panel p{margin:2px 0}
+  body.espaco .panel .objetivo{padding-top:6px;padding-bottom:6px}
+}
 /* menu do espaço: música e créditos moram em Opções */
 body.espaco .menuFoot{display:none}
 /* Como jogar do espaço */
