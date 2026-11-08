@@ -256,7 +256,7 @@ function missoesLista(){
   S = {...freshState(), missao:0, phase:'lista'}; S.fiscal=FISCAIS[0]; applyAndar(); clearBoard(); render();
   const r=MISS(), total=Object.values(r).reduce((a,x)=>a+(x.e||0),0);
   setBanner(espFig()?'Jornada':'Clássico', `${total} de ${MISSOES.length*3} estrelas`);
-  $('#btnPause').textContent='‹'; $('#btnPause').title='Voltar ao menu';
+  $('#btnPause').textContent='‹ Menu'; $('#btnPause').title='Voltar ao menu'; document.body.classList.add('naLista');
   const atual = (MISSOES.findIndex((m,i)=>!(r[i+1]?.e)) + 1) || MISSOES.length;
   const lado = ['center','flex-end','center','flex-start'], E=espFig();
   let html='';

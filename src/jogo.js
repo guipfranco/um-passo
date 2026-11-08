@@ -213,7 +213,8 @@ function show(id){
   document.body.classList.toggle('lock', id==='scrGame');
   document.body.classList.toggle('jogo', id==='scrGame');
   if(id!=='scrGame') desenhaCenario();
-  document.body.classList.remove('semHud','modoCla','modoInf');
+  document.body.classList.remove('semHud','modoCla','modoInf','naLista');
+  if(id!=='scrMenu') guardaVolta(); else if(history.state&&history.state.ptui) history.back();
   scrollTo(0,0);
 }
 

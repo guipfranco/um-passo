@@ -95,6 +95,16 @@ body.espaco .mCaminho polyline{stroke:rgba(255,255,255,.35) !important;stroke-da
 body.espaco .mGrupo{background:rgba(22,17,40,.78);border:1.5px solid rgba(255,255,255,.12);border-radius:18px;box-shadow:0 4px 0 rgba(0,0,0,.35);color:#f3e9d7}
 body.espaco .mGrupo b{color:#f3eefc}
 body.modoInf .hudCla .tr{display:none}
+/* lista de fases: o botão do canto vira "‹ Menu" */
+body.naLista #btnPause{width:auto;padding:0 14px;border-radius:999px;font-size:15px;white-space:nowrap}
+/* Clássico sem fim: só o menu e a pontuação */
+body.modoInf .hudCla .arrP,body.modoInf .hudCla .silhP,body.modoInf .top .banner,body.modoInf #btnSound{display:none !important}
+body.modoInf #shell{flex-direction:row;justify-content:space-between;align-items:center}
+body.modoInf #shell{width:min(94vw,440px);margin:0 auto}
+body.modoInf .top{order:1;flex:none;width:auto !important;max-width:none !important}
+body.modoInf .hudCla{order:2;flex:none !important;width:auto !important;max-width:none !important;margin:0 !important}
+body.modoInf .hudCla #ptsP{flex:none;min-width:150px;text-align:center;justify-content:center}
+body.modoInf .hudCla #ptsP b{font-size:30px}
 body.espaco.modoCla #mineRow{display:none !important}
 #mInf{display:none}
 body.espaco #mInf{display:block}

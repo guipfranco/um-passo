@@ -39,6 +39,19 @@ function espLoop(ms){
   }
   if(ceu && GLON) glQuadro(t);
 }
+// ---------- botão voltar do celular ----------
+// fora do menu há sempre uma entrada a mais no histórico (guardaVolta). Voltar: fecha a janela aberta; na lista de
+// fases vai ao menu; dentro de uma fase abre o menu de pausa; no menu principal sai do jogo, como qualquer app.
+function guardaVolta(){ if(!(history.state&&history.state.ptui)) history.pushState({ptui:1},''); }
+addEventListener('popstate',()=>{
+  const menu=$('#scrMenu').classList.contains('on');
+  if(overlayOpen()){ hideOverlay(); if(!menu) guardaVolta(); return; }
+  if(menu) return;
+  if(S && S.phase==='lista'){ showMenu(); return; }
+  if($('#scrGame').classList.contains('on') && S && S.phase==='mine'){ pauseMenu(); guardaVolta(); return; }
+  showMenu();
+});
+
 // ---------- planetas redondos pela placa de vídeo (WebGL) ----------
 // uma camada só, dentro do tabuleiro (com uma casa de folga em volta para os anéis e o brilho); se o aparelho
 // não tiver WebGL, GLON fica falso e cada planeta volta a ser pintado no canvas da sua peça
@@ -222,8 +235,11 @@ function espLogo(c,W,H,t){
   c.save(); c.translate(cx,cy); c.rotate(tl); c.strokeStyle='rgba(255,255,255,.2)'; c.lineWidth=1.5*Q; c.setLineDash([6*Q,7*Q]); c.beginPath(); c.ellipse(0,0,rx,ry,0,0,7); c.stroke(); c.restore(); c.setLineDash([]);
   const pl=p=>ESP.drawPeca(c,p.n,t,p.x,p.y,p.sz*Q,1,true,.7+.3*(p.z+1)/2);
   ps.filter(p=>p.z<0).sort((a,b)=>a.z-b.z).forEach(pl);
-  c.save(); c.font=`900 ${74*Q}px Orbitron, sans-serif`; c.textAlign='center'; c.textBaseline='middle'; c.fillStyle='#f4fbff';
-  c.shadowColor='rgba(110,230,255,.95)'; c.shadowBlur=26*Q; c.fillText('PTUI!',cx,cy); c.shadowColor='rgba(230,100,255,.7)'; c.shadowBlur=10*Q; c.fillText('PTUI!',cx,cy); c.restore();
+  // nome: 2048 grande e STARS embaixo, espaçado
+  c.save(); c.textAlign='center'; c.textBaseline='middle'; c.fillStyle='#f4fbff';
+  for(const [txt,px,dy,esp] of [['2048',78,-12,0],['STARS',27,40,.42]]){ c.font=`900 ${px*Q}px Orbitron, sans-serif`; if('letterSpacing' in c) c.letterSpacing=(esp*px*Q)+'px';
+    c.shadowColor='rgba(110,230,255,.95)'; c.shadowBlur=26*Q; c.fillText(txt,cx+(esp*px*Q)/2,cy+dy*Q); c.shadowColor='rgba(230,100,255,.7)'; c.shadowBlur=10*Q; c.fillText(txt,cx+(esp*px*Q)/2,cy+dy*Q); }
+  c.restore();
   ps.filter(p=>p.z>=0).sort((a,b)=>a.z-b.z).forEach(pl);
 }
 let TAG_MINA=null;
@@ -231,6 +247,7 @@ function espMenu(){
   const on=espTela(), menu=$('#scrMenu'), tag=menu.querySelector('.tagline');
   if(TAG_MINA==null) TAG_MINA=tag.textContent;
   tag.textContent = on ? 'junte poeira até virar galáxia' : TAG_MINA;
+  document.title = on ? '2048 Stars' : 'Ptui!';
   // no espaço: Jornada (as missões) e Clássico (4x4 sem fim)
   $('#mCla').innerHTML = on ? 'Jornada<small>uma missão em cada fase</small>' : 'Clássico<small>uma missão em cada fase</small>';
   if(!$('#mInf')){ const b=document.createElement('button'); b.className='btn b big'; b.id='mInf'; b.innerHTML='Clássico<small>4x4 sem fim, até não caber mais nada</small>'; b.onclick=infinitoJoga; $('#mCla').after(b); }
