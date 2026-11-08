@@ -18,8 +18,18 @@ p{margin:0;font-size:15px;line-height:1.45;color:#cfc8f2}
 .sub{font-size:13.5px;color:#9a91c9}
 a{color:#7fe0ff}
 .card{background:rgba(20,16,44,.78);border:1.5px solid rgba(160,140,255,.22);border-radius:16px;padding:12px 13px;display:flex;flex-direction:column;gap:9px}
+.ok{border-color:rgba(111,220,140,.45)}
 ul.lst{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:7px;font-size:14.5px;line-height:1.4;color:#d9d3fb}
 ul.lst b{color:#ffd877}
+.ok ul.lst b{color:#9be8b4}
+.mec{border-top:1px solid rgba(160,140,255,.15);padding-top:10px;display:flex;flex-direction:column;gap:5px}
+.mec:first-child{border-top:0;padding-top:0}
+.mec canvas{display:block;width:100%;max-width:340px;margin:0 auto}
+.mec b.t{font-size:16px;color:#f1eefc}
+.mec .o{font-size:14.5px;color:#d9d3fb;line-height:1.4}
+.mec .q{font-size:13px;color:#9a91c9}
+.mec .q i{font-style:normal;color:#9fe9ff;font-weight:700}
+.prop{background:#ffc94a;color:#2c1d00;font-weight:800;font-size:11px;border-radius:999px;padding:1px 7px;white-space:nowrap;vertical-align:2px}
 .molde{display:grid;grid-template-columns:repeat(12,1fr);gap:3px}
 .molde div{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font:800 11px 'Exo 2',sans-serif;color:#1a1230}
 .papeis{display:flex;flex-direction:column;gap:5px;font-size:13.5px;color:#cfc8f2}
@@ -30,6 +40,7 @@ svg.serra{width:100%;height:70px;display:block}
 .mapa div.c{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:800;color:rgba(20,14,40,.75)}
 .mapa div.est{box-shadow:inset 0 0 0 2px rgba(255,255,255,.95)}
 .mapa div.fim{outline:2px solid #ffcf7a;outline-offset:-2px}
+.mapa div.dif{outline:2px dashed #ff6b6b;outline-offset:-2px}
 .temas{display:flex;flex-wrap:wrap;gap:5px 10px;font-size:12.5px;color:#cfc8f2}
 .temas i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-2px}
 .mundo{border-top:1px solid rgba(160,140,255,.15);padding-top:9px;display:flex;gap:10px}
@@ -38,31 +49,37 @@ svg.serra{width:100%;height:70px;display:block}
 .mundo .co b.t{font-size:15.5px;color:#f1eefc}
 .mundo .co span{color:#b9b1e6}
 .mundo .co span i{font-style:normal;color:#9fe9ff;font-weight:700}
+.mundo .co span.prop{color:#2c1d00}
+.tab{display:grid;gap:2px;font-size:11px}
+.tab div{display:flex;align-items:center;justify-content:center;border-radius:4px;min-height:22px}
+.tab .h{color:#b9b1e6;font-weight:700}
+.tab .r{justify-content:flex-end;padding-right:5px}
+.tab .z{background:rgba(255,255,255,.04)}
 .matriz{display:grid;gap:2px;font-size:10.5px}
 .matriz div{display:flex;align-items:center;justify-content:center;border-radius:4px;min-height:24px;text-align:center}
 .matriz .h{color:#b9b1e6;font-weight:700;font-size:10px;line-height:1.05}
+.matriz .v{writing-mode:vertical-rl;transform:rotate(180deg);min-height:70px;justify-content:flex-start;padding:2px 0}
 .matriz .s{background:#3a8f6a;color:#e8fff2;font-weight:800}
 .matriz .n{background:rgba(255,255,255,.05)}
 .matriz .x{background:transparent}
-.novo,.mundo .co span.novo{background:#ffc94a;color:#2c1d00;font-weight:800;font-size:11px;border-radius:999px;padding:1px 7px;white-space:nowrap}
-.matriz .v{writing-mode:vertical-rl;transform:rotate(180deg);min-height:70px;justify-content:flex-start;padding:2px 0}
 </style>
 </head>
 <body>
 <main>
   <h1>PROPOSTA DE CAMINHO</h1>
   <p class="sub">Rascunho para discutir. O caminho de hoje está em <a href="caminho.html">caminho.html</a>.</p>
-  <p>Cada mecânica nova pode interagir com todas as anteriores, então o número de fases possíveis cresce muito a cada novidade. A proposta é apresentar menos coisas, mais devagar, e escolher de propósito poucas combinações.</p>
+  <p>Cada mecânica nova pode interagir com todas as anteriores, então o número de fases possíveis cresce muito a cada novidade. A proposta é apresentar menos coisas, mais devagar, escolher de propósito as combinações e não deixar o que foi aprendido sumir.</p>
 
-  <h2>O QUE OS OUTROS JOGOS ENSINAM</h2>
-  <div class="card"><ul class="lst">
-    <li><b>Escada de complexidade (Candy Crush):</b> quem está no começo vê só obstáculos simples; os complexos vêm para quem já passou muitas fases.</li>
-    <li><b>Uma novidade tem que merecer o lugar:</b> só entra algo novo com comportamento bem diferente, e só quando o que já existe não dá mais conta de fases boas. Não há calendário fixo de novidades.</li>
-    <li><b>Dificuldade em serrote, não em rampa:</b> uma fase difícil costuma vir seguida de uma mais leve, para manter o embalo. O Royal Match segura a primeira fase "difícil" até a 39.</li>
-    <li><b>Difícil bom é escolha, não esforço:</b> fases difíceis pedem decidir o que atacar primeiro, o que é mais gostoso do que gastar jogadas em obstáculos de várias camadas.</li>
-    <li><b>Obstáculos que quebram com jogada ao lado:</b> a cobertura do Candy Crush some com combinações vizinhas (de 1 a 5 camadas); no Royal Match há obstáculos que caem com 1 combinação ao lado e outros que pedem 8.</li>
-    <li><b>Robôs dão a primeira medida, gente de verdade confirma:</b> a King simula muitas partidas para prever a taxa de vitória, mas ainda testa com pessoas.</li>
+  <h2>JÁ DECIDIDO</h2>
+  <div class="card ok"><ul class="lst">
+    <li><b>120 fases em 10 mundos</b> para começar (dá para crescer para centenas depois).</li>
+    <li><b>A primeira fase difícil fica bem para frente:</b> na 46, o desafio do mundo 4. Antes disso, toda fase é tranquila para uma pessoa comum.</li>
+    <li><b>O lixo espacial vira um bloco fixo que racha</b> com uma junção na casa ao lado. Depois vêm versões mais duras, que pedem 2, 3 junções.</li>
+    <li><b>O que foi aprendido continua voltando</b> nos mundos seguintes (veja "As mecânicas não somem").</li>
   </ul></div>
+
+  <h2>O QUE É CADA COISA</h2>
+  <div class="card" id="mecs"></div>
 
   <h2>COMO FICA CADA MUNDO</h2>
   <div class="card">
@@ -73,12 +90,12 @@ svg.serra{width:100%;height:70px;display:block}
       <span><b>1 e 2</b> Estreia: só a novidade, pedindo 1, fácil.</span>
       <span><b>3 e 4</b> Treino: pedir 2, peça maior, tabuleiro maior.</span>
       <span><b>5</b> Quebra-cabeça com a novidade.</span>
-      <span><b>6</b> Respiro: fase leve.</span>
-      <span><b>7 e 8</b> Variação: um degrau novo da mesma família (exemplo: lixo que racha), estreia e treino.</span>
-      <span><b>9</b> Mistura com UMA mecânica antiga, já bem treinada.</span>
-      <span><b>10</b> Desafio: a mais difícil antes do final.</span>
-      <span><b>11</b> Quebra-cabeça mais difícil.</span>
-      <span><b>12</b> Final do mundo: o pico, sem limite de arrastos.</span>
+      <span><b>6</b> Respiro: fase leve, com uma mecânica antiga de lembrança.</span>
+      <span><b>7 e 8</b> Variação: um degrau novo da mesma família, estreia e treino.</span>
+      <span><b>9</b> Mistura: a novidade junto com UMA mecânica antiga, as duas valendo.</span>
+      <span><b>10</b> Desafio: a mais difícil antes do final (de verdade difícil só a partir do mundo 4).</span>
+      <span><b>11</b> Quebra-cabeça mais difícil, com uma lembrança.</span>
+      <span><b>12</b> Final do mundo: o pico, sem limite de arrastos, com uma ou duas lembranças.</span>
     </div>
   </div>
 
@@ -87,101 +104,162 @@ svg.serra{width:100%;height:70px;display:block}
 
   <h2>O MAPA PROPOSTO</h2>
   <div class="card">
-    <p class="sub">Mesmo jeito de ler do caminho de hoje: cada quadrado é uma fase na cor do que ensina; duas cores = mistura; branco = quebra-cabeça; contorno branco = estreia; dourado = final.</p>
+    <p class="sub">Cada quadrado é uma fase na cor do que ensina. Meio a meio = mistura; cantinho de outra cor = lembrança de uma mecânica antiga; branco = quebra-cabeça; contorno branco = estreia; dourado = final; tracejado vermelho = primeira fase difícil.</p>
     <div class="mapa" id="mapa"></div>
     <div class="temas" id="temas"></div>
   </div>
 
-  <h2>COMBINAÇÕES ESCOLHIDAS</h2>
+  <h2>AS MECÂNICAS NÃO SOMEM</h2>
+  <div class="card">
+    <p class="sub">Em quantas fases de cada mundo cada mecânica aparece. O 12 é o mundo dela; à direita, as vezes em que ela volta depois.</p>
+    <div class="tab" id="acum"></div>
+  </div>
+
+  <h2>COMBINAÇÕES DE VERDADE</h2>
   <div class="card">
     <p class="sub" id="combTxt"></p>
     <div class="matriz" id="matriz"></div>
   </div>
 
-  <h2>O QUE MUDA EM RELAÇÃO A HOJE</h2>
+  <h2>O QUE OS OUTROS JOGOS ENSINAM</h2>
   <div class="card"><ul class="lst">
-    <li><b>Uma família de mecânicas por mundo</b>, com um segundo degrau da mesma família no meio do mundo, em vez de três novidades diferentes no mesmo mundo (como hoje nos mundos 3 e 4).</li>
-    <li><b>Toda mecânica fica pelo menos 4 fases sozinha</b> (estreia e treino) antes da primeira mistura.</li>
-    <li><b>Quebra-cabeças dobram:</b> 2 por mundo (20 no total), contra 8 hoje.</li>
-    <li><b>Estações ganham um degrau:</b> o lixo espacial vira um bloco que <b>racha e some com uma junção na casa ao lado</b>, como você sugeriu; mais adiante, um mais duro, que pede 2 junções ao lado.</li>
-    <li><b>Órbitas viram um mundo só delas:</b> primeiro levar (estreia), depois formar em cima (variação). Hoje as duas entram juntas no mundo 3 e já pedindo 2.</li>
-    <li><b>Passinho sai como mundo</b> e fica como o modo de medalha (já existe: toda fase cumprida pode ser jogada de novo no Passinho).</li>
-    <li><b>10 mundos em vez de 8</b> (120 fases): um mundo final de revisão, que repete as duplas já treinadas e só no fim traz 4 duplas novas.</li>
-  </ul></div>
-
-  <h2>PARA VOCÊ DECIDIR</h2>
-  <div class="card"><ul class="lst">
-    <li><b>Quantos mundos:</b> 10 (120 fases), ou manter 8 e tirar duas famílias (as candidatas são Auras e Buracos negros, onde hoje se concentram as fases difíceis).</li>
-    <li><b>Lixo que racha:</b> racha com 1 junção ao lado? E o mais duro com 2?</li>
-    <li><b>Variações que ainda estão abertas:</b> o segundo degrau de Presos, Naves e Buracos negros.</li>
-    <li><b>Passinho:</b> só modo de medalha, ou também algumas fases no mundo final?</li>
+    <li><b>Escada de complexidade (Candy Crush):</b> quem está no começo vê só obstáculos simples; os complexos vêm para quem já passou muitas fases.</li>
+    <li><b>Uma novidade tem que merecer o lugar:</b> só entra algo novo com comportamento bem diferente, e só quando o que já existe não dá mais conta de fases boas.</li>
+    <li><b>Dificuldade em serrote, não em rampa:</b> uma fase difícil costuma vir seguida de uma mais leve. O Royal Match segura a primeira fase "difícil" até a 39.</li>
+    <li><b>Difícil bom é escolha, não esforço:</b> fases difíceis pedem decidir o que atacar primeiro.</li>
+    <li><b>Obstáculos que quebram com jogada ao lado:</b> a cobertura do Candy Crush some com combinações vizinhas (de 1 a 5 camadas); no Royal Match há obstáculos que caem com 1 combinação ao lado e outros que pedem 8.</li>
   </ul></div>
 
   <p class="sub">Referências: <a href="https://www.pocketgamer.biz/crafting-candy-crushs-difficulty-blockers-level-design-ai-and-the-complexity-staircase/">King sobre a escada de complexidade do Candy Crush (PocketGamer.biz)</a> · <a href="https://www.gamigion.com/why-does-royal-match-wait-22-levels-to-introduce-their-first-live-op/">ritmo do começo do Royal Match (Gamigion)</a> · <a href="https://pranaysarepaka.substack.com/p/royal-match-breakdown-part-3">obstáculos do Royal Match</a> · <a href="https://candycrush.fandom.com/wiki/Sachets">cobertura do Candy Crush</a></p>
 </main>
+<script src="src/espaco.js?v=16"></script>
 <script>
-// famílias: cor principal e cor do segundo degrau (variação)
+buildTextures();
+// ===================== o que é cada coisa: cenas curtas com os desenhos do jogo =====================
+const COR_NIV=['#d9c49a','#7fdcf0','#ff7a1e','#909cb2','#bfefff','#e9c3a0'];
+const ease=k=>k<=0?0:k>=1?1:k*k*(3-2*k);
+const CENAS=[];
+function cenaBase(c,W,H,n){ const pa=W/n, cy=H/2; c.clearRect(0,0,W,H);
+  for(let i=0;i<n;i++){ c.beginPath(); c.arc((i+.5)*pa,cy,pa*.4,0,7); c.fillStyle='rgba(16,12,38,.65)'; c.fill(); c.lineWidth=1.2*DPR; c.strokeStyle='rgba(190,170,255,.28)'; c.stroke(); }
+  return {pa,cy,X:i=>(i+.5)*pa}; }
+function peca(c,n,t,x,y,pa,a=1,e=1){ drawPeca(c,n,t,x,y,pa*1.25,a,false,e); }
+function check(c,x,y,pa,a){ if(a<=0) return; c.save(); c.globalAlpha=a; c.strokeStyle='#6fdc8c'; c.lineWidth=pa*.06; c.lineCap='round'; c.beginPath(); c.moveTo(x-pa*.16,y-pa*.42); c.lineTo(x-pa*.04,y-pa*.3); c.lineTo(x+pa*.18,y-pa*.56); c.stroke(); c.restore(); }
+function cruz(c,x,y,pa,a){ if(a<=0) return; c.save(); c.globalAlpha=a; c.strokeStyle='#ff6b6b'; c.lineWidth=pa*.06; c.lineCap='round'; c.beginPath(); c.moveTo(x-pa*.12,y-pa*.56); c.lineTo(x+pa*.12,y-pa*.32); c.moveTo(x+pa*.12,y-pa*.56); c.lineTo(x-pa*.12,y-pa*.32); c.stroke(); c.restore(); }
+// cada cena roda em laço de 3,4 s: o arrasto entre 0,7 e 1,15 s, depois o resultado
+const tempo=t=>{ const s=t%3.4; return {s, k:ease((s-.7)/.45), fim:s>1.15, f:s>3?1-(s-3)/.4:s<.2?s/.2:1, depois:Math.min(1,Math.max(0,(s-1.15)/.3))}; };
+const MECS=[
+ {nome:'Estação', o:'Ocupa uma casa e nunca sai do lugar. As peças batem nela e param.', hoje:'mundo 2 (fase 13)', prop:'mundo 2',
+  d:(c,W,H,t)=>{ const {pa,cy,X}=cenaBase(c,W,H,4), T=tempo(t); SPR.estacao(c,X(3),cy,pa,t); peca(c,'Rocha',t,X(0)+(X(2)-X(0))*T.k,cy,pa,T.f); }},
+ {nome:'Fluxo de rochas', o:'Uma faixa de rochas entre duas casas. As peças param nela, como numa parede fina.', hoje:'mundo 3 (fase 25)', prop:'mundo 3',
+  d:(c,W,H,t)=>{ const {pa,cy,X}=cenaBase(c,W,H,4), T=tempo(t); SPR.rochas(c,[2*pa,cy-pa*.45],[2*pa,cy+pa*.45],t,pa); peca(c,'Rocha',t,X(0)+(X(1)-X(0))*T.k,cy,pa,T.f); }},
+ {nome:'Lixo espacial que racha', novo:true, o:'Hoje o lixo anda com as peças e nunca junta, só ocupa espaço. Na proposta ele vira um bloco fixo que racha e some quando acontece uma junção na casa ao lado. Os mais duros pedem 2, 3 junções.', hoje:'mundo 4 (fase 40), como lixo que anda', prop:'mundo 2 (variação)',
+  d:(c,W,H,t)=>{ const {pa,cy,X}=cenaBase(c,W,H,4), T=tempo(t), sai=1-T.depois;
+    if(sai>0){ c.save(); c.globalAlpha=sai*T.f; c.translate(X(3),cy); if(T.fim) c.rotate(Math.sin(t*40)*.06*sai); SPR.lixo(c,0,0,pa*.86,t); c.restore(); }
+    if(!T.fim){ peca(c,'Rocha',t,X(0)+(X(2)-X(0))*T.k,cy,pa,T.f); peca(c,'Rocha',t,X(1)+(X(2)-X(1))*T.k,cy,pa,T.f); }
+    else peca(c,'Asteroide',t,X(2),cy,pa,T.f,1+.25*Math.sin(Math.min(1,T.depois*1.5)*Math.PI)); }},
+ {nome:'Órbita dourada: levar', o:'Uma casa marcada com um anel dourado. Levar é fazer exatamente o planeta pedido chegar nela e parar em cima.', hoje:'mundo 3 (fase 26)', prop:'mundo 4',
+  d:(c,W,H,t)=>{ const {pa,cy,X}=cenaBase(c,W,H,4), T=tempo(t); SPR.alvo(c,X(3),cy,pa,t,'Rocha'); peca(c,'Rocha',t,X(0)+(X(3)-X(0))*T.k,cy,pa,T.f); check(c,X(3),cy,pa,T.depois*T.f); }},
+ {nome:'Órbita dourada: formar em cima', o:'Mesma casa marcada, mas agora a junção tem que acontecer em cima dela.', hoje:'mundo 3 (fase 28)', prop:'mundo 4 (variação)',
+  d:(c,W,H,t)=>{ const {pa,cy,X}=cenaBase(c,W,H,4), T=tempo(t); SPR.alvo(c,X(3),cy,pa,t,'Asteroide');
+    if(!T.fim){ peca(c,'Rocha',t,X(1)+(X(3)-X(1))*T.k,cy,pa,T.f); peca(c,'Rocha',t,X(3),cy,pa,T.f); } else peca(c,'Asteroide',t,X(3),cy,pa,T.f); check(c,X(3),cy,pa,T.depois*T.f); }},
+ {nome:'Nebulosa', o:'Uma nuvem escura cobre algumas casas. Ela se desfaz quando acontece uma junção em cima dela. A meta é limpar todas.', hoje:'mundo 4 (fase 37)', prop:'mundo 5',
+  d:(c,W,H,t)=>{ const {pa,cy,X}=cenaBase(c,W,H,4), T=tempo(t); if(1-T.depois>0){ c.save(); c.globalAlpha=(1-T.depois)*T.f; SPR.neb(c,X(3),cy,pa,t,2); c.restore(); }
+    if(!T.fim){ peca(c,'Gelo',t,X(1)+(X(3)-X(1))*T.k,cy,pa,T.f); peca(c,'Gelo',t,X(3),cy,pa,T.f); } else peca(c,'Rocha',t,X(3),cy,pa,T.f); }},
+ {nome:'Planeta preso', o:'Um planeta dentro de uma gaiola de luz: não se mexe. Ele se solta quando um planeta igual se junta com ele.', hoje:'mundo 4 (fase 41)', prop:'mundo 6',
+  d:(c,W,H,t)=>{ const {pa,cy,X}=cenaBase(c,W,H,4), T=tempo(t);
+    if(!T.fim){ SPR.gaiola(c,X(3),cy,pa,t,'back'); peca(c,'Asteroide',t,X(3),cy,pa,T.f); SPR.gaiola(c,X(3),cy,pa,t,'front'); peca(c,'Asteroide',t,X(0)+(X(3)-X(0))*T.k,cy,pa,T.f); }
+    else peca(c,'Cometa',t,X(3),cy,pa,T.f); }},
+ {nome:'Nave', o:'Uma nave parada numa casa. Leve até ela o planeta pedido (ou maior): ele é recolhido e sai do tabuleiro.', hoje:'mundo 5 (fase 49)', prop:'mundo 7',
+  d:(c,W,H,t)=>{ const {pa,cy,X}=cenaBase(c,W,H,4), T=tempo(t); SPR.nave(c,X(3),cy,pa,t,'Asteroide'); const e=T.fim?Math.max(0,1-T.depois):1; if(e>0) peca(c,'Asteroide',t,X(0)+(X(3)-X(0))*T.k,cy-(T.fim?pa*.2*T.depois:0),pa,T.f,e); check(c,X(3),cy,pa,T.depois*T.f); }},
+ {nome:'Auras (cores)', o:'Cada planeta tem uma aura roxa ou verde e só junta com a mesma cor. Roxa e verde se encostam e não juntam.', hoje:'mundo 6 (fase 61)', prop:'mundo 8',
+  d:(c,W,H,t)=>{ const {pa,cy,X}=cenaBase(c,W,H,4), T=tempo(t), x1=X(0)+(X(2)-X(0))*T.k, x2=X(2)+(X(3)-X(2))*T.k;
+    SPR.aura(c,x1,cy,pa,t,0); peca(c,'Rocha',t,x1,cy,pa,T.f); SPR.aura(c,x2,cy,pa,t,1); peca(c,'Rocha',t,x2,cy,pa,T.f); cruz(c,(X(2)+X(3))/2,cy,pa,T.depois*T.f); }},
+ {nome:'Buraco negro', o:'Nascem buracos negros de um tamanho. Quando um encosta num planeta do mesmo tamanho, os dois somem (engolidos). Serve para abrir espaço, e há metas de engolir.', hoje:'mundo 7 (fase 73)', prop:'mundo 9',
+  d:(c,W,H,t)=>{ const {pa,cy,X}=cenaBase(c,W,H,4), T=tempo(t), a=T.fim?Math.max(0,1-T.depois):1;
+    if(a>0){ c.save(); c.globalAlpha=a*T.f; SPR.buraco(c,X(3),cy,pa,t,COR_NIV[2]); c.restore(); peca(c,'Rocha',t,X(0)+(X(3)-X(0))*T.k,cy,pa,T.f*a,a); } }},
+ {nome:'Duas de uma vez (combo)', o:'Duas junções no mesmo arrasto.', hoje:'mundo 1 (fase 6)', prop:'mundo 1 (variação)',
+  d:(c,W,H,t)=>{ const {pa,cy,X}=cenaBase(c,W,H,4), T=tempo(t);
+    if(!T.fim){ peca(c,'Poeira',t,X(0)+(X(2)-X(0))*T.k,cy,pa,T.f); peca(c,'Poeira',t,X(1)+(X(2)-X(1))*T.k,cy,pa,T.f); peca(c,'Gelo',t,X(2)+(X(3)-X(2))*T.k,cy,pa,T.f); peca(c,'Gelo',t,X(3),cy,pa,T.f); }
+    else { peca(c,'Gelo',t,X(2),cy,pa,T.f); peca(c,'Rocha',t,X(3),cy,pa,T.f); } check(c,(X(2)+X(3))/2,cy,pa,T.depois*T.f); }},
+ {nome:'Passinho', o:'As peças andam só uma casa por arrasto, em vez de deslizar até o fim. Hoje é o mundo 8 e também um modo de medalha: toda fase cumprida pode ser jogada de novo assim.', hoje:'mundo 8 (fase 85)', prop:'modo de medalha',
+  d:(c,W,H,t)=>{ const {pa,cy,X}=cenaBase(c,W,H,4), s=t%3.4, f=s>3?1-(s-3)/.4:s<.2?s/.2:1, p=ease((s-.6)/.3)+ease((s-1.6)/.3); peca(c,'Rocha',t,X(0)+(X(1)-X(0))*p,cy,pa,f); }},
+];
+{ const el=document.getElementById('mecs'), w=Math.min(340, el.clientWidth-26);
+  for(const m of MECS){ const d=document.createElement('div'); d.className='mec';
+    d.innerHTML=`<canvas></canvas><b class="t">${m.nome} ${m.novo?'<span class="prop">regra nova</span>':''}</b><div class="o">${m.o}</div><div class="q"><i>Hoje:</i> ${m.hoje} · <i>Na proposta:</i> ${m.prop}</div>`;
+    el.appendChild(d); const cv=d.querySelector('canvas'); cv.width=Math.round(w*DPR); cv.height=Math.round(w/4*DPR); cv.style.height=(w/4)+'px'; CENAS.push([cv,m.d]); }
+  const laco=ms=>{ const t=ms/1000; for(const [cv,d] of CENAS){ const r=cv.getBoundingClientRect(); if(r.bottom<0||r.top>innerHeight) continue; d(cv.getContext('2d'),cv.width,cv.height,t); } requestAnimationFrame(laco); };
+  requestAnimationFrame(laco); }
+
+// ===================== a proposta =====================
 const FAM = {
-  basico:  {n:'Básico',            c:'#8fa0d4', v:'#ff7eb6', vn:'Combo (duas de uma vez)'},
-  estacao: {n:'Estações',          c:'#a9bdd2', v:'#c9cc7a', vn:'Lixo espacial que racha com junção ao lado', novo:true},
-  mureta:  {n:'Fluxos de rochas',  c:'#d8925a', v:'#e8b48a', vn:'Formatos com vazios'},
+  basico:  {n:'Básico',            c:'#8fa0d4', v:'#ff7eb6', vn:'Duas de uma vez (combo)'},
+  estacao: {n:'Estações',          c:'#a9bdd2', v:'#c9cc7a', vn:'Lixo que racha com junção ao lado; depois os mais duros (2, 3 junções)', novo:true},
+  mureta:  {n:'Fluxos de rochas',  c:'#d8925a', v:'#e8b48a', vn:'Tabuleiros com formato e vazios'},
   orbita:  {n:'Órbitas',           c:'#ffe066', v:'#f5a623', vn:'Formar em cima da órbita'},
-  nebulosa:{n:'Nebulosas',         c:'#3fc9b0', v:'#2a9c88', vn:'Nebulosa dupla (2 junções)', novo:true},
-  presa:   {n:'Planetas presos',   c:'#5fdcff', v:'#3aa9cc', vn:'a definir'},
-  nave:    {n:'Naves',             c:'#7be07b', v:'#4fb84f', vn:'a definir'},
-  aura:    {n:'Auras',             c:'#b98aff', v:'#9466e0', vn:'Aura mista (junta com as duas)'},
-  buraco:  {n:'Buracos negros',    c:'#ea6fd3', v:'#c24fae', vn:'a definir'},
+  nebulosa:{n:'Nebulosas',         c:'#3fc9b0', v:'#2a9c88', vn:'Nebulosa dupla: precisa de 2 junções', novo:true},
+  presa:   {n:'Planetas presos',   c:'#5fdcff', v:'#3aa9cc', vn:'Gaiola dupla: precisa de 2 junções para soltar', novo:true},
+  nave:    {n:'Naves',             c:'#7be07b', v:'#4fb84f', vn:'Nave que muda de lugar a cada entrega', novo:true},
+  aura:    {n:'Auras',             c:'#b98aff', v:'#9466e0', vn:'Aura mista: junta com as duas cores'},
+  buraco:  {n:'Buracos negros',    c:'#ea6fd3', v:'#c24fae', vn:'Buraco que cresce: cada planeta engolido faz ele subir um tamanho', novo:true},
 };
-// mundos propostos: família e com quem mistura na fase 9
 const MUNDOS = [
   {nome:'Entrada',          fam:'basico',   mix:null,      txt:'Juntar, formar, pontos e tabuleiros maiores.'},
   {nome:'Estações',         fam:'estacao',  mix:'basico',  txt:'O bloco que não sai; depois o lixo que racha.'},
-  {nome:'Fluxos de rochas', fam:'mureta',   mix:'estacao', txt:'As peças param nas rochas; depois os formatos com vazios.'},
+  {nome:'Fluxos de rochas', fam:'mureta',   mix:'estacao', txt:'As peças param nas rochas; depois os tabuleiros com formato.'},
   {nome:'Órbitas',          fam:'orbita',   mix:'mureta',  txt:'Levar até a órbita; depois formar em cima dela.'},
   {nome:'Nebulosas',        fam:'nebulosa', mix:'orbita',  txt:'Desfazer a nebulosa juntando em cima; depois a dupla.'},
   {nome:'Planetas presos',  fam:'presa',    mix:'nebulosa',txt:'Soltar o planeta preso juntando com ele.'},
   {nome:'Naves',            fam:'nave',     mix:'mureta',  txt:'Levar planetas até a nave.'},
   {nome:'Auras',            fam:'aura',     mix:'orbita',  txt:'Cada aura só junta com a sua; depois a aura mista.'},
-  {nome:'Buracos negros',   fam:'buraco',   mix:'aura',    txt:'O buraco negro engole o planeta do mesmo nível.'},
-  {nome:'Grande final',     fam:null,       mix:null,      txt:'Revisão: cada fase mistura duas famílias já dominadas.'},
+  {nome:'Buracos negros',   fam:'buraco',   mix:'aura',    txt:'O buraco negro engole o planeta do mesmo tamanho.'},
+  {nome:'Grande final',     fam:null,       mix:null,      txt:'Revisão: as duplas já treinadas e, no fim, 4 duplas novas.'},
 ];
-// misturas do mundo final (duas famílias por fase; a última é o final de tudo)
-// revisão: primeiro as duplas que cada mundo já treinou, depois só 4 duplas novas
 const FINAL = [['estacao','mureta'],['orbita','mureta'],['nebulosa','orbita'],['presa','nebulosa'],['nave','mureta'],['aura','orbita'],['buraco','aura'],['estacao','orbita'],['nave','presa'],['nebulosa','estacao'],['orbita','mureta'],['nave','orbita']];
 const PAPEL=['E','E','T','T','Q','R','V','V','M','D','Q','F'];
 const ROTULO={E:'estreia',T:'treino',Q:'quebra-cabeça',R:'respiro',V:'variação',M:'mistura',D:'desafio',F:'final'};
-const SERRA=[2,3,4,6,5,3,5,6,6,8,7,9.5];
-// serrote
-{ const pts=SERRA.map((v,i)=>`${i*10+5},${38-v*3.6}`).join(' ');
-  document.getElementById('serra').innerHTML=`<polyline points="${pts}" fill="none" stroke="#7fe0ff" stroke-width="1.6" vector-effect="non-scaling-stroke"/>`+SERRA.map((v,i)=>`<circle cx="${i*10+5}" cy="${38-v*3.6}" r="1.6" fill="#ffd877"/>`).join(''); }
-// molde
-document.getElementById('molde').innerHTML=PAPEL.map((p,i)=>{ const c={E:'#ffe066',T:'#ffe066',Q:'#f1eefc',R:'#8fa0d4',V:'#f5a623',M:'linear-gradient(135deg,#f5a623 50%,#d8925a 50%)',D:'#ffe066',F:'#ffcf7a'}[p];
+// lembranças: nas fases 6, 10, 11 e 12 de cada mundo volta uma mecânica antiga, sempre a que está há mais tempo sem aparecer
+const visto={}, LEMB={};
+MUNDOS.forEach((m,g)=>{ if(!m.fam) return; visto[m.fam]=g; if(m.mix) visto[m.mix]=g;
+  const antigas=Object.keys(visto).filter(k=>k!==m.fam && k!=='basico'); LEMB[g]={};
+  for(const i of [5,9,10,11]){ if(!antigas.length) break; antigas.sort((a,b)=>visto[a]-visto[b]); const k=antigas[0]; LEMB[g][i]=k; visto[k]=g+i/100; } });
+const PRIMEIRA_DIFICIL=46;
+{ const S=[2,3,4,6,5,3,5,6,6,8,7,9.5]; const pts=S.map((v,i)=>`${i*10+5},${38-v*3.6}`).join(' ');
+  document.getElementById('serra').innerHTML=`<polyline points="${pts}" fill="none" stroke="#7fe0ff" stroke-width="1.6" vector-effect="non-scaling-stroke"/>`+S.map((v,i)=>`<circle cx="${i*10+5}" cy="${38-v*3.6}" r="1.6" fill="#ffd877"/>`).join(''); }
+document.getElementById('molde').innerHTML=PAPEL.map((p,i)=>{ const c={E:'#ffe066',T:'#ffe066',Q:'#f1eefc',R:'linear-gradient(135deg,#ffe066 72%,#a9bdd2 72%)',V:'#f5a623',M:'linear-gradient(135deg,#ffe066 50%,#d8925a 50%)',D:'#ffe066',F:'#ffcf7a'}[p];
   return `<div style="background:${c}" title="${ROTULO[p]}">${i+1}</div>`; }).join('');
-// mundos
-document.getElementById('mundos').innerHTML=MUNDOS.map((m,g)=>{ const f=m.fam&&FAM[m.fam];
+document.getElementById('mundos').innerHTML=MUNDOS.map((m,g)=>{ const f=m.fam&&FAM[m.fam], lb=[...new Set(Object.values(LEMB[g]||{}))].map(k=>FAM[k].n);
   return `<div class="mundo"><div class="nu" style="background:${f?f.c:'#ffcf7a'}">${g+1}</div><div class="co"><b class="t">${m.nome}</b><span>${m.txt}</span>
-    ${f?`<span><i>Estreia:</i> ${f.n}${g===0?' (juntar e formar)':''}</span><span><i>Variação:</i> ${f.vn} ${f.novo?'<span class="novo">regra nova</span>':''}</span>`:''}
-    ${m.mix?`<span><i>Mistura com:</i> ${FAM[m.mix].n}</span>`:g===0?'<span><i>Mistura com:</i> nada (é o começo)</span>':''}</div></div>`; }).join('');
-// mapa proposto
-{ let h='', n=1;
-  MUNDOS.forEach((m,g)=>{ h+=`<div class="mn">${g+1} ${({'Planetas presos':'Presos','Fluxos de rochas':'Fluxos','Buracos negros':'Buracos','Grande final':'Final'})[m.nome]||m.nome}</div>`;
+    ${f?`<span><i>Variação:</i> ${f.vn} ${f.novo?'<span class="prop">regra nova</span>':''}</span>`:''}
+    ${m.mix?`<span><i>Mistura com:</i> ${FAM[m.mix].n}</span>`:''}
+    ${lb.length?`<span><i>Lembranças:</i> ${lb.join(', ')}</span>`:''}</div></div>`; }).join('');
+{ let h='', n=1; const curto={'Planetas presos':'Presos','Fluxos de rochas':'Fluxos','Buracos negros':'Buracos','Grande final':'Final'};
+  MUNDOS.forEach((m,g)=>{ h+=`<div class="mn">${g+1} ${curto[m.nome]||m.nome}</div>`;
     PAPEL.forEach((p,i)=>{ let bg, cls='';
       if(!m.fam){ const [a,b]=FINAL[i]; bg=`linear-gradient(135deg,${FAM[a].c} 50%,${FAM[b].c} 50%)`; if(i===11) cls='fim'; }
-      else { const f=FAM[m.fam];
-        bg = p==='Q' ? '#f1eefc' : p==='R' ? (g===0?f.c:'#8fa0d4') : p==='V' ? f.v : p==='M' ? (m.mix?`linear-gradient(135deg,${f.c} 50%,${FAM[m.mix].c} 50%)`:f.c) : f.c;
+      else { const f=FAM[m.fam], lk=LEMB[g][i], base = p==='Q' ? '#f1eefc' : p==='V' ? f.v : f.c;
+        bg = p==='M' && m.mix ? `linear-gradient(135deg,${f.c} 50%,${FAM[m.mix].c} 50%)` : lk ? `linear-gradient(135deg,${base} 72%,${FAM[lk].c} 72%)` : base;
         if(i===0 || i===6) cls='est'; if(p==='F') cls='fim'; }
+      if(n===PRIMEIRA_DIFICIL) cls+=' dif';
       h+=`<div class="c ${cls}" style="background:${bg}" title="fase ${n}: ${ROTULO[p]}">${n++}</div>`; }); });
   document.getElementById('mapa').innerHTML=h;
   document.getElementById('temas').innerHTML=Object.values(FAM).map(f=>`<span><i style="background:${f.c}"></i>${f.n}</span>`).join('')+'<span><i style="background:#f1eefc"></i>Quebra-cabeça</span>'; }
-// combinações escolhidas: onde cada dupla aparece pela primeira vez
+{ const ks=Object.keys(FAM).filter(k=>k!=='basico'), conta={};
+  MUNDOS.forEach((m,g)=>{ const c=conta[g]={};
+    if(m.fam){ c[m.fam]=12; if(m.mix) c[m.mix]=(c[m.mix]||0)+1; for(const k of Object.values(LEMB[g]||{})) c[k]=(c[k]||0)+1; }
+    else for(const [a,b] of FINAL){ c[a]=(c[a]||0)+1; c[b]=(c[b]||0)+1; } });
+  const nome=k=>({'Planetas presos':'Presos','Fluxos de rochas':'Fluxos','Buracos negros':'Buracos'})[FAM[k].n]||FAM[k].n;
+  let h='<div></div>'+MUNDOS.map((m,g)=>`<div class="h">${g+1}</div>`).join('');
+  for(const k of ks){ h+=`<div class="h r">${nome(k)}</div>`;
+    MUNDOS.forEach((m,g)=>{ const v=conta[g][k]; h+= v ? `<div style="background:${FAM[k].c};color:#1a1230;font-weight:800;opacity:${v>=12?1:.82}">${v}</div>` : '<div class="z"></div>'; }); }
+  const el=document.getElementById('acum'); el.style.gridTemplateColumns=`auto repeat(${MUNDOS.length},1fr)`; el.innerHTML=h; }
 { const ks=Object.keys(FAM).filter(k=>k!=='basico'), onde={};
   const marca=(a,b,g)=>{ const k=[a,b].sort().join('|'); if(!(k in onde)) onde[k]=g; };
   MUNDOS.forEach((m,g)=>{ if(m.fam && m.mix && m.mix!=='basico') marca(m.fam,m.mix,g+1); });
   FINAL.forEach(([a,b])=>marca(a,b,10));
   const usadas=Object.keys(onde).length, total=ks.length*(ks.length-1)/2;
-  document.getElementById('combTxt').innerHTML=`Das <b>${total}</b> duplas possíveis entre as 8 famílias, a proposta usa <b>${usadas}</b>, escolhidas de propósito. O número na casa diz em que mundo a dupla aparece pela primeira vez; casa vazia = não combinamos.`;
+  document.getElementById('combTxt').innerHTML=`Lembrança é leve: a mecânica antiga aparece do jeito mais simples, só para não ser esquecida. Combinação de verdade é quando as duas valem como desafio. Das <b>${total}</b> duplas possíveis, a proposta usa <b>${usadas}</b> como combinação de verdade. O número diz em que mundo a dupla aparece pela primeira vez.`;
   const cab=k=>FAM[k].n.replace('Planetas presos','Presos').replace('Fluxos de rochas','Fluxos').replace('Buracos negros','Buracos');
-  // só a metade de baixo da tabela (cada dupla aparece uma vez); nomes das colunas em pé, para caber no celular
   let h=`<div class="x"></div>`+ks.slice(0,-1).map(k=>`<div class="h v">${cab(k)}</div>`).join('');
   ks.forEach((a,i)=>{ if(i===0) return; h+=`<div class="h" style="justify-content:flex-end;padding-right:4px">${cab(a)}</div>`;
     ks.slice(0,-1).forEach((b,j)=>{ if(j>=i){ h+='<div class="x"></div>'; return; } const k=[a,b].sort().join('|'); h+= k in onde ? `<div class="s">${onde[k]}</div>` : '<div class="n"></div>'; }); });
