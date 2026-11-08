@@ -155,11 +155,14 @@ const corJunta = (o,t) => o.c===2 ? t.c : o.c;
 const icoSvg = inner => `<svg class="ico" viewBox="0 0 100 100">${inner}</svg>`;
 const icoRock = t => icoSvg(t===0 ? torraoInner() : pedraInner(t));
 const icoOre  = o => icoSvg(oreSvg(o,50,52,2.6));
-let GLOSS=null, GLOSS_RE=null, GLOSS_T=null;   // GLOSS_T: palavra -> nível da pedrinha (para pintar o nome)
+let GLOSS=null, GLOSS_RE=null, GLOSS_T=null, GLOSS_M=null;   // GLOSS_T: palavra -> nível da pedrinha (para pintar o nome); GLOSS_M: mina ou espaço
 function gloss(){
-  if(GLOSS) return;
-  GLOSS={}; GLOSS_T={};
-  ROCKS.forEach((r,t)=>{ if(t>0) for(const w of [r.n, plural(r.n)]){ GLOSS[w]=icoRock(t); GLOSS_T[w]=t; } });
+  const modo = noEspaco() ? 'e' : 'm';
+  if(GLOSS && GLOSS_M===modo) return;
+  GLOSS={}; GLOSS_T={}; GLOSS_M=modo;
+  // no espaço os nomes são os dos corpos celestes; o ícone (o planeta) é gerado só quando aparece num texto
+  if(modo==='e') ESP.LADDER.forEach((d,i)=>{ for(const w of [d.n, plural(d.n)]){ GLOSS[w]=''; GLOSS_T[w]=i+1; } });
+  else ROCKS.forEach((r,t)=>{ if(t>0) for(const w of [r.n, plural(r.n)]){ GLOSS[w]=icoRock(t); GLOSS_T[w]=t; } });
   for(const w of ['torrão','torrões','Torrão','Torrões']){ GLOSS[w]=icoRock(0); GLOSS_T[w]=0; }
   ORES.forEach((o,i)=>{ if(i){ GLOSS[o.n]=icoOre(i); GLOSS[o.n[0].toUpperCase()+o.n.slice(1)]=icoOre(i); } });
   for(const w of ['parede','paredes','Parede','Paredes']) GLOSS[w]=icoSvg(wallInner());
@@ -175,6 +178,7 @@ function enrich(html){
 }
 // nome de pedrinha no texto: ícone + nome em negrito, na cor da pedrinha, com um rótulo suave atrás
 function nomePedra(w,t){
+  if(GLOSS_M==='e') return `<span class="nomeP" style="--c:${corNivel(t)};--f:${corNivel(t)}">${icoPlaneta(t)}<b>${noIco(w)}</b></span>`;
   return `<span class="nomeP" style="--c:${rd(t)};--f:${rc(t)}">${GLOSS[w]}<b>${noIco(w)}</b></span>`;
 }
 

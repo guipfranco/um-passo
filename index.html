@@ -355,9 +355,10 @@ body.modoCla .tile .face{width:84%;height:84%;margin:0 auto}
 .objetivo .pecaN small{display:block;font-size:11px;font-weight:600;color:#a08a74;line-height:1.1;white-space:nowrap;text-transform:none;letter-spacing:0}
 .objetivo .alvo .pecaN small{font-size:14px;color:#7a5a44}
 #bTitle .ico{width:1.1em;height:1.1em}
-.nomeP{display:inline !important;font-size:inherit !important;min-height:0 !important;line-height:inherit !important;white-space:nowrap;background:color-mix(in srgb,var(--f) 30%,transparent);border-radius:.6em;padding:0 .34em 0 .14em}
+.nomeP{display:inline !important;font-size:inherit !important;min-height:0 !important;line-height:inherit !important;vertical-align:baseline;white-space:nowrap;background:color-mix(in srgb,var(--f) 30%,transparent);border-radius:.6em;padding:.1em .42em .12em .2em;margin:0 .1em 0 .22em;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 .nomeP b{display:inline !important;font-size:inherit !important;font-weight:700;color:color-mix(in srgb,var(--c) 58%,#2e2219) !important}
-.nomeP .ico{margin-right:1px;vertical-align:-.2em}
+.nomeP .ico{margin-right:.18em;vertical-align:-.22em}
+.nomeP img.ico{width:1.2em;height:1.2em;vertical-align:-.28em}
 .objetivo .pecaN small.nomeT{font-weight:700;color:color-mix(in srgb,var(--c) 58%,#2e2219)}
 .figM .receita svg{width:34px;height:34px;overflow:visible}
 .figM .receita i{font-style:normal;font-weight:700;font-size:16px;color:#a08a74}
@@ -1228,11 +1229,14 @@ const corJunta = (o,t) => o.c===2 ? t.c : o.c;
 const icoSvg = inner => `<svg class="ico" viewBox="0 0 100 100">${inner}</svg>`;
 const icoRock = t => icoSvg(t===0 ? torraoInner() : pedraInner(t));
 const icoOre  = o => icoSvg(oreSvg(o,50,52,2.6));
-let GLOSS=null, GLOSS_RE=null, GLOSS_T=null;   // GLOSS_T: palavra -> nível da pedrinha (para pintar o nome)
+let GLOSS=null, GLOSS_RE=null, GLOSS_T=null, GLOSS_M=null;   // GLOSS_T: palavra -> nível da pedrinha (para pintar o nome); GLOSS_M: mina ou espaço
 function gloss(){
-  if(GLOSS) return;
-  GLOSS={}; GLOSS_T={};
-  ROCKS.forEach((r,t)=>{ if(t>0) for(const w of [r.n, plural(r.n)]){ GLOSS[w]=icoRock(t); GLOSS_T[w]=t; } });
+  const modo = noEspaco() ? 'e' : 'm';
+  if(GLOSS && GLOSS_M===modo) return;
+  GLOSS={}; GLOSS_T={}; GLOSS_M=modo;
+  // no espaço os nomes são os dos corpos celestes; o ícone (o planeta) é gerado só quando aparece num texto
+  if(modo==='e') ESP.LADDER.forEach((d,i)=>{ for(const w of [d.n, plural(d.n)]){ GLOSS[w]=''; GLOSS_T[w]=i+1; } });
+  else ROCKS.forEach((r,t)=>{ if(t>0) for(const w of [r.n, plural(r.n)]){ GLOSS[w]=icoRock(t); GLOSS_T[w]=t; } });
   for(const w of ['torrão','torrões','Torrão','Torrões']){ GLOSS[w]=icoRock(0); GLOSS_T[w]=0; }
   ORES.forEach((o,i)=>{ if(i){ GLOSS[o.n]=icoOre(i); GLOSS[o.n[0].toUpperCase()+o.n.slice(1)]=icoOre(i); } });
   for(const w of ['parede','paredes','Parede','Paredes']) GLOSS[w]=icoSvg(wallInner());
@@ -1248,6 +1252,7 @@ function enrich(html){
 }
 // nome de pedrinha no texto: ícone + nome em negrito, na cor da pedrinha, com um rótulo suave atrás
 function nomePedra(w,t){
+  if(GLOSS_M==='e') return `<span class="nomeP" style="--c:${corNivel(t)};--f:${corNivel(t)}">${icoPlaneta(t)}<b>${noIco(w)}</b></span>`;
   return `<span class="nomeP" style="--c:${rd(t)};--f:${rc(t)}">${GLOSS[w]}<b>${noIco(w)}</b></span>`;
 }
 
@@ -3373,6 +3378,10 @@ function espLoop(ms){
     const c=cv.getContext('2d'); c.clearRect(0,0,W,H); cv._d(c,W,H,cel,t);
   }
 }
+
+// ícone do planeta no meio do texto (uma foto parada, guardada depois da primeira vez)
+const ICO_PL={};
+function icoPlaneta(t){ if(ICO_PL[t]) return ICO_PL[t]; espInicia(); return ICO_PL[t]=`<img class="ico" alt="" src="${ESP.pecaImg(nomeNivelEsp(t),0,96).toDataURL()}">`; }
 
 // ---------- peças ----------
 function espAura(c,x,y,u,t,cor){

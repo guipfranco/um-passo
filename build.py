@@ -262,9 +262,10 @@ body.modoCla .tile .face{width:84%;height:84%;margin:0 auto}
 .objetivo .pecaN small{display:block;font-size:11px;font-weight:600;color:#a08a74;line-height:1.1;white-space:nowrap;text-transform:none;letter-spacing:0}
 .objetivo .alvo .pecaN small{font-size:14px;color:#7a5a44}
 #bTitle .ico{width:1.1em;height:1.1em}
-.nomeP{display:inline !important;font-size:inherit !important;min-height:0 !important;line-height:inherit !important;white-space:nowrap;background:color-mix(in srgb,var(--f) 30%,transparent);border-radius:.6em;padding:0 .34em 0 .14em}
+.nomeP{display:inline !important;font-size:inherit !important;min-height:0 !important;line-height:inherit !important;vertical-align:baseline;white-space:nowrap;background:color-mix(in srgb,var(--f) 30%,transparent);border-radius:.6em;padding:.1em .42em .12em .2em;margin:0 .1em 0 .22em;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 .nomeP b{display:inline !important;font-size:inherit !important;font-weight:700;color:color-mix(in srgb,var(--c) 58%,#2e2219) !important}
-.nomeP .ico{margin-right:1px;vertical-align:-.2em}
+.nomeP .ico{margin-right:.18em;vertical-align:-.22em}
+.nomeP img.ico{width:1.2em;height:1.2em;vertical-align:-.28em}
 .objetivo .pecaN small.nomeT{font-weight:700;color:color-mix(in srgb,var(--c) 58%,#2e2219)}
 .figM .receita svg{width:34px;height:34px;overflow:visible}
 .figM .receita i{font-style:normal;font-weight:700;font-size:16px;color:#a08a74}

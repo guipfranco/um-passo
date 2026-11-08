@@ -38,6 +38,10 @@ function espLoop(ms){
   }
 }
 
+// ícone do planeta no meio do texto (uma foto parada, guardada depois da primeira vez)
+const ICO_PL={};
+function icoPlaneta(t){ if(ICO_PL[t]) return ICO_PL[t]; espInicia(); return ICO_PL[t]=`<img class="ico" alt="" src="${ESP.pecaImg(nomeNivelEsp(t),0,96).toDataURL()}">`; }
+
 // ---------- peças ----------
 function espAura(c,x,y,u,t,cor){
   if(cor!==2){ ESP.SPR.aura(c,x,y,u,t,cor); return; }
