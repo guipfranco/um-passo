@@ -42,6 +42,21 @@ h3.sec{margin:10px 0 0;font-size:15px;letter-spacing:.06em;text-transform:upperc
 #barra{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;gap:12px;align-items:center;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:#f6ecd9ee;box-shadow:0 -3px 0 var(--edge);z-index:5}
 #barra .fb{font-size:16px;padding:10px 18px}
 #prog{font-size:14px;color:var(--sub)}
+.telaWrap{position:relative;overflow:hidden;border-radius:26px;align-self:center;box-shadow:0 0 0 4px #2e2219}
+.tela{position:absolute;left:0;top:0;width:390px;height:844px;transform-origin:0 0;color:#f3e9d7;font-family:'Fredoka','Trebuchet MS',sans-serif}
+.tela .bt{border-radius:20px;padding:11px 12px;font-weight:700;font-size:23px;color:#3a2a08;background:#f2b33d;box-shadow:0 6px 0 #b07a14;text-align:center;line-height:1.1}
+.tela .bt small{display:block;font-weight:500;font-size:13px;opacity:.85;margin-top:2px}
+.tela .bt.coral{background:#e0604a;color:#fff;box-shadow:0 6px 0 #a3402e}
+.tela .bt.azul{background:#4f8fd0;color:#fff;box-shadow:0 6px 0 #2f5f94}
+.tela .bt.vidro,.tela .ic.vidro{background:rgba(255,255,255,.1);color:#f3e9d7;box-shadow:0 5px 0 rgba(0,0,0,.35);border:1.5px solid rgba(255,255,255,.14)}
+.tela .bt.sm{font-size:18px;padding:10px;flex:1}
+.tela .ic{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex:none}
+.tela .sub{color:#b9a9d9}
+.tela .pill{display:inline-block;background:rgba(255,120,50,.22);border:1px solid rgba(255,140,60,.5);color:#ffd9b8;border-radius:999px;padding:1px 10px;font-weight:600;font-size:15px}
+.tela .barra{position:relative;height:9px;border-radius:9px;background:rgba(255,255,255,.12);margin-top:5px}
+.tela .barra i{position:absolute;left:0;top:0;bottom:0;border-radius:9px;background:linear-gradient(90deg,#f2b33d,#ffd36e)}
+.tela .barra s{position:absolute;top:-6px;transform:translateX(-50%);font-size:12px;color:#fff3c4;text-decoration:none;text-shadow:0 1px 0 #2e2219}
+.host{display:flex;justify-content:center}
 #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);font-size:18px;color:var(--sub);z-index:9}
 </style>
 </head>
@@ -52,11 +67,13 @@ h3.sec{margin:10px 0 0;font-size:15px;letter-spacing:.06em;text-transform:upperc
     <h1>Ptui! · sua opinião</h1>
     <p class="intro">Para cada item, toque em 👍 gostei, 🔧 ajustar ou 👎 trocar e, se quiser, diga o porquê. No fim, toque em <b>Copiar respostas</b> e cole na conversa. As respostas ficam salvas neste aparelho.</p>
   </div>
-  <div class="row"><span class="note">Mostrar:</span><button class="fb on" id="fMudou">só o que mudou</button><button class="fb" id="fTudo">tudo</button></div>
+  <div class="row"><span class="note">Mostrar:</span><button class="fb on" id="fMudou">só o que é novo</button><button class="fb" id="fTudo">tudo</button></div>
   <h3 class="sec" data-sec="tab">O tabuleiro</h3>
   <div id="itens" style="display:flex;flex-direction:column;gap:14px"></div>
   <h3 class="sec" data-sec="esc">A escada, peça por peça</h3>
   <div id="escada" class="gridop"></div>
+  <h3 class="sec" data-sec="telas">As telas</h3>
+  <div id="telas" style="display:flex;flex-direction:column;gap:14px"></div>
   <section class="card">
     <h2>Algo mais?</h2>
     <textarea id="geral" rows="3" placeholder="qualquer outra coisa (opcional)"></textarea>
@@ -69,25 +86,36 @@ h3.sec{margin:10px 0 0;font-size:15px;letter-spacing:.06em;text-transform:upperc
 <div id="barra"><span id="prog"></span><button class="fb on" id="copiar">Copiar respostas</button></div>
 
 <script src="espaco.js"></script>
+<script src="telas.js"></script>
 <script>
 'use strict';
 // ver: sobe quando o item muda; a opinião antiga daquele item é zerada e ele ganha o selo "mudou"
 const ITENS=[
-  {id:'fundo',ver:2,titulo:'Fundo',esp:'paisagem própria em cada mundo',pedido:'Mais alterações além de só a cor.',txt:'Cada mundo tem uma paisagem, além da cor. Toque nos nomes para ver.',fundo:true},
+  {id:'fundo',ver:2,r:2,titulo:'Fundo',esp:'paisagem própria em cada mundo',pedido:'Mais alterações além de só a cor.',txt:'Cada mundo tem uma paisagem, além da cor. Toque nos nomes para ver.',fundo:true},
   {id:'casa',titulo:'Casa',esp:'órbita',txt:'Hoje: mancha no chão. No espaço: um disco de luz fraco.',cena:[{o:1},{o:1,p:'Marte'},{o:1}]},
   {id:'buraco',titulo:'Buraco',esp:'vazio',txt:'Hoje: buraco no chão. No espaço: só o fundo, sem órbita (no meio).',cena:[{o:1,p:'Lua'},{},{o:1,p:'Lua'}]},
-  {id:'bloco',ver:2,titulo:'Bloco',esp:'estação espacial 3D',pedido:'Algo 3D, com movimento.',txt:'Hoje: a peça que não sai do lugar. Agora a estação é 3D e gira.',cena:[{o:1,p:'Marte'},{o:1,e:'estacao'},{o:1,p:'Terra'}]},
-  {id:'mureta',ver:2,titulo:'Mureta',esp:'rochas em movimento',pedido:'Trocar por rochas em movimento.',txt:'Hoje: parede fina entre duas casas. Agora um fluxo de rochas 3D passa entre elas, e nada atravessa.',cena:[{o:1,p:'Lua'},{o:1,p:'Marte'},{o:1}],rochas:[0]},
+  {id:'bloco',ver:2,r:2,titulo:'Bloco',esp:'estação espacial 3D',pedido:'Algo 3D, com movimento.',txt:'Hoje: a peça que não sai do lugar. Agora a estação é 3D e gira.',cena:[{o:1,p:'Marte'},{o:1,e:'estacao'},{o:1,p:'Terra'}]},
+  {id:'mureta',ver:2,r:2,titulo:'Mureta',esp:'rochas em movimento',pedido:'Trocar por rochas em movimento.',txt:'Hoje: parede fina entre duas casas. Agora um fluxo de rochas 3D passa entre elas, e nada atravessa.',cena:[{o:1,p:'Lua'},{o:1,p:'Marte'},{o:1}],rochas:[0]},
   {id:'alvo',titulo:'Casa marcada',esp:'órbita dourada',txt:'Hoje: forme o nível pedido nesta casa. O planeta pedido aparece apagado dentro.',cena:[{o:1,p:'Saturno'},{o:1,e:'alvo',t:'Júpiter'},{o:1,p:'Saturno'}]},
   {id:'terra',titulo:'Casa de terra',esp:'nebulosa escura',txt:'Hoje: casa coberta de terra para limpar. No espaço: uma nuvem escura que se desfaz.',cena:[{o:1,e:'neb'},{o:1,p:'Marte'},{o:1,e:'neb'}]},
-  {id:'torrao',ver:2,titulo:'Torrão',esp:'lixo espacial 3D',pedido:'Tem que ser algo 3D.',txt:'Hoje: peça que não junta com nada. Agora é um satélite quebrado em 3D, girando.',cena:[{o:1,p:'Lua'},{o:1,e:'lixo'},{o:1,p:'Lua'}]},
-  {id:'presa',ver:2,titulo:'Pedrinha presa',esp:'gaiola de luz 3D',pedido:'Passar por trás do planeta (feixes atrás dele).',txt:'Hoje: não se mexe até uma igual juntar nela. Agora são 3 anéis de luz que passam por trás e pela frente do planeta.',cena:[{o:1,p:'Plutão'},{o:1,p:'Plutão',presa:1},{o:1}]},
-  {id:'carrinho-nave',ver:2,titulo:'Carrinho',esp:'opção A: nave 3D com raio trator',pedido:'Trocar, por algo 3D.',txt:'Hoje: leve até ele uma peça do nível pedido. A nave flutua e puxa o planeta pedido com o raio.',cena:[{o:1,p:'Saturno'},{o:1},{o:1,e:'nave',t:'Saturno'}]},
-  {id:'carrinho-portal',ver:2,titulo:'Carrinho',esp:'opção B: portal 3D',pedido:'Trocar, por algo 3D.',txt:'Outra ideia para o carrinho: um portal girando. Leve o planeta pedido até ele.',cena:[{o:1,p:'Saturno'},{o:1},{o:1,e:'portal',t:'Saturno'}]},
+  {id:'torrao',ver:2,r:2,titulo:'Torrão',esp:'lixo espacial 3D',pedido:'Tem que ser algo 3D.',txt:'Hoje: peça que não junta com nada. Agora é um satélite quebrado em 3D, girando.',cena:[{o:1,p:'Lua'},{o:1,e:'lixo'},{o:1,p:'Lua'}]},
+  {id:'presa',ver:2,r:2,titulo:'Pedrinha presa',esp:'gaiola de luz 3D',pedido:'Passar por trás do planeta (feixes atrás dele).',txt:'Hoje: não se mexe até uma igual juntar nela. Agora são 3 anéis de luz que passam por trás e pela frente do planeta.',cena:[{o:1,p:'Plutão'},{o:1,p:'Plutão',presa:1},{o:1}]},
+  {id:'carrinho-nave',ver:2,r:2,titulo:'Carrinho',esp:'opção A: nave 3D com raio trator',pedido:'Trocar, por algo 3D.',txt:'Hoje: leve até ele uma peça do nível pedido. A nave flutua e puxa o planeta pedido com o raio.',cena:[{o:1,p:'Saturno'},{o:1},{o:1,e:'nave',t:'Saturno'}]},
+  {id:'carrinho-portal',ver:2,r:2,titulo:'Carrinho',esp:'opção B: portal 3D',pedido:'Trocar, por algo 3D.',txt:'Outra ideia para o carrinho: um portal girando. Leve o planeta pedido até ele.',cena:[{o:1,p:'Saturno'},{o:1},{o:1,e:'portal',t:'Saturno'}]},
   {id:'picareta',titulo:'Picareta',esp:'buraco negro',txt:'Hoje: quebra a pedra do mesmo nível. No espaço: engole o planeta da sua cor (aqui, Marte). A meta "Quebre" vira "Engula".',cena:[{o:1,p:'Marte'},{o:1,e:'buraco',cor:'#e0805a'},{o:1,p:'Terra'}]},
   {id:'cores',titulo:'Cores',esp:'aura roxa ou verde',txt:'Hoje: roxa só junta com roxa, verde com verde.',cena:[{o:1,p:'Vênus',aura:0},{o:1,p:'Vênus',aura:1},{o:1,p:'Vênus',aura:0}]},
 ];
+const RODADA=3;
 const ESC_VER={'Cristais':[2,'Mais parecido com a poeira, mas pontudo, e no plural.'],'Cometa':[2,'O giro não combinava com a cauda.'],'Mercúrio':[2,'Mais vermelho que Marte.'],'Sol':[2,'Tirar os raios amarelos de trás.']};
+const TELAS=[
+  {id:'tamanhos',titulo:'Tamanhos',esp:'os grandes bem maiores',pedido:'Maior diferença entre os tamanhos; os maiores realmente maiores.',txt:'Cada nível tem o seu tamanho na casa. Júpiter ocupa a casa inteira; Urano, Saturno, o Sol, a supernova e a galáxia passam da casa. No tabuleiro, os pequenos ficam por cima dos anéis dos vizinhos.',fn:telaTamanhos},
+  {id:'tela-menu',titulo:'Menu inicial',esp:'no espaço',pedido:'Olhar o menu inicial.',txt:'Os planetas giram em órbita em volta do nome, passando por trás e pela frente dele. A frase de baixo vira "junte poeira até virar galáxia".',fn:telaMenu},
+  {id:'tela-mapa',titulo:'Lista de fases',esp:'constelação',txt:'As fases viram estrelas de uma constelação, cada uma com o planeta da sua meta. As trancadas ficam apagadas e a atual brilha em dourado.',fn:telaMapa},
+  {id:'tela-info',titulo:'Informação da fase',esp:'planeta da meta em destaque',txt:'O planeta da meta gira no topo e a receita mostra o que juntar. Os nomes das fases também mudam (Primeira Rocha vira Primeira lava). O texto de hoje fala de energia e minério, que são da Mineração; aqui já vai corrigido.',fn:telaInfo},
+  {id:'tela-jogo',titulo:'Painel e tabuleiro',esp:'vidro escuro sobre o espaço',pedido:'Olhar a HUD.',txt:'Arrastos com as 3 estrelas na barra, a meta com o planeta e os pontos. Embaixo de cada peça, o valor e o nome.',fn:h=>telaJogo(h,'jogo')},
+  {id:'tela-vitoria',titulo:'Fim da fase',esp:'vitória',txt:'O planeta formado aparece grande, soltando poeira de estrelas, e as 3 estrelas acendem uma a uma.',fn:h=>telaJogo(h,'vitoria')},
+  {id:'tela-derrota',titulo:'Fim da fase',esp:'derrota',txt:'O planeta que faltou aparece apagado.',fn:h=>telaJogo(h,'derrota')},
+];
 const KEY='ptui_opiniao_v1',OP=JSON.parse(localStorage.getItem(KEY)||'{}'),TODOS=[];
 const $=q=>document.querySelector(q);
 let soMudou=true;
@@ -123,27 +151,31 @@ function fundoCard(cv,chips,legenda){const Wc=Math.min(420,cv.parentElement.clie
 
 function monta(){
   const box=$('#itens');
-  ITENS.forEach((it,i)=>{const ver=it.ver||1,mudou=ver>1;ajustaVer(it.id,ver);const s=document.createElement('section');s.className='card';
-    s.innerHTML=`<h2>${it.titulo} <span class="de">→</span> ${it.esp}${mudou?'<span class="novo">✨ mudou</span>':''}</h2>${it.pedido?`<p class="pedido">Você pediu: ${it.pedido}</p>`:''}<p class="hoje">${it.txt}</p><canvas></canvas>${it.fundo?'<div class="row chips"></div><p class="note legenda"></p>':''}`;
+  ITENS.forEach((it,i)=>{const ver=it.ver||1,mudou=it.r===RODADA;ajustaVer(it.id,ver);const s=document.createElement('section');s.className='card';
+    s.innerHTML=`<h2>${it.titulo} <span class="de">→</span> ${it.esp}${ver>1?'<span class="novo">✨ mudou</span>':''}</h2>${it.pedido?`<p class="pedido">Você pediu: ${it.pedido}</p>`:''}<p class="hoje">${it.txt}</p><canvas></canvas>${it.fundo?'<div class="row chips"></div><p class="note legenda"></p>':''}`;
     box.appendChild(s);const cv=s.querySelector('canvas');
     if(it.fundo)fundoCard(cv,s.querySelector('.chips'),s.querySelector('.legenda'));else cena(cv,it,i);
     s.appendChild(widget(it.id,ver,false));TODOS.push({id:it.id,el:s,mudou,grupo:'Tabuleiro',rotulo:`${it.titulo} → ${it.esp}`});});
   const esc=$('#escada');
-  LADDER.forEach((d,i)=>{const id='nivel-'+(i+1),[ver,pedido]=ESC_VER[d.n]||[1,''],mudou=ver>1;ajustaVer(id,ver);
+  LADDER.forEach((d,i)=>{const id='nivel-'+(i+1),[ver,pedido]=ESC_VER[d.n]||[1,''],mudou=false;ajustaVer(id,ver);
     const s=document.createElement('section');s.className='card mini';
-    s.innerHTML=`<div class="pv"><canvas></canvas></div><b>${i+1} · ${d.n}${mudou?' <span class="novo">✨</span>':''}</b>${pedido?`<p class="pedido">Você pediu: ${pedido}</p>`:''}<span class="chip">${d.src}</span>`;esc.appendChild(s);
+    s.innerHTML=`<div class="pv"><canvas></canvas></div><b>${i+1} · ${d.n}${ver>1?' <span class="novo">✨</span>':''}</b>${pedido?`<p class="pedido">Você pediu: ${pedido}</p>`:''}<span class="chip">${d.src}</span>`;esc.appendChild(s);
     const cv=s.querySelector('canvas'),ctx=disp(cv,120,120);view(cv,t=>{ctx.clearRect(0,0,cv.width,cv.height);drawPeca(ctx,d.n,t,cv.width/2,cv.height/2,cv.width);});
     s.appendChild(widget(id,ver,true));TODOS.push({id,el:s,mudou,grupo:'Escada',rotulo:`${i+1} ${d.n}`});});
+  const tb=$('#telas');
+  TELAS.forEach(it=>{const s=document.createElement('section');s.className='card';
+    s.innerHTML=`<h2>${it.titulo} <span class="de">→</span> ${it.esp}<span class="novo">✨ novo</span></h2>${it.pedido?`<p class="pedido">Você pediu: ${it.pedido}</p>`:''}<p class="hoje">${it.txt}</p><div class="host"></div>`;
+    tb.appendChild(s);it.fn(s.querySelector('.host'));s.appendChild(widget(it.id,1,false));TODOS.push({id:it.id,el:s,mudou:true,grupo:'Telas',rotulo:`${it.titulo} → ${it.esp}`});});
   const ger=$('#geral');ger.value=OP._geral||'';ger.oninput=()=>{OP._geral=ger.value;salva();};
   localStorage.setItem(KEY,JSON.stringify(OP));
   filtra();
 }
 function filtra(){for(const it of TODOS)it.el.classList.toggle('oculto',soMudou&&!it.mudou);
-  for(const [sec,g] of [['tab','Tabuleiro'],['esc','Escada']])$(`[data-sec=${sec}]`).classList.toggle('oculto',!TODOS.some(it=>it.grupo===g&&(!soMudou||it.mudou)));
+  for(const [sec,g] of [['tab','Tabuleiro'],['esc','Escada'],['telas','Telas']])$(`[data-sec=${sec}]`).classList.toggle('oculto',!TODOS.some(it=>it.grupo===g&&(!soMudou||it.mudou)));
   $('#fMudou').classList.toggle('on',soMudou);$('#fTudo').classList.toggle('on',!soMudou);prog();}
 $('#fMudou').onclick=()=>{soMudou=true;filtra();};$('#fTudo').onclick=()=>{soMudou=false;filtra();};
 const EMO={bom:'👍 gostei',ajustar:'🔧 ajustar',trocar:'👎 trocar'};
-function texto(){const L=['Opinião sobre o Ptui no espaço'+(soMudou?' (só o que mudou)':'')];let g='';
+function texto(){const L=['Opinião sobre o Ptui no espaço, rodada 3'+(soMudou?' (só o que é novo)':'')];let g='';
   for(const it of visiveis()){if(it.grupo!==g){g=it.grupo;L.push('',g.toUpperCase());}const o=OP[it.id]||{},n=(o.n||'').trim();
     L.push(`- ${it.rotulo}: ${o.v?EMO[o.v]:'sem opinião'}${n?` · "${n}"`:''}`);}
   const ger=(OP._geral||'').trim();if(ger)L.push('','ALGO MAIS',ger);return L.join('\n');}

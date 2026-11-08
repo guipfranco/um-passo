@@ -248,24 +248,24 @@ function sparkles(o,S,t){for(let i=0;i<3;i++){const a=Math.max(0,Math.sin(t*2.3+
   o.fillStyle=`rgba(255,255,255,${a.toFixed(2)})`;o.beginPath();o.moveTo(x,y-r);o.quadraticCurveTo(x,y,x+r,y);o.quadraticCurveTo(x,y,x,y+r);o.quadraticCurveTo(x,y,x-r,y);o.quadraticCurveTo(x,y,x,y-r);o.fill();}}
 function lavaGlow(o,S,t){const c=S/2,g=o.createRadialGradient(c,c,S*.18,c,c,S*.5);g.addColorStop(0,`rgba(255,120,30,${(.4+.14*Math.sin(t*2.2)).toFixed(2)})`);g.addColorStop(1,'rgba(255,90,20,0)');o.fillStyle=g;o.fillRect(0,0,S,S);}
 const LADDER=[
-  {n:'Poeira',src:'gerada',kind:'dust'},
-  {n:'Cristais',src:'gerados',kind:'shards'},
-  {n:'Rocha de lava',src:'gerada',kind:'mesh',geom:'lava',sub:3,scale:.8,rot:tumble(.7,6),pre:lavaGlow},
-  {n:'Asteroide',src:'NASA · Bennu',kind:'mesh',geom:'bennu',sub:2,scale:.92,rot:spinY(6)},
-  {n:'Cometa',src:'ESA · 67P',kind:'comet',geom:'cometa',sub:2,rot:tumble(.6,5)},
-  {n:'Plutão',src:'NASA',kind:'sphere',tex:'pluto',sp:{rScale:.5,speed:.05,tilt:.3,pitch:.2}},
-  {n:'Lua',src:'NASA',kind:'sphere',tex:'lua',sp:{rScale:.56,speed:.05,tilt:.1,pitch:.12}},
-  {n:'Mercúrio',src:'Solar System Scope',kind:'sphere',tex:'mercurio',atmo:[255,96,64],sp:{rScale:.6,speed:.05,tilt:.05,pitch:.1}},
-  {n:'Marte',src:'NASA',kind:'sphere',tex:'marte',sp:{rScale:.66,speed:.06,tilt:.4,pitch:.25}},
-  {n:'Vênus',src:'NASA',kind:'sphere',tex:'venus',atmo:[255,214,140],sp:{rScale:.7,speed:.04,tilt:.05,pitch:.1}},
-  {n:'Terra',src:'NASA',kind:'sphere',tex:'terra',clouds:'nuvens',atmo:[120,190,255],sp:{rScale:.72,speed:.05,tilt:.41,pitch:.22}},
-  {n:'Netuno',src:'NASA',kind:'sphere',tex:'netuno',atmo:[110,150,255],sp:{rScale:.76,speed:.08,tilt:.5,pitch:.2}},
-  {n:'Urano',src:'Solar System Scope',kind:'sphere',tex:'urano',ring:RING_URA,atmo:[170,240,240],sp:{rScale:.48,speed:.07,tilt:1.5,pitch:.28}},
-  {n:'Saturno',src:'NASA',kind:'sphere',tex:'saturno',ring:RING_SAT,sp:{rScale:.46,speed:.08,tilt:.38,pitch:.42}},
-  {n:'Júpiter',src:'NASA',kind:'sphere',tex:'jupiter',sp:{rScale:.88,speed:.09,tilt:.05,pitch:.1}},
-  {n:'Sol',src:'gerado',kind:'sphere',tex:'estrela',glow:true,outline:'#c47f12',sp:{rScale:.58,speed:.03,tilt:0,pitch:.1,emissive:true}},
-  {n:'Supernova',src:'NASA · Cas A',kind:'supernova'},
-  {n:'Galáxia',src:'gerada',kind:'galaxy'},
+  {n:'Poeira',src:'gerada',kind:'dust',k:.78},
+  {n:'Cristais',src:'gerados',kind:'shards',k:.85},
+  {n:'Rocha de lava',src:'gerada',kind:'mesh',geom:'lava',sub:3,scale:.8,k:.8,rot:tumble(.7,6),pre:lavaGlow},
+  {n:'Asteroide',src:'NASA · Bennu',kind:'mesh',geom:'bennu',sub:2,scale:.92,k:.74,rot:spinY(6)},
+  {n:'Cometa',src:'ESA · 67P',kind:'comet',geom:'cometa',sub:2,k:1,rot:tumble(.6,5)},
+  {n:'Plutão',src:'NASA',kind:'sphere',tex:'pluto',k:.38,sp:{rScale:.9,speed:.05,tilt:.3,pitch:.2}},
+  {n:'Lua',src:'NASA',kind:'sphere',tex:'lua',k:.46,sp:{rScale:.9,speed:.05,tilt:.1,pitch:.12}},
+  {n:'Mercúrio',src:'Solar System Scope',kind:'sphere',tex:'mercurio',atmo:[255,96,64],k:.58,sp:{rScale:.8,speed:.05,tilt:.05,pitch:.1}},
+  {n:'Marte',src:'NASA',kind:'sphere',tex:'marte',k:.58,sp:{rScale:.9,speed:.06,tilt:.4,pitch:.25}},
+  {n:'Vênus',src:'NASA',kind:'sphere',tex:'venus',atmo:[255,214,140],k:.78,sp:{rScale:.8,speed:.04,tilt:.05,pitch:.1}},
+  {n:'Terra',src:'NASA',kind:'sphere',tex:'terra',clouds:'nuvens',atmo:[120,190,255],k:.84,sp:{rScale:.8,speed:.05,tilt:.41,pitch:.22}},
+  {n:'Netuno',src:'NASA',kind:'sphere',tex:'netuno',atmo:[110,150,255],k:.95,sp:{rScale:.8,speed:.08,tilt:.5,pitch:.2}},
+  {n:'Urano',src:'Solar System Scope',kind:'sphere',tex:'urano',ring:RING_URA,atmo:[170,240,240],k:1.66,sp:{rScale:.48,speed:.07,tilt:1.5,pitch:.28}},
+  {n:'Saturno',src:'NASA',kind:'sphere',tex:'saturno',ring:RING_SAT,k:1.85,sp:{rScale:.46,speed:.08,tilt:.38,pitch:.42}},
+  {n:'Júpiter',src:'NASA',kind:'sphere',tex:'jupiter',k:1.17,sp:{rScale:.9,speed:.09,tilt:.05,pitch:.1}},
+  {n:'Sol',src:'gerado',kind:'sphere',tex:'estrela',glow:true,outline:'#c47f12',k:1.85,sp:{rScale:.58,speed:.03,tilt:0,pitch:.1,emissive:true}},
+  {n:'Supernova',src:'NASA · Cas A',kind:'supernova',k:1.45},
+  {n:'Galáxia',src:'gerada',kind:'galaxy',k:1.6},
 ];
 LADDER.forEach((d,i)=>d.seed=i+1);
 const byName=n=>LADDER.find(d=>d.n===n);
@@ -434,9 +434,13 @@ function buildFundo(w,h,m,o={}){const D=DPR,g=mk(w,h),c=g.getContext('2d'),r=rng
 function drawFundo(c,F,t){c.drawImage(F.img,0,0);for(const s of F.tw){c.fillStyle=`rgba(255,255,255,${(.5+.5*Math.sin(t*s.f+s.p)).toFixed(2)})`;c.fillRect(s.x,s.y,1.6*DPR,1.6*DPR);}if(F.anim)F.anim(c,t);}
 // peça desenhada numa casa (uma instância por nome e tamanho; o mesmo quadro é reaproveitado)
 const pcache={};
-function drawPeca(c,n,t,x,y,sz,a=1){sz=Math.max(8,Math.round(sz));const k=n+'|'+sz,P=pcache[k]||(pcache[k]=makePiece(byName(n),sz));
-  if(P._t!==t||P._L!==ST.L||P._o!==ST.outline){P._img=P.draw(t,ST.L,{outline:ST.outline});P._t=t;P._L=ST.L;P._o=ST.outline;}
-  c.globalAlpha=a;c.drawImage(P._img,x-sz/2,y-sz/2,sz,sz);c.globalAlpha=1;}
+const kDe=n=>byName(n).k||1;
+// imagem da peça num tamanho fixo (o mesmo quadro é reaproveitado); para animar o tamanho, escale no drawImage
+function pecaImg(n,t,sz){sz=Math.max(8,Math.round(sz));const k=n+'|'+sz,P=pcache[k]||(pcache[k]=makePiece(byName(n),sz));
+  if(P._t!==t||P._L!==ST.L||P._o!==ST.outline){P._img=P.draw(t,ST.L,{outline:ST.outline});P._t=t;P._L=ST.L;P._o=ST.outline;}return P._img;}
+// u = lado da casa; a peça sai no tamanho do nível (k). fit = exatamente u. esc = escala extra só no desenho
+function drawPeca(c,n,t,x,y,u,a=1,fit=false,esc=1){const sz=Math.max(8,Math.round(fit?u:u*kDe(n))),img=pecaImg(n,t,sz),d=sz*esc;
+  c.globalAlpha=a;c.drawImage(img,x-d/2,y-d/2,d,d);c.globalAlpha=1;}
 // objetos 3D do tabuleiro (fora da escada)
 const OBJDEF={
   estacao:{kind:'mesh',geom:'estacao',scale:.95,rot:t=>mmul(rotAxis(1,0,.2,.42),rotAxis(0,1,0,t*.55))},
@@ -455,7 +459,7 @@ const SPR={
       g.addColorStop(0,'rgba(84,56,46,.92)');g.addColorStop(1,'rgba(84,56,46,0)');c.fillStyle=g;c.beginPath();c.arc(px,py,u*.3,0,7);c.fill();}
     c.fillStyle='rgba(190,150,120,.5)';for(let i=0;i<7;i++){const a=t*.5+i*.9+sd;c.fillRect(x+Math.cos(a*1.7)*u*.28,y+Math.sin(a)*u*.24,u*.018,u*.018);}},
   alvo(c,x,y,u,t,n){c.save();c.strokeStyle='#f2b33d';c.lineWidth=u*.035;c.shadowColor='#f2b33d';c.shadowBlur=u*.08;c.setLineDash([u*.09,u*.06]);c.lineDashOffset=-t*u*.12;
-    c.beginPath();c.arc(x,y,u*.42,0,7);c.stroke();c.restore();drawPeca(c,n,t,x,y,u*.95,.35);},
+    c.beginPath();c.arc(x,y,u*.42,0,7);c.stroke();c.restore();drawPeca(c,n,t,x,y,u,.35);},
   aura(c,x,y,u,t,k){const col=['167,123,223','111,191,90'][k],g=c.createRadialGradient(x,y,u*.22,x,y,u*.5);
     g.addColorStop(0,`rgba(${col},0)`);g.addColorStop(.6,`rgba(${col},${(.6+.15*Math.sin(t*3)).toFixed(2)})`);g.addColorStop(1,`rgba(${col},0)`);c.fillStyle=g;c.beginPath();c.arc(x,y,u*.5,0,7);c.fill();},
   // gaiola: 3 anéis de luz em 3D; chame com 'back' antes do planeta e 'front' depois
@@ -480,10 +484,10 @@ const SPR={
     g.addColorStop(0,'rgba(140,235,255,.55)');g.addColorStop(1,'rgba(140,235,255,.04)');
     c.fillStyle=g;c.beginPath();c.moveTo(x-u*.06,top);c.lineTo(x+u*.06,top);c.lineTo(x+u*.27,bot);c.lineTo(x-u*.27,bot);c.closePath();c.fill();
     c.strokeStyle='rgba(200,250,255,.35)';c.lineWidth=u*.012;for(let i=0;i<3;i++){const k=(t*.7+i/3)%1,yy=top+(bot-top)*k,ww=u*(.06+.21*k);c.beginPath();c.moveTo(x-ww,yy);c.lineTo(x+ww,yy);c.stroke();}
-    drawPeca(c,n,t,x,y+u*.2,u*.42,.6);c.drawImage(objImg('nave',S,t),x-S/2,sy-S/2);},
+    drawPeca(c,n,t,x,y+u*.2,u*.42,.6,true);c.drawImage(objImg('nave',S,t),x-S/2,sy-S/2);},
   // carrinho, opção B: portal 3D
   portal(c,x,y,u,t,n){const S=Math.round(u);c.save();c.translate(x,y);const g=c.createRadialGradient(0,0,0,0,0,u*.32);g.addColorStop(0,'rgba(170,240,255,.55)');g.addColorStop(1,'rgba(90,120,255,0)');c.fillStyle=g;c.beginPath();c.arc(0,0,u*.32,0,7);c.fill();
     c.rotate(-t*1.2);c.strokeStyle='rgba(190,240,255,.45)';c.lineWidth=u*.012;for(let k=0;k<3;k++){c.beginPath();for(let i=0;i<=30;i++){const a=i/30*4+k*2.09,r=u*.02+u*.25*i/30;i?c.lineTo(Math.cos(a)*r,Math.sin(a)*r):c.moveTo(Math.cos(a)*r,Math.sin(a)*r);}c.stroke();}c.restore();
-    drawPeca(c,n,t,x,y,u*.4,.55);c.drawImage(objImg('portal',S,t),x-S/2,y-S/2);},
+    drawPeca(c,n,t,x,y,u*.4,.55,true);c.drawImage(objImg('portal',S,t),x-S/2,y-S/2);},
   buraco(c,x,y,u,t,cor){bnDraw(c,x,y,u*.15,t,hex(cor).join(','));},
 };
