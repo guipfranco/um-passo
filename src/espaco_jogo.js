@@ -416,31 +416,8 @@ function comoJogarEsp(p){
 }
 
 // ---------- nomes do espaço (os nomes da mina continuam em missoes.js: os testes acham as fases por eles) ----------
-const MUNDOS_NOME_ESP = [
-  ['Entrada','Formar, pontos e as primeiras metas.'],
-  ['Estações','A estação que não sai e os formatos.'],
-  ['Rochas e vazios','Fluxos de rochas, formatos e órbitas douradas.'],
-  ['Nebulosas','Nebulosas escuras, lixo espacial e planetas presos.'],
-  ['Naves','Leve os planetas até a nave.'],
-  ['Auras','Cada aura junta com a sua.'],
-  ['Buracos negros','Os buracos negros engolem os planetas.'],
-  ['Passinho','Tudo anda uma casa por vez.'],
-];
-const FASES_NOME_ESP = {
-  1:'Primeira rocha', 2:'Três rochas', 3:'Primeiro asteroide', 10:'Primeiro cometa',
-  13:'A estação que não sai', 14:'Duas estações', 17:'Estação no meio', 19:'Corredor de estações', 20:'Quebra-cabeça das estações', 24:'Salão das estações',
-  26:'Primeira órbita dourada', 28:'Duas órbitas douradas', 32:'Quebra-cabeça das rochas', 36:'Fim das rochas',
-  37:'Nebulosa leve', 38:'Mais nebulosa', 39:'Nebulosa e asteroides', 40:'Lixo espacial', 43:'Nebulosa no anel', 45:'Presa na nebulosa',
-  46:'Tempestade de nebulosa', 47:'Plutão preso', 48:'Fim das nebulosas',
-  49:'Primeira nave', 50:'Nave de asteroides', 51:'Nave e pontos', 52:'Nave na cruz', 53:'Nave e órbita', 54:'Nave na nebulosa', 55:'Nave cheia',
-  56:'Quebra-cabeça da nave', 57:'Nave de Plutão', 58:'Nave e presa', 59:'Nave no coração', 60:'Fim das naves',
-  61:'Aura roxa e verde', 62:'Toda roxa', 63:'Asteroide verde', 64:'Auras no 5x5', 65:'Roxa na órbita', 66:'Uma de cada aura',
-  68:'Quebra-cabeça das auras', 69:'Nebulosa colorida', 70:'Nave colorida', 71:'Plutão roxo', 72:'Fim das auras',
-  73:'Primeiro buraco negro', 74:'Gelo no buraco negro', 75:'Engula a rocha', 76:'Pontos de buraco negro', 77:'Buraco negro e órbita',
-  78:'Buraco negro e pontos', 79:'Quebra-cabeça do buraco negro', 80:'Asteroide engolido', 81:'Três rochas engolidas', 82:'Cometa engolido',
-  83:'Buraco negro grande', 84:'Netuno',
-  88:'Passinho na nebulosa', 89:'Passinho e estações', 91:'Passinho e nave', 96:'Fim da viagem',
-};
+const MUNDOS_NOME_ESP = MUNDOS.map(m=>[m.nome, m.desc]);
+const FASES_NOME_ESP = {};   // a Jornada 2 já nasce com os nomes do espaço em missoes.js
 // nome da fase e do mundo conforme o modo (mina ou espaço)
 const nomeFaseCla = n => (espFig() && FASES_NOME_ESP[n]) || MISSOES[n-1].nome;
 const nomeMundoCla = gi => espFig() ? MUNDOS_NOME_ESP[gi] : [MUNDOS[gi].nome, MUNDOS[gi].desc];
@@ -460,7 +437,7 @@ function rotuloEsp(o){
 // ícone de cada mundo no cabeçalho da lista de fases
 function icoMundoEsp(gi){
   const img = u => `<image href="${u}" x="4" y="4" width="92" height="92"/>`;
-  const inner = [()=>planetaInner(1), estacaoInner, ()=>img(urlObj('rochinha')), nebInner, ()=>img(urlObj('nave')), ()=>planetaInner(6,0), ()=>buracoInner(9),
-    ()=>'<ellipse cx="34" cy="58" rx="13" ry="20" fill="#cfc6ff"/><ellipse cx="66" cy="42" rx="13" ry="20" fill="#cfc6ff"/>'][gi] || (()=>planetaInner(1));
+  const orbita = () => `<image href="${fotoEsp('orbita',c=>ESP.SPR.alvo(c,80,80,150,1,'Rocha'))}" x="0" y="0" width="100" height="100"/>`;
+  const inner = [()=>planetaInner(1), estacaoInner, ()=>img(urlObj('rochinha')), orbita, ()=>img(urlObj('nave')), lixoInner, nebInner, orbita, gaiolaInner, ()=>planetaInner(6,0)][gi] || (()=>planetaInner(1));
   return `<svg class="espIco" viewBox="0 0 100 100">${inner()}</svg>`;
 }

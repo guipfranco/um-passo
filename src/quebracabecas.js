@@ -9,4 +9,10 @@ const QC = {
   q6: {mapa:['....','....','....','....'],pecas:[[2,0,2,1],[3,2,2,1],[1,1,3,1],[2,1,3,2],[2,2,2,0],[0,1,2,1],[0,3,2,1],[3,0,1,0]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:11,estrelas:[2,4]},
   q7: {mapa:['....','....','....','....'],pecas:[[1,3,3,null,'p'],[0,2,2,null,'r'],[1,2,1,null,'r'],[2,1,1,null,'r'],[2,3,1,null,'p'],[0,3,1,null,'p']],regras:{spawns:0},obj:{quebre:3,n:1},arrastos:11,estrelas:[2,4]},
   q8: {mapa:['....','....','....','....'],pecas:[[2,1,3],[2,2,2],[0,0,1],[2,3,1]],regras:{spawns:0},obj:{forme:4,n:1},arrastos:12,estrelas:[2,4]},
+  q9: {mapa:['....','....','....','....'],pecas:[[3,1,2],[2,1,2],[0,1,2],[3,2,3],[1,1,3],[3,0,1],[0,3,1],[3,3,2]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:10,estrelas:[2,4]},
+  q10: {mapa:['B...','...B','....','..B.'],pecas:[[1,3,3],[1,0,2],[0,2,3],[2,0,3],[2,1,1],[1,2,1]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:11,estrelas:[2,4]},
+  q11: {mapa:['....','.B..','....','....'],pecas:[[2,1,3],[3,2,3],[2,3,2],[0,3,2],[1,0,2],[2,2,2],[0,1,2]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:11,estrelas:[2,4],muretas:[['v',2,3],['v',1,2],['h',1,1],['h',3,0]]},
+  q12: {mapa:['....','....','....','....'],pecas:[[3,0,3],[2,2,3],[3,2,2],[0,3,1]],regras:{spawns:0},obj:{leve:4,n:1},arrastos:9,estrelas:[2,4],alvosPos:[[2,3]]},
+  q13: {mapa:['B...','..B.','....','....'],pecas:[[1,0,2],[3,2,2],[2,0,1],[1,3,1],[3,0,1],[2,3,1]],regras:{spawns:0},obj:{leve:4,n:1},arrastos:10,estrelas:[2,4],alvosPos:[[3,3]]},
+  q14: {mapa:['....','....','....','....'],pecas:[[2,2,3],[0,3,2],[1,2,1],[3,3,1],[3,2,1]],regras:{spawns:0},obj:{carrinho:4,n:1},arrastos:12,estrelas:[2,4],muretas:[['h',1,2],['v',2,0],['v',0,0]],carroPos:[0,0]},
 };

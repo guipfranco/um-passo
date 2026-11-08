@@ -122,9 +122,11 @@ details.mcard[open] summary::after{content:' ▴'}
   <p class="sub">Toque num mundo para abrir.</p>
   <div id="mundos" style="display:flex;flex-direction:column;gap:14px"></div>
 </main>
-<script src="caminho_dados.js?v=2"></script>
+<script src="caminho_dados.js?v=3"></script>
 <script>
-const {mundos, fases, dificuldade:DIF, gerado} = CAMINHO;
+const {fases, dificuldade:DIF, gerado} = CAMINHO;
+// só os mundos que já têm fases (os outros ainda estão em construção)
+const mundos = CAMINHO.mundos.filter((m,g)=>CAMINHO.fases.some(f=>f.g===g));
 document.getElementById('gerado').textContent = `Gerado do jogo em ${gerado.split('-').reverse().join('/')}. A dificuldade é a da última calibragem com os robôs.`;
 // mecânicas (o "forme" puro é a base e não conta; tamanho, formato e quebra-cabeça são variações, mostradas à parte)
 const MEC = [

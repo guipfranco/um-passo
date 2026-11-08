@@ -4,6 +4,10 @@
 // Estrelas pelos arrastos que sobram; pontos como no 2048 (juntar soma o valor da pedrinha nova).
 // Peças do Clássico: casa marcada (S.alvos), casa de terra (S.terra), pedrinha presa (tile.presa), carrinho (S.carro).
 // Guardado em mina_missoes: {n: {e: estrelas, t: pontos, pm: medalha do Passinho}}; fase em andamento em mina_cla_save.
+if(localStorage.ptui_jornada!=='2'){
+  for(const k of ['mina_missoes','mina_cla_save','ptui_partidas']) if(localStorage[k]!=null){ localStorage[k+'_v1']=localStorage[k]; localStorage.removeItem(k); }
+  localStorage.ptui_jornada='2';
+}
 const MISS = () => JSON.parse(localStorage.mina_missoes||'{}');
 const liberada = n => n===1 || (MISS()[n-1]?.e||0) > 0;
 const mundoDe = m => MUNDOS[m.g];
@@ -302,7 +306,8 @@ function missoesLista(){
   const lado = ['center','flex-end','center','flex-start'], E=espFig();
   let html='';
   MUNDOS.forEach((g,gi)=>{
-    html += `<div class="mGrupo">${E?icoMundoEsp(gi):disc(g.ico||g.fase,null,'discSm')}<div><b>${gi+1} · ${nomeMundoCla(gi)[0]}</b><span>${nomeMundoCla(gi)[1]}</span></div></div>`;
+    html += `<div class="mGrupo ${g.breve?'breve':''}">${E?icoMundoEsp(gi):disc(g.ico||g.fase,null,'discSm')}<div><b>${gi+1} · ${nomeMundoCla(gi)[0]}</b><span>${nomeMundoCla(gi)[1]}</span></div></div>`;
+    if(g.breve){ html += `<div class="mBreve">Em construção</div>`; return; }
     MISSOES.forEach((m,k)=>{ if(m.g!==gi) return; const n=k+1, lib=liberada(n), sv=faseSalva(n);
       html += `<div class="mLinha" style="justify-content:${lado[n%4]}"><button class="mNo ${lib?'':'trava'} ${n===atual?'atual':''} ${m.chefe?'chefe':''}" data-m="${n}" ${lib?'':'disabled'}>${E?icoMetaEsp(m)+'<span class="mNum">'+n+'</span>':n}${estrelasHtml(r[n]?.e||0)}${r[n]?.pm?pegada:''}${sv?'<span class="emAndamento">…</span>':''}</button></div>`; });
   });

@@ -11,7 +11,16 @@ const SPECS = {
   q6:{w:4,h:4, alvo:5, obj:{forme:5,n:1}, cores:true, prof:[6,7]},
   q7:{w:4,h:4, alvo:3, obj:{quebre:3,n:1}, picareta:true, prof:[6,7]},
   q8:{w:4,h:4, alvo:4, obj:{forme:4,n:1}, passinho:true, prof:[6,8]},
+  // Jornada 2: os segundos quebra-cabeças dos mundos 1 a 5
+  q9:{w:4,h:4, alvo:5, obj:{forme:5,n:1}, prof:[5,6]},
+  q10:{w:4,h:4, alvo:5, obj:{forme:5,n:1}, blocos:3, prof:[6,7]},
+  q11:{w:4,h:4, alvo:5, obj:{forme:5,n:1}, muretas:4, blocos:1, prof:[6,7]},
+  q12:{w:4,h:4, alvo:4, obj:{leve:4,n:1}, orbita:true, prof:[4,6]},
+  q13:{w:4,h:4, alvo:4, obj:{leve:4,n:1}, orbita:true, blocos:2, prof:[5,7]},
+  q14:{w:4,h:4, alvo:4, obj:{carrinho:4,n:1}, carro:true, muretas:3, prof:[6,7]},
 };
+// #q9,q10 gera só esses (os outros ficam como estão em src/quebracabecas.js)
+const SO = location.hash.length>1 ? location.hash.slice(1).split(',') : null;
 f.onload=async()=>{ try{ await gera(); }catch(e){ out.textContent='ERRO '+e.message+' | '+e.stack; } };
 async function gera(){const w=f.contentWindow, saida={}, log=[];
  w.eval('sound=false; music=false');
@@ -25,6 +34,7 @@ async function gera(){const w=f.contentWindow, saida={}, log=[];
     const blocos=[]; for(let i=0;i<(sp.blocos||0);i++){ const [x,y]=usa(); blocos.push([x,y]); S.walls.push({x,y,id:'b'+i}); }
     if(sp.muretas){ const todas=[]; for(let y=0;y<sp.h;y++) for(let x=0;x<sp.w-1;x++) todas.push(['v',x,y]); for(let y=0;y<sp.h-1;y++) for(let x=0;x<sp.w;x++) todas.push(['h',x,y]);
       for(const [d,x,y] of sh(todas).slice(0,sp.muretas)) S.edges.push({d,x,y,id:'e'+x+y+d}); }
+    let orbita=null; if(sp.orbita){ orbita=usa(); }   // a órbita dourada começa vazia
     let carro=null; if(sp.carro){ const borda=cel.filter(([x,y])=>x===0||y===0||x===sp.w-1||y===sp.h-1); carro=__rnd(borda); cel.splice(cel.findIndex(c=>c[0]===carro[0]&&c[1]===carro[1]),1); }
     // pedrinhas: parte o alvo em pedaços (soma exata) e põe 0 a 2 pedrinhas de enfeite
     let pecas=[{t:sp.alvo}];
@@ -37,11 +47,14 @@ async function gera(){const w=f.contentWindow, saida={}, log=[];
     if(sp.cores) pecas.forEach(p=>p.c=Math.random()<.15?2:Math.random()<.5?0:1);
     const tiles=pecas.map((p,i)=>{ const [x,y]=usa(); const t={id:'p'+i,x,y,t:p.t}; if(p.c!=null) t.c=p.c; if(p.k) t.k=p.k; return t; });
     if(presa) tiles.push({id:'pr',x:presa[0],y:presa[1],t:sp.obj.solte,presa:1});
-    return {tiles, blocos, muretas:S.edges.map(e=>[e.d,e.x,e.y]), carro, presa};
+    return {tiles, blocos, muretas:S.edges.map(e=>[e.d,e.x,e.y]), carro, presa, orbita};
   };
   // feito? depois de um arrasto (r) a partir do estado
-  window.__feito=(sp,r,tiles,carro)=>{
-    const o=sp.obj;
+  window.__feito=(sp,r,tiles,ini,antes)=>{
+    const o=sp.obj, carro=ini.carro;
+    // levar: exatamente o nível pedido chegando andando na órbita (junção ali não vale)
+    if(o.leve){ const [ox,oy]=ini.orbita, q=tiles.find(t=>t.x===ox&&t.y===oy&&t.k!=='p'); if(!q||q.t!==o.leve||r.merges.some(m=>m.id===q.id)) return false;
+      const a=antes.find(t=>t.x===ox&&t.y===oy); return !(a&&a.id===q.id); }
     if(o.forme) return r.merges.some(m=>m.t>=o.forme);
     if(o.solte) return r.merges.some(m=>m.solta);
     if(o.quebre) return r.breaks.some(b=>b.t>=o.quebre);
@@ -53,12 +66,12 @@ async function gera(){const w=f.contentWindow, saida={}, log=[];
     let nivel=[ini.tiles], visto=new Set([__chave(ini.tiles)]);
     for(let p=1;p<=maxP;p++){ const prox=[]; let sols=0;
       for(const ts of nivel) for(const [dx,dy] of DIRS){ const r=slide(ts,dx,dy); if(!r.moved) continue;
-        if(__feito(sp,r,r.tiles,ini.carro)){ sols++; continue; }
+        if(__feito(sp,r,r.tiles,ini,ts)){ sols++; continue; }
         const k=__chave(r.tiles); if(visto.has(k)) continue; visto.add(k); prox.push(r.tiles); }
       if(sols) return {prof:p, sols};
       nivel=prox; if(!nivel.length) return null; }
     return null; };`);
- for(const [id,sp] of Object.entries(SPECS)){
+ for(const [id,sp] of Object.entries(SPECS)){ if(SO && !SO.includes(id)) continue;
    let achou=null;
    for(let tent=0; tent<1500 && !achou; tent++){
      const res=w.eval(`(()=>{ const sp=${JSON.stringify(sp)}; const ini=__prepara(sp); const b=__busca(sp,ini,${sp.prof[1]}); return JSON.stringify({ini,b}); })()`);
@@ -74,6 +87,7 @@ async function gera(){const w=f.contentWindow, saida={}, log=[];
    if(ini.muretas.length) q.muretas=ini.muretas;
    if(ini.carro) q.carroPos=ini.carro;
    if(ini.presa) q.presasPos=[ini.presa];
+   if(ini.orbita) q.alvosPos=[ini.orbita];
    saida[id]=q; log.push(`${id}: menor solução ${b.prof} arrastos (${b.sols} jeitos)`);
  }
  const linhas=Object.entries(saida).map(([k,v])=>`  ${k}: ${JSON.stringify(v).replace(/"([a-zA-Z]+)":/g,'$1:').replace(/"/g,"'")},`);
