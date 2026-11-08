@@ -91,6 +91,7 @@ body.espaco .mapBody::before{display:none}
 body.espaco .mCaminho polyline{stroke:rgba(255,255,255,.35) !important;stroke-dasharray:2 8;stroke-linecap:round;stroke-width:2.5px !important}
 body.espaco .mGrupo{background:rgba(22,17,40,.78);border:1.5px solid rgba(255,255,255,.12);border-radius:18px;box-shadow:0 4px 0 rgba(0,0,0,.35);color:#f3e9d7}
 body.espaco .mGrupo b{color:#f3eefc}
+.espIco{width:42px;height:42px;flex:none;display:block}
 body.espaco .mGrupo span{color:#b9a9d9}
 body.espaco .mNo{background:rgba(26,20,48,.9) !important;border:2px solid rgba(255,255,255,.22) !important;box-shadow:none !important;color:#f3eefc !important;overflow:visible}
 body.espaco .mNo.atual{border-color:#ffd36e !important;box-shadow:0 0 0 4px rgba(242,179,61,.25),0 0 22px rgba(242,179,61,.6) !important}

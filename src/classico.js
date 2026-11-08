@@ -24,6 +24,7 @@ const listaE = a => a.length<2 ? a.join('') : a.slice(0,-1).join(', ')+' e '+a[a
 
 // ---------- metas ----------
 function objetivoTxt(o){
+  if(espFig()){ const e=objetivoEsp(o); if(e) return e; }
   if(o.forme) return `Forme ${qtd(o.n,o.forme)}`;
   if(o.cor!=null) return `Forme ${qtd(o.n,o.t)} ${corNome(o.cor)}${o.n>1?'s':''}`;
   if(o.pontos) return `Faça ${o.pontos} pontos`;
@@ -178,6 +179,7 @@ function silhuetas(o){
   return null;
 }
 function rotulo(o){
+  if(espFig()){ const e=rotuloEsp(o); if(e) return e; }
   if(o.forme) return o.n>1?plural(rockName(o.forme)):rockName(o.forme);
   if(o.cor!=null) return `${o.n>1?plural(rockName(o.t)):rockName(o.t)} ${corNome(o.cor)}${o.n>1?'s':''}`;
   if(o.quebre) return 'quebradas'; if(o.seq) return 'nessa ordem'; if(o.alvo) return 'casas marcadas';
@@ -251,7 +253,7 @@ function missoesLista(){
   const lado = ['center','flex-end','center','flex-start'], E=espFig();
   let html='';
   MUNDOS.forEach((g,gi)=>{
-    html += `<div class="mGrupo">${disc(g.ico||g.fase,null,'discSm')}<div><b>${gi+1} · ${g.nome}</b><span>${g.desc}</span></div></div>`;
+    html += `<div class="mGrupo">${E?icoMundoEsp(gi):disc(g.ico||g.fase,null,'discSm')}<div><b>${gi+1} · ${nomeMundoCla(gi)[0]}</b><span>${nomeMundoCla(gi)[1]}</span></div></div>`;
     MISSOES.forEach((m,k)=>{ if(m.g!==gi) return; const n=k+1, lib=liberada(n), sv=faseSalva(n);
       html += `<div class="mLinha" style="justify-content:${lado[n%4]}"><button class="mNo ${lib?'':'trava'} ${n===atual?'atual':''} ${m.chefe?'chefe':''}" data-m="${n}" ${lib?'':'disabled'}>${E?icoMetaEsp(m)+'<span class="mNum">'+n+'</span>':n}${estrelasHtml(r[n]?.e||0)}${r[n]?.pm?pegada:''}${sv?'<span class="emAndamento">…</span>':''}</button></div>`; });
   });
@@ -273,7 +275,7 @@ function missaoInfo(n){
   for(const o of objsDe(m)) for(const k of Object.keys(COMO_PECA)) if(o[k]!==undefined && !explica.includes(COMO_PECA[k])) explica.push(COMO_PECA[k]);
   if(m.regras?.spawns===0) explica.push('Quebra-cabeça: não nasce pedrinha nova. Pense antes de arrastar.');
   const passinho = b?.e && charDe(m)!=='passinho', E=espFig(), tA=E&&tAlvo(m);
-  showOverlay(`${tA?'<canvas id="espInfo"></canvas>':fm?formaSvg(fm,110):disc(fase,null,'bigDisc')}<h2>Fase ${n}</h2><p class="andarNome">${m.nome}${m.chefe?' · fim do mundo':''}</p>
+  showOverlay(`${tA?'<canvas id="espInfo"></canvas>':fm?formaSvg(fm,110):disc(fase,null,'bigDisc')}<h2>Fase ${n}</h2><p class="andarNome">${nomeFaseCla(n)}${m.chefe?' · fim do mundo':''}</p>
     <div class="objetivo"><small>${objsDe(m).length>1?'metas':'missão'}</small>${figuraMissao(m)}${objsDe(m).length>1?'':objetivosTxt(m)}</div>
     <p class="ajuda">${E?regrasEsp(m):regrasTxt(m)}</p>
     ${(E?explicaEsp(m):explica).map(t=>`<p class="ajuda">${t}</p>`).join('')}
@@ -305,7 +307,7 @@ function missaoJoga(n, opt={}){
   limpaMarcas(); montaPecasMissao(m);
   if(sv) restauraFase(sv.st);
   document.body.classList.add('modoCla'); montaMissaoHud(m); render();
-  setBanner(`Fase ${n}: ${m.nome}${S.medalha?' · Passinho':''}`, metasDe(m).length>1 ? `${metasDe(m).length} metas` : objetivosTxt(m));
+  setBanner(`Fase ${n}: ${nomeFaseCla(n)}${S.medalha?' · Passinho':''}`, metasDe(m).length>1 ? `${metasDe(m).length} metas` : objetivosTxt(m));
   pedeEncaixe();
 }
 function missaoResultado(ok, motivo){
