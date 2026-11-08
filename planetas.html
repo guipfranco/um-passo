@@ -170,20 +170,20 @@ canvas.drag{touch-action:none;cursor:grab}
   <!-- TABULEIRO -->
   <section class="card">
     <h2>🌌 O tabuleiro no espaço</h2>
-    <p class="lead">O fundo e os outros elementos do Clássico trocados por coisas do espaço. Cada mundo ganha a cor da sua nebulosa.</p>
+    <p class="lead">O fundo e os outros elementos do Clássico trocados por coisas do espaço. Cada mundo tem cor e paisagem próprias.</p>
     <div class="row" id="mundos"></div>
     <canvas id="tab" style="display:block;border-radius:16px;width:100%"></canvas>
     <dl class="facts troca">
-      <dt>Chão da gruta</dt><dd>espaço, com nebulosa na cor do mundo</dd>
+      <dt>Chão da gruta</dt><dd>espaço, com cor e paisagem próprias em cada mundo</dd>
       <dt>Casa</dt><dd>órbita: um disco de luz fraco</dd>
       <dt>Buraco</dt><dd>vazio, sem órbita</dd>
-      <dt>Bloco</dt><dd>estação espacial (não sai do lugar)</dd>
-      <dt>Mureta</dt><dd>campo de força</dd>
+      <dt>Bloco</dt><dd>estação espacial 3D (não sai do lugar)</dd>
+      <dt>Mureta</dt><dd>fluxo de rochas em movimento</dd>
       <dt>Casa marcada</dt><dd>órbita dourada com o planeta pedido</dd>
       <dt>Casa de terra</dt><dd>nebulosa escura, que se desfaz</dd>
-      <dt>Torrão</dt><dd>lixo espacial (pedaço de satélite)</dd>
-      <dt>Pedrinha presa</dt><dd>gaiola de luz</dd>
-      <dt>Carrinho</dt><dd>nave cargueira</dd>
+      <dt>Torrão</dt><dd>lixo espacial 3D (satélite quebrado)</dd>
+      <dt>Pedrinha presa</dt><dd>gaiola de luz 3D, por trás e pela frente</dd>
+      <dt>Carrinho</dt><dd>nave 3D com raio trator (ou portal)</dd>
       <dt>Picareta</dt><dd>buraco negro, que engole a peça da sua cor</dd>
       <dt>Cores</dt><dd>aura roxa ou verde em volta da peça</dd>
     </dl>
@@ -305,7 +305,7 @@ function init(){
      [{p:'Marte'},{p:'Cometa'},{e:'alvo',t:'Júpiter'},{},{p:'Netuno'}],
      [{e:'buraco',cor:'#e0805a'},{p:'Saturno',aura:0},{},{e:'lixo'},{p:'Plutão',presa:1}],
      [{p:'Asteroide'},{e:'neb'},{p:'Vênus',aura:1},{},{e:'nave',t:'Saturno'}],
-     [{e:'vazio'},{},{p:'Cristal de gelo'},{p:'Rocha de lava'},{p:'Mercúrio'}]];
+     [{e:'vazio'},{},{p:'Cristais'},{p:'Rocha de lava'},{p:'Mercúrio'}]];
    const MUR=[['v',1,1],['h',3,2]];
    const C0=(x,y)=>[ox+(x+.5)*u,oy+(y+.5)*u];
    const box=document.getElementById('mundos');
@@ -314,9 +314,9 @@ function init(){
    view(cv,t=>{drawFundo(ctx,F,t);
      LAY.forEach((row,y)=>row.forEach((c,x)=>{const [cx,cy]=C0(x,y);if(c.e==='vazio')return;SPR.orbita(ctx,cx,cy,u);if(c.e==='neb')SPR.neb(ctx,cx,cy,u,t,x*3+y);if(c.e==='alvo')SPR.alvo(ctx,cx,cy,u,t,c.t);}));
      LAY.forEach((row,y)=>row.forEach((c,x)=>{const [cx,cy]=C0(x,y);
-       if(c.p){if(c.aura!=null)SPR.aura(ctx,cx,cy,u,t,c.aura);drawPeca(ctx,c.p,t,cx,cy,u);if(c.presa)SPR.gaiola(ctx,cx,cy,u,t);}
+       if(c.p){if(c.aura!=null)SPR.aura(ctx,cx,cy,u,t,c.aura);if(c.presa)SPR.gaiola(ctx,cx,cy,u,t,'back');drawPeca(ctx,c.p,t,cx,cy,u);if(c.presa)SPR.gaiola(ctx,cx,cy,u,t,'front');}
        else if(c.e==='estacao')SPR.estacao(ctx,cx,cy,u,t);else if(c.e==='lixo')SPR.lixo(ctx,cx,cy,u,t);else if(c.e==='nave')SPR.nave(ctx,cx,cy,u,t,c.t);else if(c.e==='buraco')SPR.buraco(ctx,cx,cy,u,t,c.cor);}));
-     for(const [d,x,y] of MUR){const a=d==='v'?[ox+(x+1)*u,oy+(y+.08)*u]:[ox+(x+.08)*u,oy+(y+1)*u],b=d==='v'?[ox+(x+1)*u,oy+(y+.92)*u]:[ox+(x+.92)*u,oy+(y+1)*u];SPR.campo(ctx,a,b,t,u);}});}
+     for(const [d,x,y] of MUR){const a=d==='v'?[ox+(x+1)*u,oy+(y+.08)*u]:[ox+(x+.08)*u,oy+(y+1)*u],b=d==='v'?[ox+(x+1)*u,oy+(y+.92)*u]:[ox+(x+.92)*u,oy+(y+1)*u];SPR.rochas(ctx,a,b,t,u);}});}
 
   // ---- botões "ver o truque" ----
   document.querySelectorAll('[data-trick]').forEach(b=>b.onclick=()=>{const el=document.getElementById(b.dataset.trick),on=el.classList.toggle('on');b.classList.toggle('on',on);b.textContent=on?'esconder o truque':'ver o truque';});
