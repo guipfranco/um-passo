@@ -79,7 +79,12 @@ addEventListener('popstate',()=>{
 // uma camada só, dentro do tabuleiro (com uma casa de folga em volta para os anéis e o brilho); se o aparelho
 // não tiver WebGL, GLON fica falso e cada planeta volta a ser pintado no canvas da sua peça
 let GLON=null;
-function glCamada(){ let cv=document.getElementById('glPlan'); if(!cv){ cv=document.createElement('canvas'); cv.id='glPlan'; } if(cv.parentElement!==board) board.prepend(cv); return cv; }
+function glCamada(){ let cv=document.getElementById('glPlan'); if(!cv){ cv=document.createElement('canvas'); cv.id='glPlan';
+    // a placa de vídeo perdeu ou devolveu o contexto: decide de novo quem desenha os planetas e repinta as peças paradas
+    // (sem contexto a camada fica escondida: o canvas perdido pode aparecer como um retângulo branco)
+    const refaz=e=>{ GLON=null; cv.style.display=e.type==='webglcontextlost'?'none':''; for(const c of ESPC) c._feito=false; };
+    cv.addEventListener('webglcontextlost',refaz); cv.addEventListener('webglcontextrestored',refaz); }
+  if(cv.parentElement!==board) board.prepend(cv); return cv; }
 function glAtivo(){ if(GLON===null){ espInicia(); GLON = !/[?&]semgl\b/.test(location.search) && ESP.glPronto(glCamada()); } return GLON; }
 function glQuadro(t){
   const cv=glCamada(), gr=cv.getBoundingClientRect(); if(!gr.width) return;
@@ -173,18 +178,27 @@ const NEB=(()=>{
       col+=c2*.35*pow(neb,3.);
       float d=length(su-pp);col+=pc*pu*(.5*exp(-d*3.5)+.07);
       gl_FragColor=vec4(col,1.);}`;
-    const sh=(tp,src)=>{ const s=gl.createShader(tp); gl.shaderSource(s,src); gl.compileShader(s); if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
-    const pr=gl.createProgram(); gl.attachShader(pr,sh(gl.VERTEX_SHADER,'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}')); gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fs)); gl.linkProgram(pr); gl.useProgram(pr);
-    const b=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,b); gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
-    const lp=gl.getAttribLocation(pr,'p'); gl.enableVertexAttribArray(lp); gl.vertexAttribPointer(lp,2,gl.FLOAT,false,0,0);
-    const U={}; for(const k of ['res','off','pp','t','pu','c1','c2','pc']) U[k]=gl.getUniformLocation(pr,k);
+    const U={};
+    // compila o programa e prepara o retângulo (de novo quando a placa de vídeo devolve um contexto perdido)
+    const prepara=()=>{
+      const sh=(tp,src)=>{ const s=gl.createShader(tp); gl.shaderSource(s,src); gl.compileShader(s); if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
+      const pr=gl.createProgram(); gl.attachShader(pr,sh(gl.VERTEX_SHADER,'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}')); gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fs)); gl.linkProgram(pr); gl.useProgram(pr);
+      const b=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,b); gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+      const lp=gl.getAttribLocation(pr,'p'); gl.enableVertexAttribArray(lp); gl.vertexAttribPointer(lp,2,gl.FLOAT,false,0,0);
+      for(const k of ['res','off','pp','t','pu','c1','c2','pc']) U[k]=gl.getUniformLocation(pr,k);
+      gl.viewport(0,0,cv.width,cv.height); };
+    prepara();
     const v=s=>s.split(',').map(x=>x/255);
     // desenha a nebulosa (em meia resolução) na camada própria, de w por h; off = deslocamento da câmera; pul = névoa da junção
-    return {ok:true, desenha(w,h,t,off,neb,pul){ if(!cv.isConnected) document.body.prepend(cv);
+    const N={ok:true, desenha(w,h,t,off,neb,pul){ if(!cv.isConnected) document.body.prepend(cv);
       const W=Math.max(8,Math.round(w*.5)), H=Math.max(8,Math.round(h*.5)); if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; gl.viewport(0,0,W,H); }
       gl.uniform2f(U.res,W,H); gl.uniform1f(U.t,t); gl.uniform2f(U.off,-off[0]/h,off[1]/h); gl.uniform3fv(U.c1,v(neb[0])); gl.uniform3fv(U.c2,v(neb[1]));
       gl.uniform1f(U.pu,pul?pul.k:0); gl.uniform3fv(U.pc,pul?v(pul.rgb):[0,0,0]); gl.uniform2f(U.pp,pul?(pul.x-w/2)/h:0,pul?(h/2-pul.y)/h:0);
       gl.drawArrays(gl.TRIANGLE_STRIP,0,4); }};
+    // contexto perdido (no Android acontece ao voltar do segundo plano): volta o céu pintado até o contexto voltar
+    cv.addEventListener('webglcontextlost',e=>{ e.preventDefault(); N.ok=false; });
+    cv.addEventListener('webglcontextrestored',()=>{ try{ prepara(); N.ok=true; }catch(e){ console.warn('nebulosa',e); } });
+    return N;
   }catch(e){ console.warn('nebulosa',e); return {ok:false}; }
 })();
 function ceuDesenha(t){

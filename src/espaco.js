@@ -535,7 +535,7 @@ const SPR={
 // No jogo, os planetas redondos do tabuleiro são desenhados por shaders, todos numa camada só: cada pixel é
 // calculado na placa de vídeo, e não mais ponto a ponto no processador. As contas são as mesmas do SphereBody
 // (textura, inclinação do eixo, giro, luz em faixas, nuvens, atmosfera, brilho do Sol, contorno) e dos anéis.
-const GLP={gl:null,cv:null,pe:null,pa:null,buf:null,tex:new Map(),falhou:false,der:false};
+const GLP={gl:null,cv:null,pe:null,pa:null,buf:null,tex:new Map(),falhou:false,der:false,perdido:false};
 const GLS_V='attribute vec2 a;uniform vec2 c;uniform float h;uniform vec2 tela;uniform float raio;varying vec2 p;'+
   'void main(){vec2 q=c+a*h;gl_Position=vec4(q.x/tela.x*2.-1.,1.-q.y/tela.y*2.,0.,1.);p=vec2(a.x,-a.y)*h/raio;}';
 const GLS_PREC='#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n';
@@ -564,13 +564,18 @@ function glCompila(gl,vs,fs){const sh=(t,src)=>{const s=gl.createShader(t);gl.sh
   for(let i=0;i<n;i++){const nm=gl.getActiveUniform(p,i).name;u[nm]=gl.getUniformLocation(p,nm);}return {p,u,a:gl.getAttribLocation(p,'a')};}
 // prepara o WebGL no canvas (uma vez); devolve false se o aparelho não tiver
 function glPronto(cv){
-  if(GLP.falhou) return false; if(GLP.gl && GLP.cv===cv) return true;
+  if(GLP.falhou||GLP.perdido) return false; if(GLP.gl && GLP.cv===cv) return true;
   try{const gl=cv.getContext('webgl',{alpha:true,premultipliedAlpha:true,antialias:false});if(!gl)throw new Error('sem webgl');
     GLP.der=!!gl.getExtension('OES_standard_derivatives');
     GLP.pe=glCompila(gl,GLS_V,GLS_ESFERA);GLP.pa=glCompila(gl,GLS_V,GLS_ANEL(GLP.der));
     GLP.buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,GLP.buf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
     gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);GLP.gl=gl;GLP.cv=cv;GLP.tex=new Map();
-    cv.addEventListener('webglcontextlost',e=>{e.preventDefault();GLP.gl=null;GLP.falhou=true;});return true;}
+    // contexto perdido (no Android acontece ao voltar do segundo plano): enquanto isso os planetas voltam ao desenho
+    // antigo; quando a placa de vídeo devolve o contexto, a próxima chamada monta tudo de novo no mesmo canvas
+    if(!cv._glOuve){cv._glOuve=true;
+      cv.addEventListener('webglcontextlost',e=>{e.preventDefault();GLP.gl=null;GLP.perdido=true;});
+      cv.addEventListener('webglcontextrestored',()=>{GLP.perdido=false;});}
+    return true;}
   catch(e){GLP.falhou=true;console.warn('WebGL indisponível, planetas no desenho antigo:',e.message);return false;}}
 function glTex(nome){const gl=GLP.gl;let t=GLP.tex.get(nome);if(t)return t;const px=TEX[nome].px;
   t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,TW,TH,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(px.buffer,px.byteOffset,px.byteLength));
