@@ -527,7 +527,10 @@ function espMenu(){
   if(!$('#mSegue')){ const b=document.createElement('button'); b.className='btn g big'; b.id='mSegue'; b.textContent='Continuar'; b.onclick=continuarEsp; $('#mCla').after(b); }
   $('#mSegue').style.display = on && tem ? '' : 'none';
   if(on && tem) $('#mSegue').innerHTML = `Continuar<small>fase ${faseAtual()} · ${est} ${est===1?'estrela':'estrelas'}</small>`;
-  if(!$('#mInf')){ const b=document.createElement('button'); b.className='btn b big'; b.id='mInf'; b.innerHTML='Clássico<small>4x4 sem fim, até não caber mais nada</small>'; b.onclick=infinitoJoga; $('#mCla').after(b); }
+  if(!$('#mInf')){ const b=document.createElement('button'); b.className='btn b big'; b.id='mInf'; b.innerHTML='Clássico<small>4x4 sem fim, até não caber mais nada</small>'; b.onclick=()=>infinitoJoga({retoma:true}); $('#mCla').after(b); }
+  // com partida do Clássico salva, o botão continua de onde parou e diz isso na linha de baixo
+  { const inf=infSalvo(), sub=$('#mInf small'); if(sub.dataset.txt==null) sub.dataset.txt=sub.textContent;
+    sub.textContent = inf ? `continuar · ${(inf.st.pontos||0).toLocaleString('pt-BR')} pontos` : sub.dataset.txt; }
   // o Clássico vem depois do Novo jogo e do Continuar
   $('#mSegue').after($('#mInf'));
   // Como jogar: no espaço abre o do 2048 Astros; fora dele, o tutorial da mina
@@ -645,7 +648,7 @@ function comoJogarEsp(p){
   const cv=$('#cjCv');
   if(cv) espCanvasFixo(cv, w, p===0 ? Math.round(w/4*1.3) : Math.round(w/6*(1.36*2+1.36)), p===0 ? cjArrasto : cjEscada);
   $('#cjAnt').onclick=()=>{ if(p) comoJogarEsp(p-1); else fechaJanelaMenu(); }; FORA=fechaJanelaMenu;
-  $('#cjProx').onclick=()=>{ if(p<ult) comoJogarEsp(p+1); else infinitoJoga(); };
+  $('#cjProx').onclick=()=>{ if(p<ult) comoJogarEsp(p+1); else infinitoJoga({retoma:true}); };   // como o botão do menu: não apaga a partida salva
 }
 
 // ---------- nomes do espaço (os nomes da mina continuam em missoes.js: os testes acham as fases por eles) ----------
@@ -786,8 +789,8 @@ function entradaEsp(n){
     ${passinho?`<button class="btn dim pequeno" id="mPass">${b.pm?'jogar de novo no Passinho':'jogar no Passinho (medalha)'}</button>`:''}
   </div>`);
   FORA=hideOverlay; $('#mVolta').onclick=hideOverlay;
-  $('#mJoga').onclick=()=>missaoJoga(n);
+  $('#mJoga').onclick=()=>comecaFase(n);   // pergunta antes se outra fase está pela metade
   if($('#mCont')) $('#mCont').onclick=()=>missaoJoga(n,{retoma:true});
-  if($('#mPass')) $('#mPass').onclick=()=>missaoJoga(n,{passinho:true});
+  if($('#mPass')) $('#mPass').onclick=()=>comecaFase(n,{passinho:true});
   if(tA) espPlanetaGrande($('#espInfo'),tA,'info');
 }

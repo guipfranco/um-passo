@@ -142,8 +142,9 @@ body.espaco .mGrupo b{color:#f3eefc}
 body.modoInf .hudCla .tr{display:none}
 /* lista de fases: o botão do canto vira "‹ Menu" */
 body.naLista #btnPause{width:auto;padding:0 14px;border-radius:999px;font-size:15px;white-space:nowrap}
-/* Clássico sem fim: só o menu e a pontuação */
-body.modoInf .hudCla .arrP,body.modoInf .hudCla .silhP,body.modoInf .top .banner,body.modoInf #btnSound{display:none !important}
+/* Clássico sem fim: só o menu, o recorde e a pontuação */
+body.modoInf .hudCla .arrP,body.modoInf .top .banner,body.modoInf #btnSound{display:none !important}
+body.modoInf .hudCla #cMis{min-width:84px;text-align:center}
 body.modoInf #shell{flex-direction:row;justify-content:space-between;align-items:center}
 body.modoInf #shell{width:min(94vw,440px);margin:0 auto}
 body.modoInf .top{order:1;flex:none;width:auto !important;max-width:none !important}
@@ -193,11 +194,12 @@ body.espaco #ovos{display:flex;justify-content:center;gap:30px;margin-top:6px}
   body.espaco .panel .objetivo{padding-top:6px;padding-bottom:6px}
   body.espaco .ent{gap:6px}
 }
-/* telas estreitas (menos de 360 px): os dois botões do Como jogar cabem lado a lado e o contador de arrastos não
-   corta o texto (a seta decorativa sai para dar lugar) */
+/* telas estreitas (menos de 360 px): os dois botões do Como jogar cabem lado a lado, o contador de arrastos não
+   corta o texto (a seta decorativa sai para dar lugar) e, no Clássico, o recorde e os pontos cabem lado a lado */
 @media (max-width:359px){
   body.espaco .cjNav .btn{padding-left:8px;padding-right:8px;letter-spacing:.06em}
   body.espaco .hudCla .arrP .ic{display:none}
+  body.modoInf .hudCla #ptsP{min-width:120px}
 }
 /* menu do espaço: música e créditos moram em Opções */
 body.espaco .menuFoot{display:none}
