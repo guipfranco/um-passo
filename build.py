@@ -6,7 +6,7 @@ rd = lambda f: open(T + f, encoding='utf-8').read()
 missoes = rd('quebracabecas.js') + rd('missoes.js') + rd('missoes_calib.js')
 classico = rd('classico.js')
 # motor do espaço (o mesmo dos rascunhos) fechado num objeto, para os nomes dele não colidirem com os do jogo
-espaco = ('var ESP=(()=>{' + rd('espaco.js') + '\nreturn {buildTextures,preaquece,makePiece,drawPeca,drawPecaVar,pecaImg,glPronto,glDesenha,buildFundo,drawFundo,SPR,LADDER,MUNDOS_ESP,byName,kDe,ST,objImg,DPR,PASSO_VAR};\n})();\n'
+espaco = ('var ESP=(()=>{' + rd('espaco.js') + '\nreturn {buildTextures,preaquece,filaOciosa,texTarefa,makePiece,drawPeca,drawPecaVar,pecaImg,temPeca,pecaPrepara,soltaPeca,glPronto,glDesenha,discosGL,drawPecaGL,vrDe,buildFundo,drawFundo,SPR,LADDER,MUNDOS_ESP,byName,kDe,ST,objImg,DPR,PASSO_VAR};\n})();\n'
           + rd('espaco_jogo.js'))
 cfg, svg, logic, helpers, sfx, css, autoupd = rd('config.js'), rd('svg.js'), rd('jogo.js'), rd('helpers.js'), rd('sfx.js'), rd('css.css'), rd('autoupd.html')
 gi = rd('gi.js')
