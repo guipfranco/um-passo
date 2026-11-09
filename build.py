@@ -534,7 +534,8 @@ function hideOverlay(){ $('#overlay').classList.add('hidden'); $('#panel').inner
 
 // ===================== ENTRADA =====================
 const KEYS={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],w:[0,-1],s:[0,1],a:[-1,0],d:[1,0]};
-addEventListener('keydown',e=>{ const k=KEYS[e.key.length===1?e.key.toLowerCase():e.key]; if(k){ e.preventDefault(); move(...k); } });
+// escrevendo num campo de texto (nome do nível, relato) ou com Ctrl/Alt, a tecla é do campo ou do navegador, não do jogo
+addEventListener('keydown',e=>{ if(e.ctrlKey||e.metaKey||e.altKey||e.target.closest?.('input,textarea')) return; const k=KEYS[e.key.length===1?e.key.toLowerCase():e.key]; if(k){ e.preventDefault(); move(...k); } });
 // Arrastar com prévia: as pedrinhas seguem o dedo até onde iriam; só confirma ao soltar.
 // Dá para ir e voltar, testar outras direções e desistir (soltando perto do começo).
 let touch=null, prev=null;
@@ -574,13 +575,17 @@ function previewDrag(dx,dy){
 }
 addEventListener('pointerdown',e=>{ if(overlayOpen()||e.target.closest('button')||!$('#scrGame').classList.contains('on')) return;
   if(document.body.classList.contains('rola') && !e.target.closest('#stage')) return; // fora do tabuleiro, o dedo rola a página
-  touch={x:e.clientX,y:e.clientY,cel:cellPx(),hist:[[performance.now(),e.clientX,e.clientY]]}; prev=null; });
-addEventListener('pointercancel',()=>{ if(touch){ touch=null; clearPreview(true); } });
+  // outro dedo encostou: o gesto passa a ser só do dedo novo (a prévia do anterior volta e ele não decide mais nada)
+  if(prev) clearPreview(true);
+  touch={id:e.pointerId,x:e.clientX,y:e.clientY,cel:cellPx(),hist:[[performance.now(),e.clientX,e.clientY]]}; prev=null; });
+addEventListener('pointercancel',e=>{ if(touch && e.pointerId===touch.id){ touch=null; clearPreview(true); } });
 addEventListener('pointermove',e=>{
-  if(!touch || !S || S.phase!=='mine' || overlayOpen() || coachBlock || S.editando || S.ferrAtiva) return;
+  if(!touch || e.pointerId!==touch.id || !S || S.phase!=='mine' || overlayOpen() || coachBlock || S.editando || S.ferrAtiva) return;
   const dx=e.clientX-touch.x, dy=e.clientY-touch.y, agora=performance.now(), hs=touch.hist;
   hs.push([agora,e.clientX,e.clientY]); while(hs.length>2 && agora-hs[0][0]>90) hs.shift();
-  const vel=Math.hypot(e.clientX-hs[0][1],e.clientY-hs[0][2])/Math.max(1,agora-hs[0][0]);
+  // velocidade no sentido da jogada: voltar rápido para desistir (ou virar para outro lado) não confirma a jogada
+  const sx = Math.abs(dx)>Math.abs(dy) ? Math.sign(dx) : 0, sy = sx ? 0 : Math.sign(dy);
+  const vel=((e.clientX-hs[0][1])*sx+(e.clientY-hs[0][2])*sy)/Math.max(1,agora-hs[0][0]);
   if(Math.max(Math.abs(dx),Math.abs(dy))>=Math.max(CONFIRMA+8,touch.cel*.38) && vel>=.55 && agora-hs[0][0]>=30){ touch=null; confirmaArrasto(dx,dy); return; }   // arrasto rápido: vale já
   previewDrag(dx,dy);
 });
@@ -590,7 +595,7 @@ function confirmaArrasto(dx,dy){
   if(S && S.phase==='mine') for(const t of S.tiles){ const el=els.get(t.id); if(el) el.style.transform=pos(t.x,t.y); }
 }
 addEventListener('pointerup',e=>{
-  if(!touch) return; const dx=e.clientX-touch.x, dy=e.clientY-touch.y; touch=null;
+  if(!touch || e.pointerId!==touch.id) return; const dx=e.clientX-touch.x, dy=e.clientY-touch.y; touch=null;
   const tinha=!!prev;
   if(S && S.ferrAtiva && S.phase==='mine'){ usarFerramenta(e.clientX,e.clientY); return; }
   if(S && S.editando && S.phase==='mine'){ if(PINCEL.tipo==='mureta'){ labMureta(e.clientX,e.clientY); return; } const c=labCelula(e.clientX,e.clientY); if(c) labPinta(...c); return; }
@@ -604,7 +609,6 @@ addEventListener('pointerup',e=>{
   }
   confirmaArrasto(dx,dy);
 });
-addEventListener('pointercancel',()=>{ if(touch){ touch=null; clearPreview(true); } });
 // Encerrar exige dois toques enquanto ainda há energia (evita toque sem querer)
 let endArmed=null;
 function resetEnd(){ clearTimeout(endArmed); endArmed=null; $('#btnEnd').textContent=S&&(S.missao||S.infinito)?'Recomeçar':S&&S.semEnergia?'Parar aqui':'Encerrar o dia'; $('#btnEnd').classList.remove('g'); }
