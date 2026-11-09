@@ -22,7 +22,7 @@ function espInicia(){ if(espIniciado) return; espIniciado=true; ESP.buildTexture
 function espCanvas(host, kx, ky, desenha){
   let cv=host.querySelector(':scope > canvas.esp');
   if(!cv){ cv=document.createElement('canvas'); cv.className='esp'; host.appendChild(cv); }
-  cv.style.setProperty('--kx',kx); cv.style.setProperty('--ky',ky); cv._kx=kx; cv._ky=ky; cv._d=desenha; cv._feito=false; cv._estatico=false; ESPC.add(cv); espInicia(); return cv;
+  cv.style.setProperty('--kx',kx); cv.style.setProperty('--ky',ky); cv._kx=kx; cv._ky=ky; cv._d=desenha; cv._feito=false; cv._estatico=false; cv._passo=0; ESPC.add(cv); espInicia(); return cv;
 }
 // medidor de desempenho: abra o jogo com ?fps no endereço para ver quadros por segundo e quanto cada parte custa
 const MEDE=/[?&]fps\b/.test(location.search);
@@ -43,17 +43,20 @@ function espLoop(ms){
   const p1=performance.now();
   // aparelho apertado (quadro passando de 9 ms em média): a malha passa a 30 quadros por segundo
   malhaVez=!malhaVez;
-  if(ceu && (custoMedio<9 || malhaVez) && document.body.classList.contains('modoCla') && $('#scrGame').classList.contains('on')) try{ malhaQuadro(t); }catch(e){ console.warn('malha',e); anotaErro('malha',e); }
+  const telaJogo=$('#scrGame').classList.contains('on');
+  if(ceu && (custoMedio<9 || malhaVez) && document.body.classList.contains('modoCla') && telaJogo) try{ malhaQuadro(t); }catch(e){ console.warn('malha',e); anotaErro('malha',e); }
   const p2=performance.now();
   if(ESPC.size){
     const cel=(typeof cellPx==='function'?cellPx():80)*ESP.DPR;
     for(const cv of ESPC){
       if(!cv.isConnected){ ESPC.delete(cv); continue; }
       if(cv._fw && cv.offsetParent===null) continue;   // canvas fixo escondido (tela fechada): não desenha
+      if(!cv._fw && !telaJogo) continue;   // peças do tabuleiro com a tela do jogo fechada (o Clássico deixa o tabuleiro montado ao ir ao menu)
       const W=cv._fw ? Math.round(cv._fw*ESP.DPR) : Math.max(8,Math.round(cel*cv._kx)), H=cv._fh ? Math.round(cv._fh*ESP.DPR) : Math.max(8,Math.round(cel*cv._ky));
       if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; cv._feito=false; }
       if(cv._estatico && cv._feito) continue;   // desenho que não muda com o tempo: o anterior continua valendo
-      const c=cv.getContext('2d'); c.clearRect(0,0,W,H); cv._d(c,W,H,cv._fw?W:cel,t); cv._feito=true;
+      if(cv._passo && cv._feito && t-cv._tq<cv._passo) continue;   // a pedrinha só muda de quadro a cada _passo: até lá o desenho é o mesmo
+      const c=cv.getContext('2d'); c.clearRect(0,0,W,H); cv._d(c,W,H,cv._fw?W:cel,t); cv._feito=true; cv._tq=t;
     }
   }
   const p3=performance.now();
@@ -79,7 +82,12 @@ addEventListener('popstate',()=>{
 // uma camada só, dentro do tabuleiro (com uma casa de folga em volta para os anéis e o brilho); se o aparelho
 // não tiver WebGL, GLON fica falso e cada planeta volta a ser pintado no canvas da sua peça
 let GLON=null;
-function glCamada(){ let cv=document.getElementById('glPlan'); if(!cv){ cv=document.createElement('canvas'); cv.id='glPlan'; } if(cv.parentElement!==board) board.prepend(cv); return cv; }
+function glCamada(){ let cv=document.getElementById('glPlan'); if(!cv){ cv=document.createElement('canvas'); cv.id='glPlan';
+    // a placa de vídeo perdeu ou devolveu o contexto: decide de novo quem desenha os planetas e repinta as peças paradas
+    // (sem contexto a camada fica escondida: o canvas perdido pode aparecer como um retângulo branco)
+    const refaz=e=>{ GLON=null; cv.style.display=e.type==='webglcontextlost'?'none':''; for(const c of ESPC) c._feito=false; };
+    cv.addEventListener('webglcontextlost',refaz); cv.addEventListener('webglcontextrestored',refaz); }
+  if(cv.parentElement!==board) board.prepend(cv); return cv; }
 function glAtivo(){ if(GLON===null){ espInicia(); GLON = !/[?&]semgl\b/.test(location.search) && ESP.glPronto(glCamada()); } return GLON; }
 function glQuadro(t){
   const cv=glCamada(), gr=cv.getBoundingClientRect(); if(!gr.width) return;
@@ -116,6 +124,8 @@ function espTile(el,t){
     const redondo = T.t>0 && T.k!=='p' && ESP.byName(nomeNivelEsp(T.t)).kind==='sphere' && glAtivo();
     el._gl = redondo; c.canvas._estatico = redondo && T.c==null && !T.presa;   // só o brilho parado: não precisa redesenhar
     if(redondo){ if(temBrilho(T)) espBrilho(c,x,y,u,T.t); if(T.c!=null) espAura(c,x,y,u,tm,T.c); if(T.presa) ESP.SPR.gaiola(c,x,y,u,tm,'back'); if(T.c!=null||T.presa||temBrilho(T)) furaPlaneta(c,x,y,u,T); if(T.presa) ESP.SPR.gaiola(c,x,y,u,tm,'front'); return; }
+    // só a pedrinha (sem aura, gaiola, lixo ou buraco): ela troca de quadro a 20 por segundo, o canvas acompanha
+    c.canvas._passo = T.c==null && !T.presa && T.t>0 && T.k!=='p' ? ESP.PASSO_VAR : 0;
     if(temBrilho(T)) espBrilho(c,x,y,u,T.t);
     if(T.c!=null) espAura(c,x,y,u,tm,T.c);
     if(T.presa) ESP.SPR.gaiola(c,x,y,u,tm,'back');
@@ -173,18 +183,27 @@ const NEB=(()=>{
       col+=c2*.35*pow(neb,3.);
       float d=length(su-pp);col+=pc*pu*(.5*exp(-d*3.5)+.07);
       gl_FragColor=vec4(col,1.);}`;
-    const sh=(tp,src)=>{ const s=gl.createShader(tp); gl.shaderSource(s,src); gl.compileShader(s); if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
-    const pr=gl.createProgram(); gl.attachShader(pr,sh(gl.VERTEX_SHADER,'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}')); gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fs)); gl.linkProgram(pr); gl.useProgram(pr);
-    const b=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,b); gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
-    const lp=gl.getAttribLocation(pr,'p'); gl.enableVertexAttribArray(lp); gl.vertexAttribPointer(lp,2,gl.FLOAT,false,0,0);
-    const U={}; for(const k of ['res','off','pp','t','pu','c1','c2','pc']) U[k]=gl.getUniformLocation(pr,k);
+    const U={};
+    // compila o programa e prepara o retângulo (de novo quando a placa de vídeo devolve um contexto perdido)
+    const prepara=()=>{
+      const sh=(tp,src)=>{ const s=gl.createShader(tp); gl.shaderSource(s,src); gl.compileShader(s); if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; };
+      const pr=gl.createProgram(); gl.attachShader(pr,sh(gl.VERTEX_SHADER,'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}')); gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fs)); gl.linkProgram(pr); gl.useProgram(pr);
+      const b=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,b); gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+      const lp=gl.getAttribLocation(pr,'p'); gl.enableVertexAttribArray(lp); gl.vertexAttribPointer(lp,2,gl.FLOAT,false,0,0);
+      for(const k of ['res','off','pp','t','pu','c1','c2','pc']) U[k]=gl.getUniformLocation(pr,k);
+      gl.viewport(0,0,cv.width,cv.height); };
+    prepara();
     const v=s=>s.split(',').map(x=>x/255);
     // desenha a nebulosa (em meia resolução) na camada própria, de w por h; off = deslocamento da câmera; pul = névoa da junção
-    return {ok:true, desenha(w,h,t,off,neb,pul){ if(!cv.isConnected) document.body.prepend(cv);
+    const N={ok:true, desenha(w,h,t,off,neb,pul){ if(!cv.isConnected) document.body.prepend(cv);
       const W=Math.max(8,Math.round(w*.5)), H=Math.max(8,Math.round(h*.5)); if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; gl.viewport(0,0,W,H); }
       gl.uniform2f(U.res,W,H); gl.uniform1f(U.t,t); gl.uniform2f(U.off,-off[0]/h,off[1]/h); gl.uniform3fv(U.c1,v(neb[0])); gl.uniform3fv(U.c2,v(neb[1]));
       gl.uniform1f(U.pu,pul?pul.k:0); gl.uniform3fv(U.pc,pul?v(pul.rgb):[0,0,0]); gl.uniform2f(U.pp,pul?(pul.x-w/2)/h:0,pul?(h/2-pul.y)/h:0);
       gl.drawArrays(gl.TRIANGLE_STRIP,0,4); }};
+    // contexto perdido (no Android acontece ao voltar do segundo plano): volta o céu pintado até o contexto voltar
+    cv.addEventListener('webglcontextlost',e=>{ e.preventDefault(); N.ok=false; });
+    cv.addEventListener('webglcontextrestored',()=>{ try{ prepara(); N.ok=true; }catch(e){ console.warn('nebulosa',e); } });
+    return N;
   }catch(e){ console.warn('nebulosa',e); return {ok:false}; }
 })();
 function ceuDesenha(t){
