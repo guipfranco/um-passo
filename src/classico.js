@@ -379,7 +379,8 @@ function missaoJoga(n, opt={}){
   limpaMarcas(); montaPecasMissao(m);
   if(sv) restauraFase(sv.st);
   document.body.classList.add('modoCla'); $('#btnPause').textContent='☰'; $('#btnPause').title=''; montaMissaoHud(m); render();
-  setBanner(`Fase ${n}: ${nomeFaseCla(n)}${S.medalha?' · Passinho':''}`, metasDe(m).length>1 ? `${metasDe(m).length} metas` : objetivosTxt(m));
+  // o nome da fase vai sem o ícone de peça (em "Rochas de batente" as rochas são o fluxo, não a peça Rocha)
+  setBanner(`Fase ${n}: ${noIco(nomeFaseCla(n))}${S.medalha?' · Passinho':''}`, metasDe(m).length>1 ? `${metasDe(m).length} metas` : objetivosTxt(m));
   pedeEncaixe();
 }
 function missaoResultado(ok, motivo){
@@ -394,7 +395,7 @@ function missaoResultado(ok, motivo){
     r[n]={...ant, e:Math.max(e,ant.e||0), t:Math.max(S.pontos,ant.t||0)}; if(S.medalha) r[n].pm=true;
     localStorage.mina_missoes=JSON.stringify(r);
     showOverlay(`${espFig()&&tAlvo(m)?'<canvas id="espRes"></canvas>':''}<h2>${S.medalha?'Medalha do Passinho!':'Missão cumprida!'}</h2>${estrelasHtml(e,'estr grande')}
-      <p>${m.livre?`Em <b>${S.moves||0}</b> arrastos`:`Sobraram <b>${sobra}</b> arrastos`} · <b>${S.pontos}</b> pontos${rec?' (recorde!)':''}</p>
+      <p>${m.livre?`Em <b>${S.moves||0}</b> ${S.moves===1?'arrasto':'arrastos'}`:`${sobra===1?'Sobrou':'Sobraram'} <b>${sobra}</b> ${sobra===1?'arrasto':'arrastos'}`} · <b>${S.pontos}</b> pontos${rec?' (recorde!)':''}</p>
       ${e<3?`<p class="metas">${metasEstTxt(m,e)}</p>`:''}
       ${n<MISSOES.length?'<button class="btn g" id="mProx">Próxima fase</button>':'<p>Você terminou todas as fases!</p>'}
       <button class="btn dim" id="mDeNovo">Jogar de novo</button><button class="btn dim" id="mLista">Ver fases</button>`);

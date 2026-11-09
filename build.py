@@ -191,6 +191,13 @@ body.espaco #ovos{display:flex;justify-content:center;gap:30px;margin-top:6px}
   body.espaco .panel{gap:6px}
   body.espaco .panel p{margin:2px 0}
   body.espaco .panel .objetivo{padding-top:6px;padding-bottom:6px}
+  body.espaco .ent{gap:6px}
+}
+/* telas estreitas (menos de 360 px): os dois botões do Como jogar cabem lado a lado e o contador de arrastos não
+   corta o texto (a seta decorativa sai para dar lugar) */
+@media (max-width:359px){
+  body.espaco .cjNav .btn{padding-left:8px;padding-right:8px;letter-spacing:.06em}
+  body.espaco .hudCla .arrP .ic{display:none}
 }
 /* menu do espaço: música e créditos moram em Opções */
 body.espaco .menuFoot{display:none}
@@ -653,13 +660,13 @@ html = '''<!doctype html>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#0b0a18">
 <title>2048 Stars</title>
-<meta name="description" content="O 2048 no espaço: 96 fases e um modo sem fim. De graça, sem instalar.">
+<meta name="description" content="O 2048 no espaço: 120 fases e um modo sem fim. De graça, sem instalar.">
 <!-- prévia do link (WhatsApp e afins); a imagem sai de previa.html, opção D -->
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pt_BR">
 <meta property="og:url" content="https://guipfranco.github.io/um-passo/">
 <meta property="og:title" content="2048 Stars">
-<meta property="og:description" content="O 2048 no espaço: 96 fases e um modo sem fim. De graça, sem instalar.">
+<meta property="og:description" content="O 2048 no espaço: 120 fases e um modo sem fim. De graça, sem instalar.">
 <meta property="og:image" content="https://guipfranco.github.io/um-passo/previa.jpg">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
