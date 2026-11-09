@@ -50,7 +50,8 @@ def main():
     arqs = [a for a in sorted(AQUI.glob('*.html')) if not args or any(x in a.stem for x in args)]
     nav = navegador()
     falhas = 0
-    with concurrent.futures.ThreadPoolExecutor(4) as ex:
+    # quantos navegadores ao mesmo tempo: 4 por padrão; PARALELO=1 ou 2 quando a máquina está ocupada (ex.: vários agentes testando)
+    with concurrent.futures.ThreadPoolExecutor(int(os.environ.get('PARALELO', '4'))) as ex:
         for nome, ok, res in ex.map(lambda a: roda(nav, a), arqs):
             falhas += not ok
             print(f"{'OK    ' if ok else 'FALHOU'} {nome}")
