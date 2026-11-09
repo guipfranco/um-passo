@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2048 Stars · som (rascunho)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+*{box-sizing:border-box}
+html,body{background:#0b0a18}
+body{margin:0;color:#e8e4ff;font-family:'Exo 2',system-ui,sans-serif;-webkit-tap-highlight-color:transparent;
+  background:radial-gradient(120% 70% at 20% 10%,#2a1a55 0%,#120e2a 45%,#0b0a18 80%) fixed}
+main{max-width:460px;margin:0 auto;padding:14px 12px 60px;display:flex;flex-direction:column;gap:10px}
+h1{margin:2px 0 0;font:900 20px Orbitron,sans-serif;letter-spacing:.04em;color:#f4fbff;text-shadow:0 0 14px rgba(110,230,255,.7)}
+h2{margin:18px 0 0;font:900 13px Orbitron,sans-serif;letter-spacing:.12em;color:#9fe9ff}
+p{margin:0;font-size:15px;line-height:1.42;color:#c9c2ee}
+.nota{font-size:13px;color:#a49bd6}
+.card{background:rgba(22,17,40,.82);border:1.5px solid rgba(255,255,255,.12);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.card.on{border-color:rgba(110,230,255,.7);box-shadow:0 0 16px rgba(110,230,255,.25)}
+.card h3{margin:0;font:800 15.5px 'Exo 2',sans-serif;color:#fff}
+.card h3 i{font-style:normal;font:900 12px Orbitron,sans-serif;color:#6fe0ff;margin-right:6px}
+.card p{font-size:14px}
+.card ul{margin:0;padding-left:18px;font-size:13.5px;line-height:1.4;color:#c9c2ee}
+.card li{margin:3px 0}
+.card a{color:#6fe0ff}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.bt{border:1.5px solid #6fe0ff;color:#6fe0ff;background:rgba(10,8,25,.55);border-radius:12px;padding:8px 12px;font:700 13px 'Exo 2',sans-serif;cursor:pointer;
+  box-shadow:0 0 10px #6fe0ff33}
+.bt.hoje{border-color:#cfc6ff88;color:#cfc6ff;box-shadow:none}
+.bt.g{border-color:#ffd36e;color:#ffd36e;box-shadow:0 0 10px #ffd36e33}
+.bt.on{background:rgba(40,90,140,.55);color:#fff}
+.bt:disabled{opacity:.3}
+.ef{display:grid;grid-template-columns:1fr auto auto;gap:6px 8px;align-items:center;padding:9px 0;border-top:1px solid rgba(255,255,255,.08)}
+.ef:first-of-type{border-top:0}
+.ef b{color:#fff;font-size:14.5px}
+.ef small{display:block;color:#a49bd6;font-size:12.5px;line-height:1.3;margin-top:2px}
+.esc{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.esc button{border:1.5px solid rgba(140,200,255,.3);border-radius:10px;padding:7px 4px;background:rgba(20,16,44,.7);color:#e8e4ff;font:700 12.5px 'Exo 2',sans-serif;cursor:pointer;line-height:1.1}
+.esc button small{display:block;font-weight:400;font-size:10.5px;color:#a49bd6}
+.esc button.toca{border-color:#ffd36e;box-shadow:0 0 10px #ffd36e66}
+.fam{font:700 11px 'Exo 2',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#a49bd6;grid-column:1/-1;margin-top:4px}
+#pad{height:84px;border-radius:14px;border:1.5px dashed rgba(110,230,255,.5);display:flex;align-items:center;justify-content:center;text-align:center;
+  font:700 14px 'Exo 2',sans-serif;color:#9fe9ff;cursor:pointer;user-select:none;touch-action:manipulation}
+#pad.bate{background:rgba(110,230,255,.12)}
+.est{font-size:13px;color:#ffd36e;min-height:18px}
+</style>
+</head>
+<body>
+<main>
+  <h1>SOM DO ESPAÇO</h1>
+  <p>Hoje os efeitos e as músicas ainda são os do Ptui antigo: chiado de areia, fanfarra de venda, lo-fi e bossa. Aqui dá para ouvir uma proposta para cada coisa e comparar com o som de hoje. Se puder, use fone.</p>
+
+  <h2>MÚSICA</h2>
+  <p class="nota">Tudo é tocado na hora pelo próprio celular, sem arquivo de música: nunca se repete igual e não pesa no jogo.</p>
+  <div class="card" data-m="deriva"><h3><i>A</i>Deriva</h3>
+    <p>Ambiente lento: acordes longos que se abrem devagar, um grave contínuo e sininhos soltos, como se o tabuleiro flutuasse. Para o menu, o mapa e a Jornada.</p>
+    <div class="row"><button class="bt" data-tocar="deriva">▶ Tocar</button><button class="bt hoje" id="vozes">+ vozes do espaço</button></div>
+    <p class="nota">As "vozes do espaço" imitam os sons de rádio que as sondas gravaram (assobios que descem e chiados que sobem). Ligue para ouvir por cima.</p>
+    <ul><li><a href="https://store.steampowered.com/app/29180" target="_blank">Osmos</a>: eletrônica ambiente, calma e espaçosa.</li>
+      <li><a href="https://www.jpl.nasa.gov/images/pia17045-voyager-captures-sounds-of-interstellar-space" target="_blank">Voyager</a> e <a href="https://www.jpl.nasa.gov/videos/sounds-of-saturn-hear-radio-emissions-of-the-planet-and-its-moon-enceladus/" target="_blank">Cassini</a> (NASA): o "som" do espaço de verdade, gravado como ondas de rádio.</li></ul></div>
+  <div class="card" data-m="orbita"><h3><i>B</i>Órbita</h3>
+    <p>Eletrônica suave, no clima neon das telas: um arpejo que gira como uma órbita, baixo e batida leve. Para o Clássico, que pede mais ritmo.</p>
+    <div class="row"><button class="bt" data-tocar="orbita">▶ Tocar</button></div>
+    <ul><li><a href="https://www.meta.com/blog/a-chat-with-the-team-behind-vr-puzzler-tetris-effect/" target="_blank">Tetris Effect</a>: eletrônica que acompanha cada jogada.</li></ul></div>
+  <div class="card" data-m="constel"><h3><i>C</i>Constelação: a música é a partida</h3>
+    <p>Uma base calma, e cada junção vira uma nota tocada no tempo da música, na altura do planeta formado. Quanto maior o planeta da partida, mais instrumentos entram: baixo a partir da Lua, batida a partir da Terra, arpejo a partir de Saturno.</p>
+    <div class="row"><button class="bt" data-tocar="constel">▶ Tocar (joga sozinho)</button></div>
+    <div id="pad">toque aqui para juntar um planeta</div>
+    <p class="est" id="estC"></p>
+    <ul><li><a href="https://designingsound.org/2016/02/18/the-programmed-music-of-mini-metro-interview-with-rich-vreeland-disasterpeace" target="_blank">Mini Metro</a> (Disasterpeace): cada linha de metrô toca notas; a música nasce do jogo.</li>
+      <li><a href="https://www.musicradar.com/news/guitars/how-65daysofstatic-built-the-soundtrack-to-no-mans-skys-infinite-universe-641184" target="_blank">No Man's Sky</a> (65daysofstatic): trilha montada na hora a partir de pedaços, diferente a cada partida.</li></ul></div>
+  <div class="card" data-m="hoje"><h3><i>0</i>Hoje</h3>
+    <p>O lo-fi que toca hoje dentro das fases, para comparar.</p>
+    <div class="row"><button class="bt hoje" data-tocar="hoje">▶ Tocar</button></div></div>
+
+  <h2>EFEITOS</h2>
+  <div class="card" id="efeitos"></div>
+
+  <h2>JUNTAR, DEGRAU A DEGRAU</h2>
+  <p class="nota">Hoje a junção sobe uma nota a cada degrau, e do Marte em diante todas soam igual. Na proposta, cada corpo tem o seu material: as miúdas tilintam, os planetas soam como sinos, os gigantes são graves e longos, e as estrelas explodem. Dentro de cada família a nota sobe, para continuar dando a sensação de progresso.</p>
+  <div class="card"><div class="esc" id="esc"></div>
+    <div class="row"><button class="bt hoje" id="escHoje">▶ Escada inteira, hoje</button><button class="bt" id="escNovo">▶ Escada inteira, novo</button></div></div>
+
+  <h2>OUVIR JUNTO</h2>
+  <div class="card"><p>Liga uma música lá em cima e simula uma partida por cima dela: arrastos, peças novas e junções subindo a escada.</p>
+    <div class="row"><button class="bt g" id="sim">▶ Simular partida</button><button class="bt on" id="simNovo">sons novos</button><button class="bt hoje" id="simHoje">sons de hoje</button></div>
+    <p class="est" id="estSim"></p></div>
+</main>
+<script>
+// ===================== motor de som (Web Audio, tudo sintetizado) =====================
+let C=null, MST, SFXB, MUSB, REV, DLY, NB=null;
+function audio(){
+  if(C){ if(C.state==='suspended') C.resume(); return C; }
+  C=new (window.AudioContext||window.webkitAudioContext)();
+  const comp=C.createDynamicsCompressor(); comp.threshold.value=-16; comp.ratio.value=3; comp.connect(C.destination);
+  MST=C.createGain(); MST.gain.value=.9; MST.connect(comp);
+  REV=C.createConvolver(); REV.buffer=resposta(3.6); const rg=C.createGain(); rg.gain.value=.5; REV.connect(rg); rg.connect(MST);
+  DLY=C.createDelay(1); DLY.delayTime.value=.45; const fb=C.createGain(), dl=C.createBiquadFilter(); fb.gain.value=.36; dl.type='lowpass'; dl.frequency.value=2400;
+  DLY.connect(dl); dl.connect(fb); fb.connect(DLY); const dg=C.createGain(); dg.gain.value=.45; dl.connect(dg); dg.connect(MST);
+  SFXB=C.createGain(); SFXB.gain.value=.95; SFXB.connect(MST);
+  MUSB=C.createGain(); MUSB.gain.value=.55; MUSB.connect(MST);
+  NB=C.createBuffer(1,C.sampleRate,C.sampleRate); const d=NB.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+  return C;
+}
+// eco de sala grande, gerado (ruído que vai sumindo)
+function resposta(seg){ const n=Math.round(C.sampleRate*seg), b=C.createBuffer(2,n,C.sampleRate);
+  for(let ch=0;ch<2;ch++){ const d=b.getChannelData(ch); for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/n,3.2); } return b; }
+function saida(g,o){ let n=g; if(C.createStereoPanner&&o.pan){ const p=C.createStereoPanner(); p.pan.value=Math.max(-1,Math.min(1,o.pan)); g.connect(p); n=p; }
+  n.connect(o.dest||SFXB); if(o.rev){ const s=C.createGain(); s.gain.value=o.rev; n.connect(s); s.connect(REV); } if(o.dly){ const s=C.createGain(); s.gain.value=o.dly; n.connect(s); s.connect(DLY); } }
+function env(g,T,a,v,d){ g.gain.setValueAtTime(.0001,T); g.gain.exponentialRampToValueAtTime(Math.max(.0002,v),T+a); g.gain.exponentialRampToValueAtTime(.0001,T+a+d); }
+const quando=o=>o.T??(C.currentTime+(o.t||0));
+function tom(o={}){ const T=quando(o),{f=440,to=null,type='sine',a=.005,d=.2,v=.1,lp=null,q=.7}=o, os=C.createOscillator(), g=C.createGain();
+  os.type=type; os.frequency.setValueAtTime(f,T); if(to) os.frequency.exponentialRampToValueAtTime(to,T+a+d); if(o.det) os.detune.value=o.det;
+  env(g,T,a,v,d); let n=os; if(lp){ const fl=C.createBiquadFilter(); fl.frequency.setValueAtTime(lp,T); if(o.lpTo) fl.frequency.exponentialRampToValueAtTime(o.lpTo,T+a+d); fl.Q.value=q; os.connect(fl); n=fl; }
+  n.connect(g); saida(g,o); os.start(T); os.stop(T+a+d+.1); }
+function ruido(o={}){ const T=quando(o),{a=.002,d=.1,v=.1,type='bandpass',f=1000,to=null,q=1}=o, s=C.createBufferSource(), fl=C.createBiquadFilter(), g=C.createGain();
+  s.buffer=NB; fl.type=type; fl.frequency.setValueAtTime(f,T); if(to) fl.frequency.exponentialRampToValueAtTime(to,T+a+d); fl.Q.value=q;
+  env(g,T,a,v,d); s.connect(fl); fl.connect(g); saida(g,o); s.start(T,Math.random()*.5); s.stop(T+a+d+.1); }
+function sino(o={}){ const T=quando(o),{f=880,d=1,v=.1,ratio=3.5,idx=2}=o, c=C.createOscillator(), m=C.createOscillator(), mg=C.createGain(), g=C.createGain();
+  c.frequency.value=f; m.frequency.value=f*ratio; mg.gain.setValueAtTime(f*idx,T); mg.gain.exponentialRampToValueAtTime(Math.max(1,f*.01),T+d);
+  m.connect(mg); mg.connect(c.frequency); env(g,T,.003,v,d); c.connect(g); saida(g,o); c.start(T); m.start(T); c.stop(T+d+.1); m.stop(T+d+.1); }
+const mtof=m=>440*Math.pow(2,(m-69)/12);
+const PENTA=[0,2,4,7,9];
+// grau da pentatônica de Ré (0 = Ré 4), sobe de oitava a cada 5 graus
+const nota=(oit,grau)=>{ const k=((grau%5)+5)%5, o=Math.floor(grau/5); return 293.66*Math.pow(2,oit+o+PENTA[k]/12); };
+
+// ===================== efeitos de hoje (os do Ptui) =====================
+const ESCALA=[0,2,4,7,9,12,14,16,19];
+const HOJE={
+  arrastar(){ const f=900+Math.random()*400; ruido({f,to:f*2,d:.07,v:.045,q:.9}); },
+  fundir(l){ const f=392*Math.pow(2,ESCALA[Math.min(l,9)-1]/12);
+    tom({f,d:.22,v:.17}); tom({f:f*2,d:.1,v:.05,type:'triangle'}); tom({f:f*4,d:.035,v:.04});
+    if(l>=3) tom({f:f*.5,d:.25,v:.08}); if(l>=4) sino({f:f*2,t:.02,d:.7,v:.06,idx:1.6});
+    if(l>=5) [1.25,1.5,2].forEach((m,i)=>sino({f:f*2*m,t:.08+i*.06,d:.5,v:.045,idx:1.2}));
+    if(l>=6){ tom({f:f*.25,to:f*.5,a:.05,d:.5,v:.1}); [1,1.5,2,3].forEach((m,i)=>sino({f:f*4*m,t:.25+i*.05,d:.6,v:.03,idx:.8})); } },
+  pagou(){ [523,659,784,1047].forEach((f,i)=>tom({f,t:i*.09,d:.2,v:.07,type:'square',lp:3500})); [523,659,784].forEach(f=>tom({f,t:.4,d:.9,v:.05,type:'triangle'}));
+    for(let i=0;i<8;i++) sino({f:2093*Math.pow(2,ESCALA[i%6]/12),t:.4+i*.05,d:.4,v:.035,idx:1}); },
+  naoDeu(){ [392,370,349,330].forEach((f,i)=>tom({f,to:i===3?260:null,t:i*.3,a:.02,d:i===3?.8:.26,v:.08,type:'sawtooth',lp:900})); },
+};
+
+// ===================== efeitos novos =====================
+const lado=()=>(Math.random()-.5)*.6;
+const NOVO={
+  // um sopro curto, como um empurrão de foguete
+  arrastar(){ const p=lado(); ruido({f:450,to:1700,a:.03,d:.16,v:.035,q:1.1,pan:p,rev:.12}); tom({f:105,to:62,a:.008,d:.13,v:.025,pan:p}); },
+  // a peça nova aparece com um brilho baixinho
+  nasce(){ sino({t:.06,f:nota(2,(Math.random()*5)|0),d:.35,v:.02,ratio:2,idx:.5,pan:(Math.random()-.5)*.9,rev:.45}); },
+  fundir(l){ const p=lado();
+    if(l<=5){ // miúdas: tilintam agudo, cada uma no seu material
+      const f=nota(1,l+2);
+      if(l===1) for(let i=0;i<3;i++) sino({t:i*.035,f:f*(1+i*.5),d:.2,v:.06,ratio:3,idx:.6,pan:p,rev:.2});        // Poeira: brilho
+      if(l===2) sino({f:f*2,d:.6,v:.1,ratio:2.76,idx:1.2,pan:p,rev:.35});                                        // Gelo: vidro
+      if(l===3){ ruido({f:1500,d:.04,v:.18,q:6,pan:p}); tom({f:f*.5,to:f*.38,d:.09,v:.16,type:'triangle',pan:p}); } // Rocha: claque
+      if(l===4) sino({f,d:.5,v:.11,ratio:1.414,idx:2.2,pan:p,rev:.25});                                           // Asteroide: metal
+      if(l===5){ ruido({f:1500,to:6500,d:.28,v:.07,q:1,pan:p,rev:.3}); for(let i=0;i<5;i++) sino({t:.05+i*.04,f:f*2*Math.pow(2,PENTA[i]/12),d:.35,v:.045,ratio:2,idx:.5,pan:p+i*.1,rev:.45}); } // Cometa: rastro
+      tom({f,d:.16,v:.1,pan:p});
+    } else if(l<=11){ // planetas: sinos redondos com um grave por baixo
+      const g=l-6, f=nota(0,g+1);
+      sino({f,d:1.1+g*.12,v:.11,ratio:2,idx:1.1,pan:p,rev:.45,dly:.12}); tom({f:f/2,a:.01,d:.9+g*.1,v:.09,pan:p,rev:.2});
+      if(l>=9) sino({t:.06,f:f*1.5,d:1,v:.04,ratio:2,idx:.7,pan:-p,rev:.5});
+      if(l===11) [0,2,4].forEach((k,i)=>sino({t:.12+i*.07,f:nota(1,k),d:1.3,v:.035,ratio:2,idx:.6,rev:.6}));
+    } else if(l<=15){ // gigantes: graves, largos e longos
+      const g=l-12, f=nota(-1,g+1);
+      tom({f,a:.02,d:2.2,v:.13,type:'triangle',lp:900,rev:.5}); tom({f,a:.02,d:2.2,v:.07,type:'sawtooth',lp:700,lpTo:180,rev:.4,det:7});
+      sino({t:.05,f:f*4,d:1.8,v:.04,ratio:2,idx:.6,rev:.7,dly:.25});
+      if(l===14) for(let i=0;i<9;i++) sino({t:.1+i*.05,f:nota(2,i),d:.6,v:.024,ratio:2,idx:.5,pan:-.7+i*.17,rev:.5}); // Saturno: o anel brilha em volta
+    } else if(l===16){ // Sol: um acorde quente que cresce
+      [0,4,7,11,14].forEach((s,i)=>tom({f:146.83*Math.pow(2,s/12),a:.35,d:2.6,v:.05,type:'triangle',lp:2200,rev:.6,pan:-.4+i*.2}));
+      sino({t:.3,f:1174.7,d:2,v:.05,ratio:2,idx:.8,rev:.7,dly:.3});
+    } else if(l===17){ // Supernova: estrondo e um rastro de faíscas
+      tom({f:90,to:28,d:1.4,v:.26}); ruido({f:1400,to:120,d:1.2,v:.2,type:'lowpass',rev:.4});
+      for(let i=0;i<14;i++) sino({t:.15+i*.06+Math.random()*.04,f:nota(2,(Math.random()*10)|0),d:.9,v:.03,ratio:2,idx:.7,pan:Math.random()*1.6-.8,rev:.6});
+    } else { // Galáxia: um coro enorme que gira
+      [0,7,12,16,19,24].forEach((s,i)=>tom({f:73.42*Math.pow(2,s/12),a:.8,d:4,v:.045,type:'sawtooth',lp:1400,rev:.7,pan:Math.sin(i)*.7,det:i%2?6:-6}));
+      for(let i=0;i<16;i++) sino({t:.5+i*.09,f:nota(1,i),d:1,v:.022,ratio:2,idx:.5,pan:Math.sin(i*.9)*.8,rev:.6});
+    } },
+  poucos(){ [0,.34].forEach((t,i)=>tom({t,f:1318.5,d:.55,v:i?.025:.055,rev:.35})); },
+  racha(){ ruido({f:3200,d:.05,v:.1,type:'highpass'}); sino({f:520,ratio:3.73,idx:3,d:.32,v:.06}); tom({f:150,to:60,d:.1,v:.09}); ruido({t:.03,f:800,d:.14,v:.05,q:3}); },
+  nebulosa(){ ruido({f:2600,to:300,a:.05,d:.75,v:.06,q:.8,rev:.5}); sino({t:.1,f:nota(2,4),d:.6,v:.02,ratio:2,idx:.4,rev:.6}); },
+  estrela(){ [0,2,4].forEach((g,i)=>sino({t:i*.14,f:nota(2,g),d:.9,v:.05,ratio:2,idx:.8,rev:.5,pan:-.3+i*.3})); },
+  vitoria(){ for(let i=0;i<8;i++) sino({t:i*.075,f:nota(1,i),d:.7,v:.045,ratio:2,idx:.7,rev:.45,pan:-.5+i*.14});
+    [0,4,7,11,14].forEach((s,i)=>tom({t:.6,f:293.66*Math.pow(2,s/12),a:.08,d:1.8,v:.04,type:'triangle',lp:3000,rev:.6,pan:-.4+i*.2}));
+    ruido({t:.6,f:5000,to:9000,a:.2,d:1.2,v:.02,type:'highpass',rev:.6}); },
+  derrota(){ tom({f:392,to:98,a:.05,d:1.4,v:.08,type:'triangle',lp:1800,lpTo:200,rev:.4}); tom({t:.15,f:294,to:73,a:.05,d:1.4,v:.06,type:'triangle',lp:1500,lpTo:150,rev:.4});
+    ruido({f:700,to:90,d:1.2,v:.03,type:'lowpass'}); },
+  botao(){ tom({f:1100,to:1500,d:.045,v:.04}); },
+};
+
+// ===================== músicas =====================
+function busMus(){ const g=C.createGain(); g.gain.value=1; g.connect(MUSB); return g; }
+function solta(g){ g.gain.setTargetAtTime(0,C.currentTime,.5); setTimeout(()=>g.disconnect(),4000); }
+// agenda à frente: fn(T) agenda o que toca em T e devolve o próximo T
+function relogio(fn){ let prox=C.currentTime+.15; const id=setInterval(()=>{ while(prox<C.currentTime+.3) prox=fn(prox); },40); return ()=>clearInterval(id); }
+function padNota(dest,T,f,dur,v,lp=900){ const g=C.createGain(), fl=C.createBiquadFilter(); fl.type='lowpass'; fl.Q.value=.5;
+  fl.frequency.setValueAtTime(lp*.55,T); fl.frequency.linearRampToValueAtTime(lp,T+dur*.5); fl.frequency.linearRampToValueAtTime(lp*.55,T+dur);
+  g.gain.setValueAtTime(0,T); g.gain.linearRampToValueAtTime(v,T+dur*.35); g.gain.setValueAtTime(v,T+dur*.6); g.gain.linearRampToValueAtTime(0,T+dur);
+  for(const dt of [-8,8]){ const o=C.createOscillator(); o.type='sawtooth'; o.frequency.value=f; o.detune.value=dt; o.connect(fl); o.start(T); o.stop(T+dur+.1); }
+  fl.connect(g); g.connect(dest); const s=C.createGain(); s.gain.value=.7; g.connect(s); s.connect(REV); }
+const acorde=(dest,T,ms,dur,v,lp)=>ms.forEach(m=>padNota(dest,T,mtof(m),dur,v,lp));
+function drone(dest,ms,v){ const g=C.createGain(); g.gain.value=0; g.gain.setTargetAtTime(v,C.currentTime,2); g.connect(dest); const os=[];
+  for(const m of ms){ const o=C.createOscillator(); o.frequency.value=mtof(m); const lf=C.createOscillator(), lg=C.createGain(); lf.frequency.value=.07+Math.random()*.05; lg.gain.value=1.2;
+    lf.connect(lg); lg.connect(o.detune); o.connect(g); o.start(); lf.start(); os.push(o,lf); }
+  return ()=>{ g.gain.setTargetAtTime(0,C.currentTime,.6); setTimeout(()=>os.forEach(o=>o.stop()),3000); }; }
+// Ré lídio: Ré com nona e sétima maior, e Mi sobre Ré (o "flutuar" clássico das trilhas de espaço)
+const DERIVA=[[50,57,61,64,66],[50,59,64,68,71]];
+const SINOS=[74,76,78,80,81,83,85,86];
+let vozes=false;
+const MUSICAS={
+  deriva(){ const g=busMus(), para=[];
+    para.push(drone(g,[38,45],.05));
+    let k=0; para.push(relogio(T=>{ acorde(g,T,DERIVA[k++%2],12,.018,950); return T+9; }));
+    para.push(relogio(T=>{ if(Math.random()<.85) sino({T,dest:g,f:mtof(SINOS[(Math.random()*SINOS.length)|0]),d:2.2,v:.035,ratio:2,idx:.6,pan:Math.random()*1.4-.7,rev:.7,dly:.35}); return T+1.3+Math.random()*2.6; }));
+    para.push(relogio(T=>{ if(vozes){ const r=Math.random();
+        if(r<.6) tom({T,dest:g,f:2600+Math.random()*900,to:320+Math.random()*120,a:.05,d:1.7,v:.016,rev:.6,pan:Math.random()-.5});   // assobio que desce
+        else for(let i=0;i<6;i++) tom({T:T+i*.13+Math.random()*.05,dest:g,f:1300+Math.random()*500,to:2600+Math.random()*900,a:.01,d:.14,v:.012,rev:.6,pan:Math.random()-.5}); } // chiado que sobe
+      return T+4+Math.random()*5; }));
+    return {para(){ para.forEach(f=>f()); solta(g); }}; },
+  orbita(){ const g=busMus(), para=[], P=60/100/4;
+    const PROG=[[62,66,69,73],[59,62,66,69],[55,59,62,66],[57,61,64,66]], RAIZ=[38,35,31,33];
+    let s=0;
+    para.push(relogio(T=>{ const bar=Math.floor(s/16)%4, st=s%16, ch=PROG[bar];
+      if(st===0) acorde(g,T,ch.map(m=>m-12),16*P*1.1,.012,1100);
+      const seq=[0,1,2,3,2+4,3+4,2,1], idx=seq[st%8], m=ch[idx%4]+(idx>=4?12:0);
+      tom({T,dest:g,f:mtof(m),type:'square',a:.004,d:.13,v:.026,lp:1500+800*Math.sin(s/40),q:2,dly:.22,rev:.12,pan:Math.sin(s*.4)*.35});
+      if(st%4===0||st===14) tom({T,dest:g,f:mtof(RAIZ[bar]),type:'sawtooth',a:.005,d:.26,v:.07,lp:420});
+      if(st===0||st===8) tom({T,dest:g,f:130,to:44,d:.22,v:.14});
+      if(st%4===2) ruido({T,dest:g,f:8500,type:'highpass',d:.03,v:.028});
+      if(st===4||st===12) ruido({T,dest:g,f:1700,q:.8,d:.1,v:.04,rev:.25});
+      s++; return T+P; }));
+    return {para(){ para.forEach(f=>f()); solta(g); }}; },
+  constel(){ const g=busMus(), para=[], P=60/84/2; let s=0, fila=[], mx=3;
+    para.push(drone(g,[38,45],.04));
+    para.push(relogio(T=>{ const st=s%16, bar=Math.floor(s/16)%2;
+      if(st===0&&s%32===0) acorde(g,T,DERIVA[bar],32*P*1.05,.014,850);
+      for(const n of fila.splice(0,3)) sino({T,dest:g,f:nota(n.l>11?0:1,n.l),d:1.3,v:.05,ratio:2,idx:.7,pan:n.p,rev:.5,dly:.2});
+      if(mx>=7&&st%4===0) tom({T,dest:g,f:mtof(bar?40:38),a:.01,d:.5,v:.075,type:'triangle',lp:500});
+      if(mx>=11){ if(st===0||st===8) tom({T,dest:g,f:120,to:45,d:.2,v:.16}); if(st%4===2) ruido({T,dest:g,f:8500,type:'highpass',d:.03,v:.022}); }
+      if(mx>=14) tom({T,dest:g,f:mtof([62,66,69,73,76,73,69,66][st%8]+(bar?2:0)),type:'square',a:.004,d:.12,v:.018,lp:1600,dly:.2,pan:Math.sin(s*.5)*.4});
+      s++; return T+P; }));
+    return {para(){ para.forEach(f=>f()); solta(g); }, junta(l){ fila.push({l,p:(Math.random()-.5)*.8}); if(l>mx) mx=l; }, reinicia(){ mx=3; }, get mx(){ return mx; }}; },
+  hoje(){ const g=busMus(); let mod=null, parado=false;
+    import('./musica/lofi-espera.js').then(m=>{ if(parado) return; mod=m; const t=C.createGain(); t.gain.value=.95; t.connect(g); m.iniciarMusica(C,t); })
+      .catch(()=>{ document.querySelector('[data-m="hoje"] p').textContent='Não deu para carregar a música de hoje aqui (abra a página pelo endereço do jogo).'; });
+    return {para(){ parado=true; if(mod) mod.pararMusica(1); solta(g); }}; },
+};
+let MUS=null, musNome=null;
+function tocar(nome){ audio(); const igual=musNome===nome; if(MUS){ MUS.para(); MUS=null; musNome=null; }
+  if(!igual){ MUS=MUSICAS[nome](); musNome=nome; if(nome==='constel'&&!sim) liga(true); }
+  else if(nome==='constel'&&sim) liga(false);
+  marca(); }
+function marca(){ for(const b of document.querySelectorAll('[data-tocar]')) b.textContent=(b.dataset.tocar===musNome?'■ Parar':'▶ Tocar')+(b.dataset.tocar==='constel'&&b.dataset.tocar!==musNome?' (joga sozinho)':'');
+  for(const c of document.querySelectorAll('.card[data-m]')) c.classList.toggle('on',c.dataset.m===musNome); }
+document.querySelectorAll('[data-tocar]').forEach(b=>b.onclick=()=>tocar(b.dataset.tocar));
+document.getElementById('vozes').onclick=e=>{ vozes=!vozes; e.target.classList.toggle('on',vozes); if(vozes&&musNome!=='deriva') tocar('deriva'); };
+
+// ===================== efeitos: hoje x novo =====================
+const LINHAS=[
+  ['Arrasto','Cada vez que as peças deslizam. Hoje: um chiado de areia. Novo: um sopro curto, como um empurrão de foguete.',HOJE.arrastar,NOVO.arrastar],
+  ['Peça nova','A que nasce depois do arrasto. Hoje: sem som. Novo: um brilho baixinho.',null,NOVO.nasce],
+  ['Poucos arrastos','Quando sobram 5 ou menos. Hoje: sem aviso. Novo: o bipe de um sonar.',null,NOVO.poucos],
+  ['Lixo racha','Junção ao lado do lixo espacial. Hoje: sem som. Novo: metal trincando.',null,NOVO.racha],
+  ['Nebulosa some','Casa de nebulosa que se limpa. Hoje: sem som. Novo: uma nuvem que se desfaz.',null,NOVO.nebulosa],
+  ['Estrela','Cada estrela ganha no fim da fase. Hoje: sem som. Novo: três sininhos.',null,NOVO.estrela],
+  ['Vitória','Hoje: a fanfarra da venda da mina. Novo: um arpejo que sobe e abre num acorde.',HOJE.pagou,NOVO.vitoria],
+  ['Derrota','Hoje: um trombone triste, meio de deboche. Novo: a nave desligando.',HOJE.naoDeu,NOVO.derrota],
+  ['Botões','Toque nos botões das telas. Hoje: sem som. Novo: um bipe curto.',null,NOVO.botao],
+];
+const ef=document.getElementById('efeitos');
+for(const [n,d,h,v] of LINHAS){ const r=document.createElement('div'); r.className='ef';
+  r.innerHTML=`<div><b>${n}</b><small>${d}</small></div><button class="bt hoje"${h?'':' disabled'}>hoje</button><button class="bt">novo</button>`;
+  const [bh,bn]=r.querySelectorAll('button'); if(h) bh.onclick=()=>{ audio(); h(); }; bn.onclick=()=>{ audio(); v(); }; ef.appendChild(r); }
+
+// ===================== a escada =====================
+const ESC=['Poeira','Gelo','Rocha','Asteroide','Cometa','Plutão','Lua','Mercúrio','Marte','Vênus','Terra','Netuno','Urano','Saturno','Júpiter','Sol','Supernova','Galáxia'];
+const FAM={1:'miúdas: tilintam',6:'planetas: sinos',12:'gigantes: graves e longos',16:'estrelas e além'};
+const esc=document.getElementById('esc');
+ESC.forEach((n,i)=>{ const l=i+1; if(FAM[l]){ const f=document.createElement('div'); f.className='fam'; f.textContent=FAM[l]; esc.appendChild(f); }
+  const b=document.createElement('button'); b.innerHTML=`${n}<small>${2**l}</small>`; b.onclick=()=>{ audio(); NOVO.fundir(l); acende(l); }; esc.appendChild(b); });
+function acende(l){ const bs=esc.querySelectorAll('button'); bs.forEach(b=>b.classList.remove('toca')); bs[l-1].classList.add('toca'); }
+let escadaT=null;
+function escada(qual){ audio(); clearTimeout(escadaT); let l=1; const passo=()=>{ (qual==='novo'?NOVO:HOJE).fundir(l); acende(l); const espera=qual==='novo'&&l>=12?1500:750; if(++l<=18) escadaT=setTimeout(passo,espera); }; passo(); }
+document.getElementById('escHoje').onclick=()=>escada('hoje');
+document.getElementById('escNovo').onclick=()=>escada('novo');
+
+// ===================== partida simulada =====================
+let sim=false, simT=null, novos=true, mxSim=3, juntasSim=0;
+function liga(on){ sim=on; clearTimeout(simT); const b=document.getElementById('sim'); b.textContent=on?'■ Parar a partida':'▶ Simular partida'; b.classList.toggle('on',on);
+  if(on){ audio(); mxSim=3; juntasSim=0; if(MUS&&MUS.reinicia) MUS.reinicia(); jogada(); } else document.getElementById('estSim').textContent=''; }
+function jogada(){ if(!sim) return; const S=novos?NOVO:HOJE;
+  S.arrastar(); if(novos) NOVO.nasce();
+  if(Math.random()<.62){ const l=Math.max(1,Math.min(18,mxSim-((Math.random()*Math.random()*mxSim)|0))); juntaSim(l); if(Math.random()<.2) setTimeout(()=>juntaSim(Math.max(1,l-2)),45); }
+  simT=setTimeout(jogada,650+Math.random()*700); }
+function juntaSim(l){ (novos?NOVO:HOJE).fundir(l); if(MUS&&MUS.junta) MUS.junta(l); if(l===mxSim&&++juntasSim>=3){ juntasSim=0; mxSim++; } if(mxSim>16){ mxSim=3; if(MUS&&MUS.reinicia) MUS.reinicia(); }
+  const t=`planeta maior da partida: ${ESC[mxSim-1]}`; document.getElementById('estSim').textContent=t; document.getElementById('estC').textContent=musNome==='constel'?t:''; }
+document.getElementById('sim').onclick=()=>liga(!sim);
+const bN=document.getElementById('simNovo'), bH=document.getElementById('simHoje');
+bN.onclick=()=>{ novos=true; bN.classList.add('on'); bH.classList.remove('on'); };
+bH.onclick=()=>{ novos=false; bH.classList.add('on'); bN.classList.remove('on'); };
+// tocar no quadro: junta um planeta (na Constelação, a nota entra no tempo da música)
+const pad=document.getElementById('pad');
+pad.onpointerdown=()=>{ audio(); if(musNome!=='constel') tocar('constel'); const l=Math.max(1,(MUS.mx||3)-((Math.random()*3)|0)); NOVO.fundir(l); MUS.junta(l);
+  pad.classList.add('bate'); setTimeout(()=>pad.classList.remove('bate'),150); document.getElementById('estC').textContent=`juntou: ${ESC[l-1]}`; };
+</script>
+</body>
+</html>
