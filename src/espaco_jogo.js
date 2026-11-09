@@ -22,7 +22,7 @@ function espInicia(){ if(espIniciado) return; espIniciado=true; ESP.buildTexture
 function espCanvas(host, kx, ky, desenha){
   let cv=host.querySelector(':scope > canvas.esp');
   if(!cv){ cv=document.createElement('canvas'); cv.className='esp'; host.appendChild(cv); }
-  cv.style.setProperty('--kx',kx); cv.style.setProperty('--ky',ky); cv._kx=kx; cv._ky=ky; cv._d=desenha; cv._feito=false; cv._estatico=false; ESPC.add(cv); espInicia(); return cv;
+  cv.style.setProperty('--kx',kx); cv.style.setProperty('--ky',ky); cv._kx=kx; cv._ky=ky; cv._d=desenha; cv._feito=false; cv._estatico=false; cv._passo=0; ESPC.add(cv); espInicia(); return cv;
 }
 // medidor de desempenho: abra o jogo com ?fps no endereço para ver quadros por segundo e quanto cada parte custa
 const MEDE=/[?&]fps\b/.test(location.search);
@@ -43,17 +43,20 @@ function espLoop(ms){
   const p1=performance.now();
   // aparelho apertado (quadro passando de 9 ms em média): a malha passa a 30 quadros por segundo
   malhaVez=!malhaVez;
-  if(ceu && (custoMedio<9 || malhaVez) && document.body.classList.contains('modoCla') && $('#scrGame').classList.contains('on')) try{ malhaQuadro(t); }catch(e){ console.warn('malha',e); anotaErro('malha',e); }
+  const telaJogo=$('#scrGame').classList.contains('on');
+  if(ceu && (custoMedio<9 || malhaVez) && document.body.classList.contains('modoCla') && telaJogo) try{ malhaQuadro(t); }catch(e){ console.warn('malha',e); anotaErro('malha',e); }
   const p2=performance.now();
   if(ESPC.size){
     const cel=(typeof cellPx==='function'?cellPx():80)*ESP.DPR;
     for(const cv of ESPC){
       if(!cv.isConnected){ ESPC.delete(cv); continue; }
       if(cv._fw && cv.offsetParent===null) continue;   // canvas fixo escondido (tela fechada): não desenha
+      if(!cv._fw && !telaJogo) continue;   // peças do tabuleiro com a tela do jogo fechada (o Clássico deixa o tabuleiro montado ao ir ao menu)
       const W=cv._fw ? Math.round(cv._fw*ESP.DPR) : Math.max(8,Math.round(cel*cv._kx)), H=cv._fh ? Math.round(cv._fh*ESP.DPR) : Math.max(8,Math.round(cel*cv._ky));
       if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; cv._feito=false; }
       if(cv._estatico && cv._feito) continue;   // desenho que não muda com o tempo: o anterior continua valendo
-      const c=cv.getContext('2d'); c.clearRect(0,0,W,H); cv._d(c,W,H,cv._fw?W:cel,t); cv._feito=true;
+      if(cv._passo && cv._feito && t-cv._tq<cv._passo) continue;   // a pedrinha só muda de quadro a cada _passo: até lá o desenho é o mesmo
+      const c=cv.getContext('2d'); c.clearRect(0,0,W,H); cv._d(c,W,H,cv._fw?W:cel,t); cv._feito=true; cv._tq=t;
     }
   }
   const p3=performance.now();
@@ -121,6 +124,8 @@ function espTile(el,t){
     const redondo = T.t>0 && T.k!=='p' && ESP.byName(nomeNivelEsp(T.t)).kind==='sphere' && glAtivo();
     el._gl = redondo; c.canvas._estatico = redondo && T.c==null && !T.presa;   // só o brilho parado: não precisa redesenhar
     if(redondo){ if(temBrilho(T)) espBrilho(c,x,y,u,T.t); if(T.c!=null) espAura(c,x,y,u,tm,T.c); if(T.presa) ESP.SPR.gaiola(c,x,y,u,tm,'back'); if(T.c!=null||T.presa||temBrilho(T)) furaPlaneta(c,x,y,u,T); if(T.presa) ESP.SPR.gaiola(c,x,y,u,tm,'front'); return; }
+    // só a pedrinha (sem aura, gaiola, lixo ou buraco): ela troca de quadro a 20 por segundo, o canvas acompanha
+    c.canvas._passo = T.c==null && !T.presa && T.t>0 && T.k!=='p' ? ESP.PASSO_VAR : 0;
     if(temBrilho(T)) espBrilho(c,x,y,u,T.t);
     if(T.c!=null) espAura(c,x,y,u,tm,T.c);
     if(T.presa) ESP.SPR.gaiola(c,x,y,u,tm,'back');
