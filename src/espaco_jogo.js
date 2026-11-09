@@ -466,9 +466,9 @@ function espLogo(c,W,H,u,t){
     c.globalAlpha=1;
     corpos.filter(b=>(b.z<0)===(lado<0)).sort((a,b)=>a.z-b.z).forEach(b=>ESP.drawPeca(c,b.n,t,b.x,b.y,b.sz,1,true,.72+.28*(b.z+1)/2)); };
   poe(-1);
-  // nome: 2048 grande e STARS embaixo, espaçado
+  // nome: 2048 grande e ASTROS embaixo, espaçado
   c.save(); c.textAlign='center'; c.textBaseline='middle'; c.fillStyle='#f4fbff';
-  for(const [txt,px,dy,esp] of [['2048',78,-12,0],['STARS',27,40,.42]]){ c.font=`900 ${px*Q}px Orbitron, sans-serif`; if('letterSpacing' in c) c.letterSpacing=(esp*px*Q)+'px';
+  for(const [txt,px,dy,esp] of [['2048',78,-12,0],['ASTROS',27,40,.42]]){ c.font=`900 ${px*Q}px Orbitron, sans-serif`; if('letterSpacing' in c) c.letterSpacing=(esp*px*Q)+'px';
     c.shadowColor='rgba(110,230,255,.95)'; c.shadowBlur=26*Q; c.fillText(txt,cx+(esp*px*Q)/2,cy+dy*Q); c.shadowColor='rgba(230,100,255,.7)'; c.shadowBlur=10*Q; c.fillText(txt,cx+(esp*px*Q)/2,cy+dy*Q); }
   c.restore();
   poe(1);
@@ -487,7 +487,7 @@ function espMenu(){
   const on=espTela(), menu=$('#scrMenu'), tag=menu.querySelector('.tagline');
   if(TAG_MINA==null) TAG_MINA=tag.textContent;
   tag.textContent = on ? 'junte poeira até virar galáxia' : TAG_MINA;
-  document.title = on ? '2048 Stars' : 'Ptui!';
+  document.title = on ? '2048 Astros' : 'Ptui!';
   // no espaço: Jogar (sem progresso) ou Continuar (com progresso) e o Clássico (4x4 sem fim).
   // Começar do zero fica nas Opções ("Apagar o progresso"), para não competir com o Continuar.
   const tem=temProgresso(), r=MISS(), est=Object.values(r).reduce((a,x)=>a+(x.e||0),0);
@@ -500,7 +500,7 @@ function espMenu(){
   if(!$('#mInf')){ const b=document.createElement('button'); b.className='btn b big'; b.id='mInf'; b.innerHTML='Clássico<small>4x4 sem fim, até não caber mais nada</small>'; b.onclick=infinitoJoga; $('#mCla').after(b); }
   // o Clássico vem depois do Novo jogo e do Continuar
   $('#mSegue').after($('#mInf'));
-  // Como jogar: no espaço abre o do 2048 Stars; fora dele, o tutorial da mina
+  // Como jogar: no espaço abre o do 2048 Astros; fora dele, o tutorial da mina
   const tut=$('#mTut'); if(tut.onclick!==comoJogarEsp) TUT_MINA=tut.onclick; tut.onclick = on ? comoJogarEsp : TUT_MINA;
   if(!$('#mOpc')){ const b=document.createElement('button'); b.className='btn dim big'; b.id='mOpc'; b.textContent='Opções'; b.onclick=espOpcoes; tut.after(b); }
   $('#mOpc').style.display = on ? '' : 'none';
@@ -710,7 +710,7 @@ async function relatar(){
       aparelho:`${navigator.userAgent} · tela ${innerWidth}x${innerHeight} @${devicePixelRatio} · webgl ${GLON?'sim':'não'}`,
       estado:estadoDaPartida(), erros:ERROS_RECENTES.join('\n'), foto:(foto && $('#relComFoto')?.checked)?foto:''};
     const b=$('#relEnvia'); b.disabled=true;
-    if(!RELATO_URL){ const txt=`2048 Stars · ${tipo}\n${texto}\n\nOnde: ${d.onde}\nVersão: ${d.versao}\nAparelho: ${d.aparelho}`;
+    if(!RELATO_URL){ const txt=`2048 Astros · ${tipo}\n${texto}\n\nOnde: ${d.onde}\nVersão: ${d.versao}\nAparelho: ${d.aparelho}`;
       try{ await navigator.clipboard.writeText(txt); aviso.textContent='Copiado. Agora é só colar na conversa com o Guilherme.'; }catch(e){ aviso.textContent='Não deu para copiar.'; } b.disabled=false; return; }
     b.textContent='Enviando…';
     try{ await fetch(RELATO_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(d)});

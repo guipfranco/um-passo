@@ -16,7 +16,7 @@ const TRILHA = {menu:'lofi-prorroga', mapa:'armorial', mina:'lofi-espera', fisca
 const TRIM = {'armorial':.55, 'bossa':.7, 'lofi-prorroga':.95, 'lofi-espera':.95, 'lofi-segredo':1, 'sofrencia-lofi':1.1, 'orbita':1.6, 'estacao':1.55, 'pulsar':1.45};   // as eletrônicas medidas contra o lo-fi
 let music = localStorage.mina_music !== '0', MUS=null, musName=null, musKey=null, musBus=null, musFila=Promise.resolve();
 function trilha(k){ musKey=k; musFila=musFila.then(trocaMusica).catch(e=>console.warn(e)); }
-// no espaço (2048 Stars) as trilhas são eletrônicas: Estação no menu e na lista de fases, Órbita na Jornada, Pulsar no Clássico
+// no espaço (2048 Astros) as trilhas são eletrônicas: Estação no menu e na lista de fases, Órbita na Jornada, Pulsar no Clássico
 function qualTrilha(k){
   if(typeof espacoLigado==='function' && espacoLigado()){
     if(k==='menu' && (S?.phase==='lista' || document.getElementById('scrMenu')?.classList.contains('on'))) return 'estacao';   // a troca roda depois que a tela já mudou
@@ -94,7 +94,7 @@ const SFX = {
   naoDeu(){ [392,370,349,330].forEach((f,i)=>tone({f,to:i===3?260:null,t:i*.3,a:.02,d:i===3?.8:.26,v:.08,type:'sawtooth',lp:900})); },
 };
 
-// ===================== SONS DO ESPAÇO (2048 Stars) =====================
+// ===================== SONS DO ESPAÇO (2048 Astros) =====================
 // Aprovados no rascunho som.html (2026-11-09). Cada corpo tem o seu material: as miúdas tilintam, os planetas soam
 // como sinos, os gigantes são graves e longos, as estrelas explodem; dentro de cada família a nota sobe.
 // Têm eco (sala grande) e um pouco de repetição (delay); a mina continua com os sons dela.

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>2048 Stars · prévia para o WhatsApp (rascunho)</title>
+<title>2048 Astros · prévia para o WhatsApp (rascunho)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
@@ -38,10 +38,10 @@ h1{margin:4px 4px 0;font:900 19px Orbitron,sans-serif;letter-spacing:.04em;color
 <script>
 buildTextures();
 const OPS = [
-  {id:'A', nome:'A · Logo com planetas em órbita', titulo:'2048 Stars', frase:'Junte poeira até virar galáxia. Um 2048 com planetas em 3D.', desenha:opA},
-  {id:'B', nome:'B · Tabuleiro em jogo', titulo:'2048 Stars · jogue no navegador', frase:'Arraste, junte as iguais e veja a poeira virar planeta, estrela e galáxia.', desenha:opB},
-  {id:'C', nome:'C · A escada inteira', titulo:'2048 Stars', frase:'Da poeira à galáxia em 18 degraus. Até onde você chega?', desenha:opC},
-  {id:'D', nome:'D · Um planeta gigante', titulo:'2048 Stars', frase:'O 2048 no espaço: 96 fases e um modo sem fim. De graça, sem instalar.', desenha:opD},
+  {id:'A', nome:'A · Logo com planetas em órbita', titulo:'2048 Astros', frase:'Junte poeira até virar galáxia. Um 2048 com planetas em 3D.', desenha:opA},
+  {id:'B', nome:'B · Tabuleiro em jogo', titulo:'2048 Astros · jogue no navegador', frase:'Arraste, junte as iguais e veja a poeira virar planeta, estrela e galáxia.', desenha:opB},
+  {id:'C', nome:'C · A escada inteira', titulo:'2048 Astros', frase:'Da poeira à galáxia em 18 degraus. Até onde você chega?', desenha:opC},
+  {id:'D', nome:'D · Um planeta gigante', titulo:'2048 Astros', frase:'O 2048 no espaço: 120 fases e um modo sem fim. De graça, sem instalar.', desenha:opD},
 ];
 // ---------- peças de desenho ----------
 function ceu(c,W,H,seed=3){
@@ -55,7 +55,7 @@ function neon(c,txt,x,y,px,esp=0,cor='#f4fbff'){
   if('letterSpacing' in c) c.letterSpacing=(esp*px)+'px'; const dx=esp*px/2;
   c.shadowColor='rgba(110,230,255,.95)'; c.shadowBlur=px*.33; c.fillText(txt,x+dx,y); c.shadowColor='rgba(230,100,255,.7)'; c.shadowBlur=px*.13; c.fillText(txt,x+dx,y); c.restore();
 }
-function logo(c,x,y,k){ neon(c,'2048',x,y-12*k,78*k); neon(c,'STARS',x,y+40*k,27*k,.42); }
+function logo(c,x,y,k){ neon(c,'2048',x,y-12*k,78*k); neon(c,'ASTROS',x,y+40*k,27*k,.42); }
 function texto(c,txt,x,y,px,cor='#9fe9ff',esp=.18){ c.save(); c.textAlign='center'; c.textBaseline='middle'; c.font=`700 ${px}px 'Exo 2', sans-serif`; if('letterSpacing' in c) c.letterSpacing=(esp*px)+'px'; c.fillStyle=cor; c.fillText(txt,x+esp*px/2,y); c.restore(); }
 function casa(c,x,y,pa){ c.beginPath(); c.arc(x,y,pa*.39,0,7); c.fillStyle='rgba(16,12,38,.6)'; c.fill(); c.lineWidth=Math.max(1,pa*.012); c.strokeStyle='rgba(190,170,255,.28)'; c.stroke(); }
 const COR=['#d9c49a','#7fdcf0','#ff7a1e','#909cb2','#bfefff','#e9c3a0'];

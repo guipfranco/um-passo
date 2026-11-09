@@ -140,7 +140,7 @@ function dadosPartidas(volta){
   for(const [n,ok,us] of a){ const p=por[n]||(por[n]={t:0,v:0,us:[]}); p.t++; if(ok){ p.v++; p.us.push(us); } }
   const med=v=>{ if(!v.length) return '-'; const s=[...v].sort((x,y)=>x-y); return s[Math.floor(s.length/2)]; };
   const linhas=Object.keys(por).map(Number).sort((x,y)=>x-y).map(n=>{ const p=por[n]; return `Fase ${n}: ${p.v} de ${p.t} vencidas, mediana ${med(p.us)} arrastos (limite ${MISSOES[n-1]?.arrastos??'?'})`; });
-  const texto='2048 Stars, partidas da Jornada\n'+(linhas.join('\n')||'nenhuma partida ainda')+'\n\nbruto: '+JSON.stringify(a);
+  const texto='2048 Astros, partidas da Jornada\n'+(linhas.join('\n')||'nenhuma partida ainda')+'\n\nbruto: '+JSON.stringify(a);
   showOverlay(`<h2>Dados das partidas</h2><p>Ficam só neste aparelho. Copie e mande por mensagem.</p>
     <textarea id="dpTxt" readonly style="width:100%;height:180px;font-size:12px"></textarea>
     <button class="btn b" id="dpCopia">Copiar</button><button class="btn dim" id="dpVolta">Voltar</button>`);

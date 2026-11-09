@@ -4,19 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#0b0a18">
-<title>2048 Stars</title>
-<meta name="description" content="O 2048 no espaço: 96 fases e um modo sem fim. De graça, sem instalar.">
+<title>2048 Astros</title>
+<meta name="description" content="O 2048 no espaço: 120 fases e um modo sem fim. De graça, sem instalar.">
 <!-- prévia do link (WhatsApp e afins); a imagem sai de previa.html, opção D -->
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pt_BR">
 <meta property="og:url" content="https://guipfranco.github.io/um-passo/">
-<meta property="og:title" content="2048 Stars">
-<meta property="og:description" content="O 2048 no espaço: 96 fases e um modo sem fim. De graça, sem instalar.">
+<meta property="og:title" content="2048 Astros">
+<meta property="og:description" content="O 2048 no espaço: 120 fases e um modo sem fim. De graça, sem instalar.">
 <meta property="og:image" content="https://guipfranco.github.io/um-passo/previa.jpg">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="2048 Stars: o nome do jogo em neon ao lado de Saturno">
+<meta property="og:image:alt" content="2048 Astros: o nome do jogo em neon ao lado de Saturno">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -626,7 +626,7 @@ body.rola #stage{touch-action:none}
 <div id="coach" class="hidden"><div class="cav" id="coachAv"></div><div><p id="coachText"></p><button class="btn b" id="coachOk">Ok</button></div></div>
 
 <script>
-const VERSAO="6468543f";
+const VERSAO="d4607554";
 // ===================== CONFIG =====================
 let W = 4, H = 4, N = 4;      // largura e altura do tabuleiro (N = maior lado)
 const CFG = {
@@ -2905,7 +2905,7 @@ function dadosPartidas(volta){
   for(const [n,ok,us] of a){ const p=por[n]||(por[n]={t:0,v:0,us:[]}); p.t++; if(ok){ p.v++; p.us.push(us); } }
   const med=v=>{ if(!v.length) return '-'; const s=[...v].sort((x,y)=>x-y); return s[Math.floor(s.length/2)]; };
   const linhas=Object.keys(por).map(Number).sort((x,y)=>x-y).map(n=>{ const p=por[n]; return `Fase ${n}: ${p.v} de ${p.t} vencidas, mediana ${med(p.us)} arrastos (limite ${MISSOES[n-1]?.arrastos??'?'})`; });
-  const texto='2048 Stars, partidas da Jornada\n'+(linhas.join('\n')||'nenhuma partida ainda')+'\n\nbruto: '+JSON.stringify(a);
+  const texto='2048 Astros, partidas da Jornada\n'+(linhas.join('\n')||'nenhuma partida ainda')+'\n\nbruto: '+JSON.stringify(a);
   showOverlay(`<h2>Dados das partidas</h2><p>Ficam só neste aparelho. Copie e mande por mensagem.</p>
     <textarea id="dpTxt" readonly style="width:100%;height:180px;font-size:12px"></textarea>
     <button class="btn b" id="dpCopia">Copiar</button><button class="btn dim" id="dpVolta">Voltar</button>`);
@@ -4275,9 +4275,9 @@ function espLogo(c,W,H,u,t){
     c.globalAlpha=1;
     corpos.filter(b=>(b.z<0)===(lado<0)).sort((a,b)=>a.z-b.z).forEach(b=>ESP.drawPeca(c,b.n,t,b.x,b.y,b.sz,1,true,.72+.28*(b.z+1)/2)); };
   poe(-1);
-  // nome: 2048 grande e STARS embaixo, espaçado
+  // nome: 2048 grande e ASTROS embaixo, espaçado
   c.save(); c.textAlign='center'; c.textBaseline='middle'; c.fillStyle='#f4fbff';
-  for(const [txt,px,dy,esp] of [['2048',78,-12,0],['STARS',27,40,.42]]){ c.font=`900 ${px*Q}px Orbitron, sans-serif`; if('letterSpacing' in c) c.letterSpacing=(esp*px*Q)+'px';
+  for(const [txt,px,dy,esp] of [['2048',78,-12,0],['ASTROS',27,40,.42]]){ c.font=`900 ${px*Q}px Orbitron, sans-serif`; if('letterSpacing' in c) c.letterSpacing=(esp*px*Q)+'px';
     c.shadowColor='rgba(110,230,255,.95)'; c.shadowBlur=26*Q; c.fillText(txt,cx+(esp*px*Q)/2,cy+dy*Q); c.shadowColor='rgba(230,100,255,.7)'; c.shadowBlur=10*Q; c.fillText(txt,cx+(esp*px*Q)/2,cy+dy*Q); }
   c.restore();
   poe(1);
@@ -4296,7 +4296,7 @@ function espMenu(){
   const on=espTela(), menu=$('#scrMenu'), tag=menu.querySelector('.tagline');
   if(TAG_MINA==null) TAG_MINA=tag.textContent;
   tag.textContent = on ? 'junte poeira até virar galáxia' : TAG_MINA;
-  document.title = on ? '2048 Stars' : 'Ptui!';
+  document.title = on ? '2048 Astros' : 'Ptui!';
   // no espaço: Jogar (sem progresso) ou Continuar (com progresso) e o Clássico (4x4 sem fim).
   // Começar do zero fica nas Opções ("Apagar o progresso"), para não competir com o Continuar.
   const tem=temProgresso(), r=MISS(), est=Object.values(r).reduce((a,x)=>a+(x.e||0),0);
@@ -4309,7 +4309,7 @@ function espMenu(){
   if(!$('#mInf')){ const b=document.createElement('button'); b.className='btn b big'; b.id='mInf'; b.innerHTML='Clássico<small>4x4 sem fim, até não caber mais nada</small>'; b.onclick=infinitoJoga; $('#mCla').after(b); }
   // o Clássico vem depois do Novo jogo e do Continuar
   $('#mSegue').after($('#mInf'));
-  // Como jogar: no espaço abre o do 2048 Stars; fora dele, o tutorial da mina
+  // Como jogar: no espaço abre o do 2048 Astros; fora dele, o tutorial da mina
   const tut=$('#mTut'); if(tut.onclick!==comoJogarEsp) TUT_MINA=tut.onclick; tut.onclick = on ? comoJogarEsp : TUT_MINA;
   if(!$('#mOpc')){ const b=document.createElement('button'); b.className='btn dim big'; b.id='mOpc'; b.textContent='Opções'; b.onclick=espOpcoes; tut.after(b); }
   $('#mOpc').style.display = on ? '' : 'none';
@@ -4519,7 +4519,7 @@ async function relatar(){
       aparelho:`${navigator.userAgent} · tela ${innerWidth}x${innerHeight} @${devicePixelRatio} · webgl ${GLON?'sim':'não'}`,
       estado:estadoDaPartida(), erros:ERROS_RECENTES.join('\n'), foto:(foto && $('#relComFoto')?.checked)?foto:''};
     const b=$('#relEnvia'); b.disabled=true;
-    if(!RELATO_URL){ const txt=`2048 Stars · ${tipo}\n${texto}\n\nOnde: ${d.onde}\nVersão: ${d.versao}\nAparelho: ${d.aparelho}`;
+    if(!RELATO_URL){ const txt=`2048 Astros · ${tipo}\n${texto}\n\nOnde: ${d.onde}\nVersão: ${d.versao}\nAparelho: ${d.aparelho}`;
       try{ await navigator.clipboard.writeText(txt); aviso.textContent='Copiado. Agora é só colar na conversa com o Guilherme.'; }catch(e){ aviso.textContent='Não deu para copiar.'; } b.disabled=false; return; }
     b.textContent='Enviando…';
     try{ await fetch(RELATO_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(d)});
@@ -4609,7 +4609,7 @@ const TRILHA = {menu:'lofi-prorroga', mapa:'armorial', mina:'lofi-espera', fisca
 const TRIM = {'armorial':.55, 'bossa':.7, 'lofi-prorroga':.95, 'lofi-espera':.95, 'lofi-segredo':1, 'sofrencia-lofi':1.1, 'orbita':1.6, 'estacao':1.55, 'pulsar':1.45};   // as eletrônicas medidas contra o lo-fi
 let music = localStorage.mina_music !== '0', MUS=null, musName=null, musKey=null, musBus=null, musFila=Promise.resolve();
 function trilha(k){ musKey=k; musFila=musFila.then(trocaMusica).catch(e=>console.warn(e)); }
-// no espaço (2048 Stars) as trilhas são eletrônicas: Estação no menu e na lista de fases, Órbita na Jornada, Pulsar no Clássico
+// no espaço (2048 Astros) as trilhas são eletrônicas: Estação no menu e na lista de fases, Órbita na Jornada, Pulsar no Clássico
 function qualTrilha(k){
   if(typeof espacoLigado==='function' && espacoLigado()){
     if(k==='menu' && (S?.phase==='lista' || document.getElementById('scrMenu')?.classList.contains('on'))) return 'estacao';   // a troca roda depois que a tela já mudou
@@ -4687,7 +4687,7 @@ const SFX = {
   naoDeu(){ [392,370,349,330].forEach((f,i)=>tone({f,to:i===3?260:null,t:i*.3,a:.02,d:i===3?.8:.26,v:.08,type:'sawtooth',lp:900})); },
 };
 
-// ===================== SONS DO ESPAÇO (2048 Stars) =====================
+// ===================== SONS DO ESPAÇO (2048 Astros) =====================
 // Aprovados no rascunho som.html (2026-11-09). Cada corpo tem o seu material: as miúdas tilintam, os planetas soam
 // como sinos, os gigantes são graves e longos, as estrelas explodem; dentro de cada família a nota sobe.
 // Têm eco (sala grande) e um pouco de repetição (delay); a mina continua com os sons dela.
