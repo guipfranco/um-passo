@@ -338,6 +338,7 @@ function missoesLista(){
   mb.querySelector('.mNo.atual')?.scrollIntoView({block:'center'});
 }
 function missaoInfo(n){
+  if(espFig()) return entradaEsp(n);   // no espaço, a entrada nova (espaco_jogo.js)
   const m=MISSOES[n-1], fase=faseDe(m), fm=formaDe(m), b=MISS()[n], sv=faseSalva(n);
   const explica=[];
   if(fase!=='comum' && fase!=='caverna' || n===1) explica.push(PATHS[fase].como||PATHS[fase].desc);

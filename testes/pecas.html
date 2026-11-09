@@ -46,7 +46,7 @@ f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEven
   await joga(30); for(let i=0;i<10 && !w.eval('overlayOpen()');i++) await wait(200);
   log.push('resultado: '+(q('#panel h2')?.textContent||'-')+' salvo='+w.eval('localStorage.mina_missoes'));
   // tela de cada fase abre sem erro
-  const tot=w.eval('MISSOES.length'); let ok=0; for(let n=1;n<=tot;n++){ w.eval(`missaoInfo(${n})`); if(q('#panel h2')?.textContent==='Fase '+n) ok++; }
+  const tot=w.eval('MISSOES.length'); let ok=0; for(let n=1;n<=tot;n++){ w.eval(`missaoInfo(${n})`); if(q('#panel h2')?.textContent==='Fase '+n || q('#panel .ent .num')?.textContent==='FASE '+n) ok++; }
   log.push('aberturas sem erro: '+ok+'/'+tot);
  }catch(e){errs.push('EXC '+e.message+' '+(e.stack||'').split(String.fromCharCode(10)).slice(1,6).join(' <- '))}
  out.textContent=JSON.stringify({log,errs},null,1);};

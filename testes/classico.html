@@ -19,7 +19,7 @@ f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEven
   q('#mCla').click(); await wait(100);
   log.push(`lista: grupos=${d.querySelectorAll('.mGrupo').length} fases=${d.querySelectorAll('.mNo').length} travadas=${d.querySelectorAll('.mNo.trava').length} atual=${q('.mNo.atual')?.dataset.m}`);
   q('[data-m="1"]').click(); await wait(50);
-  log.push('abertura: '+q('#panel h2').textContent+' · '+q('.objetivo').textContent.replace(/\s+/g,' ').trim()+' · '+q('#panel .metas').textContent);
+  log.push('abertura: '+q('#panel h2').textContent+' · '+(q('.objetivo')||q('.ent .meta')||q('.ent .metasL')).textContent.replace(/\s+/g,' ').trim()+' · '+(q('#panel .metas')||q('.ent .estr3')).textContent.replace(/\s+/g,' ').trim());
   if(MODE==='abertura'){ out.textContent='ok'; return; }
   q('#mJoga').click(); await wait(500);
   const vis=s=>w.getComputedStyle(q(s)).display!=='none';

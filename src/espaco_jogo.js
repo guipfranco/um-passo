@@ -494,9 +494,9 @@ function espOpcoes(){
     <button class="btn dim" id="oMus">Música: ${music?'ligada':'desligada'}</button>
     <button class="btn dim" id="oSnd">Efeitos sonoros: ${sound?'ligados':'desligados'}</button>
     <button class="btn dim" id="oCred">Créditos</button>
-    <button class="btn dim" id="oRel">Relatar bug ou sugestão</button>
+    ${RELATO_URL?'<button class="btn dim" id="oRel">Relatar bug ou sugestão</button>':''}
     <button class="btn b" id="oOk">Voltar</button>`);
-  $('#oRel').onclick=relatar;
+  if($('#oRel')) $('#oRel').onclick=relatar;
   $('#oMus').onclick=()=>{ toggleMusic(); espOpcoes(); };
   $('#oSnd').onclick=()=>{ toggleSound(); espOpcoes(); };
   $('#oCred').onclick=()=>{ showOverlay(`<h2>Créditos</h2><ul>
@@ -658,4 +658,45 @@ async function relatar(){
       showOverlay(`<h2>Obrigado!</h2><p>Chegou. Cada relato ajuda a deixar o jogo melhor.</p><button class="btn g" id="relOk">Voltar ao jogo</button>`); FORA=hideOverlay; $('#relOk').onclick=hideOverlay;
     }catch(e){ anotaErro('envio', e); b.disabled=false; b.textContent='Tentar de novo'; aviso.textContent='Não deu para enviar (sem internet?). Tente de novo daqui a pouco.'; }
   };
+}
+
+// ---------- entrada da fase (jeito A do rascunho entrada.html, escolhido em 2026-11-09) ----------
+// Uma coluna com respiro: número e nome da fase, o planeta grande com o "×N", a meta numa linha, a receita em ícones,
+// tamanho e arrastos em etiquetas, as estrelas em três caixinhas (as já ganhas acesas) e um botão só. O Voltar é o ✕
+// (tocar fora também fecha). A explicação longa só aparece na fase em que a novidade estreia; nas outras ela fica
+// guardada num "como funciona" que abre com um toque.
+let ESTREIA=null;   // texto da explicação -> fase em que ela aparece pela primeira vez
+function estreiaDe(txt){
+  if(!ESTREIA){ ESTREIA=new Map(); MISSOES.forEach((m,i)=>{ for(const t of explicaEsp(m)) if(!ESTREIA.has(t)) ESTREIA.set(t,i+1); }); }
+  return ESTREIA.get(txt)||0;
+}
+function entradaEsp(n){
+  const m=MISSOES[n-1], b=MISS()[n], sv=faseSalva(n), ms=metasDe(m), proib=objsDe(m).find(o=>o.proibido), fase=faseDe(m), fm=formaDe(m), np=PATHS[fase].n;
+  const um=ms.length===1 && !proib, o=ms[0], tA=tAlvo(m), qtd=um ? (o.n||o.terra||o.rache||o.solte||1) : 0;
+  const tam=fm?`${fw(fm)}x${fh(fm)}`:`${m.w||np||4}x${m.h||m.w||np||4}`;
+  const chips=[tam, m.livre?'sem limite de arrastos':arrastosTxt(m)];
+  if(m.regras?.spawns===0) chips.push('quebra-cabeça'); if(charDe(m)==='passinho') chips.push('Passinho');
+  const est = m.livre ? (()=>{ const [t2,t3]=tetoEst(m); return ['cumprir',`até ${t2} arrastos`,`até ${t3} arrastos`]; })()
+                      : ['cumprir',`sobrando ${m.estrelas[0]}`,`sobrando ${m.estrelas[1]}`];
+  const exp=explicaEsp(m), novas=exp.filter(t=>estreiaDe(t)===n), velhas=exp.filter(t=>estreiaDe(t)!==n);
+  const metas = um ? `<div class="meta">${objetivoTxt(o)}</div>`
+    : `<div class="metasL">${ms.map(x=>`<div>${iconeObj(x)}<span>${objetivoTxt(x)}</span></div>`).join('')}${proib?`<div class="proib">${iconeObj(proib)}<span>Não forme ${artigo(rockName(proib.proibido))} ${rockName(proib.proibido)}</span></div>`:''}</div>`;
+  const receita = um && o.forme>=2 ? `<div class="rec">${icoPlaneta(o.forme-1)}<i>+</i>${icoPlaneta(o.forme-1)}<i>=</i>${icoPlaneta(o.forme)}</div>` : '';
+  const passinho = b?.e && charDe(m)!=='passinho', ganhou=b?.e||0;
+  showOverlay(`<div class="ent"><button class="fecha" id="mVolta" aria-label="Voltar">✕</button>
+    <div class="num">FASE ${n}</div><h2>${nomeFaseCla(n)}${m.chefe?' · fim do mundo':''}</h2>
+    ${tA?`<div class="pl"><canvas id="espInfo"></canvas>${um&&qtd>1&&!o.pontos?`<b class="xN">×${qtd}</b>`:''}</div>`:''}
+    ${metas}${receita}
+    <div class="chips">${chips.map(c=>`<span>${c}</span>`).join('')}</div>
+    <div class="estr3">${est.map((t,i)=>`<div class="${i<ganhou?'ok':''}"><b>${'★'.repeat(i+1)}</b><small>${t}</small></div>`).join('')}</div>
+    ${novas.map(t=>`<div class="novo"><i>NOVO</i>${t}</div>`).join('')}
+    ${velhas.length?`<details class="lembra"><summary>como funciona</summary>${velhas.map(t=>`<p>${t}</p>`).join('')}</details>`:''}
+    ${sv?`<button class="btn g" id="mCont">Continuar</button><button class="btn dim pequeno" id="mJoga">começar de novo</button>`:'<button class="btn g" id="mJoga">Jogar</button>'}
+    ${passinho?`<button class="btn dim pequeno" id="mPass">${b.pm?'jogar de novo no Passinho':'jogar no Passinho (medalha)'}</button>`:''}
+  </div>`);
+  FORA=hideOverlay; $('#mVolta').onclick=hideOverlay;
+  $('#mJoga').onclick=()=>missaoJoga(n);
+  if($('#mCont')) $('#mCont').onclick=()=>missaoJoga(n,{retoma:true});
+  if($('#mPass')) $('#mPass').onclick=()=>missaoJoga(n,{passinho:true});
+  if(tA) espPlanetaGrande($('#espInfo'),tA,'info');
 }

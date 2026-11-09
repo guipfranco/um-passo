@@ -152,6 +152,37 @@ body.espaco .tile .face{width:100% !important;height:100% !important;margin:0 !i
 #glPlan{display:none;position:absolute;left:calc(-1*var(--cell));top:calc(-1*var(--cell));width:calc(100% + 2*var(--cell));height:calc(100% + 2*var(--cell));pointer-events:none;z-index:5}
 body.espaco #glPlan{display:block}
 .relato{display:flex;flex-direction:column;gap:10px}
+body.espaco .panel:has(.ent){padding:18px 16px 16px}
+.ent{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;width:100%}
+.ent .fecha{position:absolute;right:-6px;top:-8px;width:36px;height:36px;border-radius:50%;border:1.5px solid rgba(207,198,255,.45);background:rgba(10,8,25,.55);color:#cfc6ff;font-size:16px;cursor:pointer;z-index:2}
+.ent .num{font:900 12px Orbitron,sans-serif;letter-spacing:.2em;color:#6fe0ff}
+body.espaco .ent h2{margin:0;font:800 23px 'Exo 2',sans-serif;letter-spacing:0;color:#fff;padding:0 30px}
+.ent .pl{position:relative;line-height:0}
+.ent .xN{position:absolute;right:-26px;bottom:6px;font:900 26px Orbitron,sans-serif;color:#ffd36e;text-shadow:0 0 12px #ffd36e88}
+.ent .meta{font:700 18px 'Exo 2',sans-serif;color:#fff}
+.ent .rec{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.05)}
+.ent .rec .ico{width:24px;height:24px}
+.ent .rec i{font-style:normal;color:#a49bd6;font-weight:700}
+.ent .chips{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.ent .chips span{padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);font:600 12.5px 'Exo 2',sans-serif;color:#d8d0f0}
+.ent .estr3{display:flex;gap:6px;width:100%}
+.ent .estr3>div{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:6px 2px}
+.ent .estr3 b{display:block;color:rgba(255,255,255,.35);font-size:14px;letter-spacing:1px}
+.ent .estr3 .ok b{color:#ffd36e;text-shadow:0 0 8px #ffd36e88}
+.ent .estr3 small{font-size:11.5px;color:#b9a9d9}
+.ent .novo{width:100%;text-align:left;background:rgba(110,230,255,.08);border:1px solid rgba(110,230,255,.35);border-radius:12px;padding:8px 10px;font-size:13.5px;line-height:1.35;color:#d8e6f2}
+.ent .novo i{font-style:normal;font:900 10px Orbitron,sans-serif;letter-spacing:.12em;color:#0b0a18;background:#6fe0ff;border-radius:6px;padding:2px 6px;margin-right:6px}
+.ent .lembra{width:100%;font-size:13px;color:#b9a9d9;text-align:left}
+.ent .lembra summary{cursor:pointer;text-align:center;color:#6fe0ff;font-weight:600;list-style:none}
+.ent .lembra summary::-webkit-details-marker{display:none}
+.ent .lembra summary::before{content:'ⓘ '}
+.ent .lembra p{margin:6px 0 0;font-size:13px !important;color:#cfc4e6 !important}
+.ent .btn{width:100%;margin:0}
+.ent .btn.pequeno{padding:6px !important;font-size:12px !important;letter-spacing:.06em;border-width:1.5px !important;box-shadow:none !important}
+.ent .metasL{display:flex;flex-direction:column;gap:6px;width:100%}
+.ent .metasL>div{display:flex;align-items:center;gap:8px;text-align:left;font-size:15px;color:#f3eefc}
+.ent .metasL svg,.ent .metasL .ico{width:30px;height:30px;flex:none}
+.ent .proib span{color:#ff9a8a}
 .relTipo{display:flex;gap:8px}.relTipo .btn{flex:1;margin:0;padding:8px !important}
 .relato textarea{width:100%;border-radius:12px;border:1.5px solid rgba(255,255,255,.18);background:rgba(10,8,25,.6);color:#f3eefc;font:500 16px 'Exo 2',sans-serif;padding:10px;resize:vertical}
 .relFoto{display:flex;align-items:center;gap:10px;font-size:14px;color:#cfc4e6;cursor:pointer}
@@ -593,7 +624,7 @@ body.rola #stage{touch-action:none}
 <div id="coach" class="hidden"><div class="cav" id="coachAv"></div><div><p id="coachText"></p><button class="btn b" id="coachOk">Ok</button></div></div>
 
 <script>
-const VERSAO="964ad02a";
+const VERSAO="6e3cd6c0";
 // ===================== CONFIG =====================
 let W = 4, H = 4, N = 4;      // largura e altura do tabuleiro (N = maior lado)
 const CFG = {
@@ -2640,7 +2671,7 @@ function pauseMenu(){
     ${E ? '' : '<button class="btn dim" id="pRules">Regras rápidas</button><button class="btn dim" id="pPedras">Pedrinhas</button>'}
     <button class="btn dim" id="pMusic">${music?'Desligar a música':'Ligar a música'}</button>
     <button class="btn dim" id="pSound">${sound?'Desligar os efeitos':'Ligar os efeitos'}</button>
-    ${E ? '<button class="btn dim" id="pRel">Relatar bug ou sugestão</button>' : ''}
+    ${E && RELATO_URL ? '<button class="btn dim" id="pRel">Relatar bug ou sugestão</button>' : ''}
     <button class="btn" id="pExit">${S.missao?'Voltar às fases':'Sair para o menu'}</button>
     ${inDay && !cla?'<p style="font-size:13px">Sair agora recomeça o dia.</p>':''}`);
   $('#pCont').onclick=hideOverlay; FORA=hideOverlay; if($('#pRel')) $('#pRel').onclick=relatar;
@@ -3070,6 +3101,7 @@ function missoesLista(){
   mb.querySelector('.mNo.atual')?.scrollIntoView({block:'center'});
 }
 function missaoInfo(n){
+  if(espFig()) return entradaEsp(n);   // no espaço, a entrada nova (espaco_jogo.js)
   const m=MISSOES[n-1], fase=faseDe(m), fm=formaDe(m), b=MISS()[n], sv=faseSalva(n);
   const explica=[];
   if(fase!=='comum' && fase!=='caverna' || n===1) explica.push(PATHS[fase].como||PATHS[fase].desc);
@@ -4267,9 +4299,9 @@ function espOpcoes(){
     <button class="btn dim" id="oMus">Música: ${music?'ligada':'desligada'}</button>
     <button class="btn dim" id="oSnd">Efeitos sonoros: ${sound?'ligados':'desligados'}</button>
     <button class="btn dim" id="oCred">Créditos</button>
-    <button class="btn dim" id="oRel">Relatar bug ou sugestão</button>
+    ${RELATO_URL?'<button class="btn dim" id="oRel">Relatar bug ou sugestão</button>':''}
     <button class="btn b" id="oOk">Voltar</button>`);
-  $('#oRel').onclick=relatar;
+  if($('#oRel')) $('#oRel').onclick=relatar;
   $('#oMus').onclick=()=>{ toggleMusic(); espOpcoes(); };
   $('#oSnd').onclick=()=>{ toggleSound(); espOpcoes(); };
   $('#oCred').onclick=()=>{ showOverlay(`<h2>Créditos</h2><ul>
@@ -4431,6 +4463,47 @@ async function relatar(){
       showOverlay(`<h2>Obrigado!</h2><p>Chegou. Cada relato ajuda a deixar o jogo melhor.</p><button class="btn g" id="relOk">Voltar ao jogo</button>`); FORA=hideOverlay; $('#relOk').onclick=hideOverlay;
     }catch(e){ anotaErro('envio', e); b.disabled=false; b.textContent='Tentar de novo'; aviso.textContent='Não deu para enviar (sem internet?). Tente de novo daqui a pouco.'; }
   };
+}
+
+// ---------- entrada da fase (jeito A do rascunho entrada.html, escolhido em 2026-11-09) ----------
+// Uma coluna com respiro: número e nome da fase, o planeta grande com o "×N", a meta numa linha, a receita em ícones,
+// tamanho e arrastos em etiquetas, as estrelas em três caixinhas (as já ganhas acesas) e um botão só. O Voltar é o ✕
+// (tocar fora também fecha). A explicação longa só aparece na fase em que a novidade estreia; nas outras ela fica
+// guardada num "como funciona" que abre com um toque.
+let ESTREIA=null;   // texto da explicação -> fase em que ela aparece pela primeira vez
+function estreiaDe(txt){
+  if(!ESTREIA){ ESTREIA=new Map(); MISSOES.forEach((m,i)=>{ for(const t of explicaEsp(m)) if(!ESTREIA.has(t)) ESTREIA.set(t,i+1); }); }
+  return ESTREIA.get(txt)||0;
+}
+function entradaEsp(n){
+  const m=MISSOES[n-1], b=MISS()[n], sv=faseSalva(n), ms=metasDe(m), proib=objsDe(m).find(o=>o.proibido), fase=faseDe(m), fm=formaDe(m), np=PATHS[fase].n;
+  const um=ms.length===1 && !proib, o=ms[0], tA=tAlvo(m), qtd=um ? (o.n||o.terra||o.rache||o.solte||1) : 0;
+  const tam=fm?`${fw(fm)}x${fh(fm)}`:`${m.w||np||4}x${m.h||m.w||np||4}`;
+  const chips=[tam, m.livre?'sem limite de arrastos':arrastosTxt(m)];
+  if(m.regras?.spawns===0) chips.push('quebra-cabeça'); if(charDe(m)==='passinho') chips.push('Passinho');
+  const est = m.livre ? (()=>{ const [t2,t3]=tetoEst(m); return ['cumprir',`até ${t2} arrastos`,`até ${t3} arrastos`]; })()
+                      : ['cumprir',`sobrando ${m.estrelas[0]}`,`sobrando ${m.estrelas[1]}`];
+  const exp=explicaEsp(m), novas=exp.filter(t=>estreiaDe(t)===n), velhas=exp.filter(t=>estreiaDe(t)!==n);
+  const metas = um ? `<div class="meta">${objetivoTxt(o)}</div>`
+    : `<div class="metasL">${ms.map(x=>`<div>${iconeObj(x)}<span>${objetivoTxt(x)}</span></div>`).join('')}${proib?`<div class="proib">${iconeObj(proib)}<span>Não forme ${artigo(rockName(proib.proibido))} ${rockName(proib.proibido)}</span></div>`:''}</div>`;
+  const receita = um && o.forme>=2 ? `<div class="rec">${icoPlaneta(o.forme-1)}<i>+</i>${icoPlaneta(o.forme-1)}<i>=</i>${icoPlaneta(o.forme)}</div>` : '';
+  const passinho = b?.e && charDe(m)!=='passinho', ganhou=b?.e||0;
+  showOverlay(`<div class="ent"><button class="fecha" id="mVolta" aria-label="Voltar">✕</button>
+    <div class="num">FASE ${n}</div><h2>${nomeFaseCla(n)}${m.chefe?' · fim do mundo':''}</h2>
+    ${tA?`<div class="pl"><canvas id="espInfo"></canvas>${um&&qtd>1&&!o.pontos?`<b class="xN">×${qtd}</b>`:''}</div>`:''}
+    ${metas}${receita}
+    <div class="chips">${chips.map(c=>`<span>${c}</span>`).join('')}</div>
+    <div class="estr3">${est.map((t,i)=>`<div class="${i<ganhou?'ok':''}"><b>${'★'.repeat(i+1)}</b><small>${t}</small></div>`).join('')}</div>
+    ${novas.map(t=>`<div class="novo"><i>NOVO</i>${t}</div>`).join('')}
+    ${velhas.length?`<details class="lembra"><summary>como funciona</summary>${velhas.map(t=>`<p>${t}</p>`).join('')}</details>`:''}
+    ${sv?`<button class="btn g" id="mCont">Continuar</button><button class="btn dim pequeno" id="mJoga">começar de novo</button>`:'<button class="btn g" id="mJoga">Jogar</button>'}
+    ${passinho?`<button class="btn dim pequeno" id="mPass">${b.pm?'jogar de novo no Passinho':'jogar no Passinho (medalha)'}</button>`:''}
+  </div>`);
+  FORA=hideOverlay; $('#mVolta').onclick=hideOverlay;
+  $('#mJoga').onclick=()=>missaoJoga(n);
+  if($('#mCont')) $('#mCont').onclick=()=>missaoJoga(n,{retoma:true});
+  if($('#mPass')) $('#mPass').onclick=()=>missaoJoga(n,{passinho:true});
+  if(tA) espPlanetaGrande($('#espInfo'),tA,'info');
 }
 function setBanner(title,sub){ if(title!==null) $('#bTitle').innerHTML=enrich(title); $('#bSub').innerHTML=enrich(sub||''); }
 function anim(id,name){ const el=els.get(id); if(!el) return; const f=el.firstChild; f.classList.remove(name); void f.offsetWidth; f.classList.add(name); }

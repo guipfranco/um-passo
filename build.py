@@ -47,6 +47,37 @@ body.espaco .tile .face{width:100% !important;height:100% !important;margin:0 !i
 #glPlan{display:none;position:absolute;left:calc(-1*var(--cell));top:calc(-1*var(--cell));width:calc(100% + 2*var(--cell));height:calc(100% + 2*var(--cell));pointer-events:none;z-index:5}
 body.espaco #glPlan{display:block}
 .relato{display:flex;flex-direction:column;gap:10px}
+body.espaco .panel:has(.ent){padding:18px 16px 16px}
+.ent{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;width:100%}
+.ent .fecha{position:absolute;right:-6px;top:-8px;width:36px;height:36px;border-radius:50%;border:1.5px solid rgba(207,198,255,.45);background:rgba(10,8,25,.55);color:#cfc6ff;font-size:16px;cursor:pointer;z-index:2}
+.ent .num{font:900 12px Orbitron,sans-serif;letter-spacing:.2em;color:#6fe0ff}
+body.espaco .ent h2{margin:0;font:800 23px 'Exo 2',sans-serif;letter-spacing:0;color:#fff;padding:0 30px}
+.ent .pl{position:relative;line-height:0}
+.ent .xN{position:absolute;right:-26px;bottom:6px;font:900 26px Orbitron,sans-serif;color:#ffd36e;text-shadow:0 0 12px #ffd36e88}
+.ent .meta{font:700 18px 'Exo 2',sans-serif;color:#fff}
+.ent .rec{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.05)}
+.ent .rec .ico{width:24px;height:24px}
+.ent .rec i{font-style:normal;color:#a49bd6;font-weight:700}
+.ent .chips{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.ent .chips span{padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);font:600 12.5px 'Exo 2',sans-serif;color:#d8d0f0}
+.ent .estr3{display:flex;gap:6px;width:100%}
+.ent .estr3>div{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:6px 2px}
+.ent .estr3 b{display:block;color:rgba(255,255,255,.35);font-size:14px;letter-spacing:1px}
+.ent .estr3 .ok b{color:#ffd36e;text-shadow:0 0 8px #ffd36e88}
+.ent .estr3 small{font-size:11.5px;color:#b9a9d9}
+.ent .novo{width:100%;text-align:left;background:rgba(110,230,255,.08);border:1px solid rgba(110,230,255,.35);border-radius:12px;padding:8px 10px;font-size:13.5px;line-height:1.35;color:#d8e6f2}
+.ent .novo i{font-style:normal;font:900 10px Orbitron,sans-serif;letter-spacing:.12em;color:#0b0a18;background:#6fe0ff;border-radius:6px;padding:2px 6px;margin-right:6px}
+.ent .lembra{width:100%;font-size:13px;color:#b9a9d9;text-align:left}
+.ent .lembra summary{cursor:pointer;text-align:center;color:#6fe0ff;font-weight:600;list-style:none}
+.ent .lembra summary::-webkit-details-marker{display:none}
+.ent .lembra summary::before{content:'ⓘ '}
+.ent .lembra p{margin:6px 0 0;font-size:13px !important;color:#cfc4e6 !important}
+.ent .btn{width:100%;margin:0}
+.ent .btn.pequeno{padding:6px !important;font-size:12px !important;letter-spacing:.06em;border-width:1.5px !important;box-shadow:none !important}
+.ent .metasL{display:flex;flex-direction:column;gap:6px;width:100%}
+.ent .metasL>div{display:flex;align-items:center;gap:8px;text-align:left;font-size:15px;color:#f3eefc}
+.ent .metasL svg,.ent .metasL .ico{width:30px;height:30px;flex:none}
+.ent .proib span{color:#ff9a8a}
 .relTipo{display:flex;gap:8px}.relTipo .btn{flex:1;margin:0;padding:8px !important}
 .relato textarea{width:100%;border-radius:12px;border:1.5px solid rgba(255,255,255,.18);background:rgba(10,8,25,.6);color:#f3eefc;font:500 16px 'Exo 2',sans-serif;padding:10px;resize:vertical}
 .relFoto{display:flex;align-items:center;gap:10px;font-size:14px;color:#cfc4e6;cursor:pointer}

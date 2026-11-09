@@ -1363,7 +1363,7 @@ function pauseMenu(){
     ${E ? '' : '<button class="btn dim" id="pRules">Regras rápidas</button><button class="btn dim" id="pPedras">Pedrinhas</button>'}
     <button class="btn dim" id="pMusic">${music?'Desligar a música':'Ligar a música'}</button>
     <button class="btn dim" id="pSound">${sound?'Desligar os efeitos':'Ligar os efeitos'}</button>
-    ${E ? '<button class="btn dim" id="pRel">Relatar bug ou sugestão</button>' : ''}
+    ${E && RELATO_URL ? '<button class="btn dim" id="pRel">Relatar bug ou sugestão</button>' : ''}
     <button class="btn" id="pExit">${S.missao?'Voltar às fases':'Sair para o menu'}</button>
     ${inDay && !cla?'<p style="font-size:13px">Sair agora recomeça o dia.</p>':''}`);
   $('#pCont').onclick=hideOverlay; FORA=hideOverlay; if($('#pRel')) $('#pRel').onclick=relatar;
