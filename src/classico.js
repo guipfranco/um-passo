@@ -94,7 +94,6 @@ function contaMissao(r){
     if(o.solta){ S.soltas=(S.soltas||0)+1; delete o.solta; }
   }
   if((S.terra?.size||0)<neb) SFX.nebulosa();
-  // casa marcada de levar: basta uma pedrinha do tamanho pedido (ou maior) parar em cima
   // casa de levar: vale só se exatamente a peça pedida CHEGAR andando. Junção em cima da casa não conta, nem quando a
   // peça formada ali fica parada nos arrastos seguintes (a.ocup lembra quem já estava na casa)
   { const juntou=new Set(r.merges.map(o=>o.id));
@@ -162,6 +161,8 @@ function restauraFase(st){
   for(const el of els.values()) el.remove(); els.clear(); limpaMarcas();
   for(const k of CAMPOS_SAVE) if(st[k]!==undefined) S[k]=st[k];
   S.terra=new Set(st.terra||[]);
+  // depois de reabrir o app o contador de peças volta a 1: segue depois das peças salvas, senão as novas repetem o id delas
+  for(const t of S.tiles){ const k=+String(t.id).slice(1); if(k>=nextId) nextId=k+1; }
 }
 
 // ---------- peças do Clássico no tabuleiro ----------
@@ -172,12 +173,15 @@ function montaPecasMissao(m){
   const livres=f=>{ const out=[]; for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(!wallAt(x,y) && !usados.has(x+','+y) && (!f||f(x,y))) out.push({x,y}); return shuffle(out); };
   const pega=f=>{ const c=livres(f)[0]; if(c) usados.add(c.x+','+c.y); return c; };
   const borda=(x,y)=>[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>!inside(x+dx,y+dy) || S.walls.some(w=>w.v && w.x===x+dx && w.y===y+dy));
+  // peça sorteada que nasceu na casa fixa do planeta preso vai para outra casa livre (senão ficam duas na mesma casa)
+  const tiraDaCasa=c=>{ const q=S.tiles.find(t=>t.x===c.x && t.y===c.y); if(!q) return; const l=livres()[0]; els.get(q.id)?.remove(); els.delete(q.id);
+    if(l){ usados.add(l.x+','+l.y); q.x=l.x; q.y=l.y; } else S.tiles=S.tiles.filter(t=>t!==q); };
   for(const o of objsDe(m)){
     const fixo=(lista,i)=>{ const q=lista?.[i]; if(!q) return null; usados.add(q[0]+','+q[1]); return {x:q[0],y:q[1]}; };   // posições fixas (quebra-cabeças)
     if(o.carrinho){ const c=fixo(m.carroPos&&[m.carroPos],0)||pega(borda); if(c) S.carro={x:c.x,y:c.y,t:o.carrinho,n:0}; }
     if(o.alvo) for(let i=0;i<(o.n||1);i++){ const c=fixo(o.pos||m.alvosPos,i)||pega(); if(c) S.alvos.push({x:c.x,y:c.y,t:o.alvo,ok:false}); }
     if(o.leve) for(let i=0;i<(o.n||1);i++){ const c=fixo(o.pos||m.alvosPos,i)||pega(); if(c) S.alvos.push({x:c.x,y:c.y,t:o.leve,ok:false,leve:true}); }
-    if(o.solte) for(let i=0;i<(o.n||1);i++){ const c=fixo(o.pos||m.presasPos,i)||pega(); if(c){ S.tiles.push({id:'t'+(nextId++),x:c.x,y:c.y,t:o.solte,presa:1}); S.presasTot++; } }
+    if(o.solte) for(let i=0;i<(o.n||1);i++){ const c=fixo(o.pos||m.presasPos,i)||pega(); if(c){ tiraDaCasa(c); S.tiles.push({id:'t'+(nextId++),x:c.x,y:c.y,t:o.solte,presa:1}); S.presasTot++; } }
   }
   for(const o of objsDe(m)) if(o.terra){ const ocup=new Set(usados); usados.clear(); if(S.carro) usados.add(S.carro.x+','+S.carro.y);
     for(let i=0;i<o.terra;i++){ const q=(o.pos||m.terraPos)?.[i], c=q?{x:q[0],y:q[1]}:pega(); if(c) S.terra.add(c.x+','+c.y); } S.terraTot=S.terra.size; for(const k of ocup) usados.add(k); }
@@ -241,7 +245,8 @@ function rotulo(o){
   if(o.forme) return o.n>1?plural(rockName(o.forme)):rockName(o.forme);
   if(o.cor!=null) return `${o.n>1?plural(rockName(o.t)):rockName(o.t)} ${corNome(o.cor,o.t)}${o.n>1?'s':''}`;
   if(o.quebre) return 'quebradas'; if(o.seq) return 'nessa ordem'; if(o.alvo) return 'casas marcadas'; if(o.leve) return 'na casa marcada';
-  if(o.solte) return 'soltas'; if(o.carrinho) return 'no carrinho'; if(o.terra) return 'terra limpa'; if(o.rache) return 'lixo rachado';
+  if(o.solte){ const v=artigo(rockName(o.solte))==='uma'?'solta':'solto'; return (o.n||1)>1 ? v+'s' : v; }   // concorda com a peça: Rocha solta, Asteroides soltos
+  if(o.carrinho) return 'no carrinho'; if(o.terra) return 'terra limpa'; if(o.rache) return 'lixo rachado';
   if(o.combo) return 'duas de uma vez'; if(o.pontos) return 'pontos'; return '';
 }
 function figuraMissao(m){
@@ -394,7 +399,7 @@ function missaoResultado(ok, motivo){
     r[n]={...ant, e:Math.max(e,ant.e||0), t:Math.max(S.pontos,ant.t||0)}; if(S.medalha) r[n].pm=true;
     localStorage.mina_missoes=JSON.stringify(r);
     showOverlay(`${espFig()&&tAlvo(m)?'<canvas id="espRes"></canvas>':''}<h2>${S.medalha?'Medalha do Passinho!':'Missão cumprida!'}</h2>${estrelasHtml(e,'estr grande')}
-      <p>${m.livre?`Em <b>${S.moves||0}</b> arrastos`:`Sobraram <b>${sobra}</b> arrastos`} · <b>${S.pontos}</b> pontos${rec?' (recorde!)':''}</p>
+      <p>${m.livre?`Em <b>${S.moves||0}</b> arrasto${S.moves===1?'':'s'}`:sobra===1?'Sobrou <b>1</b> arrasto':`Sobraram <b>${sobra}</b> arrastos`} · <b>${S.pontos}</b> pontos${rec?' (recorde!)':''}</p>
       ${e<3?`<p class="metas">${metasEstTxt(m,e)}</p>`:''}
       ${n<MISSOES.length?'<button class="btn g" id="mProx">Próxima fase</button>':'<p>Você terminou todas as fases!</p>'}
       <button class="btn dim" id="mDeNovo">Jogar de novo</button><button class="btn dim" id="mLista">Ver fases</button>`);
