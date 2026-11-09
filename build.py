@@ -191,6 +191,13 @@ body.espaco #ovos{display:flex;justify-content:center;gap:30px;margin-top:6px}
   body.espaco .panel{gap:6px}
   body.espaco .panel p{margin:2px 0}
   body.espaco .panel .objetivo{padding-top:6px;padding-bottom:6px}
+  body.espaco .ent{gap:6px}
+}
+/* telas estreitas (menos de 360 px): os dois botões do Como jogar cabem lado a lado e o contador de arrastos não
+   corta o texto (a seta decorativa sai para dar lugar) */
+@media (max-width:359px){
+  body.espaco .cjNav .btn{padding-left:8px;padding-right:8px;letter-spacing:.06em}
+  body.espaco .hudCla .arrP .ic{display:none}
 }
 /* menu do espaço: música e créditos moram em Opções */
 body.espaco .menuFoot{display:none}

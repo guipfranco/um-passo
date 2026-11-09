@@ -71,6 +71,9 @@ function espLoop(ms){
 function guardaVolta(){ if(!(history.state&&history.state.ptui)) history.pushState({ptui:1},''); }
 addEventListener('popstate',()=>{
   const menu=$('#scrMenu').classList.contains('on');
+  // no resultado (fase ou Clássico acabados) fechar só a janela deixaria o tabuleiro parado sem botão: volta como o "Ver fases" e o "Menu"
+  if(overlayOpen() && !menu && S && S.phase==='fimM'){ missoesLista(); return; }
+  if(overlayOpen() && !menu && S && S.phase==='fimI'){ showMenu(); return; }
   if(overlayOpen()){ hideOverlay(); if(!menu) guardaVolta(); return; }
   if(menu) return;
   if(S && S.phase==='lista'){ showMenu(); return; }
@@ -664,6 +667,7 @@ function objetivoEsp(o){
 function rotuloEsp(o){
   const varias=(o.n||1)>1;   // singular ou plural conforme a meta
   if(o.quebre) return 'engolidas'; if(o.alvo) return varias?'órbitas douradas':'órbita dourada'; if(o.leve) return varias?'nas órbitas douradas':'na órbita dourada'; if(o.carrinho) return 'na nave'; if(o.rache) return o.rache>1?'lixos rachados':'lixo rachado'; if(o.terra) return 'nebulosa desfeita';
+  if(o.solte) return (artigo(rockName(o.solte))==='uma'?'solta':'solto')+(varias?'s':'');   // Rocha solta, Asteroide solto
   return null;
 }
 // ícone de cada mundo no cabeçalho da lista de fases
@@ -771,7 +775,7 @@ function entradaEsp(n){
   const receita = um && o.forme>=2 ? `<div class="rec">${icoPlaneta(o.forme-1)}<i>+</i>${icoPlaneta(o.forme-1)}<i>=</i>${icoPlaneta(o.forme)}</div>` : '';
   const passinho = b?.e && charDe(m)!=='passinho', ganhou=b?.e||0;
   showOverlay(`<div class="ent"><button class="fecha" id="mVolta" aria-label="Voltar">✕</button>
-    <div class="num">FASE ${n}</div><h2>${nomeFaseCla(n)}${m.chefe?' · fim do mundo':''}</h2>
+    <div class="num">FASE ${n}</div><h2>${noIco(nomeFaseCla(n))}${m.chefe?' · fim do mundo':''}</h2>
     ${tA?`<div class="pl"><canvas id="espInfo"></canvas>${um&&qtd>1&&!o.pontos?`<b class="xN">×${qtd}</b>`:''}</div>`:''}
     ${metas}${receita}
     <div class="chips">${chips.map(c=>`<span>${c}</span>`).join('')}</div>

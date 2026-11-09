@@ -384,7 +384,8 @@ function missaoJoga(n, opt={}){
   limpaMarcas(); montaPecasMissao(m);
   if(sv) restauraFase(sv.st);
   document.body.classList.add('modoCla'); $('#btnPause').textContent='☰'; $('#btnPause').title=''; montaMissaoHud(m); render();
-  setBanner(`Fase ${n}: ${nomeFaseCla(n)}${S.medalha?' · Passinho':''}`, metasDe(m).length>1 ? `${metasDe(m).length} metas` : objetivosTxt(m));
+  // o nome da fase vai sem o ícone de peça (em "Rochas de batente" as rochas são o fluxo, não a peça Rocha)
+  setBanner(`Fase ${n}: ${noIco(nomeFaseCla(n))}${S.medalha?' · Passinho':''}`, metasDe(m).length>1 ? `${metasDe(m).length} metas` : objetivosTxt(m));
   pedeEncaixe();
 }
 function missaoResultado(ok, motivo){
