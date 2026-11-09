@@ -12,6 +12,8 @@
 
 - Céu (`ceuDesenha` em `src/espaco_jogo.js`): nebulosa viva pela placa de vídeo (`NEB`), estrelas e planeta do mundo em camadas que andam com a câmera, passagens (cometa, satélite, chuva, nave), névoa na cor do planeta a cada junção e anel só no recorde da partida (`S.espMax`). Sem WebGL, volta o céu pintado (`buildFundo` sem `semNebulosa`).
 - Malha da gravidade (`malhaQuadro`): rede na cor do mundo, atrás das peças, afundada pelo peso de cada planeta (o poço escurece); treme a cada junção e ganha uma onda no recorde. Respeita as casas vazias do formato. Rascunhos: `fundo.html` e `malha.html`.
+- Desempenho: a malha é desenhada em poucos traços agrupados e só quando algo se mexe; a nebulosa fica numa camada própria (`#neb`) a 30 quadros por segundo; peças paradas não são redesenhadas; se o quadro passar de 9 ms em média, a malha cai para 30 quadros por segundo. Medidor no aparelho: abrir o jogo com `?fps`.
+- Arrasto: arrastando rápido, a jogada vale na hora (sem esperar soltar o dedo); devagar, segue a prévia (dá para voltar e desistir).
 
 ## Som do espaço
 

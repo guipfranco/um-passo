@@ -22,24 +22,45 @@ function espInicia(){ if(espIniciado) return; espIniciado=true; ESP.buildTexture
 function espCanvas(host, kx, ky, desenha){
   let cv=host.querySelector(':scope > canvas.esp');
   if(!cv){ cv=document.createElement('canvas'); cv.className='esp'; host.appendChild(cv); }
-  cv.style.setProperty('--kx',kx); cv.style.setProperty('--ky',ky); cv._kx=kx; cv._ky=ky; cv._d=desenha; ESPC.add(cv); espInicia(); return cv;
+  cv.style.setProperty('--kx',kx); cv.style.setProperty('--ky',ky); cv._kx=kx; cv._ky=ky; cv._d=desenha; cv._feito=false; cv._estatico=false; ESPC.add(cv); espInicia(); return cv;
+}
+// medidor de desempenho: abra o jogo com ?fps no endereço para ver quadros por segundo e quanto cada parte custa
+const MEDE=/[?&]fps\b/.test(location.search);
+let custoMedio=0, malhaVez=false, medidor=null, medAc={q:0,ceu:0,malha:0,pecas:0,gl:0,longos:0,t0:0,ult:0};
+function mostraMedidor(ms,a,b,c,d){
+  const A=medAc; A.q++; A.ceu+=a; A.malha+=b; A.pecas+=c; A.gl+=d; if(A.ult && ms-A.ult>25) A.longos++; A.ult=ms; if(!A.t0) A.t0=ms;
+  if(ms-A.t0<1000) return;
+  if(!medidor){ medidor=document.createElement('div'); medidor.style.cssText='position:fixed;left:4px;bottom:4px;z-index:99;font:600 11px monospace;color:#9fe9ff;background:rgba(0,0,0,.6);padding:3px 6px;border-radius:6px;pointer-events:none;white-space:pre'; document.body.appendChild(medidor); }
+  const f=x=>(x/A.q).toFixed(1);
+  medidor.textContent=`${Math.round(A.q*1000/(ms-A.t0))} fps · travadas ${A.longos}\ncéu ${f(A.ceu)} · malha ${f(A.malha)} · peças ${f(A.pecas)} · planetas ${f(A.gl)} ms`;
+  medAc={q:0,ceu:0,malha:0,pecas:0,gl:0,longos:0,t0:ms,ult:ms};
 }
 function espLoop(ms){
   requestAnimationFrame(espLoop);
-  const t=ms/1000, ceu=document.body.classList.contains('espaco'); tQuadro=t;
+  const t=ms/1000, ceu=document.body.classList.contains('espaco'), p0=performance.now(); tQuadro=t;
   // cada camada num try: um erro numa delas não pode travar as outras nem deixar o céu num modo de desenho errado
   if(ceu) try{ ceuDesenha(t); }catch(e){ console.warn('céu',e); anotaErro('céu',e); }
-  if(ceu && document.body.classList.contains('modoCla') && $('#scrGame').classList.contains('on')) try{ malhaQuadro(t); }catch(e){ console.warn('malha',e); anotaErro('malha',e); }
-  if(!ESPC.size) return;
-  const cel=(typeof cellPx==='function'?cellPx():80)*ESP.DPR;
-  for(const cv of ESPC){
-    if(!cv.isConnected){ ESPC.delete(cv); continue; }
-    if(cv._fw && cv.offsetParent===null) continue;   // canvas fixo escondido (tela fechada): não desenha
-    const W=cv._fw ? Math.round(cv._fw*ESP.DPR) : Math.max(8,Math.round(cel*cv._kx)), H=cv._fh ? Math.round(cv._fh*ESP.DPR) : Math.max(8,Math.round(cel*cv._ky));
-    if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; }
-    const c=cv.getContext('2d'); c.clearRect(0,0,W,H); cv._d(c,W,H,cv._fw?W:cel,t);
+  const p1=performance.now();
+  // aparelho apertado (quadro passando de 9 ms em média): a malha passa a 30 quadros por segundo
+  malhaVez=!malhaVez;
+  if(ceu && (custoMedio<9 || malhaVez) && document.body.classList.contains('modoCla') && $('#scrGame').classList.contains('on')) try{ malhaQuadro(t); }catch(e){ console.warn('malha',e); anotaErro('malha',e); }
+  const p2=performance.now();
+  if(ESPC.size){
+    const cel=(typeof cellPx==='function'?cellPx():80)*ESP.DPR;
+    for(const cv of ESPC){
+      if(!cv.isConnected){ ESPC.delete(cv); continue; }
+      if(cv._fw && cv.offsetParent===null) continue;   // canvas fixo escondido (tela fechada): não desenha
+      const W=cv._fw ? Math.round(cv._fw*ESP.DPR) : Math.max(8,Math.round(cel*cv._kx)), H=cv._fh ? Math.round(cv._fh*ESP.DPR) : Math.max(8,Math.round(cel*cv._ky));
+      if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; cv._feito=false; }
+      if(cv._estatico && cv._feito) continue;   // desenho que não muda com o tempo: o anterior continua valendo
+      const c=cv.getContext('2d'); c.clearRect(0,0,W,H); cv._d(c,W,H,cv._fw?W:cel,t); cv._feito=true;
+    }
   }
+  const p3=performance.now();
   if(ceu && GLON) glQuadro(t);
+  const p4=performance.now();
+  custoMedio=custoMedio*.95+(p4-p0)*.05;
+  if(MEDE) mostraMedidor(ms,p1-p0,p2-p1,p3-p2,p4-p3);
 }
 // ---------- botão voltar do celular ----------
 // fora do menu há sempre uma entrada a mais no histórico (guardaVolta). Voltar: fecha a janela aberta; na lista de
@@ -93,7 +114,7 @@ function espTile(el,t){
   espCanvas(f, kk, kk, (c,W,H,u,tm)=>{ const T=el._t, x=W/2, y=H/2;
     // planeta redondo: vai pela placa de vídeo (camada embaixo); aqui só a aura e a gaiola, com o disco do planeta recortado
     const redondo = T.t>0 && T.k!=='p' && ESP.byName(nomeNivelEsp(T.t)).kind==='sphere' && glAtivo();
-    el._gl = redondo;
+    el._gl = redondo; c.canvas._estatico = redondo && T.c==null && !T.presa;   // só o brilho parado: não precisa redesenhar
     if(redondo){ if(temBrilho(T)) espBrilho(c,x,y,u,T.t); if(T.c!=null) espAura(c,x,y,u,tm,T.c); if(T.presa) ESP.SPR.gaiola(c,x,y,u,tm,'back'); if(T.c!=null||T.presa||temBrilho(T)) furaPlaneta(c,x,y,u,T); if(T.presa) ESP.SPR.gaiola(c,x,y,u,tm,'front'); return; }
     if(temBrilho(T)) espBrilho(c,x,y,u,T.t);
     if(T.c!=null) espAura(c,x,y,u,tm,T.c);
@@ -126,11 +147,12 @@ function espMarca(el,tipo,a){
 // - estrelas e o planeta do mundo ficam em camadas que andam com a câmera: ela flutua e dá um tranco a cada arrasto;
 // - de tempos em tempos passa algo ao longe (cometa, satélite, chuva de meteoros, nave);
 // - cada junção acende uma névoa na cor do planeta formado; o anel só vem quando nasce o maior planeta da partida.
-let ceu=null, ceuF=null, ceuChave='', ceuT=0, tQuadro=0;   // tQuadro: hora do último quadro (o mesmo relógio das animações)
+let ceu=null, ceuF=null, ceuChave='', ceuT=0, tQuadro=0, nebT=-1;   // tQuadro: hora do último quadro (o mesmo relógio das animações)
 const MARGEM_CEU=26, camE={x:0,y:0,vx:0,vy:0};
 let brilhosE=[], aneisE=[], passE=[], proxPass=6, passI=0;
 const NEB=(()=>{
-  const cv=document.createElement('canvas'), gl=!/[?&]semgl\b/.test(location.search) && cv.getContext('webgl',{antialias:false,premultipliedAlpha:false});
+  const cv=document.createElement('canvas'); cv.id='neb';
+  const gl=!/[?&]semgl\b/.test(location.search) && cv.getContext('webgl',{antialias:false,premultipliedAlpha:false,preserveDrawingBuffer:true});
   if(!gl) return {ok:false};
   try{
     const fs=`precision mediump float;
@@ -155,12 +177,12 @@ const NEB=(()=>{
     const lp=gl.getAttribLocation(pr,'p'); gl.enableVertexAttribArray(lp); gl.vertexAttribPointer(lp,2,gl.FLOAT,false,0,0);
     const U={}; for(const k of ['res','off','pp','t','pu','c1','c2','pc']) U[k]=gl.getUniformLocation(pr,k);
     const v=s=>s.split(',').map(x=>x/255);
-    // desenha a nebulosa (em meia resolução) no canvas c, de w por h; off = deslocamento da câmera; pul = névoa da junção
-    return {ok:true, desenha(c,w,h,t,off,neb,pul){
+    // desenha a nebulosa (em meia resolução) na camada própria, de w por h; off = deslocamento da câmera; pul = névoa da junção
+    return {ok:true, desenha(w,h,t,off,neb,pul){ if(!cv.isConnected) document.body.prepend(cv);
       const W=Math.max(8,Math.round(w*.5)), H=Math.max(8,Math.round(h*.5)); if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; gl.viewport(0,0,W,H); }
       gl.uniform2f(U.res,W,H); gl.uniform1f(U.t,t); gl.uniform2f(U.off,-off[0]/h,off[1]/h); gl.uniform3fv(U.c1,v(neb[0])); gl.uniform3fv(U.c2,v(neb[1]));
       gl.uniform1f(U.pu,pul?pul.k:0); gl.uniform3fv(U.pc,pul?v(pul.rgb):[0,0,0]); gl.uniform2f(U.pp,pul?(pul.x-w/2)/h:0,pul?(h/2-pul.y)/h:0);
-      gl.drawArrays(gl.TRIANGLE_STRIP,0,4); c.drawImage(cv,0,0,w,h); }};
+      gl.drawArrays(gl.TRIANGLE_STRIP,0,4); }};
   }catch(e){ console.warn('nebulosa',e); return {ok:false}; }
 })();
 function ceuDesenha(t){
@@ -176,7 +198,8 @@ function ceuDesenha(t){
   c.setTransform(1,0,0,1,0,0); c.globalCompositeOperation='source-over'; c.globalAlpha=1;
   // a névoa mais forte do momento (junção ou recorde)
   let pul=null; for(const j of brilhosE){ const u=(t-j.t0)/1.1; if(u<1){ const k=(1-u)*(j.forte?.9:.45); if(!pul||k>pul.k) pul={k,x:j.x,y:j.y,rgb:j.rgb}; } }
-  if(NEB.ok) NEB.desenha(c,w,h,t,[cx*.12,cy*.12],mu.neb,pul); else c.clearRect(0,0,w,h);
+  if(NEB.ok && (t-nebT>=1/30 || pul)){ nebT=t; NEB.desenha(w,h,t,[cx*.12,cy*.12],mu.neb,pul); }   // a nebulosa anda devagar: 30 quadros por segundo bastam
+  c.clearRect(0,0,w,h);
   c.save(); c.translate(-M+cx*.3,-M+cy*.3); ESP.drawFundo(c,ceuF,t); c.restore();
   if(jogo){ if(t>proxPass) novaPassagem(t,w,h); passagens(c,t,cx*.35,cy*.35); }
   c.save(); c.globalCompositeOperation='lighter';
@@ -210,15 +233,18 @@ function passagens(c,t,ox,oy){ c.save(); c.translate(ox,oy); c.globalCompositeOp
 // Rede na cor do mundo, com molinhas entre os pontos. Cada planeta afunda a rede conforme o peso (a Poeira quase nada,
 // a Terra bastante, os gigantes entortam o tabuleiro) e o fundo do poço fica escuro. Cada junção faz a rede tremer de
 // leve; quando nasce o maior planeta da partida, uma onda atravessa a rede toda.
-const MSUB=4, massaE=t=>.12+(t/10)**2;
+const MSUB=4, MBORDA=1, massaE=t=>.12+(t/10)**2;   // MBORDA: quantas casas a malha passa para fora do tabuleiro, sumindo
 let malhaCv=null, MN=null, ondasM=[], tremM=[];
 function malhaCamada(){ if(!malhaCv){ malhaCv=document.createElement('canvas'); malhaCv.id='malhaCv'; } if(malhaCv.parentElement!==board) board.prepend(malhaCv); return malhaCv; }
-// geometria do tabuleiro em px do canvas: casa (cel), passo entre casas (P) e onde começa a primeira linha (g0)
-function geoTab(){ const r=board.getBoundingClientRect(), D=ESP.DPR, cel=(typeof cellPx==='function'?cellPx():80), gap=(r.width-W*cel)/(W+1); return {r, D, P:(cel+gap)*D, g0:gap*D/2}; }
+// geometria em px do canvas da malha: D = densidade (no máximo 2: linha fina não precisa de mais), P = passo entre casas,
+// g0 = onde começa a primeira linha dentro do tabuleiro, O = margem do canvas (uma casa para cada lado do tabuleiro)
+function geoTab(){ const r=board.getBoundingClientRect(), D=Math.min(2,ESP.DPR), cel=(typeof cellPx==='function'?cellPx():80), gap=(r.width-W*cel)/(W+1);
+  return {r, D, P:(cel+gap)*D, g0:gap*D/2, O:cel*D, cel}; }
 const casaOk=(x,y)=>x>=0&&y>=0&&x<W&&y<H&&!(S.walls||[]).some(w=>w.v&&w.x===x&&w.y===y);
 function campoM(px,py,t,pocos,pa){ let dx=0,dy=0,h=0;
-  for(const q of pocos){ const ex=px-q.x, ey=py-q.y, d=Math.hypot(ex,ey)||1, sg=pa*(.32+.13*q.m), A=Math.min(pa*.12*q.m,sg*.55), f=A*(d/sg)*Math.exp(.5-d*d/(2*sg*sg));
-    dx-=ex/d*f; dy-=ey/d*f; h+=q.m*Math.exp(-d*d/(2*(sg*1.15)**2)); }
+  for(const q of pocos){ const ex=px-q.x, ey=py-q.y, d2=ex*ex+ey*ey, sg=pa*(.32+.13*q.m); if(d2>sg*sg*16) continue;
+    const d=Math.sqrt(d2)||1, A=Math.min(pa*.12*q.m,sg*.55), f=A*(d/sg)*Math.exp(.5-d2/(2*sg*sg));
+    dx-=ex/d*f; dy-=ey/d*f; h+=q.m*Math.exp(-d2/(2*(sg*1.15)**2)); }
   let w=0;
   for(const o of ondasM){ const ex=px-o.x, ey=py-o.y, d=Math.hypot(ex,ey)||1, u=(d-pa*3.4*(t-o.t0))/(pa*.45), amp=o.a*Math.exp(-(t-o.t0)*1.1)*Math.exp(-u*u)*Math.sin(u*2.4);
     dx+=ex/d*amp; dy+=ey/d*amp; w+=Math.abs(amp)/pa; }
@@ -226,29 +252,55 @@ function campoM(px,py,t,pocos,pa){ let dx=0,dy=0,h=0;
     dx+=ex/d*amp; dy+=ey/d*amp; }
   const L=Math.hypot(dx,dy), cap=pa*.42; if(L>cap){ dx*=cap/L; dy*=cap/L; }
   return [dx,dy,h,w]; }
-let malhaT=0;
+// quanto cada ponto da rede aparece: forte no meio do tabuleiro, mais fraco perto da borda, e sumindo aos poucos
+// fora dele (e nas casas vazias do formato), para a malha se misturar ao céu
+function presencaM(ci,cj,ok){
+  let fora=9; for(const [x,y] of ok){ const ex=Math.max(x-ci,0,ci-(x+1)), ey=Math.max(y-cj,0,cj-(y+1)); fora=Math.min(fora,Math.hypot(ex,ey)); }
+  if(fora>0) return .5*Math.max(0,1-fora/.9)**1.6;
+  let dentro=Math.min(ci,W-ci,cj,H-cj);
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(!casaOk(x,y)){ const ex=Math.max(x-ci,0,ci-(x+1)), ey=Math.max(y-cj,0,cj-(y+1)); dentro=Math.min(dentro,Math.hypot(ex,ey)); }
+  return .5+.5*Math.min(1,dentro/1.1);
+}
+let malhaT=0, malhaSelo='', malhaParada=false;
 function malhaQuadro(t){
   const cv=malhaCamada(), g=geoTab(); if(!g.r.width||!S||!S.tiles) return;
-  const Wp=Math.round(g.r.width*g.D), Hp=Math.round(g.r.height*g.D); if(cv.width!==Wp||cv.height!==Hp){ cv.width=Wp; cv.height=Hp; }
-  const NI=W*MSUB+1, NJ=H*MSUB+1, chave=W+'x'+H+':'+Wp+':'+Hp+':'+(S.walls||[]).filter(w=>w.v).map(w=>w.x+','+w.y).join(';');
-  if(!MN||MN.chave!==chave){ MN={chave,nos:[]}; for(let j=0;j<NJ;j++) for(let i=0;i<NI;i++){ const rx=g.g0+i*g.P/MSUB, ry=g.g0+j*g.P/MSUB; MN.nos.push({i,j,rx,ry,x:rx,y:ry,vx:0,vy:0,h:0,w:0}); } }
+  const Wp=Math.round((g.r.width+2*g.cel)*g.D), Hp=Math.round((g.r.height+2*g.cel)*g.D); let refaz=false;
+  if(cv.width!==Wp||cv.height!==Hp){ cv.width=Wp; cv.height=Hp; refaz=true; }
+  const NI=(W+2*MBORDA)*MSUB+1, NJ=(H+2*MBORDA)*MSUB+1, chave=W+'x'+H+':'+Wp+':'+Hp+':'+(S.walls||[]).filter(w=>w.v).map(w=>w.x+','+w.y).join(';');
+  if(!MN||MN.chave!==chave){ MN={chave,nos:[]}; const ok=[]; for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(casaOk(x,y)) ok.push([x,y]);
+    for(let j=0;j<NJ;j++) for(let i=0;i<NI;i++){ const rx=g.O+g.g0+(i-MBORDA*MSUB)*g.P/MSUB, ry=g.O+g.g0+(j-MBORDA*MSUB)*g.P/MSUB;
+      MN.nos.push({i,j,rx,ry,x:rx,y:ry,vx:0,vy:0,h:0,w:0,f:presencaM(i/MSUB-MBORDA,j/MSUB-MBORDA,ok)}); }
+    refaz=true; }
   if(S.espMax==null && S.tiles.length) S.espMax=Math.max(...S.tiles.map(k=>k.t));
   const dt=Math.min(.05,Math.max(0,t-malhaT)); malhaT=t;
   const pa=g.P, pocos=[];
   for(const el of board.querySelectorAll('.tile')){ if(!el._t||!el.firstChild) continue; const fr=el.firstChild.getBoundingClientRect(); if(!fr.width) continue;
-    pocos.push({x:(fr.left+fr.width/2-g.r.left)*g.D, y:(fr.top+fr.height/2-g.r.top)*g.D, m:massaE(el._t.t)}); }
-  for(const n of MN.nos){ const [dx,dy,h,w]=campoM(n.rx,n.ry,t,pocos,pa); n.vx+=((n.rx+dx-n.x)*90-n.vx*11)*dt; n.vy+=((n.ry+dy-n.y)*90-n.vy*11)*dt; n.x+=n.vx*dt; n.y+=n.vy*dt; n.h=h; n.w=w; }
+    pocos.push({x:(fr.left+fr.width/2-g.r.left)*g.D+g.O, y:(fr.top+fr.height/2-g.r.top)*g.D+g.O, m:massaE(el._t.t)}); }
+  // nada mudou desde o último desenho (peças paradas, sem onda nem tremor, rede assentada): o desenho anterior vale
+  const selo=pocos.map(q=>Math.round(q.x)+','+Math.round(q.y)+','+q.m.toFixed(2)).join(';'), calmo=!ondasM.length && !tremM.length;
+  if(!refaz && calmo && malhaParada && selo===malhaSelo) return;
+  if(selo!==malhaSelo) malhaParada=false;
+  malhaSelo=selo;
+  let mexe=0;
+  for(const n of MN.nos){ const [dx,dy,h,w]=campoM(n.rx,n.ry,t,pocos,pa); n.vx+=((n.rx+dx-n.x)*90-n.vx*11)*dt; n.vy+=((n.ry+dy-n.y)*90-n.vy*11)*dt; n.x+=n.vx*dt; n.y+=n.vy*dt; n.h=h; n.w=w;
+    mexe=Math.max(mexe,Math.abs(n.vx)+Math.abs(n.vy)); }
+  malhaParada = calmo && mexe<2;
   const c=cv.getContext('2d'); c.clearRect(0,0,Wp,Hp);
-  // fundo das casas um pouco mais escuro, e a sombra de cada poço
-  c.fillStyle='rgba(8,6,22,.38)'; for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(casaOk(x,y)) c.fillRect(g.g0+x*pa,g.g0+y*pa,pa+.5,pa+.5);
+  // uma sombra suave atrás do tabuleiro (sem borda dura) e o fundo escuro de cada poço
+  const bw=g.r.width*g.D, bh=g.r.height*g.D, cxB=g.O+bw/2, cyB=g.O+bh/2, Rb=Math.hypot(bw,bh)*.62, gb=c.createRadialGradient(cxB,cyB,Rb*.3,cxB,cyB,Rb);
+  gb.addColorStop(0,'rgba(8,6,22,.3)'); gb.addColorStop(1,'rgba(8,6,22,0)'); c.fillStyle=gb; c.fillRect(0,0,Wp,Hp);
   for(const q of pocos){ const R=pa*(.38+.16*q.m), gr=c.createRadialGradient(q.x,q.y,0,q.x,q.y,R); gr.addColorStop(0,`rgba(0,0,0,${Math.min(.8,(.12+.12*q.m)*1.6).toFixed(3)})`); gr.addColorStop(1,'rgba(0,0,0,0)'); c.fillStyle=gr; c.fillRect(q.x-R,q.y-R,2*R,2*R); }
-  // linhas na cor do mundo (clareada); quanto mais fundo o poço, mais escura e fina a linha
-  const tema=Math.max(1,(S.missao&&S.tema)||1), rgb=ESP.MUNDOS_ESP[(tema-1)%ESP.MUNDOS_ESP.length].neb[1].split(',').map(v=>Math.round(+v*.55+255*.45)).join(','), D=g.D, no=(i,j)=>MN.nos[j*NI+i];
+  // linhas na cor do mundo (clareada), bem transparentes; quanto mais fundo o poço, mais escura e fina a linha.
+  // As linhas parecidas vão juntas num traço só (poucos traços por quadro em vez de centenas)
+  const tema=Math.max(1,(S.missao&&S.tema)||1), rgb=ESP.MUNDOS_ESP[(tema-1)%ESP.MUNDOS_ESP.length].neb[1].split(',').map(v=>Math.round(+v*.55+255*.45)).join(','), no=(i,j)=>MN.nos[j*NI+i];
+  const potes=new Map();
+  const seg=(a,b,maior)=>{ const f=(a.f+b.f)/2; if(f<.02) return; const h=(a.h+b.h)/2, w=(a.w+b.w)/2, fundo=Math.min(.85,h*.32), al=Math.min(1,((maior?.17:.065)*(1-fundo)+w*.6)*f);
+    if(al<.008) return; const k=Math.round(al*60)+'|'+Math.max(1,Math.round((maior?1.2:.75)*(1-fundo*.5)*4)); let p=potes.get(k); if(!p) potes.set(k,p=[]); p.push(a.x,a.y,b.x,b.y); };
+  for(let j=0;j<NJ;j++) for(let i=0;i<NI-1;i++) seg(no(i,j),no(i+1,j),j%MSUB===0);
+  for(let i=0;i<NI;i++) for(let j=0;j<NJ-1;j++) seg(no(i,j),no(i,j+1),i%MSUB===0);
   c.lineCap='round';
-  const seg=(a,b,maior)=>{ const h=(a.h+b.h)/2, w=(a.w+b.w)/2, fundo=Math.min(.85,h*.32), al=Math.min(1,(maior?.24:.09)*(1-fundo)+w*.9);
-    c.strokeStyle=`rgba(${rgb},${al.toFixed(3)})`; c.lineWidth=(maior?1.3:.8)*(1-fundo*.5)*D; c.beginPath(); c.moveTo(a.x,a.y); c.lineTo(b.x,b.y); c.stroke(); };
-  for(let j=0;j<NJ;j++) for(let i=0;i<NI-1;i++){ const X=Math.floor(i/MSUB), maior=j%MSUB===0, dentro=maior?(casaOk(X,j/MSUB-1)||casaOk(X,j/MSUB)):casaOk(X,Math.floor(j/MSUB)); if(dentro) seg(no(i,j),no(i+1,j),maior); }
-  for(let i=0;i<NI;i++) for(let j=0;j<NJ-1;j++){ const Y=Math.floor(j/MSUB), maior=i%MSUB===0, dentro=maior?(casaOk(i/MSUB-1,Y)||casaOk(i/MSUB,Y)):casaOk(Math.floor(i/MSUB),Y); if(dentro) seg(no(i,j),no(i,j+1),maior); }
+  for(const [k,p] of potes){ const [a,wl]=k.split('|'); c.strokeStyle=`rgba(${rgb},${(a/60).toFixed(3)})`; c.lineWidth=wl/4*g.D; c.beginPath();
+    for(let i=0;i<p.length;i+=4){ c.moveTo(p[i],p[i+1]); c.lineTo(p[i+2],p[i+3]); } c.stroke(); }
   ondasM=ondasM.filter(o=>t-o.t0<3); tremM=tremM.filter(o=>t-o.t0<1.2);
 }
 // chamado a cada arrasto que mexeu: tranco da câmera, névoa de cada junção, tremor da malha; recorde da partida: onda e anel
@@ -258,9 +310,9 @@ function espJogada(dx,dy,merges){
   const g=geoTab(), t=tQuadro||performance.now()/1000;
   for(const o of merges){
     const bx=g.g0+(o.x+.5)*g.P, by=g.g0+(o.y+.5)*g.P, sx=g.r.left+bx/g.D, sy=g.r.top+by/g.D, rgb=corNivelRgb(o.t), rec=S.espMax!=null && o.t>S.espMax;
-    tremM.push({x:bx,y:by,t0:t,a:g.P*(.025+.004*o.t)});
+    tremM.push({x:bx+g.O,y:by+g.O,t0:t,a:g.P*(.025+.004*o.t)});
     brilhosE.push({x:sx,y:sy,t0:t,rgb,forte:rec});
-    if(rec){ S.espMax=o.t; ondasM.push({x:bx,y:by,t0:t,a:g.P*(.16+.012*o.t)}); aneisE.push({x:sx,y:sy,t0:t,v:g.P/g.D*3.4,rgb:'230,232,255'}); }
+    if(rec){ S.espMax=o.t; ondasM.push({x:bx+g.O,y:by+g.O,t0:t,a:g.P*(.16+.012*o.t)}); aneisE.push({x:sx,y:sy,t0:t,v:g.P/g.D*3.4,rgb:'230,232,255'}); }
   }
 }
 const corNivelRgb=t=>{ const h=corNivel(t); return [1,3,5].map(i=>parseInt(h.slice(i,i+2),16)).join(','); };

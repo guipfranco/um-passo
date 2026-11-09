@@ -469,8 +469,9 @@ const libera=P=>{P.out.width=P.out.height=0;if(P.body&&P.body.can)P.body.can.wid
 function drawPecaVar(c,n,t,x,y,u,id,a=1){const sz=Math.max(8,Math.round(u*kDe(n))),k=id+'|'+n+'|'+sz;let P=vcache.get(k);
   if(P){vcache.delete(k);vcache.set(k,P);}   // a mais usada por último fica no fim (as mais velhas saem primeiro)
   else{P=makePiece(byName(n),sz,vrDe(id));vcache.set(k,P);if(vcache.size>120){for(const [kk,PP] of vcache){if(vcache.size<=100)break;libera(PP);vcache.delete(kk);}}}
-  if(P._t===undefined||Math.abs(t-P._t)>=PASSO||P._L!==ST.L||P._o!==ST.outline){P._img=P.draw(t,ST.L,{outline:ST.outline});P._t=t;P._L=ST.L;P._o=ST.outline;}
+  if(P._t===undefined||Math.abs(t-P._t)>=PASSO_VAR||P._L!==ST.L||P._o!==ST.outline){P._img=P.draw(t,ST.L,{outline:ST.outline});P._t=t;P._L=ST.L;P._o=ST.outline;}
   c.globalAlpha=a;c.drawImage(P._img,x-sz/2,y-sz/2,sz,sz);c.globalAlpha=1;}
+const PASSO_VAR=1/20;   // as pedrinhas do tabuleiro giram devagar: 20 desenhos por segundo bastam (alivia o processador do celular)
 // objetos 3D do tabuleiro (fora da escada)
 const OBJDEF={
   estacao:{kind:'mesh',geom:'estacao',scale:.95,rot:t=>mmul(rotAxis(1,0,.2,.42),rotAxis(0,1,0,t*.55))},

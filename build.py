@@ -83,7 +83,9 @@ body.espaco .ent h2{margin:0;font:800 23px 'Exo 2',sans-serif;letter-spacing:0;c
 .relFoto{display:flex;align-items:center;gap:10px;font-size:14px;color:#cfc4e6;cursor:pointer}
 .relFoto img{width:48px;height:auto;max-height:90px;object-fit:cover;border-radius:6px;border:1px solid rgba(255,255,255,.2)}
 .relAviso{min-height:0;margin:0;color:#ffd36e !important;font-size:14px}
-#malhaCv{display:none;position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:0}
+#malhaCv{display:none;position:absolute;left:calc(-1*var(--cell));top:calc(-1*var(--cell));width:calc(100% + 2*var(--cell));height:calc(100% + 2*var(--cell));pointer-events:none;z-index:0}
+#neb{position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:-2;pointer-events:none;display:none}
+body.espaco #neb{display:block}
 body.espaco.modoCla #malhaCv{display:block}
 body.espaco.modoCla .slot::before{display:none}
 canvas.esp{position:absolute;left:50%;top:50%;width:calc(var(--cell)*var(--kx));height:calc(var(--cell)*var(--ky));transform:translate(-50%,-50%);pointer-events:none}
@@ -544,7 +546,7 @@ function clearPreview(voltar){
   prev=null;
 }
 function previewDrag(dx,dy){
-  const d=Math.max(Math.abs(dx),Math.abs(dy));
+  const d=Math.max(Math.abs(dx),Math.abs(dy)), cel=touch?.cel||cellPx();
   if(d<PV_MIN){ if(prev) clearPreview(true); return; }
   const dir = Math.abs(dx)>Math.abs(dy) ? [Math.sign(dx),0] : [0,Math.sign(dy)], key=dir.join();
   if(!prev || prev.key!==key){
@@ -556,7 +558,7 @@ function previewDrag(dx,dy){
     for(const o of r.merges) els.get(o.id)?.classList.add('willmerge');
     for(const g of r.gone) els.get(g.id)?.classList.add('willmerge');
   }
-  let p=Math.min(1,(d-PV_MIN)/(cellPx()*.9));
+  let p=Math.min(1,(d-PV_MIN)/(cel*.9));
   for(const t of S.tiles){
     const el=els.get(t.id); if(!el) continue;
     const [tx,ty]=prev.tgt[t.id]||[t.x,t.y];
@@ -572,12 +574,21 @@ function previewDrag(dx,dy){
 }
 addEventListener('pointerdown',e=>{ if(overlayOpen()||e.target.closest('button')||!$('#scrGame').classList.contains('on')) return;
   if(document.body.classList.contains('rola') && !e.target.closest('#stage')) return; // fora do tabuleiro, o dedo rola a página
-  touch={x:e.clientX,y:e.clientY}; prev=null; });
+  touch={x:e.clientX,y:e.clientY,cel:cellPx(),hist:[[performance.now(),e.clientX,e.clientY]]}; prev=null; });
 addEventListener('pointercancel',()=>{ if(touch){ touch=null; clearPreview(true); } });
 addEventListener('pointermove',e=>{
   if(!touch || !S || S.phase!=='mine' || overlayOpen() || coachBlock || S.editando || S.ferrAtiva) return;
-  previewDrag(e.clientX-touch.x, e.clientY-touch.y);
+  const dx=e.clientX-touch.x, dy=e.clientY-touch.y, agora=performance.now(), hs=touch.hist;
+  hs.push([agora,e.clientX,e.clientY]); while(hs.length>2 && agora-hs[0][0]>90) hs.shift();
+  const vel=Math.hypot(e.clientX-hs[0][1],e.clientY-hs[0][2])/Math.max(1,agora-hs[0][0]);
+  if(Math.max(Math.abs(dx),Math.abs(dy))>=Math.max(CONFIRMA+8,touch.cel*.38) && vel>=.55 && agora-hs[0][0]>=30){ touch=null; confirmaArrasto(dx,dy); return; }   // arrasto rápido: vale já
+  previewDrag(dx,dy);
 });
+function confirmaArrasto(dx,dy){
+  clearPreview(false);
+  if(Math.abs(dx)>Math.abs(dy)) move(Math.sign(dx),0); else move(0,Math.sign(dy));
+  if(S && S.phase==='mine') for(const t of S.tiles){ const el=els.get(t.id); if(el) el.style.transform=pos(t.x,t.y); }
+}
 addEventListener('pointerup',e=>{
   if(!touch) return; const dx=e.clientX-touch.x, dy=e.clientY-touch.y; touch=null;
   const tinha=!!prev;
@@ -591,9 +602,7 @@ addEventListener('pointerup',e=>{
     if(el && S && S.phase==='mine' && !S.missao && !S.infinito){ const t=S.tiles.find(x=>x.id===el.dataset.id); if(t) tileInfo(t); }
     return;
   }
-  clearPreview(false);
-  if(Math.abs(dx)>Math.abs(dy)) move(Math.sign(dx),0); else move(0,Math.sign(dy));
-  if(S && S.phase==='mine') for(const t of S.tiles){ const el=els.get(t.id); if(el) el.style.transform=pos(t.x,t.y); }
+  confirmaArrasto(dx,dy);
 });
 addEventListener('pointercancel',()=>{ if(touch){ touch=null; clearPreview(true); } });
 // Encerrar exige dois toques enquanto ainda há energia (evita toque sem querer)
