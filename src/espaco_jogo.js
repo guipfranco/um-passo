@@ -126,12 +126,14 @@ function espTile(el,t){
 }
 // bloco (a peça que não sai): estação espacial
 // lixo espacial que racha: o desenho do lixo, com rachaduras quando tem mais de 1 de vida
-function espLixo(el,w){ el.innerHTML='<div class="face"></div>'; espCanvas(el.firstChild,1.1,1.1,(c,W,H,u,tm)=>{ ESP.SPR.lixo(c,W/2,H/2,u*.9,tm);
+function espLixo(el,w){ el.innerHTML='<div class="face"></div>'; const fase=Math.random()*20, vira=Math.random()<.5;
+  espCanvas(el.firstChild,1.1,1.1,(c,W,H,u,tm)=>{ if(vira){ c.save(); c.translate(W,0); c.scale(-1,1); } ESP.SPR.lixo(c,W/2,H/2,u*.9,tm+fase); if(vira) c.restore();
   if(w.hp>1){ c.save(); c.fillStyle='#ffd877'; c.font=`800 ${u*.26}px 'Exo 2',sans-serif`; c.textAlign='center'; c.textBaseline='middle'; c.shadowColor='#000'; c.shadowBlur=u*.06; c.fillText(w.hp,W/2+u*.28,H/2-u*.28); c.restore(); } }); }
-function espParede(el){ el.innerHTML='<div class="face"></div>'; espCanvas(el.firstChild,1.1,1.1,(c,W,H,u,tm)=>ESP.SPR.estacao(c,W/2,H/2,u,tm)); }
+function espParede(el){ el.innerHTML='<div class="face"></div>'; const fase=Math.random()*20, vira=Math.random()<.5;
+  espCanvas(el.firstChild,1.1,1.1,(c,W,H,u,tm)=>{ if(vira){ c.save(); c.translate(W,0); c.scale(-1,1); } ESP.SPR.estacao(c,W/2,H/2,u,tm+fase); if(vira) c.restore(); }); }
 // mureta: fluxo de rochas entre as duas casas
-function espMureta(el,d){ const v=d==='v';
-  espCanvas(el, v?.62:1, v?1:.62, (c,W,H,u,tm)=> v ? ESP.SPR.rochas(c,[W/2,H*.03],[W/2,H*.97],tm,u) : ESP.SPR.rochas(c,[W*.03,H/2],[W*.97,H/2],tm,u)); }
+function espMureta(el,d){ const v=d==='v', fase=Math.random()*30;
+  espCanvas(el, v?.62:1, v?1:.62, (c,W,H,u,tm)=> v ? ESP.SPR.rochas(c,[W/2,H*.03],[W/2,H*.97],tm+fase,u) : ESP.SPR.rochas(c,[W*.03,H/2],[W*.97,H/2],tm+fase,u)); }
 // marcas do Clássico: casa marcada, casa de terra, carrinho
 function espMarca(el,tipo,a){
   if(tipo==='alvo'){ const k=Math.max(1.1,kNivel(a.t)); espCanvas(el,k,k,(c,W,H,u,tm)=>{
@@ -486,11 +488,13 @@ function espMenu(){
   if(TAG_MINA==null) TAG_MINA=tag.textContent;
   tag.textContent = on ? 'junte poeira até virar galáxia' : TAG_MINA;
   document.title = on ? '2048 Stars' : 'Ptui!';
-  // no espaço: Novo jogo (vai ao mapa), Continuar (só para quem já tem progresso) e Clássico (4x4 sem fim)
-  $('#mCla').innerHTML = on ? 'Novo jogo<small>a jornada, fase a fase</small>' : 'Clássico<small>uma missão em cada fase</small>';
-  $('#mCla').onclick = on ? novoJogoEsp : missoesLista;
-  if(!$('#mSegue')){ const b=document.createElement('button'); b.className='btn b big'; b.id='mSegue'; b.textContent='Continuar'; b.onclick=continuarEsp; $('#mCla').after(b); }
+  // no espaço: Jogar (sem progresso) ou Continuar (com progresso) e o Clássico (4x4 sem fim).
+  // Começar do zero fica nas Opções ("Apagar o progresso"), para não competir com o Continuar.
   const tem=temProgresso(), r=MISS(), est=Object.values(r).reduce((a,x)=>a+(x.e||0),0);
+  $('#mCla').innerHTML = on ? 'Jogar<small>a jornada, fase a fase</small>' : 'Clássico<small>uma missão em cada fase</small>';
+  $('#mCla').onclick = missoesLista;
+  $('#mCla').style.display = on && tem ? 'none' : '';
+  if(!$('#mSegue')){ const b=document.createElement('button'); b.className='btn g big'; b.id='mSegue'; b.textContent='Continuar'; b.onclick=continuarEsp; $('#mCla').after(b); }
   $('#mSegue').style.display = on && tem ? '' : 'none';
   if(on && tem) $('#mSegue').innerHTML = `Continuar<small>fase ${faseAtual()} · ${est} ${est===1?'estrela':'estrelas'}</small>`;
   if(!$('#mInf')){ const b=document.createElement('button'); b.className='btn b big'; b.id='mInf'; b.innerHTML='Clássico<small>4x4 sem fim, até não caber mais nada</small>'; b.onclick=infinitoJoga; $('#mCla').after(b); }
@@ -519,13 +523,14 @@ function espMenu(){
 const temProgresso = () => Object.keys(MISS()).length>0 || !!localStorage.mina_cla_save;
 function faseAtual(){ const r=MISS(); return (MISSOES.findIndex((m,i)=>!(r[i+1]?.e)) + 1) || MISSOES.length; }
 // sem progresso, vai direto ao mapa; com progresso, pergunta antes de apagar tudo
-function novoJogoEsp(){
+function novoJogoEsp(volta){
   if(!temProgresso()){ missoesLista(); return; }
   janelaMenu();
   showOverlay(`<h2>Começar do zero?</h2><p>Suas estrelas e as fases liberadas serão apagadas.</p>
     <button class="btn g" id="nZera">Começar do zero</button><button class="btn dim" id="nVolta">Voltar</button>`);
   $('#nZera').onclick=()=>{ localStorage.removeItem('mina_missoes'); localStorage.removeItem('mina_cla_save'); hideOverlay(); missoesLista(); };
-  $('#nVolta').onclick=fechaJanelaMenu; FORA=fechaJanelaMenu;
+  const sai = typeof volta==='function' ? volta : fechaJanelaMenu;
+  $('#nVolta').onclick=sai; FORA=sai;
 }
 // fase pela metade: volta nela; senão abre o mapa já com a próxima fase
 function continuarEsp(){
@@ -544,11 +549,13 @@ function espOpcoes(){
   janelaMenu();
   showOverlay(`<h2>Opções</h2>
     <button class="btn dim" id="oMus">Música: ${music?'ligada':'desligada'}</button>
-    <button class="btn dim" id="oSnd">Efeitos sonoros: ${sound?'ligados':'desligados'}</button>
+    <button class="btn dim" id="oSnd">Sons: ${sound?'ligados':'desligados'}</button>
     <button class="btn dim" id="oCred">Créditos</button>
     ${RELATO_URL?'<button class="btn dim" id="oRel">Relatar bug ou sugestão</button>':''}
+    ${temProgresso()?'<button class="btn dim" id="oZera">Apagar o progresso</button>':''}
     <button class="btn b" id="oOk">Voltar</button>`);
   if($('#oRel')) $('#oRel').onclick=relatar;
+  if($('#oZera')) $('#oZera').onclick=()=>novoJogoEsp(espOpcoes);
   $('#oMus').onclick=()=>{ toggleMusic(); espOpcoes(); };
   $('#oSnd').onclick=()=>{ toggleSound(); espOpcoes(); };
   $('#oCred').onclick=()=>{ showOverlay(`<h2>Créditos</h2><ul>
