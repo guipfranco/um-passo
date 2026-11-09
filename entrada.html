@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2048 Stars · entrada da fase (rascunho)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+*{box-sizing:border-box}
+html,body{background:#0b0a18}
+body{margin:0;color:#e8e4ff;font-family:'Exo 2',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+main{max-width:460px;margin:0 auto;padding:14px 12px 48px;display:flex;flex-direction:column;gap:10px}
+h1{margin:2px 0 0;font:900 20px Orbitron,sans-serif;letter-spacing:.04em;color:#f4fbff;text-shadow:0 0 14px rgba(110,230,255,.7)}
+h2{margin:18px 0 0;font:900 13px Orbitron,sans-serif;letter-spacing:.12em;color:#9fe9ff}
+p{margin:0;font-size:15px;line-height:1.42;color:#c9c2ee}
+.rot{font:700 11.5px 'Exo 2',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#a49bd6;margin:4px 0 -4px}
+.ops{display:flex;gap:6px;flex-wrap:wrap}
+.op{flex:1 1 0;min-width:0;border:1.5px solid rgba(140,200,255,.3);border-radius:12px;padding:7px 4px;background:rgba(20,16,44,.7);color:#d8d2ff;
+  font:700 13px 'Exo 2',sans-serif;cursor:pointer;line-height:1.1}
+.op small{display:block;font-weight:400;font-size:11px;color:#a49bd6;margin-top:2px}
+.op.on{border-color:#6ee6ff;background:rgba(40,90,140,.45);color:#fff;box-shadow:0 0 12px rgba(110,230,255,.45)}
+.op.on small{color:#cfe9ff}
+.fases .op{flex:1 1 30%}
+#moldura{position:relative;width:100%;border-radius:22px;overflow:hidden;border:1.5px solid rgba(140,200,255,.22);background:#0b0a18}
+#jogo{border:0;display:block;transform-origin:0 0}
+.card{background:rgba(22,17,40,.82);border:1.5px solid rgba(255,255,255,.12);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.card.on{border-color:rgba(110,230,255,.6);box-shadow:0 0 14px rgba(110,230,255,.2)}
+.card h3{margin:0;font:800 15.5px 'Exo 2',sans-serif;color:#fff}
+.card h3 i{font-style:normal;font:900 12px Orbitron,sans-serif;color:#6fe0ff;margin-right:6px}
+.card p{font-size:14px}
+.nota{font-size:13px;color:#a49bd6}
+</style>
+</head>
+<body>
+<main>
+  <h1>ENTRADA DA FASE</h1>
+  <p>Três jeitos de deixar a tela de entrada mais leve, com as fases de verdade. Em todos: o planeta aparece uma vez só, as estrelas viram três caixinhas, o Voltar vira um ✕ (tocar fora também fecha) e a explicação longa só aparece na fase em que a novidade estreia.</p>
+  <div class="rot">Jeito</div>
+  <div class="ops" id="opsV"></div>
+  <div class="rot">Fase de exemplo</div>
+  <div class="ops fases" id="opsF"></div>
+  <div id="moldura"><iframe id="jogo" src="index.html" width="390" height="800"></iframe></div>
+  <p class="nota">No rascunho o botão Jogar não abre a fase (para não mexer no seu progresso).</p>
+
+  <h2>OS TRÊS JEITOS</h2>
+  <div class="card" data-v="A"><h3><i>A</i>Cartão limpo</h3>
+    <p>Tudo numa coluna, com respiro: número e nome da fase, o planeta grande com o "×3" em cima, a meta numa linha só, a receita em ícones pequenos, tamanho e arrastos em etiquetas, as estrelas em três caixinhas e um botão só.</p></div>
+  <div class="card" data-v="B"><h3><i>B</i>Lado a lado</h3>
+    <p>O planeta fica à esquerda e a meta à direita, numa faixa só. A janela fica bem mais baixa. As explicações repetidas viram um "como funciona" que abre com um toque.</p></div>
+  <div class="card" data-v="C"><h3><i>C</i>Metas em blocos</h3>
+    <p>Do jeito dos jogos de fase como Royal Match: cada meta é um bloco com o ícone e o número, lado a lado (fica igual com uma ou com três metas). As estrelas são três estrelas grandes; as que você já ganhou ficam acesas.</p></div>
+  <div class="card" data-v="hoje"><h3><i>0</i>Hoje</h3><p>Como está no jogo agora, para comparar.</p></div>
+</main>
+
+<script type="text/plain" id="codigo">
+// ===== código que roda DENTRO do jogo (no iframe), usando as funções dele =====
+function novaEm(txt){ for(let i=0;i<MISSOES.length;i++) if(explicaEsp(MISSOES[i]).includes(txt)) return i+1; return 0; }
+function dadosE(n){
+  const m=MISSOES[n-1], b=MISS()[n], ms=metasDe(m), proib=objsDe(m).find(o=>o.proibido), fase=faseDe(m), fm=formaDe(m), np=PATHS[fase].n;
+  const tam=fm?`${fw(fm)}x${fh(fm)}`:`${m.w||np||4}x${m.h||m.w||np||4}`;
+  const est = m.livre ? (()=>{ const [t2,t3]=tetoEst(m); return ['cumprir',`até ${t2} arrastos`,`até ${t3} arrastos`]; })()
+                      : ['cumprir',`sobrando ${m.estrelas[0]}`,`sobrando ${m.estrelas[1]}`];
+  const exp=explicaEsp(m), novas=exp.filter(x=>novaEm(x)===n), velhas=exp.filter(x=>novaEm(x)!==n);
+  const chips=[tam, m.livre?'sem limite de arrastos':arrastosTxt(m)];
+  if(m.regras?.spawns===0) chips.push('quebra-cabeça'); if(charDe(m)==='passinho') chips.push('Passinho');
+  return {m,b,ms,proib,est,novas,velhas,chips,tA:tAlvo(m),nome:nomeFaseCla(n)+(m.chefe?' · fim do mundo':'')};
+}
+const qtdE=o=>o.pontos?o.pontos:(o.n||o.terra||o.rache||o.solte||1);
+function curtoE(o){
+  if(o.forme) return o.n>1?rotulo(o):rockName(o.forme);
+  if(o.leve) return `${rockName(o.leve)} na órbita`;
+  if(o.carrinho) return `${rockName(o.carrinho)} na nave`;
+  if(o.pontos) return 'pontos';
+  if(o.rache) return 'lixo para rachar';
+  if(o.terra) return 'nebulosa';
+  if(o.solte) return 'presos para soltar';
+  if(o.combo) return 'duas de uma vez';
+  return rotulo(o);
+}
+function receitaE(d){ const o=d.ms.length===1&&!d.proib?d.ms[0]:null; if(!o||!o.forme||o.forme<2) return '';
+  const a=icoPlaneta(o.forme-1), c=icoPlaneta(o.forme); return `<div class="rec">${a}<i>+</i>${a}<i>=</i>${c}</div>`; }
+function estrelasE(d,cls=''){ const ganhou=d.b?.e||0;
+  return `<div class="estr3 ${cls}">${d.est.map((t,i)=>`<div class="${i<ganhou?'ok':''}"><b>${'★'.repeat(i+1)}</b><small>${t}</small></div>`).join('')}</div>`; }
+function novidadeE(d){ return d.novas.map(t=>`<div class="novo"><i>NOVO</i>${t}</div>`).join('')
+  + (d.velhas.length?`<details class="lembra"><summary>como funciona</summary>${d.velhas.map(t=>`<p>${t}</p>`).join('')}</details>`:''); }
+function botoesE(n){ const sv=faseSalva(n), b=MISS()[n], pass=b?.e && charDe(MISSOES[n-1])!=='passinho';
+  return (sv?`<button class="btn g" id="eJoga">Continuar</button><button class="btn dim pequeno" id="eDeNovo">começar de novo</button>`:`<button class="btn g" id="eJoga">Jogar</button>`)
+    + (pass?`<button class="btn dim pequeno" id="ePass">${b.pm?'jogar de novo no Passinho':'jogar no Passinho (medalha)'}</button>`:''); }
+function abreE(html,d){
+  showOverlay(html); FORA=hideOverlay;
+  $('#eFecha').onclick=hideOverlay;
+  for(const id of ['eJoga','eDeNovo','ePass']) if($('#'+id)) $('#'+id).onclick=()=>{ const b=$('#'+id); b.textContent='(no rascunho não joga)'; };
+  if($('#espInfo')&&d.tA) espPlanetaGrande($('#espInfo'),d.tA,'info');
+}
+// A · cartão limpo
+function entradaA(n){ const d=dadosE(n), um=d.ms.length===1&&!d.proib, o=d.ms[0];
+  const metas = um ? `<div class="meta">${objetivoTxt(o)}</div>` : `<div class="metasL">${d.ms.map(x=>`<div>${iconeObj(x)}<span>${objetivoTxt(x)}</span></div>`).join('')}${d.proib?`<div class="proib">${iconeObj(d.proib)}<span>Não forme ${artigo(rockName(d.proib.proibido))} ${rockName(d.proib.proibido)}</span></div>`:''}</div>`;
+  abreE(`<div class="ent entA"><button class="fecha" id="eFecha">✕</button>
+    <div class="num">FASE ${n}</div><h2>${d.nome}</h2>
+    ${d.tA?`<div class="pl"><canvas id="espInfo"></canvas>${um&&qtdE(o)>1&&!o.pontos?`<b class="xN">×${qtdE(o)}</b>`:''}</div>`:''}
+    ${metas}${receitaE(d)}
+    <div class="chips">${d.chips.map(c=>`<span>${c}</span>`).join('')}</div>
+    ${estrelasE(d)}${novidadeE(d)}${botoesE(n)}</div>`,d); }
+// B · lado a lado
+function entradaB(n){ const d=dadosE(n);
+  const metas=d.ms.map(x=>`<div class="mB">${iconeObj(x)}<span>${objetivoTxt(x)}</span></div>`).join('')+(d.proib?`<div class="mB proib">${iconeObj(d.proib)}<span>Não forme ${rockName(d.proib.proibido)}</span></div>`:'');
+  abreE(`<div class="ent entB"><button class="fecha" id="eFecha">✕</button>
+    <div class="topo"><span class="num">FASE ${n}</span><h2>${d.nome}</h2></div>
+    <div class="linha">${d.tA?`<div class="pl"><canvas id="espInfo"></canvas></div>`:''}<div class="txt">${metas}${receitaE(d)}<div class="chips">${d.chips.map(c=>`<span>${c}</span>`).join('')}</div></div></div>
+    ${estrelasE(d,'baixa')}${novidadeE(d)}${botoesE(n)}</div>`,d); }
+// C · metas em blocos
+function entradaC(n){ const d=dadosE(n);
+  const bloco=(x,proib)=>`<div class="bC${proib?' proib':''}"><div class="ic">${iconeObj(x)}</div>${proib?'<b>✕</b>':`<b>${qtdE(x)}</b>`}<small>${proib?'não formar':curtoE(x)}</small></div>`;
+  abreE(`<div class="ent entC"><button class="fecha" id="eFecha">✕</button>
+    <div class="fita">FASE ${n}</div><h2>${d.nome}</h2>
+    <div class="blocos">${d.ms.map(x=>bloco(x)).join('')}${d.proib?bloco(d.proib,true):''}</div>
+    ${receitaE(d)}
+    <div class="estrC">${d.est.map((t,i)=>`<div class="${i<(d.b?.e||0)?'ok':''}"><b>★</b><small>${t}</small></div>`).join('')}</div>
+    <div class="chips">${d.chips.map(c=>`<span>${c}</span>`).join('')}</div>
+    ${novidadeE(d)}${botoesE(n)}</div>`,d); }
+</script>
+
+<style id="estilo" type="text/plain">
+body.espaco .panel:has(.ent){padding:18px 16px 16px}
+.ent{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;width:100%}
+.ent .fecha{position:absolute;right:-6px;top:-8px;width:36px;height:36px;border-radius:50%;border:1.5px solid rgba(207,198,255,.45);background:rgba(10,8,25,.55);color:#cfc6ff;font-size:16px;cursor:pointer;z-index:2}
+.ent .num{font:900 12px Orbitron,sans-serif;letter-spacing:.2em;color:#6fe0ff}
+body.espaco .ent h2{margin:0;font:800 23px 'Exo 2',sans-serif;letter-spacing:0;color:#fff}
+.ent .pl{position:relative;line-height:0}
+.ent .xN{position:absolute;right:-26px;bottom:6px;font:900 26px Orbitron,sans-serif;color:#ffd36e;text-shadow:0 0 12px #ffd36e88}
+.ent .meta{font:700 18px 'Exo 2',sans-serif;color:#fff}
+.ent .rec{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.05)}
+.ent .rec .ico{width:24px;height:24px}
+.ent .rec i{font-style:normal;color:#a49bd6;font-weight:700}
+.ent .chips{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
+.ent .chips span{padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);font:600 12.5px 'Exo 2',sans-serif;color:#d8d0f0}
+.ent .estr3{display:flex;gap:6px;width:100%}
+.ent .estr3>div{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:6px 2px}
+.ent .estr3 b{display:block;color:rgba(255,255,255,.35);font-size:14px;letter-spacing:1px}
+.ent .estr3 .ok b{color:#ffd36e;text-shadow:0 0 8px #ffd36e88}
+.ent .estr3 small{font-size:11.5px;color:#b9a9d9}
+.ent .novo{width:100%;text-align:left;background:rgba(110,230,255,.08);border:1px solid rgba(110,230,255,.35);border-radius:12px;padding:8px 10px;font-size:13.5px;line-height:1.35;color:#d8e6f2}
+.ent .novo i{font-style:normal;font:900 10px Orbitron,sans-serif;letter-spacing:.12em;color:#0b0a18;background:#6fe0ff;border-radius:6px;padding:2px 6px;margin-right:6px}
+.ent .lembra{width:100%;font-size:13px;color:#b9a9d9;text-align:left}
+.ent .lembra summary{cursor:pointer;text-align:center;color:#6fe0ff;font-weight:600;list-style:none}
+.ent .lembra summary::before{content:'ⓘ '}
+.ent .lembra p{margin:6px 0 0;font-size:13px !important;color:#cfc4e6 !important}
+.ent .btn{width:100%;margin:0}
+.ent .btn.pequeno{padding:6px !important;font-size:12px !important;letter-spacing:.06em;border-width:1.5px !important;box-shadow:none !important}
+.ent .metasL{display:flex;flex-direction:column;gap:6px;width:100%}
+.ent .metasL>div{display:flex;align-items:center;gap:8px;text-align:left;font-size:15px;color:#f3eefc}
+.ent .metasL svg,.ent .metasL .ico{width:30px;height:30px;flex:none}
+.ent .proib span{color:#ff9a8a}
+/* B */
+.entB .topo{display:flex;flex-direction:column;align-items:flex-start;width:100%;text-align:left;padding-right:34px}
+.entB .linha{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:rgba(255,255,255,.04);border-radius:16px;padding:10px}
+.entB .pl canvas{width:84px !important;height:84px !important}
+.entB .txt{display:flex;flex-direction:column;gap:7px;align-items:flex-start;flex:1;min-width:0}
+.entB .mB{display:flex;align-items:center;gap:6px;font:700 14.5px 'Exo 2',sans-serif;color:#fff;line-height:1.2}
+.entB .mB svg,.entB .mB .ico{width:24px;height:24px;flex:none}
+.entB .chips{justify-content:flex-start}
+.entB .estr3.baixa>div{padding:4px 2px}
+/* C */
+.entC .fita{margin-top:-4px;padding:6px 18px;border-radius:999px;background:linear-gradient(#2a2160,#1a1440);border:1.5px solid #6fe0ff;font:900 13px Orbitron,sans-serif;letter-spacing:.18em;color:#bff3ff;box-shadow:0 0 14px #6fe0ff55}
+.entC .blocos{display:flex;gap:8px;justify-content:center;width:100%}
+.entC .bC{flex:0 1 110px;background:rgba(0,0,0,.28);border:1.5px solid rgba(255,255,255,.1);border-radius:16px;padding:8px 4px 6px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.entC .bC .ic svg,.entC .bC .ic .ico{width:46px;height:46px}
+.entC .bC b{font:900 22px Orbitron,sans-serif;color:#fff;line-height:1}
+.entC .bC small{font-size:11.5px;color:#b9a9d9;line-height:1.15}
+.entC .bC.proib{border-color:#ff8a7a88}
+.entC .bC.proib b{color:#ff8a7a}
+.entC .estrC{display:flex;gap:4px;width:100%;justify-content:center}
+.entC .estrC>div{flex:1;display:flex;flex-direction:column;align-items:center}
+.entC .estrC b{font-size:30px;line-height:1;color:rgba(255,255,255,.22)}
+.entC .estrC div:nth-child(2) b{font-size:36px;margin-top:-4px}
+.entC .estrC .ok b{color:#ffd36e;text-shadow:0 0 12px #ffd36e99}
+.entC .estrC small{font-size:11.5px;color:#b9a9d9}
+</style>
+
+<script>
+const FASES=[[2,'simples'],[12,'duas metas'],[24,'sem limite'],[37,'novidade'],[41,'quebra-cabeça'],[56,'metas e lembrete'],[61,'lixo, estreia']];
+const VARS=[['A','A · Cartão','limpo'],['B','B · Lado','a lado'],['C','C · Metas','em blocos'],['hoje','Hoje','para comparar']];
+const q=new URLSearchParams(location.hash.slice(1));
+let V=q.get('v')||'A', F=+(q.get('f')||2), pronto=false;
+const fr=document.getElementById('jogo');
+function chips(){
+  const ov=document.getElementById('opsV'); ov.innerHTML='';
+  for(const [k,a,b] of VARS){ const e=document.createElement('button'); e.className='op'+(V===k?' on':''); e.innerHTML=`${a}<small>${b}</small>`; e.onclick=()=>{ V=k; chips(); abre(); }; ov.appendChild(e); }
+  const of=document.getElementById('opsF'); of.innerHTML='';
+  for(const [n,t] of FASES){ const e=document.createElement('button'); e.className='op'+(F===n?' on':''); e.innerHTML=`Fase ${n}<small>${t}</small>`; e.onclick=()=>{ F=n; chips(); abre(); }; of.appendChild(e); }
+  for(const c of document.querySelectorAll('.card[data-v]')) c.classList.toggle('on',c.dataset.v===V);
+}
+function escala(){ const w=document.getElementById('moldura').clientWidth, k=Math.min(1,w/390); fr.style.transform=`scale(${k})`; document.getElementById('moldura').style.height=(800*k)+'px'; }
+function abre(){ if(!pronto) return; const w=fr.contentWindow;
+  try{ w.eval(`hideOverlay(); missoesLista(); ${V==='hoje'?`missaoInfo(${F})`:`entrada${V}(${F})`}`); }catch(e){ console.warn(e); } }
+fr.onload=()=>{ const w=fr.contentWindow, d=w.document;
+  try{ w.eval('sound=false; music=false;'); }catch(e){}
+  const st=d.createElement('style'); st.textContent=document.getElementById('estilo').textContent; d.head.appendChild(st);
+  w.eval(document.getElementById('codigo').textContent.replace(/^function (\w+)/gm,'window.$1=function $1').replace(/^const (\w+)=/gm,'window.$1='));
+  pronto=true; setTimeout(abre,300); };
+chips(); escala(); addEventListener('resize',escala);
+</script>
+</body>
+</html>
