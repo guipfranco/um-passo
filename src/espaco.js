@@ -32,16 +32,40 @@ const L0=ST.L.slice();
 
 // ===================== texturas (geradas, nas cores do jogo) =====================
 const GW=256,GH=128,TW=512,TH=256,TEX={};
-// a textura só é gerada quando um planeta precisa dela (gerar todas de uma vez travava a abertura)
-function makeTex(fn){return {fn,_px:null,get px(){return this._px||(this._px=gerarTex(this.fn));}};}
-// gera aos poucos, nos intervalos livres, as texturas que ainda não foram usadas
-function preaquece(){const ks=Object.keys(TEX);let i=0;const passo=()=>{if(i>=ks.length)return;TEX[ks[i++]].px;(window.requestIdleCallback||setTimeout)(passo);};passo();}
-function gerarTex(fn){const g=mk(GW,GH),gx=g.getContext('2d'),gi=gx.createImageData(GW,GH),px=gi.data;
-  for(let j=0;j<GH;j++){const lat=(.5-(j+.5)/GH)*Math.PI,cl=Math.cos(lat),sl=Math.sin(lat);
+// a textura só é gerada quando um planeta precisa dela (gerar todas de uma vez travava a abertura). No tempo ocioso ela
+// sai aos poucos, algumas linhas por vez (gera); quem precisar dela antes de pronta termina o resto na hora (px)
+function makeTex(fn){return {fn,_px:null,_j:0,_gi:null,get px(){if(!this._px)gerarTex(this,Infinity);return this._px;},gera(ate){return gerarTex(this,ate);}};}
+// gera linhas da textura até acabar ou até a hora 'ate' (relógio performance.now); devolve true quando ficou pronta
+function gerarTex(T,ate){if(T._px)return true;const fn=T.fn;if(!T._gi)T._gi=new ImageData(GW,GH);const px=T._gi.data,j0=T._j;
+  while(T._j<GH){if(performance.now()>=ate)return false;const j=T._j++,lat=(.5-(j+.5)/GH)*Math.PI,cl=Math.cos(lat),sl=Math.sin(lat);
     for(let i=0;i<GW;i++){const lon=((i+.5)/GW-.5)*2*Math.PI;const c=fn(cl*Math.sin(lon),sl,cl*Math.cos(lon),lat,lon);const k=(j*GW+i)*4;
       px[k]=c[0];px[k+1]=c[1];px[k+2]=c[2];px[k+3]=c.length>3?c[3]:255;}}
-  gx.putImageData(gi,0,0);const big=mk(TW,TH),bx=big.getContext('2d');bx.imageSmoothingEnabled=true;bx.imageSmoothingQuality='high';bx.drawImage(g,0,0,TW,TH);
-  const dados=bx.getImageData(0,0,TW,TH).data;g.width=g.height=0;big.width=big.height=0;return dados;}
+  if(T._j>j0&&ate-performance.now()<4)return false;   // a ampliação final leva uns ms: se a folga acabou, fica para a próxima
+  const g=mk(GW,GH),gx=g.getContext('2d');gx.putImageData(T._gi,0,0);const big=mk(TW,TH),bx=big.getContext('2d');bx.imageSmoothingEnabled=true;bx.imageSmoothingQuality='high';bx.drawImage(g,0,0,TW,TH);
+  T._px=bx.getImageData(0,0,TW,TH).data;g.width=g.height=0;big.width=big.height=0;T._gi=null;return true;}
+// tempo ocioso do navegador (requestIdleCallback, com o prazo dele); sem ele, uma fatia de 5 ms entre os quadros
+function ocioso(f,o){if(window.requestIdleCallback)return requestIdleCallback(f,o);
+  return setTimeout(()=>{const fim=performance.now()+5;f({didTimeout:false,timeRemaining:()=>Math.max(0,fim-performance.now())});},20);}
+// anda uma fila de tarefas só no tempo ocioso, sem passar do prazo. Tarefa: {f(ate), inteira}; f devolve true quando acabou.
+// As que se dividem (texturas) param na hora 'ate'. As inteiras (passos curtos, de poucos ms) começam com FOLGA_INTEIRA ms
+// livres; se a folga não vier em ESPERA_INTEIRA ms, começam na próxima brecha assim mesmo (a fila não para num aparelho
+// sempre ocupado). Sem nenhuma brecha em 1,5 s, anda um passo de qualquer jeito. Devolve {adianta(f)}: passa para a frente
+// da fila as tarefas que faltam e em que f(tarefa) é verdade (o que o jogo vai precisar logo).
+const FOLGA_INTEIRA=5,ESPERA_INTEIRA=250;
+function filaOciosa(fila){let i=0,desde=0;
+  const passo=dl=>{const ate=dl.didTimeout?performance.now()+4:performance.now()+dl.timeRemaining()-1;
+    while(i<fila.length){const T=fila[i],folga=ate-performance.now();
+      if(!dl.didTimeout){if(folga<1)break;
+        if(T.inteira&&folga<FOLGA_INTEIRA){const ag=performance.now();if(!desde)desde=ag;if(ag-desde<ESPERA_INTEIRA)break;}}
+      desde=0;if(T.f(ate))i++;if(dl.didTimeout)break;}
+    if(i<fila.length)ocioso(passo,{timeout:1500});};
+  ocioso(passo,{timeout:1500});
+  return {adianta(f){const resto=fila.slice(i),ja=resto.filter(f);if(ja.length)fila.splice(i,resto.length,...ja,...resto.filter(T=>!f(T)));}};}
+// a textura como tarefa da fila (andando aos poucos)
+const texTarefa=nome=>({f:ate=>!TEX[nome]||TEX[nome].gera(ate)});
+// gera no tempo ocioso as texturas que ainda não foram usadas, na ordem da escada (as que aparecem antes vêm antes)
+const TEX_ORDEM=()=>{const l=[];for(const d of LADDER)for(const k of [d.tex,d.clouds])if(k&&TEX[k]&&!l.includes(k))l.push(k);for(const k of Object.keys(TEX))if(!l.includes(k))l.push(k);return l;};
+function preaquece(){return filaOciosa(TEX_ORDEM().map(texTarefa));}
 function craterField(seed,n,amin,amax){const r=rng(seed);return Array.from({length:n},()=>{const a=amin+(amax-amin)*r()*r();return {d:randDir(r),a,cut:Math.cos(a*1.35)};});}
 function craterShade(x,y,z,cr){let m=0;for(const c of cr){const dt=x*c.d[0]+y*c.d[1]+z*c.d[2];if(dt<c.cut)continue;const q=Math.acos(Math.min(1,dt))/c.a;
   if(q<1)m-=.24*(1-q*q*.6);else m+=.2*(1-(q-1)/.35);}return m;}
@@ -96,7 +120,9 @@ function buildTextures(){
 // ===================== esfera (mapeamento esférico pixel a pixel) =====================
 class SphereBody{
   constructor(tex,o={}){Object.assign(this,{tex,tilt:.35,pitch:.25,speed:.05,emissive:false,clouds:null,cloudSpeed:1.3,rScale:.86},o);this.userSpin=0;}
-  prep(S){this.S=S;const R=this.R=S/2*this.rScale,cx=S/2,cy=S/2;const idx=[],row=[],col=[],nx=[],ny=[],nz=[];
+  // as contas de cada ponto do disco ficam para a primeira pintura no processador (no logo, o disco vem da placa de vídeo)
+  prep(S){this.S=S;this.R=S/2*this.rScale;this.P=null;}
+  pontos(){const S=this.S,R=this.R,cx=S/2,cy=S/2;const idx=[],row=[],col=[],nx=[],ny=[],nz=[];
     const ct=Math.cos(this.tilt),st=Math.sin(this.tilt),cp=Math.cos(this.pitch),sp=Math.sin(this.pitch);
     for(let j=0;j<S;j++)for(let i=0;i<S;i++){const x=(i+.5-cx)/R,y=(cy-(j+.5))/R,q=x*x+y*y;if(q>1)continue;const z=Math.sqrt(1-q);
       const x1=x*ct+y*st,y1=-x*st+y*ct,y2=y1*cp+z*sp,z2=-y1*sp+z*cp;
@@ -104,7 +130,7 @@ class SphereBody{
       idx.push(j*S+i);row.push(Math.min(TH-1,Math.floor((.5-lat/Math.PI)*TH))*TW);col.push((lon/(2*Math.PI)+.5)*TW);nx.push(x);ny.push(y);nz.push(z);}
     this.P={idx:Int32Array.from(idx),row:Int32Array.from(row),col:Float32Array.from(col),nx:Float32Array.from(nx),ny:Float32Array.from(ny),nz:Float32Array.from(nz)};
     if(!this.can||this.can.width!==S){this.can=mk(S,S);this.cx=this.can.getContext('2d');this.img=this.cx.createImageData(S,S);}}
-  render(t,L,o={}){const {idx,row,col,nx,ny,nz}=this.P,tp=this.tex.px,d=this.img.data;d.fill(0);
+  render(t,L,o={}){if(!this.P)this.pontos();const {idx,row,col,nx,ny,nz}=this.P,tp=this.tex.px,d=this.img.data;d.fill(0);
     const off=(-this.speed*t+this.userSpin)*TW,cl=this.clouds?this.clouds.px:null,coff=(-this.speed*this.cloudSpeed*t+this.userSpin)*TW;
     const Lx=L[0],Ly=L[1],Lz=L[2],em=this.emissive,grid=o.grid;
     for(let k=0;k<idx.length;k++){let c=col[k]+off;c=((c%TW)+TW)%TW|0;const ti=(row[k]+c)*4;let r=tp[ti],g=tp[ti+1],b=tp[ti+2];
@@ -284,15 +310,19 @@ function makePiece(def,S,vr){
   const out=mk(S,S),o=out.getContext('2d'),P={def,S,out,userRot:null,userSpin:0};const k=def.kind;
   if(k==='sphere'){
     const sp={...def.sp};if(vr){sp.tilt=(sp.tilt||0)+vr.roll;sp.pitch=clamp((sp.pitch||0)+vr.pitch,-.85,.85);if(def.ring&&Math.abs(sp.pitch)<.24)sp.pitch=sp.pitch<0?-.24:.24;sp.speed=(sp.speed||.05)*vr.vel;P.userSpin=vr.fase;}
-    const body=new SphereBody(TEX[def.tex],{...sp,clouds:def.clouds?TEX[def.clouds]:null});body.prep(S);P.body=body;
-    P.draw=(t,L,op={})=>{o.clearRect(0,0,S,S);const R=body.R,c=S/2;
-      if(def.glow)starGlow(o,c,R,t,S);
+    const body=new SphereBody(TEX[def.tex],{...sp,clouds:def.clouds?TEX[def.clouds]:null});body.prep(S);P.body=body;const R=body.R,c=S/2;
+    // o que fica atrás do disco (brilho, atmosfera, metade de trás do anel) e o que fica na frente (contorno, anel, carinha)
+    const atras=(o,t)=>{if(def.glow)starGlow(o,c,R,t,S);
       if(def.atmo){const a=def.atmo.join(','),g=o.createRadialGradient(c,c,R*.92,c,c,R*1.25);g.addColorStop(0,`rgba(${a},.55)`);g.addColorStop(1,`rgba(${a},0)`);o.fillStyle=g;o.beginPath();o.arc(c,c,R*1.25,0,7);o.fill();}
-      if(def.ring)drawRing(o,c,c,R,body.tilt,body.pitch,'back',def.ring,t);
-      body.userSpin=P.userSpin;o.drawImage(body.render(t,L,op),0,0);
-      if(op.outline!==false){o.strokeStyle=def.outline||INK;o.lineWidth=Math.max(2,S*.024);o.beginPath();o.arc(c,c,R,0,7);o.stroke();}
+      if(def.ring)drawRing(o,c,c,R,body.tilt,body.pitch,'back',def.ring,t);};
+    const frente=(o,t,op)=>{if(op.outline!==false){o.strokeStyle=def.outline||INK;o.lineWidth=Math.max(2,S*.024);o.beginPath();o.arc(c,c,R,0,7);o.stroke();}
       if(def.ring)drawRing(o,c,c,R,body.tilt,body.pitch,'front',def.ring,t);
-      if(op.face)drawFace(o,c,c,R,t,def.seed);return out;};
+      if(op.face)drawFace(o,c,c,R,t,def.seed);};
+    P.draw=(t,L,op={})=>{o.clearRect(0,0,S,S);atras(o,t);body.userSpin=P.userSpin;o.drawImage(body.render(t,L,op),0,0);frente(o,t,op);return out;};
+    // as duas camadas em separado, para o disco vir da placa de vídeo no meio delas (logo do menu: discosGL)
+    P.partes=(t,op={})=>{if(!P.outB){P.outB=mk(S,S);P.outF=mk(S,S);}const b=P.outB.getContext('2d'),f=P.outF.getContext('2d');
+      b.clearRect(0,0,S,S);atras(b,t);f.clearRect(0,0,S,S);frente(f,t,op);};
+    P.anima=!!(def.glow||(def.ring&&def.ring.spokes));   // camadas que mudam com o tempo: o brilho do Sol pulsa, as listras do anel giram
   }else if(k==='mesh'){
     const body=meshFor(def.geom,def.sub),bc=mk(S,S),bx=bc.getContext('2d');P.body=body;
     P.draw=(t,L,op={})=>{bx.clearRect(0,0,S,S);const tt=vr?t*vr.vel+vr.dt:t;let M=op.M||(vr?mmul(vr.R0,def.cambalhota&&vr.a1?mmul(rotAxis(...vr.a1,vr.w1*tt),rotAxis(...vr.a2,vr.w2*tt)):def.rot(tt)):def.rot(t));if(P.userRot)M=mmul(P.userRot,M);
@@ -456,6 +486,11 @@ const kDe=n=>byName(n).k||1;
 const PASSO=1/30;
 function pecaImg(n,t,sz){sz=Math.max(8,Math.round(sz));const k=n+'|'+sz,P=pcache[k]||(pcache[k]=makePiece(byName(n),sz));
   if(P._t===undefined||Math.abs(t-P._t)>=PASSO||P._L!==ST.L||P._o!==ST.outline){P._img=P.draw(t,ST.L,{outline:ST.outline});P._t=t;P._L=ST.L;P._o=ST.outline;}return P._img;}
+// a peça desse tamanho já existe? / cria a peça e faz as contas do disco (a foto sai depois num passo curto) /
+// solta a peça (as fotos feitas no tempo ocioso não deixam peças na memória)
+const temPeca=(n,sz)=>!!pcache[n+'|'+Math.max(8,Math.round(sz))];
+function pecaPrepara(n,sz){const k=n+'|'+Math.max(8,Math.round(sz)),P=pcache[k]||(pcache[k]=makePiece(byName(n),Math.max(8,Math.round(sz))));if(P.body&&P.body.pontos&&!P.body.P)P.body.pontos();}
+function soltaPeca(n,sz){const k=n+'|'+Math.max(8,Math.round(sz)),P=pcache[k];if(P){libera(P);delete pcache[k];}}
 // u = lado da casa; a peça sai no tamanho do nível (k). fit = exatamente u. esc = escala extra só no desenho
 function drawPeca(c,n,t,x,y,u,a=1,fit=false,esc=1){const sz=Math.max(8,Math.round(fit?u:u*kDe(n))),img=pecaImg(n,t,sz),d=sz*esc;
   c.globalAlpha=a;c.drawImage(img,x-d/2,y-d/2,d,d);c.globalAlpha=1;}
@@ -483,10 +518,18 @@ const OBJDEF={
   portal:{kind:'mesh',geom:'portal',scale:.95,rot:t=>mmul(mmul(rotAxis(0,1,0,.45*Math.sin(t*.5)),rotAxis(1,0,0,.35)),rotAxis(0,0,1,t*.6))},
 };
 const ocache={};
-// objetos que giram em ciclo são filmados uma vez (N quadros) e depois só tocados: quase não custam nada por quadro
-const fcache={};
-function quadroObj(filme,key,S,t,N,per,rot){const k=filme+'|'+S;let F=fcache[k];if(!F)F=fcache[k]=new Array(N);const i=Math.floor(((t%per+per)%per)/per*N)%N;
-  if(!F[i]){const cv=mk(S,S);cv.getContext('2d').drawImage(objImg(key,S,0,rot(i/N*per)),0,0);F[i]=cv;}return F[i];}
+// objetos que giram em ciclo são filmados uma vez (N quadros) e depois só tocados: quase não custam nada por quadro.
+// Cada tamanho é um filme; quando os filmes passam de FILME_LIM bytes, os menos usados saem (como no vcache), mas nunca
+// um que tocou há pouco (FILME_USO ms): o que está na tela não é refilmado a cada quadro
+const fcache=new Map(),FILME_LIM=16e6,FILME_USO=2000;let fBytes=0;
+function quadroObj(filme,key,S,t,N,per,rot){const k=filme+'|'+S,agora=performance.now();let F=fcache.get(k);
+  if(F){if(agora-F.uso>100){fcache.delete(k);fcache.set(k,F);}}   // o mais usado por último fica no fim (os mais velhos saem primeiro)
+  else{F={q:new Array(N),b:0};fcache.set(k,F);}
+  F.uso=agora;const i=Math.floor(((t%per+per)%per)/per*N)%N;
+  if(!F.q[i]){const cv=mk(S,S);cv.getContext('2d').drawImage(objImg(key,S,0,rot(i/N*per)),0,0);F.q[i]=cv;F.b+=S*S*4;fBytes+=S*S*4;if(fBytes>FILME_LIM)podaFilmes(agora);}
+  return F.q[i];}
+function podaFilmes(agora){for(const [k,F] of fcache){if(fBytes<=FILME_LIM*.75)break;if(agora-F.uso<FILME_USO)continue;
+  for(const cv of F.q)if(cv)cv.width=cv.height=0;fBytes-=F.b;fcache.delete(k);}}
 const PER_EST=2*Math.PI/.55,PER_LIXO=2*Math.PI/1.1,PER_NAVE=2*Math.PI/.7,TAU=2*Math.PI;
 const rotRocha=v=>a=>mmul(rotAxis(.3+v*.4,1,.2*v,a),rotAxis(1,.2,0,v*1.3));
 function objImg(key,S,t,M){const k=key+'|'+S,P=ocache[k]||(ocache[k]=makePiece({...OBJDEF[key],seed:1},S));return P.draw(t,ST.L,{outline:ST.outline,M});}
@@ -539,16 +582,19 @@ const GLP={gl:null,cv:null,pe:null,pa:null,buf:null,tex:new Map(),falhou:false,d
 const GLS_V='attribute vec2 a;uniform vec2 c;uniform float h;uniform vec2 tela;uniform float raio;varying vec2 p;'+
   'void main(){vec2 q=c+a*h;gl_Position=vec4(q.x/tela.x*2.-1.,1.-q.y/tela.y*2.,0.,1.);p=vec2(a.x,-a.y)*h/raio;}';
 const GLS_PREC='#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n';
-const GLS_ESFERA=GLS_PREC+'varying vec2 p;uniform sampler2D tx,nv;uniform float tilt,pitch,giro,giroN,emis,temNuv,atmoOn,glow,glowR,pxR,contW;uniform vec3 L,atmo,cont;'+
+// cpu=1: o disco igual ao pintado no processador (texel mais próximo, borda dura, sem contorno), para o logo do menu
+const GLS_ESFERA=GLS_PREC+'varying vec2 p;uniform sampler2D tx,nv;uniform float tilt,pitch,giro,giroN,emis,temNuv,atmoOn,glow,glowR,pxR,contW,cpu;uniform vec3 L,atmo,cont;'+
  'void main(){float r=length(p),aa=1.2/pxR;vec4 o=vec4(0.);'+
  'if(atmoOn>.5&&r<1.25){float a=.55*clamp(1.-(r-.92)/.33,0.,1.);o=vec4(atmo*a,a);}'+
  'if(glow>.5&&r<glowR){float k=clamp((r-.8)/(glowR-.8),0.,1.);vec3 gc=mix(vec3(1.,.84,.35),vec3(1.,.6,.12),k);float a=.75*pow(1.-k,1.6);o=vec4(gc*a,a);}'+
  'if(r<1.){float z=sqrt(max(0.,1.-r*r));vec3 n=vec3(p,z);float ct=cos(tilt),st=sin(tilt),cp=cos(pitch),sp=sin(pitch);'+
  'float x1=n.x*ct+n.y*st,y1=-n.x*st+n.y*ct,y2=y1*cp+n.z*sp,z2=-y1*sp+n.z*cp;float lat=asin(clamp(y2,-1.,1.)),lon=atan(x1,z2);'+
- 'vec2 uv=vec2(lon/6.2831853+.5+giro,.5-lat/3.1415927);vec3 c=texture2D(tx,uv).rgb;'+
- 'if(temNuv>.5){float na=texture2D(nv,vec2(uv.x-giro+giroN,uv.y)).a;c=mix(c,vec3(1.),na);}'+
+ 'vec2 uv=vec2(lon/6.2831853+.5+giro,.5-lat/3.1415927),un=vec2(uv.x-giro+giroN,uv.y);'+
+ `if(cpu>.5){vec2 tq=vec2(${TW}.,${TH}.);uv=(floor(uv*tq)+.5)/tq;un=(floor(un*tq)+.5)/tq;}`+
+ 'vec3 c=texture2D(tx,uv).rgb;'+
+ 'if(temNuv>.5){float na=texture2D(nv,un).a;c=mix(c,vec3(1.),na);}'+
  'float s;if(emis>.5)s=.72+.36*z;else{float l=dot(n,L);s=.26+.56*smoothstep(-.1,.14,l)+.2*smoothstep(.45,.95,l);float rim=1.-z;s+=.2*rim*rim*rim*smoothstep(0.,.3,l);}'+
- 'c*=s;float e=contW/pxR;c=mix(c,cont,smoothstep(1.-e-aa,1.-e+aa*.5,r));float a=1.-smoothstep(1.-aa,1.,r);o=vec4(c*a,a)+o*(1.-a);}'+
+ 'c*=s;float a=1.;if(cpu<.5){float e=contW/pxR;c=mix(c,cont,smoothstep(1.-e-aa,1.-e+aa*.5,r));a=1.-smoothstep(1.-aa,1.,r);}o=vec4(c*a,a)+o*(1.-a);}'+
  'gl_FragColor=o;}';
 const GLS_ANEL=(der)=>(der?'#extension GL_OES_standard_derivatives : enable\n':'')+GLS_PREC+'varying vec2 p;uniform float tilt,pitch,lado,pxR,bordas;uniform vec4 b0,b1,b2,b3;uniform vec3 c0,c1,c2,c3,cont;'+
  'float banda(float r,vec4 b,float w){return b.z<.5?0.:smoothstep(b.x-w,b.x+w,r)*(1.-smoothstep(b.y-w,b.y+w,r));}'+
@@ -582,14 +628,17 @@ function glTex(nome){const gl=GLP.gl;let t=GLP.tex.get(nome);if(t)return t;const
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);GLP.tex.set(nome,t);return t;}
 const hex3=h=>hex(h).map(v=>v/255);
-// lista: [{n, x, y, u, id}] com x, y, u em px do canvas (u = lado da casa); desenha os redondos, os maiores primeiro
+// prepara um programa para desenhar um quadrado de meio lado h centrado em c (px do canvas), com raio R
+function glUsa(P,c,h,R){const gl=GLP.gl,cv=GLP.cv;gl.useProgram(P.p);gl.enableVertexAttribArray(P.a);gl.vertexAttribPointer(P.a,2,gl.FLOAT,false,0,0);
+  gl.uniform2f(P.u.c,c[0],c[1]);gl.uniform1f(P.u.h,h);gl.uniform2f(P.u.tela,cv.width,cv.height);gl.uniform1f(P.u.raio,R);gl.uniform1f(P.u.pxR,R);}
+// lista: [{n, x, y, u, id, vr}] com x, y, u em px do canvas (u = lado da casa); desenha os redondos, os maiores primeiro.
+// vr: o jeito da peça (vrDe), guardado por quem chama para não ser sorteado de novo a cada quadro
 function glDesenha(lista,t,L){
   const gl=GLP.gl,cv=GLP.cv;if(!gl)return false;gl.viewport(0,0,cv.width,cv.height);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);
   gl.bindBuffer(gl.ARRAY_BUFFER,GLP.buf);
-  const usa=(P,c,h,R)=>{gl.useProgram(P.p);gl.enableVertexAttribArray(P.a);gl.vertexAttribPointer(P.a,2,gl.FLOAT,false,0,0);
-    gl.uniform2f(P.u.c,c[0],c[1]);gl.uniform1f(P.u.h,h);gl.uniform2f(P.u.tela,cv.width,cv.height);gl.uniform1f(P.u.raio,R);gl.uniform1f(P.u.pxR,R);};
+  const usa=glUsa;
   const ord=lista.filter(it=>byName(it.n).kind==='sphere').sort((a,b)=>kDe(b.n)-kDe(a.n));
-  for(const it of ord){const def=byName(it.n),sp=def.sp,vr=vrDe(it.id);
+  for(const it of ord){const def=byName(it.n),sp=def.sp,vr=it.vr||vrDe(it.id);
     let tilt=(sp.tilt||0)+vr.roll,pitch=clamp((sp.pitch||0)+vr.pitch,-.85,.85);if(def.ring&&Math.abs(pitch)<.24)pitch=pitch<0?-.24:.24;
     const S=it.u*kDe(it.n)*(it.esc||1),R=S/2*sp.rScale,vel=(sp.speed||.05)*vr.vel,c=[it.x,it.y];
     const anel=lado=>{const P=GLP.pa,B=def.ring.bands;usa(P,c,R*2.1,R);gl.uniform1f(P.u.tilt,tilt);gl.uniform1f(P.u.pitch,pitch);gl.uniform1f(P.u.lado,lado);
@@ -603,6 +652,35 @@ function glDesenha(lista,t,L){
     gl.uniform1f(P.u.tilt,tilt);gl.uniform1f(P.u.pitch,pitch);gl.uniform1f(P.u.giro,-vel*t+vr.fase);gl.uniform1f(P.u.giroN,-vel*1.3*t+vr.fase);
     gl.uniform1f(P.u.emis,sp.emissive?1:0);gl.uniform1f(P.u.temNuv,def.clouds?1:0);gl.uniform1f(P.u.atmoOn,def.atmo?1:0);gl.uniform3fv(P.u.atmo,def.atmo?def.atmo.map(v=>v/255):[0,0,0]);
     gl.uniform1f(P.u.glow,def.glow?1:0);gl.uniform1f(P.u.glowR,1/sp.rScale);gl.uniform1f(P.u.contW,ST.outline?Math.max(1.6*DPR,R*.055):0);gl.uniform3fv(P.u.cont,hex3(def.outline||INK));
-    gl.uniform3f(P.u.L,L[0],L[1],L[2]);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+    gl.uniform1f(P.u.cpu,0);gl.uniform3f(P.u.L,L[0],L[1],L[2]);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
     if(def.ring)anel(1);}
   return true;}
+
+// ===================== LOGO DO MENU: O DISCO DOS PLANETAS PELA PLACA DE VÍDEO =====================
+// No logo, o que pesava era o disco de cada planeta, pintado ponto a ponto no processador a 30 quadros por segundo.
+// Aqui só o disco sai do WebGL, com as mesmas contas do SphereBody (o texel mais próximo e a borda dura, como no
+// processador). O resto da peça (brilho do Sol, atmosfera, anel com as listras, contorno) continua no canvas, em duas
+// camadas: a de trás e a da frente do disco. O logo põe as três na ordem de antes, peça por peça, então os planetas
+// seguem passando atrás do nome em cima e na frente embaixo.
+// as camadas de trás e da frente da peça no tamanho sz; o tempo do disco anda em passos de PASSO, como no pecaImg
+function pecaPartes(n,t,sz){sz=Math.max(8,Math.round(sz));const k=n+'|'+sz,P=pcache[k]||(pcache[k]=makePiece(byName(n),sz));
+  if(P._td===undefined||Math.abs(t-P._td)>=PASSO)P._td=t;
+  if(P._tp===undefined||(P.anima&&Math.abs(t-P._tp)>=PASSO)||P._op!==ST.outline){P.partes(t,{outline:ST.outline});P._tp=t;P._op=ST.outline;}
+  return P;}
+// desenha os discos da lista [{n, sz, t}] numa faixa do canvas do WebGL (uma casa por peça, sem se tocarem);
+// devolve false sem WebGL (aí o logo pinta as peças inteiras no processador, como antes)
+function discosGL(lista){const gl=GLP.gl,cv=GLP.cv;if(!gl||!lista.length)return false;
+  const Ps=lista.map(it=>pecaPartes(it.n,it.t,it.sz));let W=2,H=2;for(const P of Ps){P._gx=W;W+=P.S+2;H=Math.max(H,P.S+2);}
+  if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H;}
+  gl.viewport(0,0,W,H);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);gl.bindBuffer(gl.ARRAY_BUFFER,GLP.buf);
+  const L=ST.L,E=GLP.pe;
+  for(const P of Ps){const def=P.def,b=P.body,R=b.R,tq=P._td;glUsa(E,[P._gx+P.S/2,1+P.S/2],R*1.04,R);
+    gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,glTex(def.tex));gl.uniform1i(E.u.tx,0);
+    gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,glTex(def.clouds||def.tex));gl.uniform1i(E.u.nv,1);
+    gl.uniform1f(E.u.tilt,b.tilt);gl.uniform1f(E.u.pitch,b.pitch);gl.uniform1f(E.u.giro,-b.speed*tq+P.userSpin);gl.uniform1f(E.u.giroN,-b.speed*b.cloudSpeed*tq+P.userSpin);
+    gl.uniform1f(E.u.emis,b.emissive?1:0);gl.uniform1f(E.u.temNuv,def.clouds?1:0);gl.uniform1f(E.u.atmoOn,0);gl.uniform1f(E.u.glow,0);gl.uniform1f(E.u.contW,0);
+    gl.uniform1f(E.u.cpu,1);gl.uniform3f(E.u.L,L[0],L[1],L[2]);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);}
+  return true;}
+// a peça do logo: camada de trás, disco (da faixa do WebGL) e camada da frente, no mesmo lugar e escala do drawPeca(fit)
+function drawPecaGL(c,n,x,y,u,esc=1){const sz=Math.max(8,Math.round(u)),P=pcache[n+'|'+sz],d=sz*esc,x0=x-d/2,y0=y-d/2;
+  c.drawImage(P.outB,x0,y0,d,d);c.drawImage(GLP.cv,P._gx,1,sz,sz,x0,y0,d,d);c.drawImage(P.outF,x0,y0,d,d);}

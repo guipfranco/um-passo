@@ -17,7 +17,7 @@ const corNivel = t => COR_NIVEL[Math.max(1,Math.min(t,COR_NIVEL.length))-1];
 // cada canvas do espaço no tabuleiro fica num conjunto e é redesenhado a cada quadro
 const ESPC = new Set();
 let espIniciado=false;
-function espInicia(){ if(espIniciado) return; espIniciado=true; ESP.buildTextures(); ESP.preaquece(); requestAnimationFrame(espLoop); }
+function espInicia(){ if(espIniciado) return; espIniciado=true; ESP.buildTextures(); preparaOcioso(); requestAnimationFrame(espLoop); }
 // canvas centrado no elemento, kx por ky casas de tamanho; desenha(ctx, W, H, u, t), u = lado da casa em px do canvas
 function espCanvas(host, kx, ky, desenha){
   let cv=host.querySelector(':scope > canvas.esp');
@@ -37,7 +37,7 @@ function mostraMedidor(ms,a,b,c,d){
 }
 function espLoop(ms){
   requestAnimationFrame(espLoop);
-  const t=ms/1000, ceu=document.body.classList.contains('espaco'), p0=performance.now(); tQuadro=t;
+  const t=ms/1000, ceu=document.body.classList.contains('espaco'), p0=performance.now(); tQuadro=t; quadroN++;
   // cada camada num try: um erro numa delas não pode travar as outras nem deixar o céu num modo de desenho errado
   if(ceu) try{ ceuDesenha(t); }catch(e){ console.warn('céu',e); anotaErro('céu',e); }
   const p1=performance.now();
@@ -88,24 +88,86 @@ let GLON=null;
 function glCamada(){ let cv=document.getElementById('glPlan'); if(!cv){ cv=document.createElement('canvas'); cv.id='glPlan';
     // a placa de vídeo perdeu ou devolveu o contexto: decide de novo quem desenha os planetas e repinta as peças paradas
     // (sem contexto a camada fica escondida: o canvas perdido pode aparecer como um retângulo branco)
-    const refaz=e=>{ GLON=null; cv.style.display=e.type==='webglcontextlost'?'none':''; for(const c of ESPC) c._feito=false; };
+    const refaz=e=>{ GLON=null; glSujo=true; cv.style.display=e.type==='webglcontextlost'?'none':''; for(const c of ESPC) c._feito=false; };
     cv.addEventListener('webglcontextlost',refaz); cv.addEventListener('webglcontextrestored',refaz); }
   if(cv.parentElement!==board) board.prepend(cv); return cv; }
 function glAtivo(){ if(GLON===null){ espInicia(); GLON = !/[?&]semgl\b/.test(location.search) && ESP.glPronto(glCamada()); } return GLON; }
+// posição de cada peça no quadro, lida uma vez só: a malha e os planetas usam a mesma leitura
+let quadroN=0, pecasQ=null, pecasN=-1;
+function pecasNoQuadro(){
+  if(pecasN===quadroN && pecasQ) return pecasQ;
+  pecasN=quadroN; pecasQ=[];
+  for(const el of board.querySelectorAll('.tile')){ if(!el._t||!el.firstChild) continue; const fr=el.firstChild.getBoundingClientRect(); if(fr.width) pecasQ.push({el,fr}); }
+  return pecasQ;
+}
+// glSujo: a camada tem desenho (planetas, ou os discos do logo do menu). Sem planeta redondo e já limpa, não é limpa
+// e redesenhada de novo a cada quadro
+let glSujo=true;
 function glQuadro(t){
   const cv=glCamada(), gr=cv.getBoundingClientRect(); if(!gr.width) return;
-  const W=Math.round(gr.width*ESP.DPR), H=Math.round(gr.height*ESP.DPR); if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; }
+  const W=Math.round(gr.width*ESP.DPR), H=Math.round(gr.height*ESP.DPR); if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; glSujo=true; }
   const sx=W/gr.width, lista=[];
-  for(const el of board.querySelectorAll('.tile')){ if(!el._gl||!el._t) continue; const fr=el.firstChild.getBoundingClientRect(); if(!fr.width) continue;
-    lista.push({n:nomeNivelEsp(el._t.t), x:(fr.left+fr.width/2-gr.left)*sx, y:(fr.top+fr.height/2-gr.top)*sx, u:fr.width*sx, id:el.dataset.id||'x'}); }
-  ESP.glDesenha(lista,t,ESP.ST.L);
+  for(const {el,fr} of pecasNoQuadro()){ if(!el._gl) continue; const id=el.dataset.id||'x';
+    if(el._vrId!==id){ el._vr=ESP.vrDe(id); el._vrId=id; }   // o jeito da peça (eixo, giro) é sorteado pelo id uma vez só
+    lista.push({n:nomeNivelEsp(el._t.t), x:(fr.left+fr.width/2-gr.left)*sx, y:(fr.top+fr.height/2-gr.top)*sx, u:fr.width*sx, id, vr:el._vr}); }
+  if(!lista.length && !glSujo) return;
+  ESP.glDesenha(lista,t,ESP.ST.L); glSujo=lista.length>0;
 }
 // recorta o disco do planeta (desenhado embaixo, pela placa de vídeo) do que está no canvas da peça
 function furaPlaneta(c,x,y,u,T){ const R=u*kNivel(T.t)*ESP.byName(nomeNivelEsp(T.t)).sp.rScale/2; c.save(); c.globalCompositeOperation='destination-out'; c.beginPath(); c.arc(x,y,R,0,7); c.fill(); c.restore(); }
 
-// ícone do planeta no meio do texto (uma foto parada, guardada depois da primeira vez)
-const ICO_PL={};
-function icoPlaneta(t){ if(ICO_PL[t]) return ICO_PL[t]; espInicia(); return ICO_PL[t]=`<img class="ico" alt="" src="${ESP.pecaImg(nomeNivelEsp(t),0,96).toDataURL()}">`; }
+// ícone do planeta no meio do texto (uma foto parada). A foto (ICO_URL) é feita antes, no tempo ocioso (preparaOcioso);
+// se ainda não estiver pronta, sai na hora, como antes
+const ICO_PL={}, ICO_URL={};
+function icoPlaneta(t){ if(ICO_PL[t]) return ICO_PL[t]; espInicia();
+  const u=ICO_URL[t]||(ICO_URL[t]=ESP.pecaImg(nomeNivelEsp(t),0,96).toDataURL());
+  return ICO_PL[t]=`<img class="ico" alt="" src="${u}">`; }
+
+// ---------- preparo no tempo ocioso ----------
+// Texturas, ícones e fotos dos planetas são feitos antes de aparecerem: gerar na hora (uns 150 ms no celular) travava o
+// arrasto em que o planeta nascia. A fila anda só no tempo ocioso, sem passar do prazo (ESP.filaOciosa), desde a abertura
+// do jogo: primeiro o planeta do fundo (lista de fases e mundo atual), depois a meta da fase atual e os níveis na ordem
+// em que nascem numa partida, e por fim os desenhos da lista de fases.
+// a foto vira data URL sem pesar no quadro (toBlob codifica aos poucos); se alguém pedir antes, ela sai na hora
+function guardaFoto(dic,k,cv){
+  if(dic[k]) return;
+  if(!cv.toBlob || typeof FileReader==='undefined'){ dic[k]=cv.toDataURL(); return; }
+  cv.toBlob(b=>{ if(!b || dic[k]) return; const fr=new FileReader(); fr.onload=()=>{ if(!dic[k]) dic[k]=fr.result; }; fr.readAsDataURL(b); });
+}
+const PLANETA_FUNDO={gigante:'Júpiter', cinturao:'Lua', veu:'Saturno', nascer:'Marte'};
+let FILA_OCIOSA=null, filaMax=0;
+// a cada arrasto: o nível seguinte ao maior do tabuleiro (o próximo a nascer) passa para a frente da fila
+function adiantaProximo(){
+  if(!FILA_OCIOSA || !S || !S.tiles) return;
+  let M=0; for(const k of S.tiles) if(k.t>M) M=k.t;
+  if(M!==filaMax){ filaMax=M; FILA_OCIOSA.adianta(T=>T.nivel===M+1); }
+}
+function preparaOcioso(){
+  const fila=[], texs=[], L=ESP.LADDER; let nv=0;   // nv: nível a que as próximas tarefas pertencem
+  const textura=nome=>{ if(nome && !texs.includes(nome)){ texs.push(nome); fila.push({...ESP.texTarefa(nome), nivel:nv}); } };
+  const texNivel=t=>{ const d=L[t-1]; if(d && d.kind==='sphere'){ textura(d.tex); textura(d.clouds); } };
+  const inteira=f=>fila.push({inteira:true, nivel:nv, f:()=>{ f(); return true; }});
+  // foto da peça em dois passos curtos (preparar a peça; pintar e guardar). A peça feita só para a foto é solta em
+  // seguida (não fica ocupando memória)
+  const foto=(t,sz,dic,k)=>{ const n=nomeNivelEsp(t); let tinha=true;
+    inteira(()=>{ if(dic[k]) return; tinha=ESP.temPeca(n,sz); ESP.pecaPrepara(n,sz); });
+    inteira(()=>{ if(!dic[k]) guardaFoto(dic,k,ESP.pecaImg(n,0,sz)); if(!tinha) ESP.soltaPeca(n,sz); }); };
+  const niveis=new Set(), nivel=t=>{ if(niveis.has(t)) return; niveis.add(t); nv=t; texNivel(t); foto(t,96,ICO_URL,t); foto(t,160,URL_ESP,'p'+t); nv=0; };
+  // o fundo da lista de fases e do Clássico (mundo 1) e o do mundo da próxima fase
+  let prox=null;
+  try{ prox=MISSOES[faseAtual()-1]; }catch(e){}
+  textura('jupiter');
+  try{ const mu=ESP.MUNDOS_ESP[(Math.max(1,mundoDe(prox).tema)-1)%ESP.MUNDOS_ESP.length], nome=PLANETA_FUNDO[mu.tipo]; if(nome) textura(ESP.byName(nome).tex); }catch(e){}
+  // a meta da próxima fase (planeta grande e receita da janela da fase), depois a escada na ordem em que ela sobe
+  try{ const tA=prox && tAlvo(prox); if(tA){ nivel(tA); if(tA>1) nivel(tA-1); } }catch(e){}
+  // a camada dos planetas redondos (WebGL: contexto e programas) antes do primeiro planeta redondo nascer num arrasto
+  for(let t=4;t<=L.length;t++){ if(L[t-1].kind==='sphere' && !niveis.has(-1)){ niveis.add(-1); inteira(()=>glAtivo()); } nivel(t); }
+  for(let t=1;t<=3;t++) nivel(t);
+  // desenhos da lista de fases (ícones dos mundos e das metas)
+  for(const k of ['estacao','rochinha','nave','lixo']) inteira(()=>{ if(!URL_ESP[k]) guardaFoto(URL_ESP,k,ESP.objImg(k,160,0)); });
+  for(const [k,f] of Object.entries(FOTOS_ESP)) inteira(()=>{ if(!URL_ESP[k]) guardaFoto(URL_ESP,k,fotoCanvas(f)); });
+  FILA_OCIOSA=ESP.filaOciosa(fila);
+}
 
 // ---------- peças ----------
 function espAura(c,x,y,u,t,cor){
@@ -162,7 +224,19 @@ function espMarca(el,tipo,a){
 // - estrelas e o planeta do mundo ficam em camadas que andam com a câmera: ela flutua e dá um tranco a cada arrasto;
 // - de tempos em tempos passa algo ao longe (cometa, satélite, chuva de meteoros, nave);
 // - cada junção acende uma névoa na cor do planeta formado; o anel só vem quando nasce o maior planeta da partida.
-let ceu=null, ceuF=null, ceuChave='', ceuT=0, tQuadro=0, nebT=-1;   // tQuadro: hora do último quadro (o mesmo relógio das animações)
+let ceu=null, ceuF=null, ceuT=0, tQuadro=0, nebT=-1;   // tQuadro: hora do último quadro (o mesmo relógio das animações)
+// fundos já feitos (buildFundo pinta o planeta do mundo no processador e custa caro): o do menu e os dos últimos mundos
+// ficam guardados, e ir e voltar entre menu e jogo não refaz nada. Mudança pequena de altura (a barra do navegador
+// aparecendo e sumindo no celular, até 15%) usa o fundo que já existe; a largura mudou, ou a altura mudou muito, refaz.
+const CEU_FUNDOS=new Map(), CEU_MAX=4;
+function fundoCeu(w,h,chave,faz){
+  let F=CEU_FUNDOS.get(chave);
+  if(F && (F.w!==w || Math.abs(h-F.h)>F.h*.15)){ F.f.img.width=F.f.img.height=0; F=null; }
+  if(!F) F={w,h,f:faz()};
+  CEU_FUNDOS.delete(chave); CEU_FUNDOS.set(chave,F);   // o usado por último fica no fim (os mais velhos saem primeiro)
+  for(const [k,G] of CEU_FUNDOS){ if(CEU_FUNDOS.size<=CEU_MAX) break; G.f.img.width=G.f.img.height=0; CEU_FUNDOS.delete(k); }
+  return F;
+}
 const MARGEM_CEU=26, camE={x:0,y:0,vx:0,vy:0};
 let brilhosE=[], aneisE=[], passE=[], proxPass=6, passI=0;
 const NEB=(()=>{
@@ -214,8 +288,9 @@ function ceuDesenha(t){
   // no menu, céu sem planeta de fundo: os planetas aparecem conforme a pessoa descobre (em volta do nome)
   const menu=!!document.getElementById('scrMenu')?.classList.contains('on'), jogo=!menu && !!(S&&(S.missao||S.infinito)&&S.phase!=='lista');
   const w=innerWidth, h=innerHeight, tema=Math.max(1,(S&&S.missao&&S.tema)||1), mu=ESP.MUNDOS_ESP[(tema-1)%ESP.MUNDOS_ESP.length], M=MARGEM_CEU;
-  const chave=w+'x'+h+':'+tema+(menu?':menu':'')+(NEB.ok?':viva':'');
-  if(chave!==ceuChave){ ceuChave=chave; ceu.width=w; ceu.height=h; ceuF=ESP.buildFundo(w+2*M,h+2*M,mu,{jogo:true,planeta:!menu,semNebulosa:NEB.ok}); }
+  if(ceu.width!==w||ceu.height!==h){ ceu.width=w; ceu.height=h; }
+  const F=fundoCeu(w,h,tema+(menu?':menu':'')+(NEB.ok?':viva':''),()=>ESP.buildFundo(w+2*M,h+2*M,mu,{jogo:true,planeta:!menu,semNebulosa:NEB.ok}));
+  ceuF=F.f;
   const dt=Math.min(.05,Math.max(0,t-ceuT)); ceuT=t;
   camE.vx+=(-camE.x*32-camE.vx*7)*dt; camE.vy+=(-camE.y*32-camE.vy*7)*dt; camE.x+=camE.vx*dt; camE.y+=camE.vy*dt;
   const cx=camE.x+Math.sin(t*.21)*7, cy=camE.y+Math.cos(t*.17)*6, c=ceu.getContext('2d');
@@ -224,7 +299,11 @@ function ceuDesenha(t){
   let pul=null; for(const j of brilhosE){ const u=(t-j.t0)/1.1; if(u<1){ const k=(1-u)*(j.forte?.9:.45); if(!pul||k>pul.k) pul={k,x:j.x,y:j.y,rgb:j.rgb}; } }
   if(NEB.ok && (t-nebT>=1/30 || pul)){ nebT=t; NEB.desenha(w,h,t,[cx*.12,cy*.12],mu.neb,pul); }   // a nebulosa anda devagar: 30 quadros por segundo bastam
   c.clearRect(0,0,w,h);
-  c.save(); c.translate(-M+cx*.3,-M+cy*.3); ESP.drawFundo(c,ceuF,t); c.restore();
+  c.save();
+  // fundo feito para outra altura (até 15%): centrado na tela; mais baixo que ela, cresce por igual (sem achatar o
+  // planeta) até cobrir; mais alto, sobra um pouco em cima e embaixo
+  if(F.h!==h){ const s=Math.max(1,h/F.h); c.translate(w/2,h/2); c.scale(s,s); c.translate(-w/2,-F.h/2); }
+  c.translate(-M+cx*.3,-M+cy*.3); ESP.drawFundo(c,ceuF,t); c.restore();
   if(jogo){ if(t>proxPass) novaPassagem(t,w,h); passagens(c,t,cx*.35,cy*.35); }
   c.save(); c.globalCompositeOperation='lighter';
   for(const j of aneisE){ const u=(t-j.t0)/1.6; if(u<0||u>1) continue; const R=Math.max(0,j.v*(t-j.t0)); c.lineWidth=6*(1-u)+1; c.strokeStyle=`rgba(${j.rgb},${(.22*(1-u)).toFixed(3)})`; c.beginPath(); c.arc(j.x,j.y,R,0,7); c.stroke(); }
@@ -298,8 +377,7 @@ function malhaQuadro(t){
   if(S.espMax==null && S.tiles.length) S.espMax=Math.max(...S.tiles.map(k=>k.t));
   const dt=Math.min(.05,Math.max(0,t-malhaT)); malhaT=t;
   const pa=g.P, pocos=[];
-  for(const el of board.querySelectorAll('.tile')){ if(!el._t||!el.firstChild) continue; const fr=el.firstChild.getBoundingClientRect(); if(!fr.width) continue;
-    pocos.push({x:(fr.left+fr.width/2-g.r.left)*g.D+g.O, y:(fr.top+fr.height/2-g.r.top)*g.D+g.O, m:massaE(el._t.t)}); }
+  for(const {el,fr} of pecasNoQuadro()) pocos.push({x:(fr.left+fr.width/2-g.r.left)*g.D+g.O, y:(fr.top+fr.height/2-g.r.top)*g.D+g.O, m:massaE(el._t.t)});
   // nada mudou desde o último desenho (peças paradas, sem onda nem tremor, rede assentada): o desenho anterior vale
   const selo=pocos.map(q=>Math.round(q.x)+','+Math.round(q.y)+','+q.m.toFixed(2)).join(';'), calmo=!ondasM.length && !tremM.length;
   if(!refaz && calmo && malhaParada && selo===malhaSelo) return;
@@ -329,7 +407,7 @@ function malhaQuadro(t){
 }
 // chamado a cada arrasto que mexeu: tranco da câmera, névoa de cada junção, tremor da malha; recorde da partida: onda e anel
 function espJogada(dx,dy,merges){
-  camE.vx+=dx*190; camE.vy+=dy*190;
+  camE.vx+=dx*190; camE.vy+=dy*190; adiantaProximo();
   if(!merges||!merges.length) return;
   const g=geoTab(), t=tQuadro||performance.now()/1000;
   for(const o of merges){
@@ -374,12 +452,15 @@ function planetaInner(t,cor){
   else if(cor===2) anel=`<path d="M50 3 A47 47 0 0 0 50 97" fill="none" stroke="${CORES_AURA[0]}" stroke-width="5" opacity=".85"/><path d="M50 3 A47 47 0 0 1 50 97" fill="none" stroke="${CORES_AURA[1]}" stroke-width="5" opacity=".85"/>`;
   return `${anel}<image href="${urlPlaneta(t)}" x="0" y="0" width="100" height="100"/>`;
 }
-const fotoEsp=(k,f)=>URL_ESP[k]||(espInicia(),URL_ESP[k]=(()=>{const cv=document.createElement('canvas');cv.width=cv.height=160;f(cv.getContext('2d'));return cv.toDataURL();})());
+const fotoCanvas=f=>{ const cv=document.createElement('canvas'); cv.width=cv.height=160; f(cv.getContext('2d')); return cv; };
+const fotoEsp=(k,f)=>URL_ESP[k]||(espInicia(),URL_ESP[k]=fotoCanvas(f).toDataURL());
+// desenhos fixos dos ícones (os mesmos para fotoEsp e para o preparo no tempo ocioso)
+const FOTOS_ESP={neb:c=>ESP.SPR.neb(c,80,80,170,2,3), orbita:c=>ESP.SPR.alvo(c,80,80,150,1,'Rocha')};
 const buracoInner = t => `<image href="${fotoEsp('b'+t,c=>ESP.SPR.buraco(c,80,80,150,1.3,corNivel(t)))}" x="0" y="0" width="100" height="100"/>`;
 const buracoVetor = t => `<ellipse cx="50" cy="56" rx="46" ry="13" fill="none" stroke="${corNivel(t)}" stroke-width="7" opacity=".85"/><circle cx="50" cy="56" r="21" fill="#000" stroke="#ffe6c8" stroke-width="3"/><path d="M4 56 A46 13 0 0 0 96 56" fill="none" stroke="${corNivel(t)}" stroke-width="7"/>`;
 const lixoInner = () => `<image href="${urlObj('lixo')}" x="0" y="0" width="100" height="100"/>`;
 const estacaoInner = () => `<image href="${urlObj('estacao')}" x="0" y="0" width="100" height="100"/>`;
-const nebInner = () => `<image href="${fotoEsp('neb',c=>ESP.SPR.neb(c,80,80,170,2,3))}" x="0" y="0" width="100" height="100"/>`;
+const nebInner = () => `<image href="${fotoEsp('neb',FOTOS_ESP.neb)}" x="0" y="0" width="100" height="100"/>`;
 const nebVetor = () => `<defs><radialGradient id="nebEsp"><stop offset="0" stop-color="#5a3c30" stop-opacity=".95"/><stop offset="1" stop-color="#5a3c30" stop-opacity="0"/></radialGradient></defs><circle cx="50" cy="50" r="47" fill="url(#nebEsp)"/><circle cx="34" cy="40" r="2" fill="#c49a78"/><circle cx="62" cy="58" r="2.4" fill="#c49a78"/><circle cx="56" cy="32" r="1.6" fill="#c49a78"/>`;
 const naveInner = t => `<path d="M42 52 L58 52 L80 98 L20 98Z" fill="#8cebff" opacity=".35"/><image href="${urlPlaneta(t)}" x="33" y="62" width="34" height="34" opacity=".7"/><image href="${urlObj('nave')}" x="4" y="0" width="92" height="64"/>`;
 const gaiolaInner = () => [0,60,120].map(a=>`<ellipse cx="50" cy="50" rx="47" ry="17" fill="none" stroke="#a6ecff" stroke-width="3" transform="rotate(${a-25} 50 50)"/>`).join('');
@@ -488,20 +569,37 @@ function espLogo(c,W,H,u,t){
   const lugar=(a,f=1,dy=0)=>{ const x0=Math.cos(a)*rx*f, y0=Math.sin(a)*ry*f+dy*ry; return [cx+x0*ct-y0*st, cy+x0*st+y0*ct]; };
   // o que já foi descoberto, do Gelo para cima (no máximo os 6 maiores)
   const d=DESC(), niveis=[]; for(let k=d;k>=2&&niveis.length<6;k--) niveis.push(k);
-  const corpos=niveis.map((k,i)=>{ const a=t*.22+i*2*Math.PI/niveis.length, [x,y]=lugar(a); return {n:nomeNivelEsp(k), sz:TAM_ORB[k]*Q, x, y, z:Math.sin(a)}; });
+  const corpos=niveis.map((k,i)=>{ const a=t*.22+i*2*Math.PI/niveis.length, [x,y]=lugar(a), n=nomeNivelEsp(k); return {n, sz:TAM_ORB[k]*Q, x, y, z:Math.sin(a), esf:ESP.byName(n).kind==='sphere'}; });
+  // o disco das esferas (a parte cara, ponto a ponto) sai da placa de vídeo, todos de uma vez; o resto de cada peça segue
+  // no canvas, na mesma ordem de antes (ESP.discosGL). Sem WebGL, as peças inteiras no processador, como antes
+  const esf=corpos.filter(b=>b.esf), gl=esf.length>0 && glAtivo() && ESP.discosGL(esf.map(b=>({n:b.n, sz:b.sz, t})));
+  if(gl) glSujo=true;
   const pedras=cinto().map(p=>{ const a=p.a+t*.1*p.v, [x,y]=lugar(a,1+p.dr,p.dy); return {p,x,y,z:Math.sin(a)}; });
   const poe=(lado)=>{ // lado<0: atrás do nome (metade de cima da órbita); lado>0: na frente (metade de baixo)
     for(const q of pedras){ if((q.z<0)!==(lado<0)) continue; const k=.72+.4*(q.z+1)/2;
       c.globalAlpha=.5+.5*(q.z+1)/2; if(q.p.pedra) pedrinha(c,q.x,q.y,q.p.s*Q*k,q.p,t); else { c.fillStyle=q.p.c; c.beginPath(); c.arc(q.x,q.y,q.p.s*Q*k,0,7); c.fill(); } }
     c.globalAlpha=1;
-    corpos.filter(b=>(b.z<0)===(lado<0)).sort((a,b)=>a.z-b.z).forEach(b=>ESP.drawPeca(c,b.n,t,b.x,b.y,b.sz,1,true,.72+.28*(b.z+1)/2)); };
+    corpos.filter(b=>(b.z<0)===(lado<0)).sort((a,b)=>a.z-b.z).forEach(b=>{ const esc=.72+.28*(b.z+1)/2;
+      if(gl && b.esf) ESP.drawPecaGL(c,b.n,b.x,b.y,b.sz,esc); else ESP.drawPeca(c,b.n,t,b.x,b.y,b.sz,1,true,esc); }); };
   poe(-1);
-  // nome: 2048 grande e ASTROS embaixo, espaçado
+  c.drawImage(nomeLogo(W,H,Q,cx,cy),0,0);
+  poe(1);
+}
+// nome: 2048 grande e ASTROS embaixo, espaçado. Ele não se mexe: é pintado (com os dois brilhos) uma vez numa camada e só
+// copiado a cada quadro; pinta de novo quando o tamanho muda ou quando uma fonte acaba de carregar
+let NOME_CV=null, NOME_K='', FONTES_V=0;
+document.fonts?.addEventListener?.('loadingdone',()=>FONTES_V++);
+function nomeLogo(W,H,Q,cx,cy){
+  const k=W+'x'+H+':'+FONTES_V+':'+(document.fonts?.status||'');
+  if(NOME_CV && NOME_K===k) return NOME_CV;
+  if(!NOME_CV) NOME_CV=document.createElement('canvas');
+  NOME_CV.width=W; NOME_CV.height=H; NOME_K=k;
+  const c=NOME_CV.getContext('2d');
   c.save(); c.textAlign='center'; c.textBaseline='middle'; c.fillStyle='#f4fbff';
   for(const [txt,px,dy,esp] of [['2048',78,-12,0],['ASTROS',27,40,.42]]){ c.font=`900 ${px*Q}px Orbitron, sans-serif`; if('letterSpacing' in c) c.letterSpacing=(esp*px*Q)+'px';
     c.shadowColor='rgba(110,230,255,.95)'; c.shadowBlur=26*Q; c.fillText(txt,cx+(esp*px*Q)/2,cy+dy*Q); c.shadowColor='rgba(230,100,255,.7)'; c.shadowBlur=10*Q; c.fillText(txt,cx+(esp*px*Q)/2,cy+dy*Q); }
   c.restore();
-  poe(1);
+  return NOME_CV;
 }
 // o menu inteiro cabe na tela: o desenho do nome encolhe o quanto precisar (os botões ficam do tamanho certo para o dedo)
 function ajustaMenu(){
@@ -673,7 +771,7 @@ function rotuloEsp(o){
 // ícone de cada mundo no cabeçalho da lista de fases
 function icoMundoEsp(gi){
   const img = u => `<image href="${u}" x="4" y="4" width="92" height="92"/>`;
-  const orbita = () => `<image href="${fotoEsp('orbita',c=>ESP.SPR.alvo(c,80,80,150,1,'Rocha'))}" x="0" y="0" width="100" height="100"/>`;
+  const orbita = () => `<image href="${fotoEsp('orbita',FOTOS_ESP.orbita)}" x="0" y="0" width="100" height="100"/>`;
   const inner = [()=>planetaInner(1), estacaoInner, ()=>img(urlObj('rochinha')), orbita, ()=>img(urlObj('nave')), lixoInner, nebInner, orbita, gaiolaInner, ()=>planetaInner(6,0)][gi] || (()=>planetaInner(1));
   return `<svg class="espIco" viewBox="0 0 100 100">${inner()}</svg>`;
 }
@@ -696,7 +794,7 @@ async function fotoDaTela(){
     const h2c=await carregaFoto();
     // os planetas são da placa de vídeo: guarda o quadro agora, porque a foto copiaria essa camada em branco
     let gl=null; const cv=document.getElementById('glPlan');
-    if(cv && GLON){ try{ glQuadro(tQuadro||performance.now()/1000); gl=cv.toDataURL('image/png'); }catch(e){} }
+    if(cv && GLON){ try{ quadroN++; glQuadro(tQuadro||performance.now()/1000); gl=cv.toDataURL('image/png'); }catch(e){} }
     const k=Math.min(1, 540/innerWidth);
     const img=await h2c(document.body,{backgroundColor:'#0b0a18', scale:k, logging:false, useCORS:true, x:scrollX, y:scrollY, width:innerWidth, height:innerHeight,
       onclone:doc=>{ const c2=doc.getElementById('glPlan'); if(!c2||!gl) return; const cs=getComputedStyle(cv), im=doc.createElement('img'); im.src=gl;
