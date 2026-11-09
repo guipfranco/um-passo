@@ -118,7 +118,7 @@ const vaoDe = c => Math.max(2,Math.round(c*.11));
 const ladoDe = (n,c) => n*c + (n+1)*vaoDe(c);
 const fimDoJogo = () => $('#scrGame').getBoundingClientRect().bottom + scrollY + 12;
 function encaixa(redimensiona=true){
-  document.body.classList.remove('rola');
+  document.body.classList.remove('rola'); $('#stage').style.marginTop='';
   document.body.classList.toggle('editando', !!S?.editando && $('#scrGame').classList.contains('on'));
   if(!$('#scrGame').classList.contains('on')) return;
   if(redimensiona){
@@ -130,6 +130,9 @@ function encaixa(redimensiona=true){
     while(c>10 && ladoDe(W,c)>largMax) c--;
     board.style.setProperty('--cell', c+'px'); board.style.setProperty('--gap', vaoDe(c)+'px');
   }
+  // no espaço (Jornada e Clássico) o tabuleiro fica no meio do que sobra embaixo do HUD, sem o vazio no pé da tela
+  if(document.body.classList.contains('espaco') && document.body.classList.contains('modoCla')){
+    const sobra = innerHeight - fimDoJogo(); if(sobra>8) $('#stage').style.marginTop = Math.floor(sobra/2)+'px'; }
   document.body.classList.toggle('rola', fimDoJogo() > innerHeight+1);
   if(!$('#coach').classList.contains('hidden')) placeCoach();
   desenhaCenario();
@@ -1360,7 +1363,7 @@ function pauseMenu(){
     <button class="btn dim" id="pSound">${sound?'Desligar os efeitos':'Ligar os efeitos'}</button>
     <button class="btn" id="pExit">${S.missao?'Voltar às fases':'Sair para o menu'}</button>
     ${inDay && !cla?'<p style="font-size:13px">Sair agora recomeça o dia.</p>':''}`);
-  $('#pCont').onclick=hideOverlay;
+  $('#pCont').onclick=hideOverlay; FORA=hideOverlay;
   // recomeçar a fase (no espaço o botão Recomeçar sai da tela e fica só aqui)
   if($('#pReset')) $('#pReset').onclick=()=>{ hideOverlay(); if(S.infinito) infinitoJoga(); else missaoJoga(S.missao, S.medalha?{passinho:true}:{}); };
   if($('#pRules')) $('#pRules').onclick=quickRules;

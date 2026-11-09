@@ -337,7 +337,7 @@ function novoJogoEsp(){
   showOverlay(`<h2>Começar do zero?</h2><p>Suas estrelas e as fases liberadas serão apagadas.</p>
     <button class="btn g" id="nZera">Começar do zero</button><button class="btn dim" id="nVolta">Voltar</button>`);
   $('#nZera').onclick=()=>{ localStorage.removeItem('mina_missoes'); localStorage.removeItem('mina_cla_save'); hideOverlay(); missoesLista(); };
-  $('#nVolta').onclick=fechaJanelaMenu;
+  $('#nVolta').onclick=fechaJanelaMenu; FORA=fechaJanelaMenu;
 }
 // fase pela metade: volta nela; senão abre o mapa já com a próxima fase
 function continuarEsp(){
@@ -366,8 +366,8 @@ function espOpcoes(){
       <li><b>Planetas, texturas e cenário:</b> gerados por código, inspirados em imagens da NASA e da ESA.</li>
       <li><b>Músicas:</b> trilhas do jogo O Gabinete, todas sintetizadas.</li>
       <li><b>Fontes:</b> Orbitron e Exo 2 (SIL Open Font License).</li>
-    </ul><button class="btn b" id="oVolta">Voltar</button>`); $('#oVolta').onclick=espOpcoes; };
-  $('#oOk').onclick=fechaJanelaMenu;
+    </ul><button class="btn b" id="oVolta">Voltar</button>`); $('#oVolta').onclick=espOpcoes; FORA=espOpcoes; };
+  $('#oOk').onclick=fechaJanelaMenu; FORA=fechaJanelaMenu;
 }
 
 // ---------- como jogar ----------
@@ -417,7 +417,7 @@ function comoJogarEsp(p){
     <button class="btn b" id="cjProx">${p<ult?'Próximo ›':'Jogar'}</button></div>`);
   const cv=$('#cjCv');
   if(cv) espCanvasFixo(cv, w, p===0 ? Math.round(w/4*1.3) : Math.round(w/6*(1.36*2+1.36)), p===0 ? cjArrasto : cjEscada);
-  $('#cjAnt').onclick=()=>{ if(p) comoJogarEsp(p-1); else fechaJanelaMenu(); };
+  $('#cjAnt').onclick=()=>{ if(p) comoJogarEsp(p-1); else fechaJanelaMenu(); }; FORA=fechaJanelaMenu;
   $('#cjProx').onclick=()=>{ if(p<ult) comoJogarEsp(p+1); else infinitoJoga(); };
 }
 

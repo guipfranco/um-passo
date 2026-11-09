@@ -476,7 +476,13 @@ body = '''<div id="cenario"></div>
 '''
 
 ui = r'''// ===================== UI =====================
-function showOverlay(html){ $('#panel').innerHTML=enrich(html); $('#overlay').classList.remove('hidden'); $('#panel').scrollTop=0; }
+function showOverlay(html){ FORA=null; $('#panel').innerHTML=enrich(html); $('#overlay').classList.remove('hidden'); $('#panel').scrollTop=0; }
+// tocar fora da janela fecha a janela, nas que têm um jeito de voltar (pausa, opções, como jogar, informação da fase).
+// Quem abre a janela diz o que fazer em FORA; resultados e escolhas sem volta deixam FORA vazio.
+// Só vale se o dedo desceu e subiu fora da janela (rolar a janela e soltar fora não fecha).
+var FORA=null, desceuFora=false;   // var: showOverlay pode ser chamado antes desta linha rodar
+$('#overlay').addEventListener('pointerdown', e=>{ desceuFora = e.target.id==='overlay'; });
+$('#overlay').addEventListener('click', e=>{ if(e.target.id==='overlay' && desceuFora && FORA){ const f=FORA; FORA=null; f(); } desceuFora=false; });
 function hideOverlay(){ $('#overlay').classList.add('hidden'); $('#panel').innerHTML=''; }
 
 // ===================== ENTRADA =====================

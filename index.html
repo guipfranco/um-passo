@@ -1385,7 +1385,7 @@ const vaoDe = c => Math.max(2,Math.round(c*.11));
 const ladoDe = (n,c) => n*c + (n+1)*vaoDe(c);
 const fimDoJogo = () => $('#scrGame').getBoundingClientRect().bottom + scrollY + 12;
 function encaixa(redimensiona=true){
-  document.body.classList.remove('rola');
+  document.body.classList.remove('rola'); $('#stage').style.marginTop='';
   document.body.classList.toggle('editando', !!S?.editando && $('#scrGame').classList.contains('on'));
   if(!$('#scrGame').classList.contains('on')) return;
   if(redimensiona){
@@ -1397,6 +1397,9 @@ function encaixa(redimensiona=true){
     while(c>10 && ladoDe(W,c)>largMax) c--;
     board.style.setProperty('--cell', c+'px'); board.style.setProperty('--gap', vaoDe(c)+'px');
   }
+  // no espaço (Jornada e Clássico) o tabuleiro fica no meio do que sobra embaixo do HUD, sem o vazio no pé da tela
+  if(document.body.classList.contains('espaco') && document.body.classList.contains('modoCla')){
+    const sobra = innerHeight - fimDoJogo(); if(sobra>8) $('#stage').style.marginTop = Math.floor(sobra/2)+'px'; }
   document.body.classList.toggle('rola', fimDoJogo() > innerHeight+1);
   if(!$('#coach').classList.contains('hidden')) placeCoach();
   desenhaCenario();
@@ -2627,7 +2630,7 @@ function pauseMenu(){
     <button class="btn dim" id="pSound">${sound?'Desligar os efeitos':'Ligar os efeitos'}</button>
     <button class="btn" id="pExit">${S.missao?'Voltar às fases':'Sair para o menu'}</button>
     ${inDay && !cla?'<p style="font-size:13px">Sair agora recomeça o dia.</p>':''}`);
-  $('#pCont').onclick=hideOverlay;
+  $('#pCont').onclick=hideOverlay; FORA=hideOverlay;
   // recomeçar a fase (no espaço o botão Recomeçar sai da tela e fica só aqui)
   if($('#pReset')) $('#pReset').onclick=()=>{ hideOverlay(); if(S.infinito) infinitoJoga(); else missaoJoga(S.missao, S.medalha?{passinho:true}:{}); };
   if($('#pRules')) $('#pRules').onclick=quickRules;
@@ -3074,7 +3077,7 @@ function missaoInfo(n){
   $('#mJoga').onclick=()=>missaoJoga(n);
   if($('#mCont')) $('#mCont').onclick=()=>missaoJoga(n,{retoma:true});
   if($('#mPass')) $('#mPass').onclick=()=>missaoJoga(n,{passinho:true});
-  $('#mVolta').onclick=hideOverlay;
+  $('#mVolta').onclick=hideOverlay; FORA=hideOverlay;
 }
 function missaoJoga(n, opt={}){
   const m=MISSOES[n-1], fase=faseDe(m), fm=formaDe(m);
@@ -4089,7 +4092,7 @@ function novoJogoEsp(){
   showOverlay(`<h2>Começar do zero?</h2><p>Suas estrelas e as fases liberadas serão apagadas.</p>
     <button class="btn g" id="nZera">Começar do zero</button><button class="btn dim" id="nVolta">Voltar</button>`);
   $('#nZera').onclick=()=>{ localStorage.removeItem('mina_missoes'); localStorage.removeItem('mina_cla_save'); hideOverlay(); missoesLista(); };
-  $('#nVolta').onclick=fechaJanelaMenu;
+  $('#nVolta').onclick=fechaJanelaMenu; FORA=fechaJanelaMenu;
 }
 // fase pela metade: volta nela; senão abre o mapa já com a próxima fase
 function continuarEsp(){
@@ -4118,8 +4121,8 @@ function espOpcoes(){
       <li><b>Planetas, texturas e cenário:</b> gerados por código, inspirados em imagens da NASA e da ESA.</li>
       <li><b>Músicas:</b> trilhas do jogo O Gabinete, todas sintetizadas.</li>
       <li><b>Fontes:</b> Orbitron e Exo 2 (SIL Open Font License).</li>
-    </ul><button class="btn b" id="oVolta">Voltar</button>`); $('#oVolta').onclick=espOpcoes; };
-  $('#oOk').onclick=fechaJanelaMenu;
+    </ul><button class="btn b" id="oVolta">Voltar</button>`); $('#oVolta').onclick=espOpcoes; FORA=espOpcoes; };
+  $('#oOk').onclick=fechaJanelaMenu; FORA=fechaJanelaMenu;
 }
 
 // ---------- como jogar ----------
@@ -4169,7 +4172,7 @@ function comoJogarEsp(p){
     <button class="btn b" id="cjProx">${p<ult?'Próximo ›':'Jogar'}</button></div>`);
   const cv=$('#cjCv');
   if(cv) espCanvasFixo(cv, w, p===0 ? Math.round(w/4*1.3) : Math.round(w/6*(1.36*2+1.36)), p===0 ? cjArrasto : cjEscada);
-  $('#cjAnt').onclick=()=>{ if(p) comoJogarEsp(p-1); else fechaJanelaMenu(); };
+  $('#cjAnt').onclick=()=>{ if(p) comoJogarEsp(p-1); else fechaJanelaMenu(); }; FORA=fechaJanelaMenu;
   $('#cjProx').onclick=()=>{ if(p<ult) comoJogarEsp(p+1); else infinitoJoga(); };
 }
 
@@ -4312,7 +4315,13 @@ const SFX = {
 };
 
 // ===================== UI =====================
-function showOverlay(html){ $('#panel').innerHTML=enrich(html); $('#overlay').classList.remove('hidden'); $('#panel').scrollTop=0; }
+function showOverlay(html){ FORA=null; $('#panel').innerHTML=enrich(html); $('#overlay').classList.remove('hidden'); $('#panel').scrollTop=0; }
+// tocar fora da janela fecha a janela, nas que têm um jeito de voltar (pausa, opções, como jogar, informação da fase).
+// Quem abre a janela diz o que fazer em FORA; resultados e escolhas sem volta deixam FORA vazio.
+// Só vale se o dedo desceu e subiu fora da janela (rolar a janela e soltar fora não fecha).
+var FORA=null, desceuFora=false;   // var: showOverlay pode ser chamado antes desta linha rodar
+$('#overlay').addEventListener('pointerdown', e=>{ desceuFora = e.target.id==='overlay'; });
+$('#overlay').addEventListener('click', e=>{ if(e.target.id==='overlay' && desceuFora && FORA){ const f=FORA; FORA=null; f(); } desceuFora=false; });
 function hideOverlay(){ $('#overlay').classList.add('hidden'); $('#panel').innerHTML=''; }
 
 // ===================== ENTRADA =====================

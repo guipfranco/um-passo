@@ -358,7 +358,7 @@ function missaoInfo(n){
   $('#mJoga').onclick=()=>missaoJoga(n);
   if($('#mCont')) $('#mCont').onclick=()=>missaoJoga(n,{retoma:true});
   if($('#mPass')) $('#mPass').onclick=()=>missaoJoga(n,{passinho:true});
-  $('#mVolta').onclick=hideOverlay;
+  $('#mVolta').onclick=hideOverlay; FORA=hideOverlay;
 }
 function missaoJoga(n, opt={}){
   const m=MISSOES[n-1], fase=faseDe(m), fm=formaDe(m);
