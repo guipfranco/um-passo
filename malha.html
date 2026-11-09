@@ -102,7 +102,7 @@ const PALS=[{m:0,cor:'#8a5fe0',marco:(w,h)=>({n:'Júpiter',x:w*1.02,y:h*1.02,d:w
             {m:1,cor:'#3f8fe0',marco:(w,h)=>({n:'Netuno',x:-w*.08,y:h*.98,d:w*.9,a:.85,massa:3})},
             {m:2,cor:'#2fb890',marco:(w,h)=>({n:'Saturno',x:w*.02,y:h*.97,d:w*.8,a:.9,massa:3.4})},
             {m:4,cor:'#e0703a',marco:(w,h)=>({n:'Marte',x:w*.5,y:h+w*.42,d:w*1.5,a:1,massa:2.4})}];
-const OP={casa:'lencol',mom:'meio',tom:'branco',pal:0};
+const OP={casa:'lencol',mom:'meio',tom:'mundo',pal:0};
 (function(){ const q=new URLSearchParams(location.hash.slice(1)); if(q.has('c')) OP.casa=q.get('c'); if(q.has('p')) OP.mom=q.get('p'); if(q.has('t')) OP.tom=q.get('t'); if(q.has('m')) OP.pal=+q.get('m')||0; })();
 function chips(id,lista,chave,aoMudar){ const E=document.getElementById(id); E.innerHTML='';
   for(const [k,a,b] of lista){ const e=document.createElement('button'); e.className='op'+(OP[chave]===k?' on':''); e.innerHTML=b?`${a}<small>${b}</small>`:a;
@@ -236,9 +236,9 @@ function desenhaEvs(t,o){ c.save(); c.translate(o[0],o[1]); c.globalCompositeOpe
 // ---------------- o campo: peso de cada planeta ----------------
 // o peso cresce mais que o degrau: a Poeira quase não marca, a Terra afunda bem, o Sol entorta o tabuleiro
 const massa=t=>.12+(t/10)**2;
-let pocos=[], ondas=[], tremores=[];
+let pocos=[], ondas=[], tremores=[], brilhos=[];
 function onda(x,y,t){ ondas.push({x,y,t0:agora(),a:pa*(.16+.012*t)}); }
-function treme(x,y,t){ tremores.push({x,y,t0:agora(),a:pa*(.025+.004*t)}); }
+function treme(x,y,t){ tremores.push({x,y,t0:agora(),a:pa*(.025+.004*t)}); brilhos.push({x,y,t0:agora(),rgb:RGB[t-1]}); }
 // deslocamento de um ponto: puxado para cada poço, mais a onda do recorde e o tremor da junção
 function campo(px,py,t,extra){ let dx=0,dy=0,h=0;
   for(const q of pocos){ const ex=px-q.x, ey=py-q.y, d=Math.hypot(ex,ey)||1, sg=pa*(.32+.13*q.m), A=Math.min(pa*.12*q.m,sg*.55), f=A*(d/sg)*Math.exp(.5-d*d/(2*sg*sg));
@@ -252,7 +252,7 @@ function campo(px,py,t,extra){ let dx=0,dy=0,h=0;
   const L=Math.hypot(dx,dy), cap=pa*.42; if(L>cap){ dx*=cap/L; dy*=cap/L; }
   return [dx,dy,h,w]; }
 function tom(a){ const rgb=OP.tom==='branco'?'225,228,255':MUNDOS_ESP[PALS[OP.pal].m].neb[1].split(',').map(v=>Math.round(+v*.55+255*.45)).join(','); return `rgba(${rgb},${Math.min(1,a).toFixed(3)})`; }
-function sombraPocos(k=1){ for(const q of pocos){ const R=pa*(.38+.16*q.m), g=c.createRadialGradient(q.x,q.y,0,q.x,q.y,R); g.addColorStop(0,`rgba(0,0,0,${Math.min(.6,(.12+.12*q.m)*k).toFixed(3)})`); g.addColorStop(1,'rgba(0,0,0,0)'); c.fillStyle=g; c.fillRect(q.x-R,q.y-R,2*R,2*R); } }
+function sombraPocos(k=1){ for(const q of pocos){ const R=pa*(.38+.16*q.m), g=c.createRadialGradient(q.x,q.y,0,q.x,q.y,R); g.addColorStop(0,`rgba(0,0,0,${Math.min(.8,(.12+.12*q.m)*k).toFixed(3)})`); g.addColorStop(1,'rgba(0,0,0,0)'); c.fillStyle=g; c.fillRect(q.x-R,q.y-R,2*R,2*R); } }
 function fundoTab(a){ c.fillStyle=`rgba(8,6,22,${a})`; c.fillRect(ox,oy,N*pa,N*pa); }
 
 // 1 · lençol, 4 · relevo e 5 · céu: rede de pontos ligados por molinhas
@@ -263,10 +263,10 @@ function redeIni(){ nos=[]; if(OP.casa==='ceu'){ const st=pa/3; I0=Math.ceil(ox/
 function redeAtualiza(t,dt,extra){ if(!nos) redeIni();
   for(const n of nos){ const [dx,dy,h,w]=campo(n.rx,n.ry,t,extra); n.vx+=((n.rx+dx-n.x)*90-n.vx*11)*dt; n.vy+=((n.ry+dy-n.y)*90-n.vy*11)*dt; n.x+=n.vx*dt; n.y+=n.vy*dt; n.h=h; n.w=w; } }
 const no=(i,j)=>nos[j*NI+i];
-function lencol(t,dt){ redeAtualiza(t,dt); fundoTab(.38); sombraPocos();
+function lencol(t,dt){ redeAtualiza(t,dt); fundoTab(.38); sombraPocos(1.6);
   c.save(); c.lineCap='round';
-  const seg=(a,b,maior)=>{ const h=(a.h+b.h)/2, w=(a.w+b.w)/2, al=(maior?.2:.07)+Math.min(.42,h*(maior?.16:.09))+w*.9;
-    c.strokeStyle=tom(al); c.lineWidth=(maior?1.3:.8)*S; c.beginPath(); c.moveTo(a.x,a.y); c.lineTo(b.x,b.y); c.stroke(); };
+  const seg=(a,b,maior)=>{ const h=(a.h+b.h)/2, w=(a.w+b.w)/2, fundo=Math.min(.85,h*.32), al=(maior?.24:.09)*(1-fundo)+w*.9;
+    c.strokeStyle=tom(al); c.lineWidth=(maior?1.3:.8)*(1-fundo*.5)*S; c.beginPath(); c.moveTo(a.x,a.y); c.lineTo(b.x,b.y); c.stroke(); };
   for(let j=0;j<NJ;j++) for(let i=0;i<NI-1;i++) seg(no(i,j),no(i+1,j),j%SUB===0);
   for(let i=0;i<NI;i++) for(let j=0;j<NJ-1;j++) seg(no(i,j),no(i,j+1),i%SUB===0);
   c.restore(); }
@@ -358,7 +358,8 @@ function quadro(){
   pocos=tiles.filter(k=>!k.hide).map(k=>{ const [x,y]=posTile(k,pe); return {x,y,m:massa(k.t)}; });
   cam.vx+=(-cam.x*32-cam.vx*7)*dt; cam.vy+=(-cam.y*32-cam.vy*7)*dt; cam.x+=cam.vx*dt; cam.y+=cam.vy*dt;
   const camX=(cam.x+Math.sin(t*.21)*7)*S, camY=(cam.y+Math.cos(t*.17)*6)*S, o=k=>[camX*k,camY*k];
-  let pul=null; for(const j of ondas){ const u=(t-j.t0)/1.2; if(u<1){ const k=(1-u)*.7; if(!pul||k>pul.k) pul={k,x:j.x,y:j.y,rgb:'230,230,255'}; } }
+  let pul=null; for(const j of brilhos){ const u=(t-j.t0)/1.1; if(u<1){ const k=(1-u)*.45; if(!pul||k>pul.k) pul={k,x:j.x,y:j.y,rgb:j.rgb}; } }
+  for(const j of ondas){ const u=(t-j.t0)/1.2; if(u<1){ const k=(1-u)*.9; if(!pul||k>pul.k) pul={k,x:j.x,y:j.y,rgb:pul?pul.rgb:'230,230,255'}; } }
   c.setTransform(1,0,0,1,0,0); c.clearRect(0,0,W,H);
   if(gl) nebulosa(t,...o(.12),pul); else { c.fillStyle='#0b0a18'; c.fillRect(0,0,W,H); }
   let [a,b]=o(.18); c.save(); c.translate(a,b); for(const s of far){ c.fillStyle=`rgba(${s.c},${s.a})`; c.fillRect(s.x,s.y,s.s,s.s); } c.restore();
@@ -372,7 +373,7 @@ function quadro(){
   c.restore();
   if(OP.casa==='lencol') lencol(t,dt); else if(OP.casa==='curvas') curvas(t); else if(OP.casa==='poeira') poeiraCampo(t); else if(OP.casa==='relevo') relevo(t,dt); else ceu(t,dt);
   pecas(t,pe);
-  ondas=ondas.filter(j=>t-j.t0<3); tremores=tremores.filter(j=>t-j.t0<1.2);
+  ondas=ondas.filter(j=>t-j.t0<3); tremores=tremores.filter(j=>t-j.t0<1.2); brilhos=brilhos.filter(j=>t-j.t0<1.2);
   requestAnimationFrame(quadro);
 }
 botoes(); inicial();

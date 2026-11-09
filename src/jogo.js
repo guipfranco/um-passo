@@ -550,6 +550,7 @@ function move(dx,dy){
   for(let i=0;i<(S.path.spawns??1);i++) addTile(undefined,[dx,dy]);
   if((S.path.spawns??1)>0) SFX.nasce();
   render();
+  if(espFig()) espJogada(dx,dy,r.merges);   // fundo e malha reagem ao arrasto
   if(S.missao||S.infinito) flutuaPontos(r);
   SFX.arrastar();
   const tops=r.merges.map(o=>o.t).sort((a,b)=>b-a);

@@ -43,6 +43,9 @@ body.espaco .slot.void::before{display:none}
 body.espaco .tile .face{width:100% !important;height:100% !important;margin:0 !important;position:relative}
 #glPlan{display:none;position:absolute;left:calc(-1*var(--cell));top:calc(-1*var(--cell));width:calc(100% + 2*var(--cell));height:calc(100% + 2*var(--cell));pointer-events:none;z-index:5}
 body.espaco #glPlan{display:block}
+#malhaCv{display:none;position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:0}
+body.espaco.modoCla #malhaCv{display:block}
+body.espaco.modoCla .slot::before{display:none}
 canvas.esp{position:absolute;left:50%;top:50%;width:calc(var(--cell)*var(--kx));height:calc(var(--cell)*var(--ky));transform:translate(-50%,-50%);pointer-events:none}
 body.espaco .edge{background:none;border:0;box-shadow:none}
 body.espaco .etq{background:rgba(12,9,26,.84) !important;border:1px solid rgba(255,255,255,.2);color:#ece3f7;font-family:'Exo 2',sans-serif}

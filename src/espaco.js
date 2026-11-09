@@ -393,16 +393,17 @@ function bnDraw(c,x,y,R,t,col,tilt=-.3){c.save();c.translate(x,y);
   pinta(pts.filter(p=>p.z>=0));c.restore();}
 function rockPoly(c,x,y,s,rot,k){c.beginPath();for(let i=0;i<6;i++){const a=rot+i/6*2*Math.PI,f=.7+.3*k[i%k.length];c.lineTo(x+Math.cos(a)*s*f,y+Math.sin(a)*s*f);}c.closePath();}
 function buildFundo(w,h,m,o={}){const D=DPR,g=mk(w,h),c=g.getContext('2d'),r=rng(o.seed||7),big=Math.max(w,h),marco=o.planeta!==false,J=!!o.jogo;
-  const bg=c.createLinearGradient(0,0,w,h);bg.addColorStop(0,'#0b0a18');bg.addColorStop(1,'#141026');c.fillStyle=bg;c.fillRect(0,0,w,h);
-  const blob=(x,y,rad,col,a)=>{const gr=c.createRadialGradient(x,y,0,x,y,rad);gr.addColorStop(0,`rgba(${col},${a})`);gr.addColorStop(1,`rgba(${col},0)`);c.fillStyle=gr;c.fillRect(x-rad,y-rad,rad*2,rad*2);};
+  const sn=!!o.semNebulosa;   // semNebulosa: só estrelas, planeta e animação, em fundo transparente (a nebulosa vem da placa de vídeo)
+  const bg=c.createLinearGradient(0,0,w,h);bg.addColorStop(0,'#0b0a18');bg.addColorStop(1,'#141026');if(!sn){c.fillStyle=bg;c.fillRect(0,0,w,h);}
+  const blob=(x,y,rad,col,a)=>{if(sn)return;const gr=c.createRadialGradient(x,y,0,x,y,rad);gr.addColorStop(0,`rgba(${col},${a})`);gr.addColorStop(1,`rgba(${col},0)`);c.fillStyle=gr;c.fillRect(x-rad,y-rad,rad*2,rad*2);};
   c.globalCompositeOperation='lighter';
   if(m.tipo==='veu'){for(let i=0;i<14;i++)blob(w*r(),h*r(),big*(.1+.2*r()),m.neb[i%2],(.03+.05*r()).toFixed(3));
     c.lineCap='round';for(let i=0;i<80;i++){const x0=w*(r()*1.2-.1),y0=h*(r()*1.2-.1),ang=-.6+r()*.5,L=big*(.3+.5*r()),q=()=>(r()-.5)*big*.2;
       c.strokeStyle=`rgba(${m.neb[i%2]},${(.04+.09*r()).toFixed(3)})`;c.lineWidth=(1.5+9*r()*r())*D;c.beginPath();c.moveTo(x0,y0);
-      c.bezierCurveTo(x0+Math.cos(ang)*L*.33+q(),y0+Math.sin(ang)*L*.33+q(),x0+Math.cos(ang)*L*.66+q(),y0+Math.sin(ang)*L*.66+q(),x0+Math.cos(ang)*L,y0+Math.sin(ang)*L);c.stroke();}}
+      c.bezierCurveTo(x0+Math.cos(ang)*L*.33+q(),y0+Math.sin(ang)*L*.33+q(),x0+Math.cos(ang)*L*.66+q(),y0+Math.sin(ang)*L*.66+q(),x0+Math.cos(ang)*L,y0+Math.sin(ang)*L);if(!sn)c.stroke();}}
   else for(let i=0;i<34;i++){const t=r();blob(w*t+(r()-.5)*w*.35,h*(.15+.7*t)+(r()-.5)*h*.3,big*(.1+.22*r()),m.neb[i%2],(.05+.1*r()).toFixed(3));}
   c.globalCompositeOperation='source-over';
-  for(let i=0;i<12;i++){const x=w*r(),y=h*r(),rad=big*(.06+.12*r()),gr=c.createRadialGradient(x,y,0,x,y,rad);gr.addColorStop(0,'rgba(6,4,14,.4)');gr.addColorStop(1,'rgba(6,4,14,0)');c.fillStyle=gr;c.fillRect(x-rad,y-rad,rad*2,rad*2);}
+  for(let i=0;i<12;i++){const x=w*r(),y=h*r(),rad=big*(.06+.12*r()),gr=c.createRadialGradient(x,y,0,x,y,rad);gr.addColorStop(0,'rgba(6,4,14,.4)');gr.addColorStop(1,'rgba(6,4,14,0)');if(!sn){c.fillStyle=gr;c.fillRect(x-rad,y-rad,rad*2,rad*2);}}
   const nst=Math.round(w*h/(D*D)/450),cols=['255,255,255','190,215,255','255,236,200'];
   for(let i=0;i<nst;i++){const x=w*r(),y=h*r(),sz=(.4+1.3*r()*r())*D;c.fillStyle=`rgba(${cols[(r()*3)|0]},${(.25+.65*r()).toFixed(2)})`;c.fillRect(x,y,sz,sz);}
   // estrela mais forte: um ponto de luz redondo e suave (a cruz parecia mira)

@@ -8,6 +8,11 @@
 - **Mineração**: o roguelite (andares, mapa, loja, itens, fiscal).
 - **Laboratório**: testar qualquer regra; dele saem o Editor de níveis e o Catálogo.
 
+## Fundo e malha do espaço
+
+- Céu (`ceuDesenha` em `src/espaco_jogo.js`): nebulosa viva pela placa de vídeo (`NEB`), estrelas e planeta do mundo em camadas que andam com a câmera, passagens (cometa, satélite, chuva, nave), névoa na cor do planeta a cada junção e anel só no recorde da partida (`S.espMax`). Sem WebGL, volta o céu pintado (`buildFundo` sem `semNebulosa`).
+- Malha da gravidade (`malhaQuadro`): rede na cor do mundo, atrás das peças, afundada pelo peso de cada planeta (o poço escurece); treme a cada junção e ganha uma onda no recorde. Respeita as casas vazias do formato. Rascunhos: `fundo.html` e `malha.html`.
+
 ## Som do espaço
 
 - Efeitos: `SONS_ESP` em `src/sfx.js` (cada corpo com o seu material; eco e delay próprios). No espaço eles substituem os da mina; a Mineração segue com os sons antigos.
