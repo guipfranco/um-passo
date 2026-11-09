@@ -4,6 +4,7 @@
 // Estrelas pelos arrastos que sobram; pontos como no 2048 (juntar soma o valor da pedrinha nova).
 // Peças do Clássico: casa marcada (S.alvos), casa de terra (S.terra), pedrinha presa (tile.presa), carrinho (S.carro).
 // Guardado em mina_missoes: {n: {e: estrelas, t: pontos, pm: medalha do Passinho}}; fase em andamento em mina_cla_save.
+// O Clássico sem fim guarda a partida em andamento à parte, em ptui_inf_save (ver infinitoJoga).
 if(localStorage.ptui_jornada!=='2'){
   for(const k of ['mina_missoes','mina_cla_save','ptui_partidas']) if(localStorage[k]!=null){ localStorage[k+'_v1']=localStorage[k]; localStorage.removeItem(k); }
   localStorage.ptui_jornada='2';
@@ -118,13 +119,23 @@ function flutuaPontos(r){
 // depois de cada arrasto: cumpriu, formou o proibido, acabaram os arrastos ou travou
 function checaMissao(){
   const m=MISSOES[S.missao-1];
-  const est=S, acaba=(ok,txt,motivo)=>{ S.phase='fimM'; localStorage.removeItem('mina_cla_save'); anotaPartida(ok, motivo); setBanner(null,txt); if(ok) SFX.pagou();
+  const est=S, acaba=(ok,txt,motivo)=>{ S.phase='fimM'; localStorage.removeItem('mina_cla_save'); anotaPartida(ok, motivo); if(ok) gravaVitoria(); setBanner(null,txt); if(ok) SFX.pagou();
     setTimeout(()=>{ if(S===est && S.phase==='fimM') missaoResultado(ok,motivo); }, ok?800:650); };   // só se ainda estiver nessa fase
   const v=violou(m); if(v) return acaba(false,'não podia!',`Você formou ${artigo(rockName(v.proibido))} ${rockName(v.proibido)}.`);
   if(cumpriu(m)) return acaba(true,'missão cumprida!');
   if(S.energy<=0) return acaba(false,'acabaram os arrastos','Acabaram os arrastos.');
   if(!anyMove()) return acaba(false,'não cabe mais nada','Não cabia mais nada no tabuleiro.');
   salvaFase();
+}
+// estrelas, pontos e medalha gravados no instante da vitória: sair pela pausa antes da tela de resultado não perde a fase.
+// Uma vez por partida (S.res); a tela de resultado só mostra, e o "recorde" compara com o que havia antes desta vitória.
+function gravaVitoria(){
+  if(S.res) return S.res;
+  const n=S.missao, m=MISSOES[n-1], e=estrelasPor(m,Math.max(0,S.energy),S.moves||0), r=MISS(), ant=r[n]||{};
+  S.res={e, rec: ant.t!=null && S.pontos>ant.t};
+  r[n]={...ant, e:Math.max(e,ant.e||0), t:Math.max(S.pontos,ant.t||0)}; if(S.medalha) r[n].pm=true;
+  localStorage.mina_missoes=JSON.stringify(r);
+  return S.res;
 }
 
 // ---------- partidas anotadas no próprio aparelho (nada sai dele): Laboratório > Dados das partidas ----------
@@ -152,10 +163,8 @@ function dadosPartidas(volta){
 
 // ---------- fase em andamento: salvar e continuar ----------
 const CAMPOS_SAVE = ['tiles','walls','edges','alvos','terraTot','carro','energy','moves','pontos','feitas','coresF','quebras','seqI','combos','soltas','presasTot','maxForm','next','rachados'];
-function salvaFase(){
-  const st={}; for(const k of CAMPOS_SAVE) st[k]=S[k]; st.terra=[...(S.terra||[])];
-  localStorage.mina_cla_save=JSON.stringify({n:S.missao, pass:!!S.medalha, st});
-}
+const estadoFase = () => { const st={}; for(const k of CAMPOS_SAVE) st[k]=S[k]; st.terra=[...(S.terra||[])]; return st; };
+function salvaFase(){ localStorage.mina_cla_save=JSON.stringify({n:S.missao, pass:!!S.medalha, st:estadoFase()}); }
 const faseSalva = n => { const sv=JSON.parse(localStorage.mina_cla_save||'null'); return sv && sv.n===n ? sv : null; };
 function restauraFase(st){
   for(const el of els.values()) el.remove(); els.clear(); limpaMarcas();
@@ -363,10 +372,19 @@ function missaoInfo(n){
     ${passinho?`<button class="btn dim" id="mPass">${b.pm?'Jogar de novo no Passinho':'Jogar no Passinho (medalha)'}</button>`:''}
     <button class="btn dim" id="mVolta">Voltar</button>`);
   if(tA) espPlanetaGrande($('#espInfo'),tA,'info');
-  $('#mJoga').onclick=()=>missaoJoga(n);
+  $('#mJoga').onclick=()=>comecaFase(n);
   if($('#mCont')) $('#mCont').onclick=()=>missaoJoga(n,{retoma:true});
-  if($('#mPass')) $('#mPass').onclick=()=>missaoJoga(n,{passinho:true});
+  if($('#mPass')) $('#mPass').onclick=()=>comecaFase(n,{passinho:true});
   $('#mVolta').onclick=hideOverlay; FORA=hideOverlay;
+}
+// só há um lugar para fase pela metade: começar outra fase apaga a que estava salva, então pergunta antes.
+// Começar de novo a própria fase salva não pergunta (o botão já diz isso). Voltar reabre a tela de onde veio.
+function comecaFase(n, opt={}, volta=()=>missaoInfo(n)){
+  const sv=JSON.parse(localStorage.mina_cla_save||'null');
+  if(!sv || sv.n===n || !MISSOES[sv.n-1]) return missaoJoga(n,opt);
+  showOverlay(`<h2>Começar a fase ${n}?</h2><p>A fase ${sv.n}, ${noIco(nomeFaseCla(sv.n))}, está pela metade e será perdida.</p>
+    <button class="btn g" id="fSim">Começar</button><button class="btn dim" id="fNao">Voltar</button>`);
+  $('#fSim').onclick=()=>missaoJoga(n,opt); $('#fNao').onclick=volta; FORA=volta;
 }
 function missaoJoga(n, opt={}){
   const m=MISSOES[n-1], fase=faseDe(m), fm=formaDe(m);
@@ -396,9 +414,7 @@ function missaoResultado(ok, motivo){
     showOverlay(`${espFig()&&tAlvo(m)?'<canvas id="espRes"></canvas>':disc(faseDe(m),null,'bigDisc')}<h2>Não deu</h2><p>${motivo}</p>${falta.map(t=>`<p>${t}.</p>`).join('')}
       <button class="btn g" id="mDeNovo">Tentar de novo</button><button class="btn dim" id="mLista">Ver fases</button>`);
   } else {
-    const e=estrelasPor(m,sobra,S.moves||0), r=MISS(), ant=r[n]||{}, rec=ant.t!=null && S.pontos>ant.t;
-    r[n]={...ant, e:Math.max(e,ant.e||0), t:Math.max(S.pontos,ant.t||0)}; if(S.medalha) r[n].pm=true;
-    localStorage.mina_missoes=JSON.stringify(r);
+    const {e,rec}=gravaVitoria();   // já gravado quando a fase foi cumprida
     showOverlay(`${espFig()&&tAlvo(m)?'<canvas id="espRes"></canvas>':''}<h2>${S.medalha?'Medalha do Passinho!':'Missão cumprida!'}</h2>${estrelasHtml(e,'estr grande')}
       <p>${m.livre?`Em <b>${S.moves||0}</b> arrasto${S.moves===1?'':'s'}`:sobra===1?'Sobrou <b>1</b> arrasto':`Sobraram <b>${sobra}</b> arrastos`} · <b>${S.pontos}</b> pontos${rec?' (recorde!)':''}</p>
       ${e<3?`<p class="metas">${metasEstTxt(m,e)}</p>`:''}
@@ -408,7 +424,7 @@ function missaoResultado(ok, motivo){
     SFX.estrelas(e);
   }
   if($('#espRes')) espPlanetaGrande($('#espRes'),tAlvo(m),ok?'vit':'der');
-  $('#mDeNovo').onclick=()=>missaoJoga(n, S.medalha?{passinho:true}:{});
+  $('#mDeNovo').onclick=()=>comecaFase(n, S.medalha?{passinho:true}:{}, ()=>missaoResultado(ok,motivo));
   $('#mLista').onclick=missoesLista;
 }
 
@@ -416,12 +432,19 @@ function missaoResultado(ok, motivo){
 // Só o tabuleiro 4x4: junta até não caber mais nada. Sem metas e sem limite de arrastos; guarda o recorde de pontos.
 // (No menu do espaço o modo de missões passa a se chamar Jornada e este é o Clássico.)
 const REC_INF = () => +(localStorage.ptui_rec_inf||0);
-function infinitoJoga(){
+// partida em andamento, gravada a cada arrasto (fechar o app não a perde); chave própria, a mina_cla_save é da Jornada
+const infSalvo = () => JSON.parse(localStorage.ptui_inf_save||'null');
+// {retoma:true}: continua a partida salva, se houver (botão do menu); sem isso começa uma nova e apaga a salva
+function infinitoJoga(opt){
+  const sv = opt?.retoma ? infSalvo() : null;
+  if(!sv) localStorage.removeItem('ptui_inf_save');
   hideOverlay(); hideCoach(); VEIO_DO_EDITOR=false;
-  S = {...freshState(), infinito:true, missao:0, tema:1, char:'rola', moves:0, extra:0, pontos:0, feitas:{}, coresF:{}, quebras:[], seqI:0, combos:0, soltas:0, maxForm:0, rachados:0, recAntes:REC_INF()};
+  // recAntes vem do salvo: o "recorde!" do fim compara com o recorde de antes desta partida, não de antes de continuar
+  S = {...freshState(), infinito:true, missao:0, tema:1, char:'rola', moves:0, extra:0, pontos:0, feitas:{}, coresF:{}, quebras:[], seqI:0, combos:0, soltas:0, maxForm:0, rachados:0, recAntes:sv?sv.recAntes:REC_INF()};
   S.fiscal=FISCAIS[0];
   applyAndar(); startDay({...PATHS.comum, forma:null, caverna:false, energy:999-CFG.energy, semEnergia:true, w:4, h:4});
-  limpaMarcas(); document.body.classList.add('modoCla','modoInf'); $('#btnPause').textContent='☰';
+  limpaMarcas(); if(sv) restauraFase(sv.st);
+  document.body.classList.add('modoCla','modoInf'); $('#btnPause').textContent='☰';
   montaInfinitoHud(); render();
   setBanner('Clássico', 'junte até não caber mais nada'); pedeEncaixe();
 }
@@ -430,9 +453,18 @@ function hudInfinito(){ $('#cArr').textContent=S.moves||0; $('#cPts').textConten
 function checaInfinito(){
   // o recorde fica guardado na hora: sair, recomeçar ou fechar o jogo no meio da partida não o perde
   if((S.pontos||0)>REC_INF()) localStorage.ptui_rec_inf=S.pontos;
-  if(anyMove()) return;
+  if(anyMove()){ localStorage.ptui_inf_save=JSON.stringify({recAntes:S.recAntes, st:estadoFase()}); return; }
+  localStorage.removeItem('ptui_inf_save');   // fim de jogo: não há o que continuar
   S.phase='fimI'; setBanner(null,'não cabe mais nada');
   const est=S; setTimeout(()=>{ if(S===est && S.phase==='fimI') infinitoFim(); },650);
+}
+// Recomeçar pela pausa com pontos na partida: pergunta antes de perder a partida
+function recomecaInfinito(){
+  if(!(S.pontos>0)) return infinitoJoga();
+  const volta=()=>{ hideOverlay(); pauseMenu(); };
+  showOverlay(`<h2>Recomeçar?</h2><p>A partida atual será perdida.</p>
+    <button class="btn g" id="rSim">Recomeçar</button><button class="btn dim" id="rNao">Voltar</button>`);
+  $('#rSim').onclick=()=>infinitoJoga(); $('#rNao').onclick=volta; FORA=volta;
 }
 function infinitoFim(){
   const rec=S.pontos>S.recAntes; if(S.pontos>REC_INF()) localStorage.ptui_rec_inf=S.pontos;
@@ -440,7 +472,8 @@ function infinitoFim(){
   const t=Math.max(1,S.maxForm||1), E=espFig();
   showOverlay(`${E?'<canvas id="espRes"></canvas>':''}<h2>Fim de jogo</h2><p>Maior peça: ${rockName(t)}</p>
     <p><b>${S.pontos}</b> pontos${rec?' (recorde!)':''} · <b>${S.moves}</b> arrastos</p>
+    ${rec?'':`<p>Recorde: <b>${REC_INF()}</b> pontos</p>`}
     <button class="btn g" id="iDeNovo">Jogar de novo</button><button class="btn dim" id="iMenu">Menu</button>`);
   if(E) espPlanetaGrande($('#espRes'),t,'vit');
-  $('#iDeNovo').onclick=infinitoJoga; $('#iMenu').onclick=()=>{ hideOverlay(); showMenu(); };
+  $('#iDeNovo').onclick=()=>infinitoJoga(); $('#iMenu').onclick=()=>{ hideOverlay(); showMenu(); };
 }

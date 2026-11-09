@@ -1367,8 +1367,8 @@ function pauseMenu(){
     <button class="btn" id="pExit">${S.missao?'Voltar às fases':'Sair para o menu'}</button>
     ${inDay && !cla?'<p style="font-size:13px">Sair agora recomeça o dia.</p>':''}`);
   $('#pCont').onclick=hideOverlay; FORA=hideOverlay; if($('#pRel')) $('#pRel').onclick=relatar;
-  // recomeçar a fase (no espaço o botão Recomeçar sai da tela e fica só aqui)
-  if($('#pReset')) $('#pReset').onclick=()=>{ hideOverlay(); if(S.infinito) infinitoJoga(); else missaoJoga(S.missao, S.medalha?{passinho:true}:{}); };
+  // recomeçar a fase (no espaço o botão Recomeçar sai da tela e fica só aqui); no Clássico com pontos, confirma antes
+  if($('#pReset')) $('#pReset').onclick=()=>{ hideOverlay(); if(S.infinito) recomecaInfinito(); else missaoJoga(S.missao, S.medalha?{passinho:true}:{}); };
   if($('#pRules')) $('#pRules').onclick=quickRules;
   if($('#pPedras')) $('#pPedras').onclick=()=>pedrapedia(pauseMenu);
   $('#pSound').onclick=()=>{ toggleSound(); hideOverlay(); pauseMenu(); };
