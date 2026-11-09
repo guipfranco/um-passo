@@ -626,7 +626,7 @@ body.rola #stage{touch-action:none}
 <div id="coach" class="hidden"><div class="cav" id="coachAv"></div><div><p id="coachText"></p><button class="btn b" id="coachOk">Ok</button></div></div>
 
 <script>
-const VERSAO="1afe46f4";
+const VERSAO="dc574b56";
 // ===================== CONFIG =====================
 let W = 4, H = 4, N = 4;      // largura e altura do tabuleiro (N = maior lado)
 const CFG = {
@@ -3182,7 +3182,7 @@ function missaoResultado(ok, motivo){
 const REC_INF = () => +(localStorage.ptui_rec_inf||0);
 function infinitoJoga(){
   hideOverlay(); hideCoach(); VEIO_DO_EDITOR=false;
-  S = {...freshState(), infinito:true, missao:0, tema:1, char:'rola', moves:0, extra:0, pontos:0, feitas:{}, coresF:{}, quebras:[], seqI:0, combos:0, soltas:0, maxForm:0, rachados:0};
+  S = {...freshState(), infinito:true, missao:0, tema:1, char:'rola', moves:0, extra:0, pontos:0, feitas:{}, coresF:{}, quebras:[], seqI:0, combos:0, soltas:0, maxForm:0, rachados:0, recAntes:REC_INF()};
   S.fiscal=FISCAIS[0];
   applyAndar(); startDay({...PATHS.comum, forma:null, caverna:false, energy:999-CFG.energy, semEnergia:true, w:4, h:4});
   limpaMarcas(); document.body.classList.add('modoCla','modoInf'); $('#btnPause').textContent='☰';
@@ -3192,12 +3192,14 @@ function infinitoJoga(){
 function montaInfinitoHud(){ $('#cMis').innerHTML=`<div><b id="cRec">${REC_INF()}</b><small>recorde</small></div>`; $('#ptsP').style.display=''; }
 function hudInfinito(){ $('#cArr').textContent=S.moves||0; $('#cPts').textContent=S.pontos||0; const r=$('#cRec'); if(r) r.textContent=Math.max(REC_INF(),S.pontos||0); }
 function checaInfinito(){
+  // o recorde fica guardado na hora: sair, recomeçar ou fechar o jogo no meio da partida não o perde
+  if((S.pontos||0)>REC_INF()) localStorage.ptui_rec_inf=S.pontos;
   if(anyMove()) return;
   S.phase='fimI'; setBanner(null,'não cabe mais nada');
   const est=S; setTimeout(()=>{ if(S===est && S.phase==='fimI') infinitoFim(); },650);
 }
 function infinitoFim(){
-  const rec=S.pontos>REC_INF(); if(rec) localStorage.ptui_rec_inf=S.pontos;
+  const rec=S.pontos>S.recAntes; if(S.pontos>REC_INF()) localStorage.ptui_rec_inf=S.pontos;
   if(rec) SFX.pagou(); else SFX.naoDeu();
   const t=Math.max(1,S.maxForm||1), E=espFig();
   showOverlay(`${E?'<canvas id="espRes"></canvas>':''}<h2>Fim de jogo</h2><p>Maior peça: ${rockName(t)}</p>
@@ -4635,11 +4637,13 @@ let AC=null, BUS=null, NB=null;
 function ctxAudio(){
   try{
     if(!AC){ AC=new (window.AudioContext||window.webkitAudioContext)(); BUS=AC.createGain(); BUS.gain.value=.9; BUS.connect(AC.destination); }
-    if(AC.state==='suspended') AC.resume();
+    if(AC.state==='suspended' && !document.hidden) AC.resume();   // escondido, fica parado (ver visibilitychange)
     return AC;
   }catch(e){ return null; }
 }
 function ac(){ return sound ? ctxAudio() : null; }
+// jogo em segundo plano (trocou de app, bloqueou a tela, outra aba): o som para e volta quando o jogo reaparece
+document.addEventListener('visibilitychange',()=>{ if(AC) (document.hidden ? AC.suspend() : AC.resume()).catch(()=>{}); });
 
 // ===================== MÚSICA =====================
 // Trilha por tela (todas sintetizadas, vindas do Gabinete). TRIM iguala o volume entre elas.
@@ -4818,7 +4822,8 @@ function hideOverlay(){ $('#overlay').classList.add('hidden'); $('#panel').inner
 
 // ===================== ENTRADA =====================
 const KEYS={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],w:[0,-1],s:[0,1],a:[-1,0],d:[1,0]};
-addEventListener('keydown',e=>{ const k=KEYS[e.key.length===1?e.key.toLowerCase():e.key]; if(k){ e.preventDefault(); move(...k); } });
+// escrevendo num campo de texto (nome do nível, relato) ou com Ctrl/Alt, a tecla é do campo ou do navegador, não do jogo
+addEventListener('keydown',e=>{ if(e.ctrlKey||e.metaKey||e.altKey||e.target.closest?.('input,textarea')) return; const k=KEYS[e.key.length===1?e.key.toLowerCase():e.key]; if(k){ e.preventDefault(); move(...k); } });
 // Arrastar com prévia: as pedrinhas seguem o dedo até onde iriam; só confirma ao soltar.
 // Dá para ir e voltar, testar outras direções e desistir (soltando perto do começo).
 let touch=null, prev=null;
@@ -4858,13 +4863,17 @@ function previewDrag(dx,dy){
 }
 addEventListener('pointerdown',e=>{ if(overlayOpen()||e.target.closest('button')||!$('#scrGame').classList.contains('on')) return;
   if(document.body.classList.contains('rola') && !e.target.closest('#stage')) return; // fora do tabuleiro, o dedo rola a página
-  touch={x:e.clientX,y:e.clientY,cel:cellPx(),hist:[[performance.now(),e.clientX,e.clientY]]}; prev=null; });
-addEventListener('pointercancel',()=>{ if(touch){ touch=null; clearPreview(true); } });
+  // outro dedo encostou: o gesto passa a ser só do dedo novo (a prévia do anterior volta e ele não decide mais nada)
+  if(prev) clearPreview(true);
+  touch={id:e.pointerId,x:e.clientX,y:e.clientY,cel:cellPx(),hist:[[performance.now(),e.clientX,e.clientY]]}; prev=null; });
+addEventListener('pointercancel',e=>{ if(touch && e.pointerId===touch.id){ touch=null; clearPreview(true); } });
 addEventListener('pointermove',e=>{
-  if(!touch || !S || S.phase!=='mine' || overlayOpen() || coachBlock || S.editando || S.ferrAtiva) return;
+  if(!touch || e.pointerId!==touch.id || !S || S.phase!=='mine' || overlayOpen() || coachBlock || S.editando || S.ferrAtiva) return;
   const dx=e.clientX-touch.x, dy=e.clientY-touch.y, agora=performance.now(), hs=touch.hist;
   hs.push([agora,e.clientX,e.clientY]); while(hs.length>2 && agora-hs[0][0]>90) hs.shift();
-  const vel=Math.hypot(e.clientX-hs[0][1],e.clientY-hs[0][2])/Math.max(1,agora-hs[0][0]);
+  // velocidade no sentido da jogada: voltar rápido para desistir (ou virar para outro lado) não confirma a jogada
+  const sx = Math.abs(dx)>Math.abs(dy) ? Math.sign(dx) : 0, sy = sx ? 0 : Math.sign(dy);
+  const vel=((e.clientX-hs[0][1])*sx+(e.clientY-hs[0][2])*sy)/Math.max(1,agora-hs[0][0]);
   if(Math.max(Math.abs(dx),Math.abs(dy))>=Math.max(CONFIRMA+8,touch.cel*.38) && vel>=.55 && agora-hs[0][0]>=30){ touch=null; confirmaArrasto(dx,dy); return; }   // arrasto rápido: vale já
   previewDrag(dx,dy);
 });
@@ -4874,7 +4883,7 @@ function confirmaArrasto(dx,dy){
   if(S && S.phase==='mine') for(const t of S.tiles){ const el=els.get(t.id); if(el) el.style.transform=pos(t.x,t.y); }
 }
 addEventListener('pointerup',e=>{
-  if(!touch) return; const dx=e.clientX-touch.x, dy=e.clientY-touch.y; touch=null;
+  if(!touch || e.pointerId!==touch.id) return; const dx=e.clientX-touch.x, dy=e.clientY-touch.y; touch=null;
   const tinha=!!prev;
   if(S && S.ferrAtiva && S.phase==='mine'){ usarFerramenta(e.clientX,e.clientY); return; }
   if(S && S.editando && S.phase==='mine'){ if(PINCEL.tipo==='mureta'){ labMureta(e.clientX,e.clientY); return; } const c=labCelula(e.clientX,e.clientY); if(c) labPinta(...c); return; }
@@ -4888,7 +4897,6 @@ addEventListener('pointerup',e=>{
   }
   confirmaArrasto(dx,dy);
 });
-addEventListener('pointercancel',()=>{ if(touch){ touch=null; clearPreview(true); } });
 // Encerrar exige dois toques enquanto ainda há energia (evita toque sem querer)
 let endArmed=null;
 function resetEnd(){ clearTimeout(endArmed); endArmed=null; $('#btnEnd').textContent=S&&(S.missao||S.infinito)?'Recomeçar':S&&S.semEnergia?'Parar aqui':'Encerrar o dia'; $('#btnEnd').classList.remove('g'); }
@@ -4908,7 +4916,9 @@ $('#btnEdit').onclick=()=>labEditar(!S.editando);
 $('#btnAssovio').onclick=assoviar;
 $('#btnPause').onclick=pauseMenu;
 document.querySelectorAll('.musBtn').forEach(b=>{ b.onclick=toggleMusic; b.style.opacity=music?1:.4; });
-addEventListener('pointerdown',()=>{ if(AC&&AC.state==='suspended') AC.resume(); else if(!AC&&music){ ctxAudio(); trilha(musKey); } },{capture:true});
+// destrava o áudio no primeiro toque. No celular o navegador só libera o som quando o dedo sobe (pointerup), não quando encosta
+const destravaAudio=()=>{ if(AC&&AC.state==='suspended') AC.resume(); else if(!AC&&music){ ctxAudio(); trilha(musKey); } };
+for(const t of ['pointerdown','pointerup','keydown']) addEventListener(t,destravaAudio,{capture:true});
 $('#mContinue').onclick=loadGame;
 $('#mCred').onclick=credits;
 $('#mLab').onclick=labPainel;
