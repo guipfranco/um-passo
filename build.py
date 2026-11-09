@@ -10,6 +10,9 @@ espaco = ('var ESP=(()=>{' + rd('espaco.js') + '\nreturn {buildTextures,preaquec
           + rd('espaco_jogo.js'))
 cfg, svg, logic, helpers, sfx, css, autoupd = rd('config.js'), rd('svg.js'), rd('jogo.js'), rd('helpers.js'), rd('sfx.js'), rd('css.css'), rd('autoupd.html')
 gi = rd('gi.js')
+# versão do jogo nos relatos de bug: um resumo do código-fonte (muda só quando o código muda)
+import hashlib
+VERSAO = hashlib.sha1((cfg + missoes + gi + svg + logic + classico + espaco + helpers + sfx).encode('utf-8')).hexdigest()[:8]
 css = css.replace('width:calc(4*var(--cell) + 5*var(--gap));height:calc(4*var(--cell) + 5*var(--gap))', 'width:calc(var(--w,4)*var(--cell) + (var(--w,4) + 1)*var(--gap));height:calc(var(--h,4)*var(--cell) + (var(--h,4) + 1)*var(--gap))')
 css = css.replace('touch-action:none;user-select:none;-webkit-user-select:none;overscroll-behavior:none;overflow:hidden}', 'user-select:none;-webkit-user-select:none;overscroll-behavior:none;overflow-x:hidden}\nbody.lock{overflow:hidden}\n#scrGame{touch-action:none}')
 
@@ -43,6 +46,12 @@ body.espaco .slot.void::before{display:none}
 body.espaco .tile .face{width:100% !important;height:100% !important;margin:0 !important;position:relative}
 #glPlan{display:none;position:absolute;left:calc(-1*var(--cell));top:calc(-1*var(--cell));width:calc(100% + 2*var(--cell));height:calc(100% + 2*var(--cell));pointer-events:none;z-index:5}
 body.espaco #glPlan{display:block}
+.relato{display:flex;flex-direction:column;gap:10px}
+.relTipo{display:flex;gap:8px}.relTipo .btn{flex:1;margin:0;padding:8px !important}
+.relato textarea{width:100%;border-radius:12px;border:1.5px solid rgba(255,255,255,.18);background:rgba(10,8,25,.6);color:#f3eefc;font:500 16px 'Exo 2',sans-serif;padding:10px;resize:vertical}
+.relFoto{display:flex;align-items:center;gap:10px;font-size:14px;color:#cfc4e6;cursor:pointer}
+.relFoto img{width:48px;height:auto;max-height:90px;object-fit:cover;border-radius:6px;border:1px solid rgba(255,255,255,.2)}
+.relAviso{min-height:0;margin:0;color:#ffd36e !important;font-size:14px}
 #malhaCv{display:none;position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:0}
 body.espaco.modoCla #malhaCv{display:block}
 body.espaco.modoCla .slot::before{display:none}
@@ -625,6 +634,7 @@ html = '''<!doctype html>
 <body>
 ''' + body + '''
 <script>
+const VERSAO="''' + VERSAO + '''";
 ''' + cfg + missoes + gi + svg + logic + classico + espaco + helpers + sfx + ui + '''</script>
 </body>
 </html>

@@ -28,8 +28,8 @@ function espLoop(ms){
   requestAnimationFrame(espLoop);
   const t=ms/1000, ceu=document.body.classList.contains('espaco'); tQuadro=t;
   // cada camada num try: um erro numa delas não pode travar as outras nem deixar o céu num modo de desenho errado
-  if(ceu) try{ ceuDesenha(t); }catch(e){ console.warn('céu',e); }
-  if(ceu && document.body.classList.contains('modoCla') && $('#scrGame').classList.contains('on')) try{ malhaQuadro(t); }catch(e){ console.warn('malha',e); }
+  if(ceu) try{ ceuDesenha(t); }catch(e){ console.warn('céu',e); anotaErro('céu',e); }
+  if(ceu && document.body.classList.contains('modoCla') && $('#scrGame').classList.contains('on')) try{ malhaQuadro(t); }catch(e){ console.warn('malha',e); anotaErro('malha',e); }
   if(!ESPC.size) return;
   const cel=(typeof cellPx==='function'?cellPx():80)*ESP.DPR;
   for(const cv of ESPC){
@@ -494,7 +494,9 @@ function espOpcoes(){
     <button class="btn dim" id="oMus">Música: ${music?'ligada':'desligada'}</button>
     <button class="btn dim" id="oSnd">Efeitos sonoros: ${sound?'ligados':'desligados'}</button>
     <button class="btn dim" id="oCred">Créditos</button>
+    <button class="btn dim" id="oRel">Relatar bug ou sugestão</button>
     <button class="btn b" id="oOk">Voltar</button>`);
+  $('#oRel').onclick=relatar;
   $('#oMus').onclick=()=>{ toggleMusic(); espOpcoes(); };
   $('#oSnd').onclick=()=>{ toggleSound(); espOpcoes(); };
   $('#oCred').onclick=()=>{ showOverlay(`<h2>Créditos</h2><ul>
@@ -583,4 +585,77 @@ function icoMundoEsp(gi){
   const orbita = () => `<image href="${fotoEsp('orbita',c=>ESP.SPR.alvo(c,80,80,150,1,'Rocha'))}" x="0" y="0" width="100" height="100"/>`;
   const inner = [()=>planetaInner(1), estacaoInner, ()=>img(urlObj('rochinha')), orbita, ()=>img(urlObj('nave')), lixoInner, nebInner, orbita, gaiolaInner, ()=>planetaInner(6,0)][gi] || (()=>planetaInner(1));
   return `<svg class="espIco" viewBox="0 0 100 100">${inner()}</svg>`;
+}
+
+// ---------- relatar bug ou sugestão ----------
+// O relato vai para a planilha do Guilherme ("2048 Stars · relatos"), por um script do Google publicado como app da web:
+// a mensagem, onde no jogo, aparelho, versão, foto da tela, o estado da partida (para reproduzir o erro) e os erros
+// recentes. A foto sai antes da janela abrir, com a tela do jeito que a pessoa estava vendo.
+// Sem o endereço configurado (ou sem internet), a janela oferece copiar o relato.
+const RELATO_URL = '';   // endereço do app da web (Apps Script "2048 Stars relatos")
+const ERROS_RECENTES = [];
+function anotaErro(onde, e){ ERROS_RECENTES.push(`${new Date().toISOString().slice(11,19)} ${onde}: ${(e&&(e.message||e))||e}`.slice(0,300)); if(ERROS_RECENTES.length>10) ERROS_RECENTES.shift(); }
+addEventListener('error', e=>anotaErro(`${(e.filename||'').split('/').pop()}:${e.lineno}`, e.message));
+addEventListener('unhandledrejection', e=>anotaErro('promessa', e.reason));
+let H2C=null;   // biblioteca que fotografa a página, carregada só na hora de relatar
+function carregaFoto(){ return H2C || (H2C=new Promise((ok,erro)=>{ const s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/html2canvas-pro@2.6.3/dist/html2canvas-pro.min.js';   // a versão mantida entende as cores novas do CSS
+  s.onload=()=>{ const h=window.html2canvas; ok(typeof h==='function'?h:h&&(h.default||h.html2canvas)); }; s.onerror=()=>{ H2C=null; erro(new Error('sem a biblioteca da foto')); }; document.head.appendChild(s); })); }
+async function fotoDaTela(){
+  try{
+    const h2c=await carregaFoto();
+    // os planetas são da placa de vídeo: guarda o quadro agora, porque a foto copiaria essa camada em branco
+    let gl=null; const cv=document.getElementById('glPlan');
+    if(cv && GLON){ try{ glQuadro(tQuadro||performance.now()/1000); gl=cv.toDataURL('image/png'); }catch(e){} }
+    const k=Math.min(1, 540/innerWidth);
+    const img=await h2c(document.body,{backgroundColor:'#0b0a18', scale:k, logging:false, useCORS:true, x:scrollX, y:scrollY, width:innerWidth, height:innerHeight,
+      onclone:doc=>{ const c2=doc.getElementById('glPlan'); if(!c2||!gl) return; const cs=getComputedStyle(cv), im=doc.createElement('img'); im.src=gl;
+        im.style.cssText=`position:absolute;left:${cs.left};top:${cs.top};width:${cs.width};height:${cs.height};z-index:${cs.zIndex};pointer-events:none`; c2.replaceWith(im); }});
+    return img.toDataURL('image/jpeg',.72);
+  }catch(e){ anotaErro('foto', e); return null; }
+}
+function ondeNoJogo(){
+  if(!S) return 'início';
+  if(S.missao) return `Jornada, fase ${S.missao} (${nomeFaseCla(S.missao)})${S.phase&&S.phase!=='mine'?' · '+S.phase:''}`;
+  if(S.infinito) return 'Clássico';
+  if(S.phase==='lista') return 'mapa da Jornada';
+  if($('#scrMenu')?.classList.contains('on')) return 'menu';
+  return S.lab ? 'Laboratório' : 'Mineração';
+}
+function estadoDaPartida(){
+  if(!S || !(S.missao||S.infinito)) return '';
+  const st={missao:S.missao, infinito:!!S.infinito, W, H, char:S.char, phase:S.phase, moves:S.moves, energy:S.energy, pontos:S.pontos, maxForm:S.maxForm, espMax:S.espMax,
+    tiles:S.tiles, walls:S.walls, edges:S.edges, alvos:S.alvos, terra:[...(S.terra||[])], carro:S.carro, rachados:S.rachados, seqI:S.seqI, soltas:S.soltas};
+  try{ return JSON.stringify(st,(k,v)=>v instanceof Set?[...v]:v).slice(0,40000); }catch(e){ return 'não deu para guardar: '+e.message; }
+}
+async function relatar(){
+  hideOverlay();
+  await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));   // a tela sem a janela, para a foto
+  const foto=await fotoDaTela();
+  let tipo='bug';
+  showOverlay(`<div class="relato">
+    <h2>Relatar</h2>
+    <div class="relTipo"><button class="btn b" data-t="bug">Bug</button><button class="btn dim" data-t="sugestão">Sugestão</button></div>
+    <textarea id="relTexto" rows="5" maxlength="2000" placeholder="O que aconteceu? Ou o que você mudaria no jogo?"></textarea>
+    ${foto?`<label class="relFoto"><input type="checkbox" id="relComFoto" checked><img src="${foto}" alt=""><span>Mandar a foto da tela</span></label>`:''}
+    <p class="ajuda">Vai junto: onde você estava no jogo, o aparelho e a partida, para dar para ver exatamente o que aconteceu.</p>
+    <p class="relAviso" id="relAviso"></p>
+    <button class="btn g" id="relEnvia">${RELATO_URL?'Enviar':'Copiar o relato'}</button>
+    <button class="btn dim" id="relVolta">Voltar</button></div>`);
+  FORA=null;   // tocar fora não fecha: não pode perder o que a pessoa escreveu
+  document.querySelectorAll('.relTipo .btn').forEach(b=>b.onclick=()=>{ tipo=b.dataset.t; document.querySelectorAll('.relTipo .btn').forEach(x=>x.className='btn '+(x===b?'b':'dim')); });
+  $('#relVolta').onclick=hideOverlay;
+  $('#relEnvia').onclick=async()=>{
+    const texto=$('#relTexto').value.trim(), aviso=$('#relAviso');
+    if(!texto){ aviso.textContent='Escreva uma frase contando o que foi.'; $('#relTexto').focus(); return; }
+    const d={jogo:'2048 Stars', tipo, texto, onde:ondeNoJogo(), versao:typeof VERSAO!=='undefined'?VERSAO:'?',
+      aparelho:`${navigator.userAgent} · tela ${innerWidth}x${innerHeight} @${devicePixelRatio} · webgl ${GLON?'sim':'não'}`,
+      estado:estadoDaPartida(), erros:ERROS_RECENTES.join('\n'), foto:(foto && $('#relComFoto')?.checked)?foto:''};
+    const b=$('#relEnvia'); b.disabled=true;
+    if(!RELATO_URL){ const txt=`2048 Stars · ${tipo}\n${texto}\n\nOnde: ${d.onde}\nVersão: ${d.versao}\nAparelho: ${d.aparelho}`;
+      try{ await navigator.clipboard.writeText(txt); aviso.textContent='Copiado. Agora é só colar na conversa com o Guilherme.'; }catch(e){ aviso.textContent='Não deu para copiar.'; } b.disabled=false; return; }
+    b.textContent='Enviando…';
+    try{ await fetch(RELATO_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(d)});
+      showOverlay(`<h2>Obrigado!</h2><p>Chegou. Cada relato ajuda a deixar o jogo melhor.</p><button class="btn g" id="relOk">Voltar ao jogo</button>`); FORA=hideOverlay; $('#relOk').onclick=hideOverlay;
+    }catch(e){ anotaErro('envio', e); b.disabled=false; b.textContent='Tentar de novo'; aviso.textContent='Não deu para enviar (sem internet?). Tente de novo daqui a pouco.'; }
+  };
 }
