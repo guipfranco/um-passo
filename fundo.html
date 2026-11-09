@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2048 Stars · fundo e casas (rascunho)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+*{box-sizing:border-box}
+html,body{background:#0b0a18}
+body{margin:0;color:#e8e4ff;font-family:'Exo 2',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+main{max-width:460px;margin:0 auto;padding:14px 12px 48px;display:flex;flex-direction:column;gap:10px}
+h1{margin:2px 0 0;font:900 20px Orbitron,sans-serif;letter-spacing:.04em;color:#f4fbff;text-shadow:0 0 14px rgba(110,230,255,.7)}
+h2{margin:18px 0 0;font:900 13px Orbitron,sans-serif;letter-spacing:.12em;color:#9fe9ff}
+p{margin:0;font-size:15px;line-height:1.42;color:#c9c2ee}
+.rot{font:700 11.5px 'Exo 2',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#a49bd6;margin:4px 0 -4px}
+.ops{display:flex;gap:6px;flex-wrap:wrap}
+.op{flex:1 1 0;min-width:0;border:1.5px solid rgba(140,200,255,.3);border-radius:12px;padding:7px 4px;background:rgba(20,16,44,.7);color:#d8d2ff;
+  font:700 13px 'Exo 2',sans-serif;cursor:pointer;line-height:1.1}
+.op small{display:block;font-weight:400;font-size:11px;color:#a49bd6;margin-top:2px}
+.op.on{border-color:#6ee6ff;background:rgba(40,90,140,.45);color:#fff;box-shadow:0 0 12px rgba(110,230,255,.45)}
+.op.on small{color:#cfe9ff}
+.cor{flex:0 0 auto;width:34px;height:34px;border-radius:50%;padding:0;border:2px solid rgba(255,255,255,.25)}
+.cor.on{border-color:#fff;box-shadow:0 0 12px rgba(255,255,255,.5)}
+#tela{position:relative;width:100%;aspect-ratio:10/18;border-radius:22px;overflow:hidden;border:1.5px solid rgba(140,200,255,.22);touch-action:none;user-select:none}
+#tela canvas{position:absolute;inset:0;width:100%;height:100%}
+.hud{position:absolute;left:10px;right:10px;top:10px;display:flex;gap:6px;pointer-events:none}
+.pill{flex:1 1 0;height:42px;border-radius:14px;background:rgba(22,17,40,.8);border:1.5px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;gap:6px;
+  font:800 18px Orbitron,sans-serif;color:#f3e9d7}
+.pill small{font:600 11px 'Exo 2',sans-serif;color:#b9a9d9}
+.pill.g{flex:1.6}
+.ban{position:absolute;left:10px;right:10px;top:58px;height:36px;border-radius:14px;background:rgba(22,17,40,.8);border:1.5px solid rgba(255,255,255,.12);
+  display:flex;align-items:center;justify-content:center;font:700 14px 'Exo 2',sans-serif;color:#f3eefc;pointer-events:none}
+.dica{position:absolute;left:0;right:0;bottom:10px;text-align:center;font:600 12px 'Exo 2',sans-serif;color:rgba(230,225,255,.55);pointer-events:none}
+.card{background:rgba(22,17,40,.82);border:1.5px solid rgba(255,255,255,.12);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.card.on{border-color:rgba(110,230,255,.6);box-shadow:0 0 14px rgba(110,230,255,.2)}
+.card h3{margin:0;font:800 15.5px 'Exo 2',sans-serif;color:#fff}
+.card h3 i{font-style:normal;font:900 12px Orbitron,sans-serif;color:#6fe0ff;margin-right:6px}
+.card p{font-size:14px}
+.card ul{margin:0;padding-left:18px;font-size:13.5px;line-height:1.4;color:#c9c2ee}
+.card li{margin:3px 0}
+.card a{color:#6fe0ff}
+.card .risco{color:#ffb7a8}
+.nota{font-size:13px;color:#a49bd6}
+.agora{border:1.5px solid #ffd36e;color:#ffd36e;background:rgba(10,8,25,.55);border-radius:12px;padding:7px 10px;font:700 12.5px 'Exo 2',sans-serif;cursor:pointer}
+</style>
+</head>
+<body>
+<main>
+  <h1>FUNDO E CASAS</h1>
+  <p>Escolha as camadas do fundo e o estilo das casas. Arraste na tela para jogar; parada, ela joga sozinha.</p>
+
+  <div class="rot">Fundo · pode ligar mais de uma</div>
+  <div class="ops" id="opsF"></div>
+  <div class="rot">Casas · escolha uma</div>
+  <div class="ops" id="opsC"></div>
+  <div class="ops" style="align-items:center;gap:8px">
+    <span class="rot" style="margin:0">Mundo</span><span id="opsM" class="ops"></span>
+    <button class="op" id="forma" style="flex:0 0 auto;padding:7px 10px">Fase com formato</button>
+  </div>
+
+  <div id="tela">
+    <canvas id="cv"></canvas>
+    <div class="hud"><div class="pill g"><span id="arr">0</span><small>arrastos</small></div><div class="pill"><small>meta</small>Lua</div><div class="pill"><span id="pts">0</span><small>pontos</small></div></div>
+    <div class="ban">Fase 14 · Forme uma Lua</div>
+    <div class="dica">arraste para jogar</div>
+  </div>
+  <div class="ops"><button class="agora" id="agora">Fazer passar algo agora</button></div>
+
+  <h2>O FUNDO</h2>
+  <p class="nota">Hoje o fundo é uma pintura parada (nuvens, estrelas e o planeta do mundo), com estrelas piscando. As quatro camadas abaixo se somam.</p>
+  <div class="card" data-f="a"><h3><i>A</i>Nebulosa viva</h3>
+    <p>A nebulosa deixa de ser pintura: as nuvens se enrolam devagar, desenhadas pela placa de vídeo, nas duas cores do mundo. Faixas escuras de poeira dão volume.</p>
+    <ul><li><a href="https://www.shadertoy.com/view/XlfGRj" target="_blank">Star Nest</a>, de Pablo Roman Andrioli: o céu inteiro feito por fórmula, sem imagem.</li>
+      <li><a href="https://jotson.itch.io/gravity/devlog/60099/how-to-make-a-nebula-shader" target="_blank">Como fazer uma nebulosa</a> (jogo Gravity): camadas de ruído que andam em velocidades diferentes.</li>
+      <li><a href="https://store.steampowered.com/app/29180" target="_blank">Osmos</a>: espaço macio, só brilho e círculos, calmo sem ficar parado.</li></ul></div>
+  <div class="card" data-f="b"><h3><i>B</i>Camadas de profundidade</h3>
+    <p>Estrelas e poeira em três distâncias. A câmera flutua devagar e dá um tranco leve para o lado de cada arrasto: o que está perto anda mais que o que está longe.</p>
+    <ul><li><a href="https://www.dice.com/career-advice/altos-odyssey-winning-mobile-game" target="_blank">Alto's Odyssey</a>: camadas com paralaxe, o fundo mais apagado para não brigar com a frente.</li></ul></div>
+  <div class="card" data-f="c"><h3><i>C</i>Reage à jogada</h3>
+    <p>Cada junção solta uma onda de luz no fundo, na cor do planeta formado; o maior planeta da partida solta um clarão. Com o tabuleiro quase cheio, as bordas ficam avermelhadas e pulsam.</p>
+    <ul><li><a href="https://www.meta.com/blog/a-chat-with-the-team-behind-vr-puzzler-tetris-effect/" target="_blank">Tetris Effect</a>: fundo, música, efeitos e vibração acompanham cada jogada.</li>
+      <li><a href="https://en.wikipedia.org/wiki/Lumines" target="_blank">Lumines</a>: cada fase tem visual próprio, e o fundo muda aos poucos conforme a pessoa avança.</li></ul></div>
+  <div class="card" data-f="d"><h3><i>D</i>Passagens</h3>
+    <p>De tempos em tempos passa algo ao longe: um cometa, um satélite piscando, uma chuva de meteoros, uma nave. Não atrapalha; só mostra que o céu está vivo.</p>
+    <ul><li><a href="https://macstories.net/reviews/altos-odyssey-review-desert-tranquility/" target="_blank">Alto's Odyssey</a>: dia e noite, tempestade de areia, chuva e estrelas cadentes aparecem sem aviso.</li></ul></div>
+
+  <h2>AS CASAS</h2>
+  <p class="nota">Hoje cada casa é um círculo escuro igual aos outros. Aqui o tabuleiro inteiro ganha um jeito próprio.</p>
+  <div class="card" data-c="malha"><h3><i>1</i>Malha do espaço-tempo</h3>
+    <p>O tabuleiro vira uma rede de luz. Cada planeta afunda a rede em volta conforme o peso (a Terra afunda mais que a Poeira), e cada junção faz a rede ondular. Os quadrados da rede marcam as casas vazias.</p>
+    <ul><li><a href="https://code.tutsplus.com/make-a-neon-vector-shooter-in-xna-the-warping-grid--gamedev-9904t" target="_blank">A grade que deforma do Geometry Wars</a>: molinhas entre os pontos da rede; tiros e buracos negros puxam e soltam.</li>
+      <li><a href="https://drpetter.se/project_dyngrid.html" target="_blank">Grade dinâmica do DrPetter</a>: o mesmo efeito, explicado.</li>
+      <li>O desenho clássico da gravidade de Einstein: a bola pesada afundando o lençol.</li></ul>
+    <p class="risco">Cuidado: muita linha atrás dos planetas pode cansar a vista; dá para deixar a rede mais apagada.</p></div>
+  <div class="card" data-c="berco"><h3><i>2</i>Berços orbitais</h3>
+    <p>Cada casa é uma plataforma vista de lado: um anel no chão e o planeta flutuando em cima. Vazia, o anel fica apagado; ocupada, acende na cor do planeta e joga luz para cima.</p>
+    <ul><li><a href="https://chrislemke.github.io/website_designs/examples/Sci_Fi_Interface.html" target="_blank">Interface de ficção científica</a> (Chris Lemke): cantoneiras e bordas acesas.</li>
+      <li><a href="https://80.lv/articles/neon-genesis-evangelion-inspired-diegetic-hud-for-space-game" target="_blank">HUD dentro do mundo</a> num jogo espacial: a interface vira objeto da cena.</li></ul></div>
+  <div class="card" data-c="vidro"><h3><i>3</i>Painel de vidro</h3>
+    <p>O tabuleiro vira uma peça só, de vidro fosco, com moldura acesa que segue o formato da fase e casas em xadrez bem leve. A luz de cada planeta tinge o vidro em volta; de vez em quando uma faixa de luz varre o painel.</p>
+    <ul><li><a href="https://dreamgames.com/games/royal-match" target="_blank">Royal Match</a> e Candy Crush: xadrez leve nas casas e moldura contornando o formato de cada fase.</li>
+      <li><a href="https://chrislemke.github.io/website_designs/examples/Dark_Futurism.html" target="_blank">Painéis de vidro com desfoque</a> (Chris Lemke).</li>
+      <li><a href="https://blog.gskinner.com/archives/2019/04/fui-fun.html" target="_blank">Como animar telas de ficção científica</a> (gskinner).</li></ul></div>
+  <div class="card" data-c="const"><h3><i>4</i>Constelação</h3>
+    <p>Casa vazia é uma estrela pequena; linhas finas ligam as vizinhas, como num mapa do céu. O planeta que anda deixa rastro, e as linhas ligadas a ele acendem na cor dele. Conversa com o mapa de fases, que já é uma constelação.</p>
+    <p class="risco">Cuidado: é o mais leve de todos, e as casas vazias ficam menos marcadas.</p></div>
+  <div class="card" data-c="hoje"><h3><i>0</i>Hoje</h3><p>Círculos escuros, para comparar.</p></div>
+</main>
+<script src="src/espaco.js?v=15"></script>
+<script>
+addEventListener('error',e=>document.title='ERRO '+e.message+' @'+e.lineno); addEventListener('unhandledrejection',e=>document.title='REJ '+(e.reason&&(e.reason.stack||e.reason.message)));
+(()=>{   // tudo fechado aqui dentro para não trombar com os nomes do motor
+buildTextures(); preaquece();
+const NOMES=LADDER.map(d=>d.n);
+const COR=['#d9c49a','#7fdcf0','#ff7a1e','#909cb2','#bfefff','#e9c3a0','#cfd3dc','#c0342a','#e0805a','#f2d08a','#43a0e6','#4f86ec','#9fdde4','#e8c98a','#d9a07a','#ffd84a','#c08aff','#9a77c9'];
+const RGB=COR.map(h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)).join(','));
+const S=DPR, N=4, TAU=Math.PI*2;
+const tela=document.getElementById('tela'), cv=document.getElementById('cv'), c=cv.getContext('2d');
+
+// ---------------- opções ----------------
+const FUNDOS=[['a','Nebulosa','viva'],['b','Camadas','profundidade'],['c','Reage','à jogada'],['d','Passagens','cometa, nave']];
+const CASAS=[['hoje','Hoje','círculos'],['malha','1 Malha','gravidade'],['berco','2 Berços','orbitais'],['vidro','3 Vidro','painel'],['const','4 Estrelas','constelação']];
+const PALS=[{m:0,cor:'#8a5fe0',marco:(w,h)=>({n:'Júpiter',x:w*1.02,y:h*1.02,d:w*1.05,a:.9})},
+            {m:1,cor:'#3f8fe0',marco:(w,h)=>({n:'Netuno',x:-w*.08,y:h*.98,d:w*.9,a:.85})},
+            {m:2,cor:'#2fb890',marco:(w,h)=>({n:'Saturno',x:w*.02,y:h*.97,d:w*.8,a:.9})},
+            {m:4,cor:'#e0703a',marco:(w,h)=>({n:'Marte',x:w*.5,y:h+w*.42,d:w*1.5,a:1})}];
+const OP={f:new Set(['a','b','c','d']),casa:'malha',pal:0,forma:false};
+(function(){ const q=new URLSearchParams(location.hash.slice(1)); if(q.has('f')) OP.f=new Set(q.get('f').split('').filter(k=>'abcd'.includes(k)));
+  if(q.has('c')) OP.casa=q.get('c'); if(q.has('m')) OP.pal=+q.get('m')||0; if(q.get('forma')==='1') OP.forma=true; })();
+function botoes(){
+  const F=document.getElementById('opsF'); F.innerHTML='';
+  for(const [k,a,b] of FUNDOS){ const e=document.createElement('button'); e.className='op'+(OP.f.has(k)?' on':''); e.innerHTML=`${a}<small>${b}</small>`;
+    e.onclick=()=>{ OP.f.has(k)?OP.f.delete(k):OP.f.add(k); botoes(); }; F.appendChild(e); }
+  const C=document.getElementById('opsC'); C.innerHTML='';
+  for(const [k,a,b] of CASAS){ const e=document.createElement('button'); e.className='op'+(OP.casa===k?' on':''); e.innerHTML=`${a}<small>${b}</small>`;
+    e.onclick=()=>{ OP.casa=k; botoes(); }; C.appendChild(e); }
+  const M=document.getElementById('opsM'); M.innerHTML='';
+  PALS.forEach((p,i)=>{ const e=document.createElement('button'); e.className='op cor'+(OP.pal===i?' on':''); e.style.background=p.cor; e.title='mundo';
+    e.onclick=()=>{ OP.pal=i; botoes(); reconstroi(); }; M.appendChild(e); });
+  document.getElementById('forma').classList.toggle('on',OP.forma);
+  for(const e of document.querySelectorAll('.card[data-f]')) e.classList.toggle('on',OP.f.has(e.dataset.f));
+  for(const e of document.querySelectorAll('.card[data-c]')) e.classList.toggle('on',OP.casa===e.dataset.c);
+}
+document.getElementById('forma').onclick=()=>{ OP.forma=!OP.forma; VOID=OP.forma?new Set(['0,0','3,0']):new Set(); inicial(); botoes(); };
+document.getElementById('agora').onclick=()=>{ if(!OP.f.has('d')){ OP.f.add('d'); botoes(); } novoEv(); };
+
+// ---------------- medidas e camadas fixas ----------------
+let W,H,cw,ch,pa,ox,oy,M, hojeF=null, marcoImg=null, marco=null, far=[], mid=[], poeira=[];
+function medidas(){ const r=tela.getBoundingClientRect(); cw=r.width; ch=r.height; W=Math.round(cw*S); H=Math.round(ch*S);
+  cv.width=W; cv.height=H; pa=(cw-24)/N*S; ox=12*S; oy=104*S; M=Math.round(30*S); reconstroi(); }
+function estrelas(n,seed,a,b){ const r=rng(seed); return Array.from({length:n},()=>({x:r()*(W+2*M)-M,y:r()*(H+2*M)-M,s:(a+(b-a)*r()*r())*S,a:.25+.65*r(),f:.5+2*r(),p:r()*7,
+  c:['255,255,255','190,215,255','255,236,200'][(r()*3)|0]})); }
+function reconstroi(){
+  const P=PALS[OP.pal], mu=MUNDOS_ESP[P.m];
+  hojeF=buildFundo(W+2*M,H+2*M,mu,{jogo:true});
+  marco=P.marco(W,H); const S0=Math.max(64,Math.min(720,Math.round(marco.d)));
+  marcoImg=makePiece(byName(marco.n),S0).draw(3.7,[-.55,.5,.67],{outline:false});
+  far=estrelas(Math.round(cw*ch/650),11,.4,1.2); mid=estrelas(Math.round(cw*ch/3800),12,1,2.2);
+  const r=rng(13); poeira=Array.from({length:16},()=>({x:r()*(W+2*M)-M,y:r()*(H+2*M)-M,r:(2+6*r())*S,a:.05+.09*r()}));
+  glTam(); nos=null;
+}
+
+// ---------------- nebulosa pela placa de vídeo ----------------
+const glc=document.createElement('canvas'), gl=glc.getContext('webgl',{antialias:false,premultipliedAlpha:false});
+let GP=null;
+if(gl){
+  const vs=`attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}`;
+  const fs=`precision mediump float;
+  uniform vec2 res,off,pp;uniform float t,pu;uniform vec3 c1,c2,pc;
+  float h(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
+  float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
+  float fbm(vec2 p){float v=0.,a=.5;mat2 m=mat2(1.6,1.2,-1.2,1.6);for(int i=0;i<5;i++){v+=a*n(p);p=m*p;a*=.5;}return v;}
+  void main(){vec2 su=(gl_FragCoord.xy-.5*res)/res.y,uv=su+off,p=uv*1.7;
+    vec2 q=vec2(fbm(p+vec2(0.,t*.03)),fbm(p+vec2(5.2,1.3)-vec2(t*.02,0.)));
+    vec2 r=vec2(fbm(p+3.*q+vec2(1.7,9.2)+t*.04),fbm(p+3.*q+vec2(8.3,2.8)-t*.035));
+    float f=fbm(p+2.6*r),faixa=.35+.65*exp(-pow((uv.x*.7+uv.y*.75)/.55,2.)),neb=smoothstep(.25,.8,f)*faixa;
+    vec3 col=vec3(.043,.039,.094);
+    col=mix(col,c1*.85,neb*.9);
+    col=mix(col,c2*.95,clamp(length(r)-.5,0.,1.)*neb);
+    float poe=smoothstep(.48,.78,fbm(p*2.3+q*1.5-t*.01));col*=1.-.45*poe*(1.-neb*.5);
+    col+=c2*.35*pow(neb,3.);
+    float d=length(su-pp);col+=pc*pu*(.5*exp(-d*3.5)+.07);
+    gl_FragColor=vec4(col,1.);}`;
+  const sh=(tp,src)=>{const s=gl.createShader(tp);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s;};
+  const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,vs));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(pr);gl.useProgram(pr);
+  const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+  const lp=gl.getAttribLocation(pr,'p');gl.enableVertexAttribArray(lp);gl.vertexAttribPointer(lp,2,gl.FLOAT,false,0,0);
+  GP={}; for(const k of ['res','off','pp','t','pu','c1','c2','pc']) GP[k]=gl.getUniformLocation(pr,k);
+}
+function glTam(){ if(!gl) return; glc.width=Math.round(W*.5); glc.height=Math.round(H*.5); gl.viewport(0,0,glc.width,glc.height); }
+function nebulosa(t,offx,offy,pul){
+  const mu=MUNDOS_ESP[PALS[OP.pal].m], v=s=>s.split(',').map(x=>x/255);
+  gl.uniform2f(GP.res,glc.width,glc.height); gl.uniform1f(GP.t,t); gl.uniform2f(GP.off,-offx/H,offy/H);
+  gl.uniform3fv(GP.c1,v(mu.neb[0])); gl.uniform3fv(GP.c2,v(mu.neb[1]));
+  gl.uniform1f(GP.pu,pul?pul.k:0); gl.uniform3fv(GP.pc,pul?v(pul.rgb):[0,0,0]);
+  gl.uniform2f(GP.pp,pul?(pul.x-W/2)/H:0,pul?(H/2-pul.y)/H:0);
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4); c.drawImage(glc,0,0,W,H);
+}
+
+// ---------------- o jogo (2048 de verdade, com casas vazias de formato) ----------------
+const INI=[[0,3,11],[1,3,9],[2,3,7],[3,3,5],[0,2,4],[1,2,3],[2,2,2],[3,1,1],[1,1,2],[2,1,1]];
+let VOID=new Set(), tiles=[], nid=1, anim=null, arrastos=0, pontos=0, ultimoToque=-9, ultimoAuto=0, fimEm=0;
+const ok=(x,y)=>x>=0&&y>=0&&x<N&&y<N&&!VOID.has(x+','+y);
+const agora=()=>performance.now()/1000;
+const novo=(x,y,t,tipo)=>({id:nid++,t,x,y,fx:x,fy:y,pop:tipo?agora():-9,tipo});
+function inicial(){ tiles=INI.filter(([x,y])=>ok(x,y)).map(([x,y,t])=>novo(x,y,t)); arrastos=0; pontos=0; anim=null; }
+const cel=(x,y)=>tiles.find(k=>!k.dying&&!k.hide&&k.x===x&&k.y===y);
+function linhas(d){ const L=[]; for(let a=0;a<N;a++){ const l=[]; for(let b=0;b<N;b++) l.push(d==='E'?[b,a]:d==='D'?[N-1-b,a]:d==='C'?[a,b]:[a,N-1-b]); L.push(l);} return L; }
+function plano(d){ const mv=[],mg=[]; let mud=false;
+  for(const l of linhas(d)){ const segs=[]; let s=[]; for(const p of l){ if(!ok(...p)){ if(s.length) segs.push(s); s=[]; } else s.push(p); } if(s.length) segs.push(s);
+    for(const sg of segs){ const ts=sg.map(p=>cel(...p)).filter(Boolean); let k=0;
+      for(let i=0;i<ts.length;i++){ const [tx,ty]=sg[k++], a=ts[i], b=ts[i+1];
+        if(b&&b.t===a.t){ mg.push({a,b,tx,ty,t:a.t+1}); mud=true; i++; }
+        else { mv.push({a,tx,ty}); if(a.x!==tx||a.y!==ty) mud=true; } } } }
+  return {mv,mg,mud}; }
+const DIR={E:[-1,0],D:[1,0],C:[0,-1],B:[0,1]};
+function joga(d){ if(anim) return false; const P=plano(d); if(!P.mud) return false;
+  for(const k of tiles){ k.fx=k.x; k.fy=k.y; }
+  for(const {a,tx,ty} of P.mv){ a.x=tx; a.y=ty; }
+  const nasc=[]; for(const g of P.mg){ for(const k of [g.a,g.b]){ k.x=g.tx; k.y=g.ty; k.dying=true; } const n=novo(g.tx,g.ty,g.t,'junta'); n.hide=true; nasc.push(n); }
+  tiles.push(...nasc); anim={t0:agora(),dur:.14,P,nasc}; arrastos++; aoMover(d); return true; }
+function termina(){ const tn=agora(), maxAntes=Math.max(0,...tiles.filter(k=>!k.hide&&!k.dying).map(k=>k.t),...anim.P.mg.map(g=>g.t-1));
+  tiles=tiles.filter(k=>!k.dying);
+  for(const n of anim.nasc){ n.hide=false; n.pop=tn; pontos+=2**n.t; aoJuntar(n, n.t>maxAntes, anim.nasc.length>1); }
+  const vazias=[]; for(let y=0;y<N;y++) for(let x=0;x<N;x++) if(ok(x,y)&&!cel(x,y)) vazias.push([x,y]);
+  if(vazias.length){ const [x,y]=vazias[(Math.random()*vazias.length)|0]; tiles.push(novo(x,y,Math.random()<.85?1:2,'nasce')); }
+  for(const k of tiles){ k.fx=k.x; k.fy=k.y; } anim=null;
+  if(!['E','D','C','B'].some(d=>plano(d).mud)) fimEm=tn+1.4;
+  document.getElementById('arr').textContent=arrastos; document.getElementById('pts').textContent=pontos; }
+function auto(){ let best=null,bs=-1e9; for(const d of ['E','D','C','B']){ const P=plano(d); if(!P.mud) continue; const s=P.mg.length*10+(d==='C'?-4:0)+Math.random()*3; if(s>bs){bs=s;best=d;} } if(best) joga(best); }
+// entrada: arrasto na tela e setas
+let ini=null;
+tela.addEventListener('pointerdown',e=>{ ini=[e.clientX,e.clientY]; });
+tela.addEventListener('pointerup',e=>{ if(!ini) return; const dx=e.clientX-ini[0], dy=e.clientY-ini[1]; ini=null; if(Math.max(Math.abs(dx),Math.abs(dy))<22) return;
+  ultimoToque=agora(); joga(Math.abs(dx)>Math.abs(dy)?(dx<0?'E':'D'):(dy<0?'C':'B')); });
+addEventListener('keydown',e=>{ const d={ArrowLeft:'E',ArrowRight:'D',ArrowUp:'C',ArrowDown:'B'}[e.key]; if(d){ e.preventDefault(); ultimoToque=agora(); joga(d); } });
+
+// ---------------- efeitos ligados às jogadas ----------------
+const cam={x:0,y:0,vx:0,vy:0};
+let ondas=[], juntas=[], rastros=[], tensao=0;
+function aoMover(d){ const [dx,dy]=DIR[d]; cam.vx+=dx*190; cam.vy+=dy*190;
+  for(const k of tiles) if(k.fx!==k.x||k.fy!==k.y) rastros.push({x0:cx(k.fx),y0:cy(k.fy),x1:cx(k.x),y1:cy(k.y),rgb:RGB[k.t-1],t0:agora()}); }
+function aoJuntar(n,recorde,combo){ const j={x:cx(n.x),y:cy(n.y),rgb:RGB[n.t-1],t0:agora(),big:recorde,combo,t:n.t}; juntas.push(j); if(OP.f.has('c')) ondas.push(j); if(nos) empurra(j); }
+const cx=x=>ox+(x+.5)*pa, cy=y=>oy+(y+.5)*pa;
+function posTile(k,p){ return [cx(k.fx+(k.x-k.fx)*p), cy(k.fy+(k.y-k.fy)*p)]; }
+
+// ---------------- acontecimentos ----------------
+let evs=[], proxEv=agora()+3, evI=0;
+const TIPOS=['cometa','satelite','chuva','nave'];
+function novoEv(){ const tipo=TIPOS[evI++%TIPOS.length], r=Math.random, t0=agora();
+  if(tipo==='cometa') evs.push({tipo,t0,dur:7,a:[W*1.15,H*(.06+.16*r())],b:[-W*.15,H*(.22+.2*r())]});
+  if(tipo==='satelite') evs.push({tipo,t0,dur:14,a:[-W*.05,H*(.1+.3*r())],b:[W*1.05,H*(.05+.2*r())]});
+  if(tipo==='chuva') evs.push({tipo,t0,dur:2.6,st:Array.from({length:7},(_,i)=>({d:i*.3+r()*.15,x:W*(.25+.75*r()),y:H*(.02+.3*r())}))});
+  if(tipo==='nave') evs.push({tipo,t0,dur:9,a:[W*1.06,H*(.6+.15*r())],b:[-W*.06,H*(.45+.1*r())]});
+  proxEv=t0+6+4*Math.random(); }
+function desenhaEvs(t,o){ c.save(); c.translate(o[0],o[1]); c.globalCompositeOperation='lighter';
+  for(const e of evs){ const u=(t-e.t0)/e.dur; if(u<0||u>1) continue;
+    if(e.tipo==='cometa'){ const x=e.a[0]+(e.b[0]-e.a[0])*u, y=e.a[1]+(e.b[1]-e.a[1])*u-Math.sin(u*Math.PI)*H*.04, vx=e.b[0]-e.a[0], vy=e.b[1]-e.a[1], L=Math.hypot(vx,vy), tx=-vx/L, ty=-vy/L, cl=150*S;
+      for(const [w,a] of [[12*S,.1],[3*S,.6]]){ const g=c.createLinearGradient(x,y,x+tx*cl,y+ty*cl); g.addColorStop(0,`rgba(190,240,255,${a})`); g.addColorStop(1,'rgba(190,240,255,0)');
+        c.strokeStyle=g; c.lineWidth=w; c.lineCap='round'; c.beginPath(); c.moveTo(x,y); c.lineTo(x+tx*cl,y+ty*cl); c.stroke(); }
+      const g=c.createRadialGradient(x,y,0,x,y,9*S); g.addColorStop(0,'rgba(255,255,255,.95)'); g.addColorStop(1,'rgba(160,230,255,0)'); c.fillStyle=g; c.beginPath(); c.arc(x,y,9*S,0,TAU); c.fill(); }
+    if(e.tipo==='satelite'){ const x=e.a[0]+(e.b[0]-e.a[0])*u, y=e.a[1]+(e.b[1]-e.a[1])*u; c.fillStyle='rgba(235,240,255,.85)'; c.beginPath(); c.arc(x,y,1.3*S,0,TAU); c.fill();
+      if((t*0.9)%1<.12){ const g=c.createRadialGradient(x,y,0,x,y,5*S); g.addColorStop(0,'rgba(255,90,90,.95)'); g.addColorStop(1,'rgba(255,90,90,0)'); c.fillStyle=g; c.beginPath(); c.arc(x,y,5*S,0,TAU); c.fill(); } }
+    if(e.tipo==='chuva') for(const s of e.st){ const v=(t-e.t0-s.d)/.45; if(v<0||v>1) continue; const L=95*S, x=s.x-.75*L*v*1.6, y=s.y+.55*L*v*1.6, g=c.createLinearGradient(x,y,x+.75*L,y-.55*L);
+      g.addColorStop(0,`rgba(255,255,255,${(.9*(1-v)).toFixed(2)})`); g.addColorStop(1,'rgba(255,255,255,0)'); c.strokeStyle=g; c.lineWidth=1.6*S; c.beginPath(); c.moveTo(x,y); c.lineTo(x+.75*L,y-.55*L); c.stroke(); }
+    if(e.tipo==='nave'){ const x=e.a[0]+(e.b[0]-e.a[0])*u, y=e.a[1]+(e.b[1]-e.a[1])*u+Math.sin(t*2)*2*S, fl=.7+.3*Math.sin(t*31);
+      const g=c.createRadialGradient(x+7*S,y,0,x+7*S,y,10*S*fl); g.addColorStop(0,'rgba(120,230,255,.9)'); g.addColorStop(1,'rgba(120,230,255,0)'); c.fillStyle=g; c.beginPath(); c.arc(x+7*S,y,10*S*fl,0,TAU); c.fill();
+      c.globalCompositeOperation='source-over'; c.fillStyle='rgba(220,226,245,.95)'; c.beginPath(); c.moveTo(x-6*S,y); c.lineTo(x+5*S,y-3.4*S); c.lineTo(x+3*S,y); c.lineTo(x+5*S,y+3.4*S); c.closePath(); c.fill(); c.globalCompositeOperation='lighter'; } }
+  c.restore(); evs=evs.filter(e=>t-e.t0<e.dur); }
+
+// ---------------- casas ----------------
+function luzes(p){ // luz de cada casa vinda dos planetas (acompanha o deslize)
+  const L={}; for(let y=0;y<N;y++) for(let x=0;x<N;x++) L[x+','+y]={k:0,rgb:null,t:0};
+  for(const k of tiles){ if(k.hide) continue; const [px,py]=posTile(k,p);
+    for(let y=0;y<N;y++) for(let x=0;x<N;x++){ const v=Math.max(0,1-Math.hypot(px-cx(x),py-cy(y))/(pa*.9)); const o=L[x+','+y]; if(v>o.k){ o.k=v; o.rgb=RGB[k.t-1]; o.t=k.t; } } }
+  return L; }
+function casasHoje(){ for(let y=0;y<N;y++) for(let x=0;x<N;x++){ if(!ok(x,y)) continue; const X=cx(x),Y=cy(y),R=pa*.44, g=c.createRadialGradient(X,Y,0,X,Y,R);
+  g.addColorStop(0,'rgba(12,9,28,.62)'); g.addColorStop(.72,'rgba(12,9,28,.38)'); g.addColorStop(1,'rgba(12,9,28,.38)'); c.fillStyle=g; c.beginPath(); c.arc(X,Y,R,0,TAU); c.fill();
+  c.lineWidth=1.5*S; c.strokeStyle='rgba(255,255,255,.14)'; c.stroke(); } }
+function fundoTab(a){ c.fillStyle=`rgba(8,6,22,${a})`; for(let y=0;y<N;y++) for(let x=0;x<N;x++) if(ok(x,y)) c.fillRect(ox+x*pa,oy+y*pa,pa+.5,pa+.5); }
+
+// 1 · malha: molinhas puxadas pelo peso de cada planeta
+const SUB=4, NM=N*SUB+1; let nos=null;
+function malhaIni(){ nos=[]; for(let j=0;j<NM;j++) for(let i=0;i<NM;i++){ const rx=ox+i*pa/SUB, ry=oy+j*pa/SUB; nos.push({i,j,rx,ry,x:rx,y:ry,vx:0,vy:0,w:0,rgb:null}); } }
+function empurra(j){ for(const n of nos){ const dx=n.x-j.x, dy=n.y-j.y, d=Math.hypot(dx,dy)||1; if(d>pa*2.6) continue; const f=pa*(j.big?16:9)*Math.exp(-d/(pa*.7)); n.vx+=dx/d*f; n.vy+=dy/d*f; } }
+function malha(t,dt,p){ if(!nos) malhaIni(); const pocos=tiles.filter(k=>!k.hide).map(k=>{ const [x,y]=posTile(k,p); return {x,y,t:k.t,rgb:RGB[k.t-1]}; });
+  for(const n of nos){ let tx=n.rx, ty=n.ry, w=0, rgb=null, wm=0;
+    for(const q of pocos){ const dx=n.rx-q.x, dy=n.ry-q.y, d=Math.hypot(dx,dy)||1, sg=pa*(.4+.02*q.t), A=pa*(.08+.011*q.t), e=Math.exp(.5-d*d/(2*sg*sg)), f=A*(d/sg)*e;
+      tx-=dx/d*f; ty-=dy/d*f; const wi=(.35+.05*q.t)*Math.exp(-d*d/(2*(sg*1.1)**2)); w+=wi; if(wi>wm){wm=wi;rgb=q.rgb;} }
+    n.vx+=((tx-n.x)*70-n.vx*7.5)*dt; n.vy+=((ty-n.y)*70-n.vy*7.5)*dt; n.x+=n.vx*dt; n.y+=n.vy*dt; n.w=Math.min(1,w); n.rgb=rgb; }
+  fundoTab(.42);
+  // sombra do poço embaixo de cada planeta
+  for(const q of pocos){ const R=pa*(.45+.02*q.t), g=c.createRadialGradient(q.x,q.y,0,q.x,q.y,R); g.addColorStop(0,'rgba(0,0,0,.45)'); g.addColorStop(1,'rgba(0,0,0,0)'); c.fillStyle=g; c.fillRect(q.x-R,q.y-R,2*R,2*R); }
+  const base=MUNDOS_ESP[PALS[OP.pal].m].neb[1], no=(i,j)=>nos[j*NM+i];
+  c.save(); c.globalCompositeOperation='lighter'; c.lineCap='round';
+  const seg=(a,b,maior)=>{ const w=(a.w+b.w)/2, rgb=a.w>b.w?a.rgb:b.rgb, al=(maior?.34:.11)+w*(maior?.5:.3);
+    c.strokeStyle=`rgba(${w>.15&&rgb?rgb:base},${al.toFixed(3)})`; c.lineWidth=(maior?1.5:.8)*S; c.beginPath(); c.moveTo(a.x,a.y); c.lineTo(b.x,b.y); c.stroke(); };
+  for(let j=0;j<NM;j++) for(let i=0;i<NM-1;i++){ const X=Math.floor(i/SUB), maior=j%SUB===0, dentro=maior?(ok(X,j/SUB-1)||ok(X,j/SUB)):ok(X,Math.floor(j/SUB)); if(dentro) seg(no(i,j),no(i+1,j),maior); }
+  for(let i=0;i<NM;i++) for(let j=0;j<NM-1;j++){ const Y=Math.floor(j/SUB), maior=i%SUB===0, dentro=maior?(ok(i/SUB-1,Y)||ok(i/SUB,Y)):ok(Math.floor(i/SUB),Y); if(dentro) seg(no(i,j),no(i,j+1),maior); }
+  c.restore(); }
+
+// 2 · berços orbitais
+function bercos(t,p){ const L=luzes(p), base=MUNDOS_ESP[PALS[OP.pal].m].neb[1];
+  for(let y=0;y<N;y++) for(let x=0;x<N;x++){ if(!ok(x,y)) continue; const X=cx(x), Y=cy(y)+pa*.22, rx=pa*.37, ry=pa*.12, o=L[x+','+y], k=o.k, rgb=k>.05?o.rgb:base;
+    // cantoneiras
+    c.strokeStyle='rgba(200,190,255,.16)'; c.lineWidth=1.2*S; const m=pa*.08, l=pa*.12, x0=ox+x*pa+m, y0=oy+y*pa+m, x1=ox+(x+1)*pa-m, y1=oy+(y+1)*pa-m;
+    c.beginPath(); for(const [a,b,sx,sy] of [[x0,y0,1,1],[x1,y0,-1,1],[x0,y1,1,-1],[x1,y1,-1,-1]]){ c.moveTo(a,b+sy*l); c.lineTo(a,b); c.lineTo(a+sx*l,b); } c.stroke();
+    c.save(); c.globalCompositeOperation='lighter';
+    if(k>.05){ const g=c.createLinearGradient(0,Y,0,Y-pa*.62); g.addColorStop(0,`rgba(${rgb},${(.2*k).toFixed(3)})`); g.addColorStop(1,`rgba(${rgb},0)`); c.fillStyle=g;
+      c.beginPath(); c.moveTo(X-rx,Y); c.lineTo(X-rx*.55,Y-pa*.62); c.lineTo(X+rx*.55,Y-pa*.62); c.lineTo(X+rx,Y); c.closePath(); c.fill(); }
+    c.translate(X,Y); c.scale(1,ry/rx);
+    const g=c.createRadialGradient(0,0,0,0,0,rx); g.addColorStop(0,`rgba(${rgb},${(.06+.3*k).toFixed(3)})`); g.addColorStop(1,`rgba(${rgb},0)`); c.fillStyle=g; c.beginPath(); c.arc(0,0,rx,0,TAU); c.fill();
+    c.lineWidth=(1.4+1.6*k)*S; c.strokeStyle=`rgba(${rgb},${(.28+.6*k).toFixed(3)})`; c.beginPath(); c.arc(0,0,rx,0,TAU); c.stroke();
+    if(k>.05){ c.lineWidth=7*S; c.strokeStyle=`rgba(${rgb},${(.12*k).toFixed(3)})`; c.stroke(); }
+    c.lineWidth=2.2*S; c.strokeStyle=`rgba(${rgb},${(.35+.5*k).toFixed(3)})`; const gi=t*(.35+.08*(o.t||0));
+    for(let s=0;s<3;s++){ c.beginPath(); c.arc(0,0,rx*.72,gi+s*TAU/3,gi+s*TAU/3+.5); c.stroke(); }
+    c.restore(); }
+  c.save(); c.globalCompositeOperation='lighter';
+  for(const j of juntas){ const u=(t-j.t0)/.6; if(u>1) continue; c.save(); c.translate(j.x,j.y+pa*.22); c.scale(1,.32); c.lineWidth=3*S*(1-u); c.strokeStyle=`rgba(${j.rgb},${(.8*(1-u)).toFixed(2)})`;
+    c.beginPath(); c.arc(0,0,pa*(.37+.5*u),0,TAU); c.stroke(); c.restore(); }
+  c.restore(); }
+
+// 3 · painel de vidro
+const pq=document.createElement('canvas'), pqc=pq.getContext('2d');
+function vidro(t,p){ const base=MUNDOS_ESP[PALS[OP.pal].m].neb[1];
+  pq.width=Math.max(8,W>>4); pq.height=Math.max(8,H>>4); pqc.drawImage(cv,0,0,pq.width,pq.height);
+  c.save(); c.beginPath(); for(let y=0;y<N;y++) for(let x=0;x<N;x++) if(ok(x,y)) c.rect(ox+x*pa,oy+y*pa,pa+.5,pa+.5); c.clip();
+  c.imageSmoothingEnabled=true; c.globalAlpha=.9; c.drawImage(pq,0,0,W,H); c.globalAlpha=1;
+  c.fillStyle='rgba(14,10,34,.5)'; c.fillRect(ox,oy,N*pa,N*pa);
+  for(let y=0;y<N;y++) for(let x=0;x<N;x++) if(ok(x,y)&&(x+y)%2===0){ c.fillStyle='rgba(255,255,255,.045)'; c.fillRect(ox+x*pa,oy+y*pa,pa,pa); }
+  c.globalCompositeOperation='lighter';
+  for(const k of tiles){ if(k.hide) continue; const [X,Y]=posTile(k,p), R=pa*.85, g=c.createRadialGradient(X,Y,0,X,Y,R); g.addColorStop(0,`rgba(${RGB[k.t-1]},.26)`); g.addColorStop(1,`rgba(${RGB[k.t-1]},0)`); c.fillStyle=g; c.fillRect(X-R,Y-R,2*R,2*R); }
+  for(const j of juntas){ const u=(t-j.t0)/.45; if(u>1) continue; c.fillStyle=`rgba(${j.rgb},${(.3*(1-u)).toFixed(2)})`; c.fillRect(j.x-pa/2,j.y-pa/2,pa,pa); }
+  const ciclo=5.5, u=(t%ciclo)/1.6; if(u<1){ const Y=oy+u*N*pa, g=c.createLinearGradient(0,Y-pa*.5,0,Y); g.addColorStop(0,`rgba(${base},0)`); g.addColorStop(1,`rgba(${base},.16)`); c.fillStyle=g; c.fillRect(ox,Y-pa*.5,N*pa,pa*.5); }
+  c.restore();
+  // linhas finas entre casas e moldura acesa só nas bordas do formato
+  c.save(); c.lineCap='round';
+  c.strokeStyle='rgba(255,255,255,.07)'; c.lineWidth=1*S; c.beginPath();
+  for(let y=0;y<N;y++) for(let x=0;x<N;x++){ if(!ok(x,y)) continue; if(ok(x+1,y)){ c.moveTo(ox+(x+1)*pa,oy+y*pa); c.lineTo(ox+(x+1)*pa,oy+(y+1)*pa); } if(ok(x,y+1)){ c.moveTo(ox+x*pa,oy+(y+1)*pa); c.lineTo(ox+(x+1)*pa,oy+(y+1)*pa); } }
+  c.stroke();
+  const borda=()=>{ c.beginPath(); for(let y=0;y<N;y++) for(let x=0;x<N;x++){ if(!ok(x,y)) continue; const X0=ox+x*pa, Y0=oy+y*pa, X1=X0+pa, Y1=Y0+pa;
+    if(!ok(x,y-1)){ c.moveTo(X0,Y0); c.lineTo(X1,Y0); } if(!ok(x,y+1)){ c.moveTo(X0,Y1); c.lineTo(X1,Y1); } if(!ok(x-1,y)){ c.moveTo(X0,Y0); c.lineTo(X0,Y1); } if(!ok(x+1,y)){ c.moveTo(X1,Y0); c.lineTo(X1,Y1); } } };
+  c.globalCompositeOperation='lighter'; borda(); c.strokeStyle=`rgba(${base},.22)`; c.lineWidth=7*S; c.stroke(); c.strokeStyle=`rgba(${base},.85)`; c.lineWidth=1.6*S; c.stroke();
+  const e=7*S, l=pa*.28, X0=ox-e, Y0=oy-e, X1=ox+N*pa+e, Y1=oy+N*pa+e; c.strokeStyle='rgba(255,255,255,.75)'; c.lineWidth=2*S; c.beginPath();
+  for(const [a,b,sx,sy] of [[X0,Y0,1,1],[X1,Y0,-1,1],[X0,Y1,1,-1],[X1,Y1,-1,-1]]){ c.moveTo(a,b+sy*l); c.lineTo(a,b); c.lineTo(a+sx*l,b); } c.stroke();
+  c.restore(); }
+
+// 4 · constelação
+function constel(t,p){ const L=luzes(p), base=MUNDOS_ESP[PALS[OP.pal].m].neb[1];
+  fundoTab(.18);
+  c.save(); c.globalCompositeOperation='lighter'; c.lineCap='round';
+  const liga=(x,y,a,b)=>{ const o1=L[x+','+y], o2=L[a+','+b], k=Math.max(o1.k,o2.k), rgb=o1.k>o2.k?o1.rgb:o2.rgb;
+    c.setLineDash([2*S,6*S]); c.strokeStyle=`rgba(${base},.32)`; c.lineWidth=1.2*S; c.beginPath(); c.moveTo(cx(x),cy(y)); c.lineTo(cx(a),cy(b)); c.stroke();
+    if(k>.05){ c.setLineDash([]); c.strokeStyle=`rgba(${rgb},${(.5*k).toFixed(3)})`; c.lineWidth=1.6*S; c.stroke(); } };
+  for(let y=0;y<N;y++) for(let x=0;x<N;x++){ if(!ok(x,y)) continue; if(ok(x+1,y)) liga(x,y,x+1,y); if(ok(x,y+1)) liga(x,y,x,y+1); }
+  c.setLineDash([]);
+  for(let y=0;y<N;y++) for(let x=0;x<N;x++){ if(!ok(x,y)) continue; const o=L[x+','+y]; if(o.k>.55) continue; const X=cx(x), Y=cy(y), tw=.65+.35*Math.sin(t*1.7+x*2.1+y*3.3), a=(1-o.k/.55)*tw;
+    const g=c.createRadialGradient(X,Y,0,X,Y,pa*.16); g.addColorStop(0,`rgba(255,255,255,${(.9*a).toFixed(2)})`); g.addColorStop(.18,`rgba(${base},${(.5*a).toFixed(2)})`); g.addColorStop(1,`rgba(${base},0)`);
+    c.fillStyle=g; c.beginPath(); c.arc(X,Y,pa*.16,0,TAU); c.fill(); }
+  for(const r of rastros){ const u=(t-r.t0)/.55; if(u>1) continue; const g=c.createLinearGradient(r.x0,r.y0,r.x1,r.y1); g.addColorStop(0,`rgba(${r.rgb},0)`); g.addColorStop(1,`rgba(${r.rgb},${(.7*(1-u)).toFixed(2)})`);
+    c.strokeStyle=g; c.lineWidth=pa*.09*(1-u*.5); c.beginPath(); c.moveTo(r.x0,r.y0); c.lineTo(r.x1,r.y1); c.stroke(); }
+  for(const j of juntas){ const u=(t-j.t0)/.7; if(u>1) continue; for(let i=0;i<12;i++){ const a=i/12*TAU+j.t, d=pa*(.3+.55*u); c.fillStyle=`rgba(${j.rgb},${(.9*(1-u)).toFixed(2)})`;
+    c.beginPath(); c.arc(j.x+Math.cos(a)*d,j.y+Math.sin(a)*d,2*S*(1-u)+.5,0,TAU); c.fill(); } }
+  c.restore(); }
+
+// ---------------- peças ----------------
+function etiqueta(t,x,y){ const w=pa*.42,h=pa*.29,r=h*.3; c.beginPath(); c.roundRect(x-w/2,y-h/2,w,h,r); c.fillStyle='rgba(22,18,44,.92)'; c.fill();
+  c.lineWidth=Math.max(1,pa*.01); c.strokeStyle='rgba(190,170,255,.3)'; c.stroke(); c.textAlign='center'; c.textBaseline='middle';
+  const num=String(2**t); c.font=`800 ${pa*(num.length>3?.11:.14)}px 'Exo 2',sans-serif`; c.fillStyle='#f2b33d'; c.fillText(num,x,y-h*.2);
+  const nm=NOMES[t-1]; c.font=`700 ${pa*(nm.length>7?.075:.088)}px 'Exo 2',sans-serif`; c.fillStyle='#f1eefc'; c.fillText(nm,x,y+h*.24); }
+function pecas(t,p){ const lista=[]; const ergue=OP.casa==='berco';
+  for(const k of tiles){ if(k.hide) continue; let [x,y]=posTile(k,p); if(ergue) y-=pa*.06-Math.sin(t*1.6+k.id)*pa*.015;
+    let sc=1; const a=t-k.pop; if(k.tipo==='nasce'&&a<.2) sc=Math.max(.05,a/.2); if(k.tipo==='junta'&&a<.22) sc=1+.22*Math.sin(a/.22*Math.PI);
+    lista.push([k,x,y,sc]); }
+  for(const [k,x,y,sc] of lista){ const u=pa*.8;
+    if(k.t<=6){ const g=c.createRadialGradient(x,y,0,x,y,u*.46*sc); g.addColorStop(0,COR[k.t-1]+'70'); g.addColorStop(.55,COR[k.t-1]+'26'); g.addColorStop(1,COR[k.t-1]+'00'); c.fillStyle=g; c.beginPath(); c.arc(x,y,u*.46*sc,0,TAU); c.fill(); }
+    c.save(); c.translate(x,y); c.scale(sc,sc); drawPecaVar(c,NOMES[k.t-1],t,0,0,u,'p'+k.id); c.restore(); }
+  for(const [k,x,y,sc] of lista) if(sc>.6) etiqueta(k.t,x,y+pa*.3+(ergue?pa*.06:0)); }
+
+// ---------------- quadro ----------------
+let antes=agora();
+function quadro(){
+  const t=agora(), dt=Math.min(.05,t-antes); antes=t;
+  if(anim&&t>=anim.t0+anim.dur) termina();
+  if(fimEm&&t>fimEm){ fimEm=0; inicial(); }
+  if(!anim&&!fimEm&&t-ultimoToque>2.4&&t-ultimoAuto>.8){ ultimoAuto=t; auto(); }
+  const p=anim?Math.min(1,(t-anim.t0)/anim.dur):1, pe=1-(1-p)*(1-p);
+  const F=OP.f, B=F.has('b');
+  // câmera: flutua devagar e leva um tranco a cada arrasto
+  cam.vx+=(-cam.x*32-cam.vx*7)*dt; cam.vy+=(-cam.y*32-cam.vy*7)*dt; cam.x+=cam.vx*dt; cam.y+=cam.vy*dt;
+  const camX=B?(cam.x+Math.sin(t*.21)*7)*S:0, camY=B?(cam.y+Math.cos(t*.17)*6)*S:0, o=k=>[camX*k,camY*k];
+  // pulso mais forte do momento (para a nebulosa)
+  let pul=null; for(const j of ondas){ const u=(t-j.t0)/1.1; if(u>1) continue; const k=(1-u)*(j.big?1:.45)*(j.combo?1.3:1); if(!pul||k>pul.k) pul={k,x:j.x,y:j.y,rgb:j.rgb}; }
+  c.setTransform(1,0,0,1,0,0); c.clearRect(0,0,W,H);
+  if(F.has('a')&&gl){
+    nebulosa(t,...o(.12),pul);
+    let [a,b]=o(.18); c.save(); c.translate(a,b); for(const s of far){ c.fillStyle=`rgba(${s.c},${s.a})`; c.fillRect(s.x,s.y,s.s,s.s); } c.restore();
+    [a,b]=o(.3); c.globalAlpha=marco.a; c.drawImage(marcoImg,marco.x-marco.d/2+a,marco.y-marco.d/2+b,marco.d,marco.d); c.globalAlpha=1;
+  } else { const [a,b]=o(.18); c.save(); c.translate(a-M,b-M); drawFundo(c,hojeF,t); c.restore(); }
+  if(F.has('a')||B){ const [a,b]=o(.5); c.save(); c.translate(a,b); for(const s of mid){ const tw=.55+.45*Math.sin(t*s.f+s.p); c.fillStyle=`rgba(${s.c},${(s.a*tw).toFixed(2)})`; c.beginPath(); c.arc(s.x,s.y,s.s*.6,0,TAU); c.fill(); } c.restore(); }
+  if(F.has('d')){ if(t>proxEv) novoEv(); desenhaEvs(t,o(.35)); }
+  if(B){ const [a,b]=o(1.1); c.save(); c.translate(a,b); for(const s of poeira){ const g=c.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r); g.addColorStop(0,`rgba(230,220,255,${s.a})`); g.addColorStop(1,'rgba(230,220,255,0)'); c.fillStyle=g; c.beginPath(); c.arc(s.x,s.y,s.r,0,TAU); c.fill(); } c.restore(); }
+  if(F.has('c')){ c.save(); c.globalCompositeOperation='lighter';
+    for(const j of ondas){ const dur=j.big?1.4:.9, u=(t-j.t0)/dur; if(u>1) continue; const e=1-(1-u)**3, R=pa*(.4+(j.big?5.5:2.3)*e);
+      c.lineWidth=((j.big?12:5)*(1-u)+1)*S; c.strokeStyle=`rgba(${j.rgb},${(.55*(1-u)).toFixed(2)})`; c.beginPath(); c.arc(j.x,j.y,R,0,TAU); c.stroke();
+      if(!F.has('a')){ const g=c.createRadialGradient(j.x,j.y,0,j.x,j.y,R*1.1); g.addColorStop(0,`rgba(${j.rgb},${(.3*(1-u)).toFixed(2)})`); g.addColorStop(1,`rgba(${j.rgb},0)`); c.fillStyle=g; c.fillRect(j.x-R*1.1,j.y-R*1.1,R*2.2,R*2.2); } }
+    c.restore(); }
+  // casas
+  if(OP.casa==='malha') malha(t,dt,pe); else if(OP.casa==='berco') bercos(t,pe); else if(OP.casa==='vidro') vidro(t,pe); else if(OP.casa==='const') constel(t,pe); else casasHoje();
+  if(OP.casa!=='malha') nos=null;
+  pecas(t,pe);
+  // tensão: tabuleiro quase cheio avermelha as bordas
+  if(F.has('c')){ let vaz=0; for(let y=0;y<N;y++) for(let x=0;x<N;x++) if(ok(x,y)&&!cel(x,y)) vaz++; const alvo=vaz<=1?1:vaz<=3?.4:0; tensao+=(alvo-tensao)*Math.min(1,dt*2.5);
+    if(tensao>.02){ const g=c.createRadialGradient(W/2,H*.42,Math.min(W,H)*.45,W/2,H*.42,Math.max(W,H)*.75); g.addColorStop(0,'rgba(255,60,90,0)'); g.addColorStop(1,`rgba(255,60,90,${(.36*tensao*(.75+.25*Math.sin(t*4))).toFixed(3)})`); c.fillStyle=g; c.fillRect(0,0,W,H); } }
+  ondas=ondas.filter(j=>t-j.t0<1.5); juntas=juntas.filter(j=>t-j.t0<1); rastros=rastros.filter(r=>t-r.t0<.6);
+  requestAnimationFrame(quadro);
+}
+VOID=OP.forma?new Set(['0,0','3,0']):new Set();
+botoes(); inicial();
+medidas(); addEventListener('resize',medidas); requestAnimationFrame(quadro);   // as fontes chegam depois; o canvas redesenha a cada quadro
+})();
+</script>
+</body>
+</html>
