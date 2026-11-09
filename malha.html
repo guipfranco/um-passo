@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2048 Stars · malha da gravidade (rascunho)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+*{box-sizing:border-box}
+html,body{background:#0b0a18}
+body{margin:0;color:#e8e4ff;font-family:'Exo 2',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+main{max-width:460px;margin:0 auto;padding:14px 12px 48px;display:flex;flex-direction:column;gap:10px}
+h1{margin:2px 0 0;font:900 20px Orbitron,sans-serif;letter-spacing:.04em;color:#f4fbff;text-shadow:0 0 14px rgba(110,230,255,.7)}
+h2{margin:18px 0 0;font:900 13px Orbitron,sans-serif;letter-spacing:.12em;color:#9fe9ff}
+p{margin:0;font-size:15px;line-height:1.42;color:#c9c2ee}
+.rot{font:700 11.5px 'Exo 2',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#a49bd6;margin:4px 0 -4px}
+.ops{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.op{flex:1 1 0;min-width:0;border:1.5px solid rgba(140,200,255,.3);border-radius:12px;padding:7px 4px;background:rgba(20,16,44,.7);color:#d8d2ff;
+  font:700 13px 'Exo 2',sans-serif;cursor:pointer;line-height:1.1}
+.op small{display:block;font-weight:400;font-size:11px;color:#a49bd6;margin-top:2px}
+.op.on{border-color:#6ee6ff;background:rgba(40,90,140,.45);color:#fff;box-shadow:0 0 12px rgba(110,230,255,.45)}
+.op.on small{color:#cfe9ff}
+.cor{flex:0 0 auto;width:30px;height:30px;border-radius:50%;padding:0;border:2px solid rgba(255,255,255,.25)}
+.cor.on{border-color:#fff;box-shadow:0 0 12px rgba(255,255,255,.5)}
+#tela{position:relative;width:100%;aspect-ratio:10/18;border-radius:22px;overflow:hidden;border:1.5px solid rgba(140,200,255,.22);touch-action:none;user-select:none}
+#tela canvas{position:absolute;inset:0;width:100%;height:100%}
+.hud{position:absolute;left:10px;right:10px;top:10px;display:flex;gap:6px;pointer-events:none}
+.pill{flex:1 1 0;height:42px;border-radius:14px;background:rgba(22,17,40,.8);border:1.5px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;gap:6px;
+  font:800 18px Orbitron,sans-serif;color:#f3e9d7}
+.pill small{font:600 11px 'Exo 2',sans-serif;color:#b9a9d9}
+.pill.g{flex:1.6}
+.ban{position:absolute;left:10px;right:10px;top:58px;height:36px;border-radius:14px;background:rgba(22,17,40,.8);border:1.5px solid rgba(255,255,255,.12);
+  display:flex;align-items:center;justify-content:center;font:700 14px 'Exo 2',sans-serif;color:#f3eefc;pointer-events:none}
+.dica{position:absolute;left:0;right:0;bottom:10px;text-align:center;font:600 12px 'Exo 2',sans-serif;color:rgba(230,225,255,.55);pointer-events:none}
+.card{background:rgba(22,17,40,.82);border:1.5px solid rgba(255,255,255,.12);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.card.on{border-color:rgba(110,230,255,.6);box-shadow:0 0 14px rgba(110,230,255,.2)}
+.card h3{margin:0;font:800 15.5px 'Exo 2',sans-serif;color:#fff}
+.card h3 i{font-style:normal;font:900 12px Orbitron,sans-serif;color:#6fe0ff;margin-right:6px}
+.card p{font-size:14px}
+.card ul{margin:0;padding-left:18px;font-size:13.5px;line-height:1.4;color:#c9c2ee}
+.card a{color:#6fe0ff}
+.nota{font-size:13px;color:#a49bd6}
+.agora{border:1.5px solid #ffd36e;color:#ffd36e;background:rgba(10,8,25,.55);border-radius:12px;padding:7px 10px;font:700 12.5px 'Exo 2',sans-serif;cursor:pointer}
+</style>
+</head>
+<body>
+<main>
+  <h1>MALHA DA GRAVIDADE</h1>
+  <p>Cinco jeitos de fazer a malha, todos em tom só. Os planetas pesados entortam mais: use Início, Meio e Fim para ver a malha mudando conforme a partida cresce.</p>
+
+  <div class="rot">Malha</div>
+  <div class="ops" id="opsC"></div>
+  <div class="rot">Momento da partida</div>
+  <div class="ops" id="opsP"></div>
+  <div class="ops"><span class="rot" style="margin:0">Tom</span><span class="ops" id="opsT" style="flex:1"></span><span class="ops" id="opsM"></span></div>
+
+  <div id="tela">
+    <canvas id="cv"></canvas>
+    <div class="hud"><div class="pill g"><span id="arr">0</span><small>arrastos</small></div><div class="pill"><small>meta</small>Lua</div><div class="pill"><span id="pts">0</span><small>pontos</small></div></div>
+    <div class="ban">Fase 14 · Forme uma Lua</div>
+    <div class="dica">arraste para jogar</div>
+  </div>
+  <div class="ops"><button class="agora" id="recorde">Ver a onda do recorde</button></div>
+  <p class="nota">A onda forte só vem quando nasce o maior planeta da partida (um recorde). Nas outras junções a malha só treme de leve.</p>
+
+  <h2>AS CINCO MALHAS</h2>
+  <div class="card" data-c="lencol"><h3><i>1</i>Lençol</h3>
+    <p>A malha de antes, em tom só e mais calma. Cada planeta afunda a malha conforme o peso: a Poeira quase nada, a Terra bastante, e Júpiter e o Sol entortam o tabuleiro inteiro.</p></div>
+  <div class="card" data-c="curvas"><h3><i>2</i>Curvas de nível</h3>
+    <p>No lugar da rede, as linhas do campo, como num mapa de relevo: anéis em volta de cada planeta, que se juntam quando dois planetas pesados ficam perto. Quanto mais pesado, mais anéis e mais largos. Pontinhos nos cantos marcam as casas.</p></div>
+  <div class="card" data-c="poeira"><h3><i>3</i>Poeira no campo</h3>
+    <p>A rede vira poeira fina, alinhada nas casas. Perto dos planetas a poeira é puxada para dentro e gira devagar, como um disco em volta deles.</p></div>
+  <div class="card" data-c="relevo"><h3><i>4</i>Relevo</h3>
+    <p>A malha com luz batendo de lado: cada planeta abre um funil que parece fundo de verdade, e os gigantes cavam crateras.</p></div>
+  <div class="card" data-c="ceu"><h3><i>5</i>Céu inteiro</h3>
+    <p>A malha não fica só no tabuleiro: cobre a tela toda, bem apagada fora dele. O planeta grande do fundo também entorta a malha, e o recorde manda uma onda pelo céu inteiro.</p></div>
+  <div class="card"><h3>De onde vem</h3>
+    <ul><li><a href="https://en.wikipedia.org/wiki/Gravity_well" target="_blank">Poço gravitacional</a>: o desenho clássico do lençol afundado pela bola pesada.</li>
+      <li><a href="https://en.wikipedia.org/wiki/Gravitational_wave" target="_blank">Ondas gravitacionais</a>: a onda do recorde imita a ondulação que corre pelo espaço quando algo enorme acontece.</li>
+      <li><a href="https://code.tutsplus.com/make-a-neon-vector-shooter-in-xna-the-warping-grid--gamedev-9904t" target="_blank">A grade do Geometry Wars</a>: molinhas entre os pontos, que tremem e voltam.</li></ul></div>
+</main>
+<script src="src/espaco.js?v=15"></script>
+<script>
+(()=>{   // tudo fechado aqui dentro para não trombar com os nomes do motor
+buildTextures(); preaquece();
+const NOMES=LADDER.map(d=>d.n);
+const COR=['#d9c49a','#7fdcf0','#ff7a1e','#909cb2','#bfefff','#e9c3a0','#cfd3dc','#c0342a','#e0805a','#f2d08a','#43a0e6','#4f86ec','#9fdde4','#e8c98a','#d9a07a','#ffd84a','#c08aff','#9a77c9'];
+const RGB=COR.map(h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)).join(','));
+const S=DPR, N=4, TAU=Math.PI*2;
+const tela=document.getElementById('tela'), cv=document.getElementById('cv'), c=cv.getContext('2d');
+
+// ---------------- opções ----------------
+const CASAS=[['lencol','1 Lençol','afunda'],['curvas','2 Curvas','de nível'],['poeira','3 Poeira','no campo'],['relevo','4 Relevo','funis'],['ceu','5 Céu','inteiro']];
+const MOMENTOS=[['inicio','Início','até o Asteroide'],['meio','Meio','até a Terra'],['fim','Fim','até o Sol']];
+const PRESET={
+  inicio:[[0,3,4],[1,3,3],[2,3,2],[3,3,1],[0,2,2],[1,2,1],[3,1,1],[2,2,1]],
+  meio:[[0,3,11],[1,3,9],[2,3,7],[3,3,5],[0,2,4],[1,2,3],[2,2,2],[3,1,1],[1,1,2],[2,1,1]],
+  fim:[[0,3,16],[1,3,15],[2,3,14],[3,3,11],[0,2,12],[1,2,9],[2,2,7],[3,2,4],[0,1,5],[1,1,2],[3,0,1]]};
+const PALS=[{m:0,cor:'#8a5fe0',marco:(w,h)=>({n:'Júpiter',x:w*1.02,y:h*1.02,d:w*1.05,a:.9,massa:4})},
+            {m:1,cor:'#3f8fe0',marco:(w,h)=>({n:'Netuno',x:-w*.08,y:h*.98,d:w*.9,a:.85,massa:3})},
+            {m:2,cor:'#2fb890',marco:(w,h)=>({n:'Saturno',x:w*.02,y:h*.97,d:w*.8,a:.9,massa:3.4})},
+            {m:4,cor:'#e0703a',marco:(w,h)=>({n:'Marte',x:w*.5,y:h+w*.42,d:w*1.5,a:1,massa:2.4})}];
+const OP={casa:'lencol',mom:'meio',tom:'branco',pal:0};
+(function(){ const q=new URLSearchParams(location.hash.slice(1)); if(q.has('c')) OP.casa=q.get('c'); if(q.has('p')) OP.mom=q.get('p'); if(q.has('t')) OP.tom=q.get('t'); if(q.has('m')) OP.pal=+q.get('m')||0; })();
+function chips(id,lista,chave,aoMudar){ const E=document.getElementById(id); E.innerHTML='';
+  for(const [k,a,b] of lista){ const e=document.createElement('button'); e.className='op'+(OP[chave]===k?' on':''); e.innerHTML=b?`${a}<small>${b}</small>`:a;
+    e.onclick=()=>{ OP[chave]=k; botoes(); if(aoMudar) aoMudar(); }; E.appendChild(e); } }
+function botoes(){
+  chips('opsC',CASAS,'casa',()=>{ nos=null; });
+  chips('opsP',MOMENTOS,'mom',inicial);
+  chips('opsT',[['branco','branco'],['mundo','cor do mundo']],'tom');
+  const M=document.getElementById('opsM'); M.innerHTML='';
+  PALS.forEach((p,i)=>{ const e=document.createElement('button'); e.className='op cor'+(OP.pal===i?' on':''); e.style.background=p.cor; e.onclick=()=>{ OP.pal=i; botoes(); reconstroi(); }; M.appendChild(e); });
+  for(const e of document.querySelectorAll('.card[data-c]')) e.classList.toggle('on',OP.casa===e.dataset.c);
+}
+document.getElementById('recorde').onclick=()=>{ const vivos=tiles.filter(k=>!k.hide&&!k.dying); if(!vivos.length) return; const k=vivos.reduce((a,b)=>b.t>a.t?b:a); onda(cx(k.x),cy(k.y),k.t); };
+
+// ---------------- medidas e camadas fixas ----------------
+let W,H,cw,ch,pa,ox,oy,M, marcoImg=null, marco=null, far=[], mid=[], poeira=[];
+function medidas(){ const r=tela.getBoundingClientRect(); cw=r.width; ch=r.height; W=Math.round(cw*S); H=Math.round(ch*S);
+  cv.width=W; cv.height=H; pa=(cw-24)/N*S; ox=12*S; M=Math.round(30*S);
+  oy=Math.round((104+Math.max(0,(ch-104-(cw-24))/2-6))*S);   // o tabuleiro no meio do espaço livre, como ficou no jogo
+  reconstroi(); }
+function estrelas(n,seed,a,b){ const r=rng(seed); return Array.from({length:n},()=>({x:r()*(W+2*M)-M,y:r()*(H+2*M)-M,s:(a+(b-a)*r()*r())*S,a:.25+.65*r(),f:.5+2*r(),p:r()*7,
+  c:['255,255,255','190,215,255','255,236,200'][(r()*3)|0]})); }
+function reconstroi(){
+  const P=PALS[OP.pal];
+  marco=P.marco(W,H); const S0=Math.max(64,Math.min(720,Math.round(marco.d)));
+  marcoImg=makePiece(byName(marco.n),S0).draw(3.7,[-.55,.5,.67],{outline:false});
+  far=estrelas(Math.round(cw*ch/650),11,.4,1.2); mid=estrelas(Math.round(cw*ch/3800),12,1,2.2);
+  const r=rng(13); poeira=Array.from({length:16},()=>({x:r()*(W+2*M)-M,y:r()*(H+2*M)-M,r:(2+6*r())*S,a:.05+.09*r()}));
+  glTam(); nos=null; graos=null;
+}
+
+// ---------------- nebulosa pela placa de vídeo ----------------
+const glc=document.createElement('canvas'), gl=glc.getContext('webgl',{antialias:false,premultipliedAlpha:false});
+let GP=null;
+if(gl){
+  const vs=`attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}`;
+  const fs=`precision mediump float;
+  uniform vec2 res,off,pp;uniform float t,pu;uniform vec3 c1,c2,pc;
+  float h(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
+  float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
+  float fbm(vec2 p){float v=0.,a=.5;mat2 m=mat2(1.6,1.2,-1.2,1.6);for(int i=0;i<5;i++){v+=a*n(p);p=m*p;a*=.5;}return v;}
+  void main(){vec2 su=(gl_FragCoord.xy-.5*res)/res.y,uv=su+off,p=uv*1.7;
+    vec2 q=vec2(fbm(p+vec2(0.,t*.03)),fbm(p+vec2(5.2,1.3)-vec2(t*.02,0.)));
+    vec2 r=vec2(fbm(p+3.*q+vec2(1.7,9.2)+t*.04),fbm(p+3.*q+vec2(8.3,2.8)-t*.035));
+    float f=fbm(p+2.6*r),faixa=.35+.65*exp(-pow((uv.x*.7+uv.y*.75)/.55,2.)),neb=smoothstep(.25,.8,f)*faixa;
+    vec3 col=vec3(.043,.039,.094);
+    col=mix(col,c1*.85,neb*.9);
+    col=mix(col,c2*.95,clamp(length(r)-.5,0.,1.)*neb);
+    float poe=smoothstep(.48,.78,fbm(p*2.3+q*1.5-t*.01));col*=1.-.45*poe*(1.-neb*.5);
+    col+=c2*.35*pow(neb,3.);
+    float d=length(su-pp);col+=pc*pu*(.5*exp(-d*3.5)+.07);
+    gl_FragColor=vec4(col,1.);}`;
+  const sh=(tp,src)=>{const s=gl.createShader(tp);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));return s;};
+  const pr=gl.createProgram();gl.attachShader(pr,sh(gl.VERTEX_SHADER,vs));gl.attachShader(pr,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(pr);gl.useProgram(pr);
+  const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+  const lp=gl.getAttribLocation(pr,'p');gl.enableVertexAttribArray(lp);gl.vertexAttribPointer(lp,2,gl.FLOAT,false,0,0);
+  GP={}; for(const k of ['res','off','pp','t','pu','c1','c2','pc']) GP[k]=gl.getUniformLocation(pr,k);
+}
+function glTam(){ if(!gl) return; glc.width=Math.round(W*.5); glc.height=Math.round(H*.5); gl.viewport(0,0,glc.width,glc.height); }
+function nebulosa(t,offx,offy,pul){
+  const mu=MUNDOS_ESP[PALS[OP.pal].m], v=s=>s.split(',').map(x=>x/255);
+  gl.uniform2f(GP.res,glc.width,glc.height); gl.uniform1f(GP.t,t); gl.uniform2f(GP.off,-offx/H,offy/H);
+  gl.uniform3fv(GP.c1,v(mu.neb[0])); gl.uniform3fv(GP.c2,v(mu.neb[1]));
+  gl.uniform1f(GP.pu,pul?pul.k:0); gl.uniform3fv(GP.pc,pul?v(pul.rgb):[0,0,0]);
+  gl.uniform2f(GP.pp,pul?(pul.x-W/2)/H:0,pul?(H/2-pul.y)/H:0);
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4); c.drawImage(glc,0,0,W,H);
+}
+
+// ---------------- o jogo (2048 de verdade) ----------------
+let tiles=[], nid=1, anim=null, arrastos=0, pontos=0, ultimoToque=-9, ultimoAuto=0, fimEm=0, maxPartida=0;
+const ok=(x,y)=>x>=0&&y>=0&&x<N&&y<N;
+const agora=()=>performance.now()/1000;
+const novo=(x,y,t,tipo)=>({id:nid++,t,x,y,fx:x,fy:y,pop:tipo?agora():-9,tipo});
+function inicial(){ tiles=PRESET[OP.mom].map(([x,y,t])=>novo(x,y,t)); maxPartida=Math.max(...tiles.map(k=>k.t)); arrastos=0; pontos=0; anim=null; }
+const cel=(x,y)=>tiles.find(k=>!k.dying&&!k.hide&&k.x===x&&k.y===y);
+function linhas(d){ const L=[]; for(let a=0;a<N;a++){ const l=[]; for(let b=0;b<N;b++) l.push(d==='E'?[b,a]:d==='D'?[N-1-b,a]:d==='C'?[a,b]:[a,N-1-b]); L.push(l);} return L; }
+function plano(d){ const mv=[],mg=[]; let mud=false;
+  for(const l of linhas(d)){ const ts=l.map(p=>cel(...p)).filter(Boolean); let k=0;
+    for(let i=0;i<ts.length;i++){ const [tx,ty]=l[k++], a=ts[i], b=ts[i+1];
+      if(b&&b.t===a.t){ mg.push({a,b,tx,ty,t:a.t+1}); mud=true; i++; }
+      else { mv.push({a,tx,ty}); if(a.x!==tx||a.y!==ty) mud=true; } } }
+  return {mv,mg,mud}; }
+const DIR={E:[-1,0],D:[1,0],C:[0,-1],B:[0,1]};
+function joga(d){ if(anim) return false; const P=plano(d); if(!P.mud) return false;
+  for(const k of tiles){ k.fx=k.x; k.fy=k.y; }
+  for(const {a,tx,ty} of P.mv){ a.x=tx; a.y=ty; }
+  const nasc=[]; for(const g of P.mg){ for(const k of [g.a,g.b]){ k.x=g.tx; k.y=g.ty; k.dying=true; } const n=novo(g.tx,g.ty,g.t,'junta'); n.hide=true; nasc.push(n); }
+  tiles.push(...nasc); anim={t0:agora(),dur:.14,P,nasc}; arrastos++; const [dx,dy]=DIR[d]; cam.vx+=dx*190; cam.vy+=dy*190; return true; }
+function termina(){ const tn=agora();
+  tiles=tiles.filter(k=>!k.dying);
+  for(const n of anim.nasc){ n.hide=false; n.pop=tn; pontos+=2**n.t; treme(cx(n.x),cy(n.y),n.t); if(n.t>maxPartida){ maxPartida=n.t; onda(cx(n.x),cy(n.y),n.t); } }
+  const vazias=[]; for(let y=0;y<N;y++) for(let x=0;x<N;x++) if(!cel(x,y)) vazias.push([x,y]);
+  if(vazias.length){ const [x,y]=vazias[(Math.random()*vazias.length)|0]; tiles.push(novo(x,y,Math.random()<.85?1:2,'nasce')); }
+  for(const k of tiles){ k.fx=k.x; k.fy=k.y; } anim=null;
+  if(!['E','D','C','B'].some(d=>plano(d).mud)) fimEm=tn+1.4;
+  document.getElementById('arr').textContent=arrastos; document.getElementById('pts').textContent=pontos; }
+function auto(){ let best=null,bs=-1e9; for(const d of ['E','D','C','B']){ const P=plano(d); if(!P.mud) continue; const s=P.mg.length*10+(d==='C'?-4:0)+Math.random()*3; if(s>bs){bs=s;best=d;} } if(best) joga(best); }
+let ini=null;
+tela.addEventListener('pointerdown',e=>{ ini=[e.clientX,e.clientY]; });
+tela.addEventListener('pointerup',e=>{ if(!ini) return; const dx=e.clientX-ini[0], dy=e.clientY-ini[1]; ini=null; if(Math.max(Math.abs(dx),Math.abs(dy))<22) return;
+  ultimoToque=agora(); joga(Math.abs(dx)>Math.abs(dy)?(dx<0?'E':'D'):(dy<0?'C':'B')); });
+addEventListener('keydown',e=>{ const d={ArrowLeft:'E',ArrowRight:'D',ArrowUp:'C',ArrowDown:'B'}[e.key]; if(d){ e.preventDefault(); ultimoToque=agora(); joga(d); } });
+const cx=x=>ox+(x+.5)*pa, cy=y=>oy+(y+.5)*pa;
+function posTile(k,p){ return [cx(k.fx+(k.x-k.fx)*p), cy(k.fy+(k.y-k.fy)*p)]; }
+const cam={x:0,y:0,vx:0,vy:0};
+
+// ---------------- acontecimentos ----------------
+let evs=[], proxEv=agora()+3, evI=0;
+const TIPOS=['cometa','satelite','chuva','nave'];
+function novoEv(){ const tipo=TIPOS[evI++%TIPOS.length], r=Math.random, t0=agora();
+  if(tipo==='cometa') evs.push({tipo,t0,dur:7,a:[W*1.15,H*(.06+.16*r())],b:[-W*.15,H*(.22+.2*r())]});
+  if(tipo==='satelite') evs.push({tipo,t0,dur:14,a:[-W*.05,H*(.1+.3*r())],b:[W*1.05,H*(.05+.2*r())]});
+  if(tipo==='chuva') evs.push({tipo,t0,dur:2.6,st:Array.from({length:7},(_,i)=>({d:i*.3+r()*.15,x:W*(.25+.75*r()),y:H*(.02+.3*r())}))});
+  if(tipo==='nave') evs.push({tipo,t0,dur:9,a:[W*1.06,H*(.6+.15*r())],b:[-W*.06,H*(.45+.1*r())]});
+  proxEv=t0+6+4*Math.random(); }
+function desenhaEvs(t,o){ c.save(); c.translate(o[0],o[1]); c.globalCompositeOperation='lighter';
+  for(const e of evs){ const u=(t-e.t0)/e.dur; if(u<0||u>1) continue;
+    if(e.tipo==='cometa'){ const x=e.a[0]+(e.b[0]-e.a[0])*u, y=e.a[1]+(e.b[1]-e.a[1])*u-Math.sin(u*Math.PI)*H*.04, vx=e.b[0]-e.a[0], vy=e.b[1]-e.a[1], L=Math.hypot(vx,vy), tx=-vx/L, ty=-vy/L, cl=150*S;
+      for(const [w,a] of [[12*S,.1],[3*S,.6]]){ const g=c.createLinearGradient(x,y,x+tx*cl,y+ty*cl); g.addColorStop(0,`rgba(190,240,255,${a})`); g.addColorStop(1,'rgba(190,240,255,0)');
+        c.strokeStyle=g; c.lineWidth=w; c.lineCap='round'; c.beginPath(); c.moveTo(x,y); c.lineTo(x+tx*cl,y+ty*cl); c.stroke(); }
+      const g=c.createRadialGradient(x,y,0,x,y,9*S); g.addColorStop(0,'rgba(255,255,255,.95)'); g.addColorStop(1,'rgba(160,230,255,0)'); c.fillStyle=g; c.beginPath(); c.arc(x,y,9*S,0,TAU); c.fill(); }
+    if(e.tipo==='satelite'){ const x=e.a[0]+(e.b[0]-e.a[0])*u, y=e.a[1]+(e.b[1]-e.a[1])*u; c.fillStyle='rgba(235,240,255,.85)'; c.beginPath(); c.arc(x,y,1.3*S,0,TAU); c.fill();
+      if((t*0.9)%1<.12){ const g=c.createRadialGradient(x,y,0,x,y,5*S); g.addColorStop(0,'rgba(255,90,90,.95)'); g.addColorStop(1,'rgba(255,90,90,0)'); c.fillStyle=g; c.beginPath(); c.arc(x,y,5*S,0,TAU); c.fill(); } }
+    if(e.tipo==='chuva') for(const s of e.st){ const v=(t-e.t0-s.d)/.45; if(v<0||v>1) continue; const L=95*S, x=s.x-.75*L*v*1.6, y=s.y+.55*L*v*1.6, g=c.createLinearGradient(x,y,x+.75*L,y-.55*L);
+      g.addColorStop(0,`rgba(255,255,255,${(.9*(1-v)).toFixed(2)})`); g.addColorStop(1,'rgba(255,255,255,0)'); c.strokeStyle=g; c.lineWidth=1.6*S; c.beginPath(); c.moveTo(x,y); c.lineTo(x+.75*L,y-.55*L); c.stroke(); }
+    if(e.tipo==='nave'){ const x=e.a[0]+(e.b[0]-e.a[0])*u, y=e.a[1]+(e.b[1]-e.a[1])*u+Math.sin(t*2)*2*S, fl=.7+.3*Math.sin(t*31);
+      const g=c.createRadialGradient(x+7*S,y,0,x+7*S,y,10*S*fl); g.addColorStop(0,'rgba(120,230,255,.9)'); g.addColorStop(1,'rgba(120,230,255,0)'); c.fillStyle=g; c.beginPath(); c.arc(x+7*S,y,10*S*fl,0,TAU); c.fill();
+      c.globalCompositeOperation='source-over'; c.fillStyle='rgba(220,226,245,.95)'; c.beginPath(); c.moveTo(x-6*S,y); c.lineTo(x+5*S,y-3.4*S); c.lineTo(x+3*S,y); c.lineTo(x+5*S,y+3.4*S); c.closePath(); c.fill(); c.globalCompositeOperation='lighter'; } }
+  c.restore(); evs=evs.filter(e=>t-e.t0<e.dur); }
+
+// ---------------- o campo: peso de cada planeta ----------------
+// o peso cresce mais que o degrau: a Poeira quase não marca, a Terra afunda bem, o Sol entorta o tabuleiro
+const massa=t=>.12+(t/10)**2;
+let pocos=[], ondas=[], tremores=[];
+function onda(x,y,t){ ondas.push({x,y,t0:agora(),a:pa*(.16+.012*t)}); }
+function treme(x,y,t){ tremores.push({x,y,t0:agora(),a:pa*(.025+.004*t)}); }
+// deslocamento de um ponto: puxado para cada poço, mais a onda do recorde e o tremor da junção
+function campo(px,py,t,extra){ let dx=0,dy=0,h=0;
+  for(const q of pocos){ const ex=px-q.x, ey=py-q.y, d=Math.hypot(ex,ey)||1, sg=pa*(.32+.13*q.m), A=Math.min(pa*.12*q.m,sg*.55), f=A*(d/sg)*Math.exp(.5-d*d/(2*sg*sg));
+    dx-=ex/d*f; dy-=ey/d*f; h+=q.m*Math.exp(-d*d/(2*(sg*1.15)**2)); }
+  if(extra) for(const q of extra){ const ex=px-q.x, ey=py-q.y, d=Math.hypot(ex,ey)||1, sg=q.r*.5, A=Math.min(pa*.1*q.m,sg*.5), f=A*(d/sg)*Math.exp(.5-d*d/(2*sg*sg)); dx-=ex/d*f; dy-=ey/d*f; }
+  let w=0;
+  for(const o of ondas){ const ex=px-o.x, ey=py-o.y, d=Math.hypot(ex,ey)||1, u=(d-pa*3.4*(t-o.t0))/(pa*.45), amp=o.a*Math.exp(-(t-o.t0)*1.1)*Math.exp(-u*u)*Math.sin(u*2.4);
+    dx+=ex/d*amp; dy+=ey/d*amp; w+=Math.abs(amp)/pa; }
+  for(const o of tremores){ const ex=px-o.x, ey=py-o.y, d=Math.hypot(ex,ey)||1, u=(d-pa*2.2*(t-o.t0))/(pa*.3), amp=o.a*Math.exp(-(t-o.t0)*3)*Math.exp(-u*u)*Math.sin(u*2.4);
+    dx+=ex/d*amp; dy+=ey/d*amp; }
+  const L=Math.hypot(dx,dy), cap=pa*.42; if(L>cap){ dx*=cap/L; dy*=cap/L; }
+  return [dx,dy,h,w]; }
+function tom(a){ const rgb=OP.tom==='branco'?'225,228,255':MUNDOS_ESP[PALS[OP.pal].m].neb[1].split(',').map(v=>Math.round(+v*.55+255*.45)).join(','); return `rgba(${rgb},${Math.min(1,a).toFixed(3)})`; }
+function sombraPocos(k=1){ for(const q of pocos){ const R=pa*(.38+.16*q.m), g=c.createRadialGradient(q.x,q.y,0,q.x,q.y,R); g.addColorStop(0,`rgba(0,0,0,${Math.min(.6,(.12+.12*q.m)*k).toFixed(3)})`); g.addColorStop(1,'rgba(0,0,0,0)'); c.fillStyle=g; c.fillRect(q.x-R,q.y-R,2*R,2*R); } }
+function fundoTab(a){ c.fillStyle=`rgba(8,6,22,${a})`; c.fillRect(ox,oy,N*pa,N*pa); }
+
+// 1 · lençol, 4 · relevo e 5 · céu: rede de pontos ligados por molinhas
+const SUB=4; let nos=null, NI=0, NJ=0, I0=0, J0=0;
+function redeIni(){ nos=[]; if(OP.casa==='ceu'){ const st=pa/3; I0=Math.ceil(ox/st)+1; J0=Math.ceil(oy/st)+1; NI=Math.ceil(W/st)+3; NJ=Math.ceil(H/st)+3;
+    for(let j=0;j<NJ;j++) for(let i=0;i<NI;i++){ const rx=ox+(i-I0)*st, ry=oy+(j-J0)*st; nos.push({i,j,rx,ry,x:rx,y:ry,vx:0,vy:0,h:0,w:0}); } }
+  else { NI=NJ=N*SUB+1; I0=J0=0; for(let j=0;j<NJ;j++) for(let i=0;i<NI;i++){ const rx=ox+i*pa/SUB, ry=oy+j*pa/SUB; nos.push({i,j,rx,ry,x:rx,y:ry,vx:0,vy:0,h:0,w:0}); } } }
+function redeAtualiza(t,dt,extra){ if(!nos) redeIni();
+  for(const n of nos){ const [dx,dy,h,w]=campo(n.rx,n.ry,t,extra); n.vx+=((n.rx+dx-n.x)*90-n.vx*11)*dt; n.vy+=((n.ry+dy-n.y)*90-n.vy*11)*dt; n.x+=n.vx*dt; n.y+=n.vy*dt; n.h=h; n.w=w; } }
+const no=(i,j)=>nos[j*NI+i];
+function lencol(t,dt){ redeAtualiza(t,dt); fundoTab(.38); sombraPocos();
+  c.save(); c.lineCap='round';
+  const seg=(a,b,maior)=>{ const h=(a.h+b.h)/2, w=(a.w+b.w)/2, al=(maior?.2:.07)+Math.min(.42,h*(maior?.16:.09))+w*.9;
+    c.strokeStyle=tom(al); c.lineWidth=(maior?1.3:.8)*S; c.beginPath(); c.moveTo(a.x,a.y); c.lineTo(b.x,b.y); c.stroke(); };
+  for(let j=0;j<NJ;j++) for(let i=0;i<NI-1;i++) seg(no(i,j),no(i+1,j),j%SUB===0);
+  for(let i=0;i<NI;i++) for(let j=0;j<NJ-1;j++) seg(no(i,j),no(i,j+1),i%SUB===0);
+  c.restore(); }
+// relevo: a mesma rede, vista um pouco de lado, com a luz vindo do alto à esquerda
+function relevo(t,dt){ redeAtualiza(t,dt); fundoTab(.42); sombraPocos(1.5);
+  const LX=-.55, LY=-.83, alt=n=>n.h;
+  c.save(); c.lineCap='round';
+  const P=n=>[n.x, n.y+n.h*pa*.16];
+  const luz=(n)=>{ const a=no(Math.min(NI-1,n.i+1),n.j), b=no(Math.max(0,n.i-1),n.j), d=no(n.i,Math.min(NJ-1,n.j+1)), e=no(n.i,Math.max(0,n.j-1));
+    const gx=(alt(a)-alt(b)), gy=(alt(d)-alt(e)); return Math.max(.12,Math.min(2,.7+3.2*(gx*LX+gy*LY))); };
+  for(const n of nos) n.l=luz(n);
+  const seg=(a,b,maior)=>{ const l=(a.l+b.l)/2, w=(a.w+b.w)/2, al=((maior?.3:.11)+Math.min(.3,(a.h+b.h)*.06))*l+w*.9; const [x1,y1]=P(a), [x2,y2]=P(b);
+    c.strokeStyle=tom(al); c.lineWidth=(maior?1.3:.8)*S; c.beginPath(); c.moveTo(x1,y1); c.lineTo(x2,y2); c.stroke(); };
+  for(let j=0;j<NJ;j++) for(let i=0;i<NI-1;i++) seg(no(i,j),no(i+1,j),j%SUB===0);
+  for(let i=0;i<NI;i++) for(let j=0;j<NJ-1;j++) seg(no(i,j),no(i,j+1),i%SUB===0);
+  c.restore(); }
+// céu inteiro: a rede cobre a tela toda; fora do tabuleiro ela fica bem apagada, e o planeta do fundo também pesa
+function ceu(t,dt){ const extra=[{x:marco.x,y:marco.y,m:marco.massa,r:marco.d*.9}]; redeAtualiza(t,dt,extra); fundoTab(.3); sombraPocos(.9);
+  c.save(); c.lineCap='round';
+  const dentro=(x,y)=>x>=ox-1&&x<=ox+N*pa+1&&y>=oy-1&&y<=oy+N*pa+1;
+  const seg=(a,b)=>{ const ii=a.i-I0, jj=a.j-J0, horiz=a.j===b.j, maior=horiz?(jj%3===0):(ii%3===0), dn=dentro((a.rx+b.rx)/2,(a.ry+b.ry)/2);
+    const borda=Math.min(1,Math.min(a.rx,W-a.rx,a.ry,H-a.ry)/(pa*1.2)), base=dn?(maior?.2:.07):(maior?.11:.045)*borda;
+    const al=base+Math.min(.4,((a.h+b.h)/2)*(dn?.15:.06))+((a.w+b.w)/2)*(dn?.9:.5);
+    if(al<.01) return; c.strokeStyle=tom(al); c.lineWidth=(maior&&dn?1.3:.8)*S; c.beginPath(); c.moveTo(a.x,a.y); c.lineTo(b.x,b.y); c.stroke(); };
+  for(let j=0;j<NJ;j++) for(let i=0;i<NI-1;i++) seg(no(i,j),no(i+1,j));
+  for(let i=0;i<NI;i++) for(let j=0;j<NJ-1;j++) seg(no(i,j),no(i,j+1));
+  c.restore(); }
+
+// 2 · curvas de nível do campo (desenhadas por "quadradinhos que andam")
+const G=60;
+function curvas(t){ fundoTab(.3);
+  const step=N*pa/G, V=[], NIV=[.55,.8,1.15,1.65,2.4,3.4,4.9,7];
+  for(let j=0;j<=G;j++){ const row=[]; for(let i=0;i<=G;i++){ const px=ox+i*step, py=oy+j*step; let v=0;
+      for(const q of pocos){ const d2=((px-q.x)**2+(py-q.y)**2)/(pa*pa); v+=q.m/(d2+.07); }
+      for(const o of ondas){ const d=Math.hypot(px-o.x,py-o.y), u=(d-pa*3.4*(t-o.t0))/(pa*.45); v+=1.6*Math.exp(-(t-o.t0)*1.1)*Math.exp(-u*u)*Math.sin(u*2.4); }
+      for(const o of tremores){ const d=Math.hypot(px-o.x,py-o.y), u=(d-pa*2.2*(t-o.t0))/(pa*.3); v+=.35*Math.exp(-(t-o.t0)*3)*Math.exp(-u*u)*Math.sin(u*2.4); }
+      row.push(v); } V.push(row); }
+  // casas: linhas bem leves e um pontinho em cada canto
+  c.save(); c.strokeStyle=tom(.06); c.lineWidth=1*S; c.beginPath(); for(let k=0;k<=N;k++){ c.moveTo(ox+k*pa,oy); c.lineTo(ox+k*pa,oy+N*pa); c.moveTo(ox,oy+k*pa); c.lineTo(ox+N*pa,oy+k*pa); } c.stroke();
+  c.fillStyle=tom(.45); for(let y=0;y<=N;y++) for(let x=0;x<=N;x++){ c.beginPath(); c.arc(ox+x*pa,oy+y*pa,1.6*S,0,TAU); c.fill(); }
+  c.lineCap='round'; c.lineJoin='round';
+  NIV.forEach((L,k)=>{ c.strokeStyle=tom(.13+.05*k); c.lineWidth=(k>4?1.3:1)*S; c.beginPath();
+    for(let j=0;j<G;j++) for(let i=0;i<G;i++){ const a=V[j][i], b=V[j][i+1], d=V[j+1][i+1], e=V[j+1][i];
+      const caso=(a>L?8:0)|(b>L?4:0)|(d>L?2:0)|(e>L?1:0); if(caso===0||caso===15) continue;
+      const x0=ox+i*step, y0=oy+j*step, it=(p,q)=>(L-p)/(q-p);
+      const T=[x0+step*it(a,b),y0], R=[x0+step,y0+step*it(b,d)], B=[x0+step*it(e,d),y0+step], Lf=[x0,y0+step*it(a,e)];
+      const ln=(p,q)=>{ c.moveTo(p[0],p[1]); c.lineTo(q[0],q[1]); };
+      switch(caso){ case 1: case 14: ln(Lf,B); break; case 2: case 13: ln(B,R); break; case 3: case 12: ln(Lf,R); break; case 4: case 11: ln(T,R); break;
+        case 5: ln(Lf,T); ln(B,R); break; case 6: case 9: ln(T,B); break; case 7: case 8: ln(Lf,T); break; case 10: ln(T,R); ln(Lf,B); break; } }
+    c.stroke(); });
+  c.restore(); }
+
+// 3 · poeira no campo: grãos alinhados nas casas, puxados e girando em volta dos planetas
+let graos=null;
+function graosIni(){ graos=[]; const K=32, r=rng(77), st=N*pa/K;
+  for(let j=0;j<=K;j++) for(let i=0;i<=K;i++){ const linha=i%8===0||j%8===0, jit=linha?0:st*.45;
+    graos.push({rx:ox+i*st+(r()-.5)*jit, ry:oy+j*st+(r()-.5)*jit, x:0, y:0, linha, f:r()*TAU}); } }
+function poeiraCampo(t){ if(!graos) graosIni(); fundoTab(.32); sombraPocos(.8);
+  c.save();
+  for(const g of graos){ let [dx,dy,h,w]=campo(g.rx,g.ry,t);
+    for(const q of pocos){ const ex=g.rx-q.x, ey=g.ry-q.y, d=Math.hypot(ex,ey)||1, sg=pa*(.32+.13*q.m), s=pa*.13*q.m*Math.exp(-d*d/(2*sg*sg))*Math.sin(t*.9+d/pa*4+g.f*.3);
+      dx+=-ey/d*s; dy+=ex/d*s; }
+    const X=g.rx+dx, Y=g.ry+dy, al=(g.linha?.6:.3)+Math.min(.4,h*.2)+w*1.2, s=(g.linha?1.9:1.5)*S;
+    c.fillStyle=tom(al); c.fillRect(X-s/2,Y-s/2,s,s); }
+  c.restore(); }
+
+// ---------------- peças ----------------
+function etiqueta(t,x,y){ const w=pa*.42,h=pa*.29,r=h*.3; c.beginPath(); c.roundRect(x-w/2,y-h/2,w,h,r); c.fillStyle='rgba(22,18,44,.92)'; c.fill();
+  c.lineWidth=Math.max(1,pa*.01); c.strokeStyle='rgba(190,170,255,.3)'; c.stroke(); c.textAlign='center'; c.textBaseline='middle';
+  const num=String(2**t); c.font=`800 ${pa*(num.length>3?.11:.14)}px 'Exo 2',sans-serif`; c.fillStyle='#f2b33d'; c.fillText(num,x,y-h*.2);
+  const nm=NOMES[t-1]; c.font=`700 ${pa*(nm.length>7?.075:.088)}px 'Exo 2',sans-serif`; c.fillStyle='#f1eefc'; c.fillText(nm,x,y+h*.24); }
+function pecas(t,p){ const lista=[];
+  for(const k of tiles){ if(k.hide) continue; const [x,y]=posTile(k,p);
+    let sc=1; const a=t-k.pop; if(k.tipo==='nasce'&&a<.2) sc=Math.max(.05,a/.2); if(k.tipo==='junta'&&a<.22) sc=1+.22*Math.sin(a/.22*Math.PI);
+    lista.push([k,x,y+(OP.casa==='relevo'?massa(k.t)*pa*.05:0),sc]); }
+  for(const [k,x,y,sc] of lista){ const u=pa*.8;
+    if(k.t<=6){ const g=c.createRadialGradient(x,y,0,x,y,u*.46*sc); g.addColorStop(0,COR[k.t-1]+'70'); g.addColorStop(.55,COR[k.t-1]+'26'); g.addColorStop(1,COR[k.t-1]+'00'); c.fillStyle=g; c.beginPath(); c.arc(x,y,u*.46*sc,0,TAU); c.fill(); }
+    c.save(); c.translate(x,y); c.scale(sc,sc); drawPecaVar(c,NOMES[k.t-1],t,0,0,u,'p'+k.id); c.restore(); }
+  for(const [k,x,y,sc] of lista) if(sc>.6) etiqueta(k.t,x,y+pa*.3); }
+
+// ---------------- quadro ----------------
+let antes=agora();
+function quadro(){
+  const t=agora(), dt=Math.min(.05,t-antes); antes=t;
+  if(anim&&t>=anim.t0+anim.dur) termina();
+  if(fimEm&&t>fimEm){ fimEm=0; inicial(); }
+  if(!anim&&!fimEm&&t-ultimoToque>2.4&&t-ultimoAuto>.9){ ultimoAuto=t; auto(); }
+  const p=anim?Math.min(1,(t-anim.t0)/anim.dur):1, pe=1-(1-p)*(1-p);
+  pocos=tiles.filter(k=>!k.hide).map(k=>{ const [x,y]=posTile(k,pe); return {x,y,m:massa(k.t)}; });
+  cam.vx+=(-cam.x*32-cam.vx*7)*dt; cam.vy+=(-cam.y*32-cam.vy*7)*dt; cam.x+=cam.vx*dt; cam.y+=cam.vy*dt;
+  const camX=(cam.x+Math.sin(t*.21)*7)*S, camY=(cam.y+Math.cos(t*.17)*6)*S, o=k=>[camX*k,camY*k];
+  let pul=null; for(const j of ondas){ const u=(t-j.t0)/1.2; if(u<1){ const k=(1-u)*.7; if(!pul||k>pul.k) pul={k,x:j.x,y:j.y,rgb:'230,230,255'}; } }
+  c.setTransform(1,0,0,1,0,0); c.clearRect(0,0,W,H);
+  if(gl) nebulosa(t,...o(.12),pul); else { c.fillStyle='#0b0a18'; c.fillRect(0,0,W,H); }
+  let [a,b]=o(.18); c.save(); c.translate(a,b); for(const s of far){ c.fillStyle=`rgba(${s.c},${s.a})`; c.fillRect(s.x,s.y,s.s,s.s); } c.restore();
+  [a,b]=o(.3); c.globalAlpha=marco.a; c.drawImage(marcoImg,marco.x-marco.d/2+a,marco.y-marco.d/2+b,marco.d,marco.d); c.globalAlpha=1;
+  [a,b]=o(.5); c.save(); c.translate(a,b); for(const s of mid){ const tw=.55+.45*Math.sin(t*s.f+s.p); c.fillStyle=`rgba(${s.c},${(s.a*tw).toFixed(2)})`; c.beginPath(); c.arc(s.x,s.y,s.s*.6,0,TAU); c.fill(); } c.restore();
+  if(t>proxEv) novoEv(); desenhaEvs(t,o(.35));
+  [a,b]=o(1.1); c.save(); c.translate(a,b); for(const s of poeira){ const g=c.createRadialGradient(s.x,s.y,0,s.x,s.y,s.r); g.addColorStop(0,`rgba(230,220,255,${s.a})`); g.addColorStop(1,'rgba(230,220,255,0)'); c.fillStyle=g; c.beginPath(); c.arc(s.x,s.y,s.r,0,TAU); c.fill(); } c.restore();
+  // o anel claro só no recorde (bem mais leve que antes)
+  c.save(); c.globalCompositeOperation='lighter';
+  for(const j of ondas){ const u=(t-j.t0)/1.6; if(u>1) continue; const R=pa*3.4*(t-j.t0); c.lineWidth=(6*(1-u)+1)*S; c.strokeStyle=tom(.22*(1-u)); c.beginPath(); c.arc(j.x,j.y,R,0,TAU); c.stroke(); }
+  c.restore();
+  if(OP.casa==='lencol') lencol(t,dt); else if(OP.casa==='curvas') curvas(t); else if(OP.casa==='poeira') poeiraCampo(t); else if(OP.casa==='relevo') relevo(t,dt); else ceu(t,dt);
+  pecas(t,pe);
+  ondas=ondas.filter(j=>t-j.t0<3); tremores=tremores.filter(j=>t-j.t0<1.2);
+  requestAnimationFrame(quadro);
+}
+botoes(); inicial();
+medidas(); addEventListener('resize',medidas); requestAnimationFrame(quadro);
+})();
+</script>
+</body>
+</html>
