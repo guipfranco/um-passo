@@ -562,7 +562,7 @@ function move(dx,dy){
   if(!wasTired && S.energy<=0 && !S.missao){
     setBanner(null,`Exausta! Só vem torrão`);
     $('#btnEnd').classList.add('hot');
-  } else if(tops.length && tops[0]>=4) setBanner(null,`${rockName(tops[0])}!`);
+  } else if(tops.length && tops[0]>=4){ setBanner(null,`${rockName(tops[0])}!`); if(S.missao) voltaMeta(); }
   // tutorial
   if(S.tut===1 && tops.length){
     S.tut=2;

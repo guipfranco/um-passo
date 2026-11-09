@@ -645,8 +645,30 @@ function comoJogarEsp(p){
   const cv=$('#cjCv');
   if(cv) espCanvasFixo(cv, w, p===0 ? Math.round(w/4*1.3) : Math.round(w/6*(1.36*2+1.36)), p===0 ? cjArrasto : cjEscada);
   $('#cjAnt').onclick=()=>{ if(p) comoJogarEsp(p-1); else fechaJanelaMenu(); }; FORA=fechaJanelaMenu;
-  $('#cjProx').onclick=()=>{ if(p<ult) comoJogarEsp(p+1); else infinitoJoga(); };
+  // Jogar faz o mesmo que o botão principal do menu: continua a Jornada ou, sem progresso, abre o mapa dela
+  $('#cjProx').onclick=()=>{ if(p<ult) comoJogarEsp(p+1); else if(temProgresso()) continuarEsp(); else missoesLista(); };
 }
+
+// ---------- til na Orbitron ----------
+// A Orbitron desenha o til como crase ("Missào", "Opçòes"). Nos textos em Orbitron, ã e õ vão num span .til, na Exo 2
+// e no tamanho que iguala a altura das letras (CSS). Um observador pega tudo o que entra na página, sem caçar título.
+const TIL_RE=/[ãõÃÕ]/;
+function tilOrbitron(raiz){
+  if(!raiz || !document.body.classList.contains('espaco')) return;
+  const it=document.createTreeWalker(raiz, NodeFilter.SHOW_TEXT), nos=[];
+  for(let n=it.nextNode(); n; n=it.nextNode()) if(TIL_RE.test(n.nodeValue) && !n.parentNode.classList?.contains('til')) nos.push(n);
+  for(const n of nos){ const pai=n.parentNode;
+    if(!/^["']?Orbitron/i.test(getComputedStyle(pai).fontFamily)) continue;
+    const fr=document.createDocumentFragment();
+    for(const p of n.nodeValue.split(/([ãõÃÕ])/)){ if(!p) continue;
+      if(TIL_RE.test(p)){ const s=document.createElement('span'); s.className = p===p.toLowerCase() ? 'til' : 'til M'; s.textContent=p; fr.appendChild(s); }
+      else fr.appendChild(document.createTextNode(p)); }
+    pai.replaceChild(fr,n); }
+}
+new MutationObserver(rs=>{ for(const r of rs){
+  if(r.type==='characterData'){ if(TIL_RE.test(r.target.nodeValue)) tilOrbitron(r.target.parentNode); continue; }
+  for(const n of r.addedNodes) if(TIL_RE.test(n.textContent||'')) tilOrbitron(n.nodeType===3 ? n.parentNode : n); } })
+  .observe(document.body, {childList:true, subtree:true, characterData:true});
 
 // ---------- nomes do espaço (os nomes da mina continuam em missoes.js: os testes acham as fases por eles) ----------
 const MUNDOS_NOME_ESP = MUNDOS.map(m=>[m.nome, m.desc]);
