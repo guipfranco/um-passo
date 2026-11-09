@@ -76,13 +76,14 @@ const metasEstTxt = (m,e=1) => m.livre ? `${e<2?`★★ em até ${tetoEst(m)[0]}
 // lixo espacial: bloco fixo; cada junção numa casa vizinha tira 1 de vida; sem vida, ele some e a casa fica livre
 function rachaLixo(r){
   if(!S.walls.some(w=>w.hp)) return;
-  for(const o of r.merges) for(const w of S.walls) if(w.hp>0 && Math.abs(w.x-o.x)+Math.abs(w.y-o.y)===1) w.hp--;
+  let bateu=0; for(const o of r.merges) for(const w of S.walls) if(w.hp>0 && Math.abs(w.x-o.x)+Math.abs(w.y-o.y)===1){ w.hp--; bateu++; }
+  if(bateu) SFX.racha();
   const foram=S.walls.filter(w=>w.lixo && w.hp<=0); if(!foram.length) return;
   S.walls=S.walls.filter(w=>!(w.lixo && w.hp<=0)); S.rachados=(S.rachados||0)+foram.length;
   for(const w of foram){ const el=els.get(w.id); if(el){ els.delete(w.id); el.classList.add('some'); setTimeout(()=>el.remove(),300); } }
 }
 function contaMissao(r){
-  rachaLixo(r);
+  rachaLixo(r); const neb=S.terra?.size||0;
   for(const o of r.merges){
     S.feitas[o.t]=(S.feitas[o.t]||0)+1; if(o.c!=null) S.coresF[o.t+':'+o.c]=(S.coresF[o.t+':'+o.c]||0)+1;
     if(o.k!=='p') S.pontos+=VAL(o.t);
@@ -92,6 +93,7 @@ function contaMissao(r){
     S.terra?.delete(o.x+','+o.y);
     if(o.solta){ S.soltas=(S.soltas||0)+1; delete o.solta; }
   }
+  if((S.terra?.size||0)<neb) SFX.nebulosa();
   // casa marcada de levar: basta uma pedrinha do tamanho pedido (ou maior) parar em cima
   // casa de levar: vale só se exatamente a peça pedida CHEGAR andando. Junção em cima da casa não conta, nem quando a
   // peça formada ali fica parada nos arrastos seguintes (a.ocup lembra quem já estava na casa)
@@ -396,6 +398,7 @@ function missaoResultado(ok, motivo){
       ${n<MISSOES.length?'<button class="btn g" id="mProx">Próxima fase</button>':'<p>Você terminou todas as fases!</p>'}
       <button class="btn dim" id="mDeNovo">Jogar de novo</button><button class="btn dim" id="mLista">Ver fases</button>`);
     if($('#mProx')) $('#mProx').onclick=()=>{ missoesLista(); missaoInfo(n+1); };
+    SFX.estrelas(e);
   }
   if($('#espRes')) espPlanetaGrande($('#espRes'),tAlvo(m),ok?'vit':'der');
   $('#mDeNovo').onclick=()=>missaoJoga(n, S.medalha?{passinho:true}:{});
@@ -424,6 +427,7 @@ function checaInfinito(){
 }
 function infinitoFim(){
   const rec=S.pontos>REC_INF(); if(rec) localStorage.ptui_rec_inf=S.pontos;
+  if(rec) SFX.pagou(); else SFX.naoDeu();
   const t=Math.max(1,S.maxForm||1), E=espFig();
   showOverlay(`${E?'<canvas id="espRes"></canvas>':''}<h2>Fim de jogo</h2><p>Maior peça: ${rockName(t)}</p>
     <p><b>${S.pontos}</b> pontos${rec?' (recorde!)':''} · <b>${S.moves}</b> arrastos</p>

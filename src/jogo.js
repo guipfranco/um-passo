@@ -548,12 +548,13 @@ function move(dx,dy){
   if(!S.semEnergia){ if(S.energy>0) S.energy--; else S.tired++; }
   humor();
   for(let i=0;i<(S.path.spawns??1);i++) addTile(undefined,[dx,dy]);
+  if((S.path.spawns??1)>0) SFX.nasce();
   render();
   if(S.missao||S.infinito) flutuaPontos(r);
   SFX.arrastar();
   const tops=r.merges.map(o=>o.t).sort((a,b)=>b-a);
   if(tops.length){ SFX.fundir(tops[0]); if(tops.length>1) setTimeout(()=>SFX.fundir(tops[1]),45); S.stats.maxT=Math.max(S.stats.maxT,tops[0]); }
-  if(S.missao||S.infinito){}
+  if(S.missao||S.infinito){ if(S.missao && !S.semEnergia && [5,3,1].includes(S.energy)) SFX.poucos(); }   // sonar quando sobram poucos arrastos
   else if(S.energy<=0) SFX.torraoCai(); else if(S.energy<=5) SFX.cansado();
   for(const o of r.merges) anim(o.id,'pop');
   if(has('coroa')){ const n=r.merges.filter(o=>o.t>=5).length; if(n){ const g=n*CORO[lvl('coroa')]; S.coroa+=g; renderItems(); fire('coroa','+×'+String(+g.toFixed(2)).replace('.',','),true); } }

@@ -71,6 +71,10 @@ p{margin:0;font-size:15px;line-height:1.42;color:#c9c2ee}
     <p class="est" id="estC"></p>
     <ul><li><a href="https://designingsound.org/2016/02/18/the-programmed-music-of-mini-metro-interview-with-rich-vreeland-disasterpeace" target="_blank">Mini Metro</a> (Disasterpeace): cada linha de metrô toca notas; a música nasce do jogo.</li>
       <li><a href="https://www.musicradar.com/news/guitars/how-65daysofstatic-built-the-soundtrack-to-no-mans-skys-infinite-universe-641184" target="_blank">No Man's Sky</a> (65daysofstatic): trilha montada na hora a partir de pedaços, diferente a cada partida.</li></ul></div>
+  <div class="card" data-m="jogo"><h3><i>✓</i>No jogo agora</h3>
+    <p>As três trilhas da família da Órbita que entraram no jogo. Tocam igual ao jogo (só abrindo pelo endereço do jogo).</p>
+    <div class="row"><button class="bt" data-tocar="estacao">▶ Estação</button><button class="bt" data-tocar="orbita2">▶ Órbita</button><button class="bt" data-tocar="pulsar">▶ Pulsar</button></div>
+    <p class="nota">Estação: menu e lista de fases. Órbita: fases da Jornada. Pulsar: Clássico.</p></div>
   <div class="card" data-m="hoje"><h3><i>0</i>Hoje</h3>
     <p>O lo-fi que toca hoje dentro das fases, para comparar.</p>
     <div class="row"><button class="bt hoje" data-tocar="hoje">▶ Tocar</button></div></div>
@@ -240,18 +244,24 @@ const MUSICAS={
       if(mx>=14) tom({T,dest:g,f:mtof([62,66,69,73,76,73,69,66][st%8]+(bar?2:0)),type:'square',a:.004,d:.12,v:.018,lp:1600,dly:.2,pan:Math.sin(s*.5)*.4});
       s++; return T+P; }));
     return {para(){ para.forEach(f=>f()); solta(g); }, junta(l){ fila.push({l,p:(Math.random()-.5)*.8}); if(l>mx) mx=l; }, reinicia(){ mx=3; }, get mx(){ return mx; }}; },
+  estacao(){ return modulo('estacao',1.55); }, orbita2(){ return modulo('orbita',1.6); }, pulsar(){ return modulo('pulsar',1.45); },
   hoje(){ const g=busMus(); let mod=null, parado=false;
     import('./musica/lofi-espera.js').then(m=>{ if(parado) return; mod=m; const t=C.createGain(); t.gain.value=.95; t.connect(g); m.iniciarMusica(C,t); })
       .catch(()=>{ document.querySelector('[data-m="hoje"] p').textContent='Não deu para carregar a música de hoje aqui (abra a página pelo endereço do jogo).'; });
     return {para(){ parado=true; if(mod) mod.pararMusica(1); solta(g); }}; },
 };
+// as trilhas do jogo, do jeito que o jogo toca (mesmo arquivo e mesmo volume)
+function modulo(nome,trim){ const g=busMus(); g.gain.value=trim; let mod=null, parado=false;
+  import('./musica/'+nome+'.js').then(m=>{ if(parado) return; mod=m; m.iniciarMusica(C,g); }).catch(()=>{ document.querySelector('[data-m="jogo"] .nota').textContent='Não deu para carregar aqui: abra pelo endereço do jogo.'; });
+  return {para(){ parado=true; if(mod) mod.pararMusica(.8); solta(g); }}; }
 let MUS=null, musNome=null;
 function tocar(nome){ audio(); const igual=musNome===nome; if(MUS){ MUS.para(); MUS=null; musNome=null; }
   if(!igual){ MUS=MUSICAS[nome](); musNome=nome; if(nome==='constel'&&!sim) liga(true); }
   else if(nome==='constel'&&sim) liga(false);
   marca(); }
-function marca(){ for(const b of document.querySelectorAll('[data-tocar]')) b.textContent=(b.dataset.tocar===musNome?'■ Parar':'▶ Tocar')+(b.dataset.tocar==='constel'&&b.dataset.tocar!==musNome?' (joga sozinho)':'');
-  for(const c of document.querySelectorAll('.card[data-m]')) c.classList.toggle('on',c.dataset.m===musNome); }
+const ROTULO={estacao:'Estação',orbita2:'Órbita',pulsar:'Pulsar'};
+function marca(){ for(const b of document.querySelectorAll('[data-tocar]')){ const k=b.dataset.tocar, on=k===musNome; b.textContent=ROTULO[k]?(on?'■ ':'▶ ')+ROTULO[k]:(on?'■ Parar':'▶ Tocar')+(k==='constel'&&!on?' (joga sozinho)':''); }
+  for(const c of document.querySelectorAll('.card[data-m]')) c.classList.toggle('on',c.dataset.m===musNome||(c.dataset.m==='jogo'&&!!ROTULO[musNome])); }
 document.querySelectorAll('[data-tocar]').forEach(b=>b.onclick=()=>tocar(b.dataset.tocar));
 document.getElementById('vozes').onclick=e=>{ vozes=!vozes; e.target.classList.toggle('on',vozes); if(vozes&&musNome!=='deriva') tocar('deriva'); };
 

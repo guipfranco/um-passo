@@ -8,6 +8,11 @@
 - **Mineração**: o roguelite (andares, mapa, loja, itens, fiscal).
 - **Laboratório**: testar qualquer regra; dele saem o Editor de níveis e o Catálogo.
 
+## Som do espaço
+
+- Efeitos: `SONS_ESP` em `src/sfx.js` (cada corpo com o seu material; eco e delay próprios). No espaço eles substituem os da mina; a Mineração segue com os sons antigos.
+- Músicas: eletrônicas tocadas na hora, sem arquivo (`musica/eletronica.js`): Estação no menu e na lista de fases, Órbita nas fases da Jornada, Pulsar no Clássico (`qualTrilha` em `src/sfx.js`). Rascunho para ouvir e comparar: `som.html`.
+
 ## Montar e publicar
 
 - O código fica em `src/` (`jogo.js` é a lógica; `config.js` os dados; `svg.js` a arte). O HTML e o CSS ficam em `build.py`.

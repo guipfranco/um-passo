@@ -364,7 +364,7 @@ function espOpcoes(){
   $('#oCred').onclick=()=>{ showOverlay(`<h2>Créditos</h2><ul>
       <li><b>Jogo:</b> Guilherme Franco.</li>
       <li><b>Planetas, texturas e cenário:</b> gerados por código, inspirados em imagens da NASA e da ESA.</li>
-      <li><b>Músicas:</b> trilhas do jogo O Gabinete, todas sintetizadas.</li>
+      <li><b>Músicas e efeitos:</b> tocados na hora pelo próprio jogo, sem arquivo de áudio.</li>
       <li><b>Fontes:</b> Orbitron e Exo 2 (SIL Open Font License).</li>
     </ul><button class="btn b" id="oVolta">Voltar</button>`); $('#oVolta').onclick=espOpcoes; FORA=espOpcoes; };
   $('#oOk').onclick=fechaJanelaMenu; FORA=fechaJanelaMenu;

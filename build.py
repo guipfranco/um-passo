@@ -482,6 +482,8 @@ function showOverlay(html){ FORA=null; $('#panel').innerHTML=enrich(html); $('#o
 // Só vale se o dedo desceu e subiu fora da janela (rolar a janela e soltar fora não fecha).
 var FORA=null, desceuFora=false;   // var: showOverlay pode ser chamado antes desta linha rodar
 $('#overlay').addEventListener('pointerdown', e=>{ desceuFora = e.target.id==='overlay'; });
+// no espaço, os botões das telas fazem um bipe curto
+addEventListener('click', e=>{ if(e.target.closest && e.target.closest('.btn,.icon,.mNo')) SFX.botao(); }, true);
 $('#overlay').addEventListener('click', e=>{ if(e.target.id==='overlay' && desceuFora && FORA){ const f=FORA; FORA=null; f(); } desceuFora=false; });
 function hideOverlay(){ $('#overlay').classList.add('hidden'); $('#panel').innerHTML=''; }
 
