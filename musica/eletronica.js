@@ -50,7 +50,16 @@ export function cria(cfg) {
       if (cfg.palma.includes(st)) chiado({ T, f: 1700, q: 0.8, d: 0.1, v: cfg.palmaV, rev: 0.25 });
       s++; return T + P;
     };
-    const id = setInterval(() => { while (prox < ctx.currentTime + 0.3) prox = passo(prox); }, 40);
+    const id = setInterval(() => {
+      const agora = ctx.currentTime;
+      if (prox < agora - 0.15) {
+        // atrasou (aba em segundo plano, celular travou): pula para o próximo compasso em vez de despejar notas
+        let p = s + Math.ceil((agora - prox) / P); p = Math.ceil(p / 16) * 16;
+        prox += (p - s) * P; s = p;
+      }
+      const frente = (typeof document !== 'undefined' && document.hidden) ? 1.2 : 0.3;   // em segundo plano o relógio só acorda 1 vez por segundo
+      while (prox < agora + frente) prox = passo(prox);
+    }, 40);
     E = { ctx, sai, id };
   }
   function pararMusica(fade = 1.5) {
