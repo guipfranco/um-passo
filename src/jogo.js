@@ -432,10 +432,12 @@ function startDay(p, tutorial=false){
   $('#btnEdit').style.display = S.lab ? '' : 'none'; S.editando=false; $('#labTools').classList.add('hidden');
   humor();
   if(forma){
-    forma.mapa.forEach((row,y)=>[...row].forEach((ch,x)=>{ if(ch==='#') S.walls.push({x,y,v:true}); else if(ch==='B') S.walls.push({x,y}); }));
+    forma.mapa.forEach((row,y)=>[...row].forEach((ch,x)=>{ if(ch==='#') S.walls.push({x,y,v:true}); else if(ch==='B') S.walls.push({x,y});
+      else if(ch==='L'||ch==='2'||ch==='3') S.walls.push({x,y,lixo:true,hp:ch==='L'?1:+ch}); }));   // lixo espacial: racha com junção ao lado
     S.edges = (forma.muretas||[]).map(([d,x,y])=>({d,x,y}));
   }
   if(p.walls){ const cells=shuffle([...Array(W*H).keys()].map(i=>({x:i%W,y:i/W|0})).filter(c=>!wallAt(c.x,c.y))); S.walls.push(...cells.slice(0,p.walls)); }
+  if(p.lixos){ const cells=shuffle([...Array(W*H).keys()].map(i=>({x:i%W,y:i/W|0})).filter(c=>!wallAt(c.x,c.y))); S.walls.push(...cells.slice(0,p.lixos).map(c=>({...c,lixo:true,hp:1}))); }
   S.walls.forEach((w,i)=>w.id='w'+i);
   if(p.edges){
     const all=[]; for(let y=0;y<H;y++) for(let x=0;x<W-1;x++) all.push({d:'v',x,y}); for(let y=0;y<H-1;y++) for(let x=0;x<W;x++) all.push({d:'h',x,y});
@@ -1181,7 +1183,7 @@ function formaAtual(){
   if(!xs.length) return null;
   // recorta no menor retângulo que contém as casas
   const x0=Math.min(...xs), y0=Math.min(...ys), w=Math.max(...xs)-x0+1, h=Math.max(...ys)-y0+1;
-  const mapa=[...Array(h).keys()].map(y=>[...Array(w).keys()].map(x=>{ const X=x+x0, Y=y+y0; const w=S.walls.find(v=>v.x===X&&v.y===Y); return w?(w.v?'#':'B'):'.'; }).join(''));
+  const mapa=[...Array(h).keys()].map(y=>[...Array(w).keys()].map(x=>{ const X=x+x0, Y=y+y0; const w=S.walls.find(v=>v.x===X&&v.y===Y); return w?(w.v?'#':w.lixo?(w.hp>1?String(w.hp):'L'):'B'):'.'; }).join(''));
   const muretas=S.edges.map(e=>[e.d,e.x-x0,e.y-y0]).filter(([d,x,y])=>x>=0&&y>=0&&x<w&&y<h);
   const pecas=S.tiles.map(t=>[t.x-x0,t.y-y0,t.t,t.c??null,t.k||null]).filter(([x,y])=>x>=0&&y>=0&&x<w&&y<h);
   return {mapa, muretas, pecas};
@@ -1408,7 +1410,7 @@ function render(){
   board.querySelectorAll('.slot').forEach(sl=>sl.classList.toggle('void', S.walls.some(w=>w.v && w.x==sl.dataset.x && w.y==sl.dataset.y)));
   for(const w of S.walls){
     if(w.v) continue;
-    if(!els.has(w.id)){ const el=document.createElement('div'); el.className='tile'; el.style.transform=pos(w.x,w.y); if(noEspaco()) espParede(el); else el.innerHTML=`<div class="face">${svgOf(wallInner())}</div>`; board.appendChild(el); els.set(w.id,el); }
+    if(!els.has(w.id)){ const el=document.createElement('div'); el.className='tile'; el.style.transform=pos(w.x,w.y); if(noEspaco()) (w.lixo ? espLixo(el,w) : espParede(el)); else el.innerHTML=`<div class="face">${svgOf(w.lixo ? torraoInner() : wallInner())}</div>`; board.appendChild(el); els.set(w.id,el); }
   }
   for(const e of (S.edges||[])){
     if(!els.has(e.id)){ const el=document.createElement('div'); el.className='edge '+e.d; el.style.setProperty('--ex',e.x); el.style.setProperty('--ey',e.y); board.appendChild(el); els.set(e.id,el); if(noEspaco()) espMureta(el,e.d); }

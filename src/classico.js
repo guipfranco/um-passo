@@ -15,7 +15,8 @@ const faseDe = m => m.fase || (m.forma||m.mapa ? 'caverna' : mundoDe(m).fase);
 const charDe = m => m.char || mundoDe(m).char || 'rola';
 const objsDe = m => m.objs || [m.obj];
 const metasDe = m => objsDe(m).filter(o=>!o.proibido);
-const corNome = c => ['roxa','verde','mista'][c];
+// nome da cor concordando com a peça (Asteroide roxo, Rocha roxa)
+const corNome = (c,t) => { const fem = t==null || artigo(rockName(t))==='uma'; return [fem?'roxa':'roxo','verde',fem?'mista':'misto'][c]; };
 const artigo = nome => { const w=nome.split(' ')[0]; if(/^(Cometa|Planeta)$/.test(w)) return 'um'; if(/is$/.test(w)) return 'uns'; return /a$/.test(w) ? 'uma' : 'um'; };
 // só as palavras antes de "de" vão para o plural (Rochas de gelo); ão vira ões
 const plural = nome => { let para=false; return nome.split(' ').map(w=>{ if(para) return w; if(w==='de'){ para=true; return w; } return /ão$/.test(w)?w.slice(0,-2)+'ões':/[aeiouáéíóú]$/i.test(w)?w+'s':/r$/.test(w)?w+'es':/l$/.test(w)?w.slice(0,-1)+'is':w; }).join(' '); };
@@ -30,13 +31,14 @@ const listaE = a => a.length<2 ? a.join('') : a.slice(0,-1).join(', ')+' e '+a[a
 function objetivoTxt(o){
   if(espFig()){ const e=objetivoEsp(o); if(e) return e; }
   if(o.forme) return `Forme ${qtd(o.n,o.forme)}`;
-  if(o.cor!=null) return `Forme ${qtd(o.n,o.t)} ${corNome(o.cor)}${o.n>1?'s':''}`;
+  if(o.cor!=null) return `Forme ${qtd(o.n,o.t)} ${corNome(o.cor,o.t)}${o.n>1?'s':''}`;
   if(o.pontos) return `Faça ${o.pontos} pontos`;
   if(o.quebre) return o.quebre<=1 ? `Quebre ${o.n} pedrinha${o.n>1?'s':''} com a picareta` : `Quebre ${qtd(o.n,o.quebre)} com a picareta`;
   if(o.seq) return `Forme, nessa ordem: ${listaE(o.seq.map(t=>rockName(t)))}`;
   if(o.combo) return `Faça duas junções num arrasto só, ${o.combo} ${o.combo>1?'vezes':'vez'}`;
   if(o.leve) return (o.n||1)>1 ? `Leve ${artigo(rockName(o.leve))} ${rockName(o.leve)} até cada casa marcada` : `Leve ${artigo(rockName(o.leve))} ${rockName(o.leve)} até a casa marcada`;
   if(o.alvo) return (o.n||1)>1 ? `Forme ${artigo(rockName(o.alvo))} ${rockName(o.alvo)} em cada casa marcada` : `Forme ${artigo(rockName(o.alvo))} ${rockName(o.alvo)} na casa marcada`;
+  if(o.rache) return o.rache>1 ? `Rache ${o.rache} lixos espaciais` : 'Rache o lixo espacial';
   if(o.terra) return `Limpe a terra das ${o.terra} casas`;
   if(o.solte) return (o.n||1)>1 ? `Solte as ${o.n} ${plural(rockName(o.solte))} presas` : `Solte ${artigo(rockName(o.solte))==='uma'?'a':'o'} ${rockName(o.solte)} pres${artigo(rockName(o.solte))==='uma'?'a':'o'}`;
   if(o.carrinho) return `Coloque ${qtd(o.n,o.carrinho)} no carrinho`;
@@ -54,6 +56,7 @@ function progObj(o){
   if(o.combo) return {at:S.combos||0, alvo:o.combo};
   if(o.alvo) return {at:(S.alvos||[]).filter(a=>a.ok&&!a.leve).length, alvo:(S.alvos||[]).filter(a=>!a.leve).length||o.n||1};
   if(o.leve) return {at:(S.alvos||[]).filter(a=>a.ok&&a.leve).length, alvo:(S.alvos||[]).filter(a=>a.leve).length||o.n||1};
+  if(o.rache) return {at:S.rachados||0, alvo:o.rache};
   if(o.terra) return {at:(S.terraTot||0)-(S.terra?.size||0), alvo:S.terraTot||o.terra};
   if(o.solte) return {at:S.soltas||0, alvo:S.presasTot||o.n||1};
   if(o.carrinho) return {at:S.carro?.n||0, alvo:o.n};
@@ -70,7 +73,16 @@ const metasEstTxt = (m,e=1) => m.livre ? `${e<2?`★★ em até ${tetoEst(m)[0]}
                                      : `${e<2?`★★ sobrando ${m.estrelas[0]} arrastos · `:''}★★★ sobrando ${m.estrelas[1]}`;
 
 // conta o que as metas pedem e os pontos, a cada arrasto (sem mexer na tela: o robô de calibrar usa)
+// lixo espacial: bloco fixo; cada junção numa casa vizinha tira 1 de vida; sem vida, ele some e a casa fica livre
+function rachaLixo(r){
+  if(!S.walls.some(w=>w.hp)) return;
+  for(const o of r.merges) for(const w of S.walls) if(w.hp>0 && Math.abs(w.x-o.x)+Math.abs(w.y-o.y)===1) w.hp--;
+  const foram=S.walls.filter(w=>w.lixo && w.hp<=0); if(!foram.length) return;
+  S.walls=S.walls.filter(w=>!(w.lixo && w.hp<=0)); S.rachados=(S.rachados||0)+foram.length;
+  for(const w of foram){ const el=els.get(w.id); if(el){ els.delete(w.id); el.classList.add('some'); setTimeout(()=>el.remove(),300); } }
+}
 function contaMissao(r){
+  rachaLixo(r);
   for(const o of r.merges){
     S.feitas[o.t]=(S.feitas[o.t]||0)+1; if(o.c!=null) S.coresF[o.t+':'+o.c]=(S.coresF[o.t+':'+o.c]||0)+1;
     if(o.k!=='p') S.pontos+=VAL(o.t);
@@ -138,7 +150,7 @@ function dadosPartidas(volta){
 }
 
 // ---------- fase em andamento: salvar e continuar ----------
-const CAMPOS_SAVE = ['tiles','walls','edges','alvos','terraTot','carro','energy','moves','pontos','feitas','coresF','quebras','seqI','combos','soltas','presasTot','maxForm','next'];
+const CAMPOS_SAVE = ['tiles','walls','edges','alvos','terraTot','carro','energy','moves','pontos','feitas','coresF','quebras','seqI','combos','soltas','presasTot','maxForm','next','rachados'];
 function salvaFase(){
   const st={}; for(const k of CAMPOS_SAVE) st[k]=S[k]; st.terra=[...(S.terra||[])];
   localStorage.mina_cla_save=JSON.stringify({n:S.missao, pass:!!S.medalha, st});
@@ -161,12 +173,12 @@ function montaPecasMissao(m){
   for(const o of objsDe(m)){
     const fixo=(lista,i)=>{ const q=lista?.[i]; if(!q) return null; usados.add(q[0]+','+q[1]); return {x:q[0],y:q[1]}; };   // posições fixas (quebra-cabeças)
     if(o.carrinho){ const c=fixo(m.carroPos&&[m.carroPos],0)||pega(borda); if(c) S.carro={x:c.x,y:c.y,t:o.carrinho,n:0}; }
-    if(o.alvo) for(let i=0;i<(o.n||1);i++){ const c=fixo(m.alvosPos,i)||pega(); if(c) S.alvos.push({x:c.x,y:c.y,t:o.alvo,ok:false}); }
-    if(o.leve) for(let i=0;i<(o.n||1);i++){ const c=fixo(m.alvosPos,i)||pega(); if(c) S.alvos.push({x:c.x,y:c.y,t:o.leve,ok:false,leve:true}); }
-    if(o.solte) for(let i=0;i<(o.n||1);i++){ const c=fixo(m.presasPos,i)||pega(); if(c){ S.tiles.push({id:'t'+(nextId++),x:c.x,y:c.y,t:o.solte,presa:1}); S.presasTot++; } }
+    if(o.alvo) for(let i=0;i<(o.n||1);i++){ const c=fixo(o.pos||m.alvosPos,i)||pega(); if(c) S.alvos.push({x:c.x,y:c.y,t:o.alvo,ok:false}); }
+    if(o.leve) for(let i=0;i<(o.n||1);i++){ const c=fixo(o.pos||m.alvosPos,i)||pega(); if(c) S.alvos.push({x:c.x,y:c.y,t:o.leve,ok:false,leve:true}); }
+    if(o.solte) for(let i=0;i<(o.n||1);i++){ const c=fixo(o.pos||m.presasPos,i)||pega(); if(c){ S.tiles.push({id:'t'+(nextId++),x:c.x,y:c.y,t:o.solte,presa:1}); S.presasTot++; } }
   }
   for(const o of objsDe(m)) if(o.terra){ const ocup=new Set(usados); usados.clear(); if(S.carro) usados.add(S.carro.x+','+S.carro.y);
-    for(let i=0;i<o.terra;i++){ const c=pega(); if(c) S.terra.add(c.x+','+c.y); } S.terraTot=S.terra.size; for(const k of ocup) usados.add(k); }
+    for(let i=0;i<o.terra;i++){ const q=(o.pos||m.terraPos)?.[i], c=q?{x:q[0],y:q[1]}:pega(); if(c) S.terra.add(c.x+','+c.y); } S.terraTot=S.terra.size; for(const k of ocup) usados.add(k); }
   const sq=objsDe(m).find(o=>o.seq); S.seqAlvo=sq?sq.seq:null;
 }
 const svgAlvo = t => `<svg viewBox="0 0 100 100"><circle class="anel" cx="50" cy="52" r="41" fill="none" stroke-width="5" stroke-dasharray="11 7"/><g class="fantasma" transform="translate(30 31) scale(.42)">${pedraInner(t)}</g></svg>`;
@@ -205,6 +217,7 @@ function iconeObj(o){
   if(o.seq) return figSvg(pedraInner(o.seq[Math.min(S?.seqI||0,o.seq.length-1)]));
   if(o.leve) return iconeObj({alvo:o.leve});
   if(o.alvo) return figSvg(`<circle cx="50" cy="52" r="40" fill="none" stroke="#f2b33d" stroke-width="7" stroke-dasharray="11 7"/><g transform="translate(28 30) scale(.45)">${pedraInner(o.alvo)}</g>`);
+  if(o.rache) return figSvg(espFig() ? lixoInner() : torraoInner());
   if(o.terra) return svgTerra(0,0).replace('<svg','<svg class=""');
   if(o.solte) return figSvg(pedraInner(o.solte)+(espFig()?gaiolaInner():svgCorrente.replace(/<\/?svg[^>]*>/g,'')));
   if(o.carrinho) return svgCarro(o.carrinho);
@@ -218,15 +231,15 @@ function silhuetas(o){
   const p=progObj(o), n=p.alvo;
   if(n>4 || n<1) return null;
   if(o.seq) return o.seq.map(t=>figSvg(pedraInner(t)));
-  if(o.forme||o.cor!=null||o.quebre||o.alvo||o.leve||o.solte||o.carrinho) return Array.from({length:n},()=>iconeObj(o));
+  if(o.forme||o.cor!=null||o.quebre||o.alvo||o.leve||o.solte||o.carrinho||o.rache) return Array.from({length:n},()=>iconeObj(o));
   return null;
 }
 function rotulo(o){
   if(espFig()){ const e=rotuloEsp(o); if(e) return e; }
   if(o.forme) return o.n>1?plural(rockName(o.forme)):rockName(o.forme);
-  if(o.cor!=null) return `${o.n>1?plural(rockName(o.t)):rockName(o.t)} ${corNome(o.cor)}${o.n>1?'s':''}`;
+  if(o.cor!=null) return `${o.n>1?plural(rockName(o.t)):rockName(o.t)} ${corNome(o.cor,o.t)}${o.n>1?'s':''}`;
   if(o.quebre) return 'quebradas'; if(o.seq) return 'nessa ordem'; if(o.alvo) return 'casas marcadas'; if(o.leve) return 'na casa marcada';
-  if(o.solte) return 'soltas'; if(o.carrinho) return 'no carrinho'; if(o.terra) return 'terra limpa';
+  if(o.solte) return 'soltas'; if(o.carrinho) return 'no carrinho'; if(o.terra) return 'terra limpa'; if(o.rache) return 'lixo rachado';
   if(o.combo) return 'duas de uma vez'; if(o.pontos) return 'pontos'; return '';
 }
 function figuraMissao(m){
@@ -235,7 +248,7 @@ function figuraMissao(m){
     const o=ms[0], sil=silhuetas(o);
     const peca = (inner,nome,t=null) => `<div class="pecaN">${figSvg(inner)}<small ${t!=null?`class="nomeT" style="--c:${rd(t)}"`:''}>${noIco(nome)}</small></div>`;
     const rec = (a,b,c) => `<div class="receita">${peca(...a)}<i>+</i>${peca(...b)}<i>=</i>${peca(...c)}</div>`;
-    if(o.forme || o.cor!=null){ const t=o.forme||o.t, c=o.cor, nm=x=>rockName(x)+(c!=null?' '+corNome(c):'');
+    if(o.forme || o.cor!=null){ const t=o.forme||o.t, c=o.cor, nm=x=>rockName(x)+(c!=null?' '+corNome(c,x):'');
       return `<div class="figM"><div class="alvo"><div class="pecaN">${figSvg(pedraCor(t,c),'fG')}<small class="nomeT" style="--c:${rd(t)}">${noIco(nm(t))}</small></div><b>×${o.n}</b></div>${rec([pedraCor(t-1,c),nm(t-1),t-1],[pedraCor(t-1,c),nm(t-1),t-1],[pedraCor(t,c),nm(t),t])}</div>`; }
     if(o.quebre){ const t=Math.max(1,o.quebre), nome=o.quebre<=1?(espFig()?'peça':'pedrinha'):rockName(t);
       return `<div class="figM"><div class="alvo"><div class="pecaN">${figSvg(pedraInner(t),'fG')}<small class="nomeT" style="--c:${rd(t)}">${noIco(nome)}</small></div><b>×${o.n}</b></div>${rec([pedraInner(t),nome,t],[pickInner(t),espFig()?'buraco negro':'picareta'],espFig()?['<circle cx="50" cy="50" r="30" fill="none" stroke="#cfc6ff" stroke-width="5" stroke-dasharray="8 7"/>','engolido']:[oreSvg(4,50,52,2.6),'minério'])}</div>`; }
@@ -248,6 +261,7 @@ const COMO_PECA = {
   alvo:'Casa marcada: forme a pedrinha pedida em cima dela, juntando ali (maior também vale).',
   leve:'Casa marcada: leve até ela exatamente a pedrinha pedida e pare em cima. Juntar em cima da casa não vale.',
   terra:'Casa de terra: uma junção em cima limpa a terra.',
+  rache:'Torrão fixo: some quando acontece uma junção numa casa ao lado.',
   solte:'Pedrinha presa: não sai do lugar, mas aceita junção. Junte uma igual nela para soltar.',
   carrinho:'Carrinho: pedrinha do tamanho pedido, ou maior, que parar nele é recolhida.',
   combo:'Duas junções no mesmo arrasto contam uma vez.',
@@ -353,7 +367,7 @@ function missaoJoga(n, opt={}){
   if(!sv) localStorage.removeItem('mina_cla_save');
   const pass = !!(opt.passinho || sv?.pass);
   S = {...freshState(), missao:n, tema:mundoDe(m).tema, char: pass?'passinho':charDe(m), medalha: pass && charDe(m)!=='passinho',
-       moves:0, extra:0, pontos:0, feitas:{}, coresF:{}, quebras:[], seqI:0, combos:0, soltas:0, maxForm:0};
+       moves:0, extra:0, pontos:0, feitas:{}, coresF:{}, quebras:[], seqI:0, combos:0, soltas:0, maxForm:0, rachados:0};
   S.fiscal=FISCAIS[0];
   for(const [k,v] of Object.entries(m.itens||{})) S.lv[k]=v;
   const p = {...PATHS[fase], ...(m.regras||{}), forma:fm, caverna:false, energy:(m.arrastos||999)-CFG.energy, semEnergia:!!m.livre};
@@ -394,7 +408,7 @@ function missaoResultado(ok, motivo){
 const REC_INF = () => +(localStorage.ptui_rec_inf||0);
 function infinitoJoga(){
   hideOverlay(); hideCoach(); VEIO_DO_EDITOR=false;
-  S = {...freshState(), infinito:true, missao:0, tema:1, char:'rola', moves:0, extra:0, pontos:0, feitas:{}, coresF:{}, quebras:[], seqI:0, combos:0, soltas:0, maxForm:0};
+  S = {...freshState(), infinito:true, missao:0, tema:1, char:'rola', moves:0, extra:0, pontos:0, feitas:{}, coresF:{}, quebras:[], seqI:0, combos:0, soltas:0, maxForm:0, rachados:0};
   S.fiscal=FISCAIS[0];
   applyAndar(); startDay({...PATHS.comum, forma:null, caverna:false, energy:999-CFG.energy, semEnergia:true, w:4, h:4});
   limpaMarcas(); document.body.classList.add('modoCla','modoInf'); $('#btnPause').textContent='☰';

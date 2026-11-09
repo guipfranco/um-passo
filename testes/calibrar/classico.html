@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <body style="margin:0"><script src="robo.js"></script><iframe id="f" src="../../index.html" width="400" height="800" style="border:0"></iframe><pre id="out" style="position:absolute;left:410px;top:0">x</pre>
 <script>
 // Calibra o Clássico com os dois robôs de robo.js (o do canto e o da meta); em cada fase vale o melhor. Eles também
@@ -36,7 +37,7 @@ async function calibra(){ const w=f.contentWindow, log=[], calib={};
    const A=await mede('escolhe'), B=await mede('escolheMeta'), C=await mede('escolheCasual');
    const R = Math.abs(A.pc-B.pc)>5 ? (A.pc>B.pc?A:B) : (A.u50<=B.u50?A:B);
    if(!R.ok.length){ log.push(`${n} ${m.nome}: o robô NÃO CUMPRE`); continue; }
-   const ok=R.ok, pc=R.pc, u20=q(ok,.2), u50=q(ok,.5), u80=q(ok,.8), fol=m.chefe?1.15:FOLGA[m.g];
+   const ok=R.ok, pc=R.pc, u20=q(ok,.2), u50=q(ok,.5), u80=q(ok,.8), fol=m.chefe?1.15:(FOLGA[m.g]??1.2);
    // a cauda longa (partidas raras e enormes) não pode puxar demais: no máximo ~1,9x a mediana
    const arrForte=Math.max(u50+5, Math.ceil(Math.min(u80*fol, u50*1.9)));
    // o limite vem do robô casual (uma pessoa comum): dá para ele cumprir em ~85% das partidas em que ele cumpre;

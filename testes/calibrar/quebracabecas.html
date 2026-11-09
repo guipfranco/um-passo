@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <body style="margin:0"><iframe id="f" src="../../index.html" width="400" height="800" style="border:0"></iframe><pre id="out" style="position:absolute;left:410px;top:0">x</pre>
 <script>
 // Gera os quebra-cabeças do Clássico: tabuleiros sem pedrinha nascendo, conferidos por busca (menor solução).
@@ -18,6 +19,13 @@ const SPECS = {
   q12:{w:4,h:4, alvo:4, obj:{leve:4,n:1}, orbita:true, prof:[4,6]},
   q13:{w:4,h:4, alvo:4, obj:{leve:4,n:1}, orbita:true, blocos:2, prof:[5,7]},
   q14:{w:4,h:4, alvo:4, obj:{carrinho:4,n:1}, carro:true, muretas:3, prof:[6,7]},
+  // Jornada 2: mundos 6 a 10
+  q15:{w:4,h:4, alvo:4, obj:{rache:2}, lixos:2, prof:[5,7]},
+  q16:{w:4,h:4, alvo:4, obj:{terra:3}, terra:3, prof:[5,7]},
+  q17:{w:4,h:4, alvo:5, obj:{terra:3}, terra:3, blocos:2, prof:[6,8]},
+  q18:{w:4,h:4, alvo:4, obj:{alvo:4,n:1}, orbita:true, prof:[5,7]},
+  q19:{w:4,h:4, alvo:4, obj:{solte:4,n:1}, presa:4, passinho:true, prof:[6,8]},
+  q20:{w:4,h:4, alvo:5, obj:{forme:5,n:1}, cores:true, muretas:2, prof:[6,8]},
 };
 // #q9,q10 gera só esses (os outros ficam como estão em src/quebracabecas.js)
 const SO = location.hash.length>1 ? location.hash.slice(1).split(',') : null;
@@ -32,6 +40,8 @@ async function gera(){const w=f.contentWindow, saida={}, log=[];
     const sh=a=>a.sort(()=>Math.random()-.5); sh(cel);
     const usa=()=>cel.pop();
     const blocos=[]; for(let i=0;i<(sp.blocos||0);i++){ const [x,y]=usa(); blocos.push([x,y]); S.walls.push({x,y,id:'b'+i}); }
+    const lixos=[]; for(let i=0;i<(sp.lixos||0);i++){ const [x,y]=usa(); lixos.push([x,y]); }   // lixo que racha (entra em S.walls na busca)
+    const terra=[]; for(let i=0;i<(sp.terra||0);i++){ const [x,y]=usa(); terra.push([x,y]); }    // nebulosa (casa vazia no começo)
     if(sp.muretas){ const todas=[]; for(let y=0;y<sp.h;y++) for(let x=0;x<sp.w-1;x++) todas.push(['v',x,y]); for(let y=0;y<sp.h-1;y++) for(let x=0;x<sp.w;x++) todas.push(['h',x,y]);
       for(const [d,x,y] of sh(todas).slice(0,sp.muretas)) S.edges.push({d,x,y,id:'e'+x+y+d}); }
     let orbita=null; if(sp.orbita){ orbita=usa(); }   // a órbita dourada começa vazia
@@ -47,11 +57,14 @@ async function gera(){const w=f.contentWindow, saida={}, log=[];
     if(sp.cores) pecas.forEach(p=>p.c=Math.random()<.15?2:Math.random()<.5?0:1);
     const tiles=pecas.map((p,i)=>{ const [x,y]=usa(); const t={id:'p'+i,x,y,t:p.t}; if(p.c!=null) t.c=p.c; if(p.k) t.k=p.k; return t; });
     if(presa) tiles.push({id:'pr',x:presa[0],y:presa[1],t:sp.obj.solte,presa:1});
-    return {tiles, blocos, muretas:S.edges.map(e=>[e.d,e.x,e.y]), carro, presa, orbita};
+    return {tiles, blocos, lixos, terra, muretas:S.edges.map(e=>[e.d,e.x,e.y]), carro, presa, orbita};
   };
   // feito? depois de um arrasto (r) a partir do estado
-  window.__feito=(sp,r,tiles,ini,antes)=>{
+  window.__feito=(sp,r,tiles,ini,antes,novo)=>{
     const o=sp.obj, carro=ini.carro;
+    if(o.rache) return novo.rach>=o.rache;
+    if(o.terra) return novo.tr.length===0;
+    if(o.alvo){ const [ox,oy]=ini.orbita; return r.merges.some(m=>m.x===ox&&m.y===oy&&m.t>=o.alvo); }
     // levar: exatamente o nível pedido chegando andando na órbita (junção ali não vale)
     if(o.leve){ const [ox,oy]=ini.orbita, q=tiles.find(t=>t.x===ox&&t.y===oy&&t.k!=='p'); if(!q||q.t!==o.leve||r.merges.some(m=>m.id===q.id)) return false;
       const a=antes.find(t=>t.x===ox&&t.y===oy); return !(a&&a.id===q.id); }
@@ -63,14 +76,20 @@ async function gera(){const w=f.contentWindow, saida={}, log=[];
   };
   window.__chave=ts=>ts.map(t=>t.x+'.'+t.y+'.'+t.t+'.'+(t.c??'')+(t.k||'')+(t.presa?'P':'')).sort().join('|');
   window.__busca=(sp,ini,maxP)=>{ // menor número de arrastos para cumprir (e quantas soluções nessa profundidade)
-    let nivel=[ini.tiles], visto=new Set([__chave(ini.tiles)]);
-    for(let p=1;p<=maxP;p++){ const prox=[]; let sols=0;
-      for(const ts of nivel) for(const [dx,dy] of DIRS){ const r=slide(ts,dx,dy); if(!r.moved) continue;
-        if(__feito(sp,r,r.tiles,ini,ts)){ sols++; continue; }
-        const k=__chave(r.tiles); if(visto.has(k)) continue; visto.add(k); prox.push(r.tiles); }
-      if(sols) return {prof:p, sols};
-      nivel=prox; if(!nivel.length) return null; }
-    return null; };`);
+    // estado: as peças, os lixos que ainda não racharam e as casas de nebulosa que faltam
+    const base=S.walls.filter(w=>!w.lixo);
+    const n0={ts:ini.tiles, lx:(ini.lixos||[]).map(([x,y])=>({x,y,hp:1})), tr:(ini.terra||[]).map(([x,y])=>x+','+y), rach:0};
+    const chave=n=>__chave(n.ts)+'#'+n.lx.map(l=>l.x+'.'+l.y+'.'+l.hp).join(',')+'#'+n.tr.join(',');
+    let nivel=[n0], visto=new Set([chave(n0)]), achou=null;
+    for(let p=1;p<=maxP && !achou;p++){ const prox=[]; let sols=0;
+      for(const nd of nivel){ S.walls=[...base, ...nd.lx.map((l,i)=>({x:l.x,y:l.y,id:'l'+i,lixo:true,hp:l.hp}))];
+        for(const [dx,dy] of DIRS){ const r=slide(nd.ts,dx,dy); if(!r.moved) continue;
+          const lx=nd.lx.map(l=>({...l})); for(const o of r.merges) for(const l of lx) if(l.hp>0 && Math.abs(l.x-o.x)+Math.abs(l.y-o.y)===1) l.hp--;
+          const novo={ts:r.tiles, lx:lx.filter(l=>l.hp>0), tr:nd.tr.filter(k=>!r.merges.some(o=>o.x+','+o.y===k)), rach:nd.rach+lx.filter(l=>l.hp<=0).length};
+          if(__feito(sp,r,r.tiles,ini,nd.ts,novo)){ sols++; continue; }
+          const k=chave(novo); if(visto.has(k)) continue; visto.add(k); prox.push(novo); } }
+      if(sols) achou={prof:p, sols}; else { nivel=prox; if(!nivel.length) break; } }
+    S.walls=base; return achou; };`);
  for(const [id,sp] of Object.entries(SPECS)){ if(SO && !SO.includes(id)) continue;
    let achou=null;
    for(let tent=0; tent<1500 && !achou; tent++){
@@ -81,13 +100,14 @@ async function gera(){const w=f.contentWindow, saida={}, log=[];
    }
    if(!achou){ log.push(id+': não achei'); continue; }
    const {ini,b}=achou;
-   const mapa=[]; for(let y=0;y<sp.h;y++){ let row=''; for(let x=0;x<sp.w;x++) row+= ini.blocos.some(([a,c])=>a===x&&c===y)?'B':'.'; mapa.push(row); }
+   const mapa=[]; for(let y=0;y<sp.h;y++){ let row=''; for(let x=0;x<sp.w;x++) row+= ini.blocos.some(([a,c])=>a===x&&c===y)?'B':(ini.lixos||[]).some(([a,c])=>a===x&&c===y)?'L':'.'; mapa.push(row); }
    const pecas=ini.tiles.filter(t=>!t.presa).map(t=>{ const a=[t.x,t.y,t.t]; if(t.c!=null||t.k) a.push(t.c??null); if(t.k) a.push(t.k); return a; });
    const q={mapa, pecas, regras:{spawns:0}, obj:sp.obj, arrastos:b.prof+5, estrelas:[2,4]};
    if(ini.muretas.length) q.muretas=ini.muretas;
    if(ini.carro) q.carroPos=ini.carro;
    if(ini.presa) q.presasPos=[ini.presa];
    if(ini.orbita) q.alvosPos=[ini.orbita];
+   if((ini.terra||[]).length) q.terraPos=ini.terra;
    saida[id]=q; log.push(`${id}: menor solução ${b.prof} arrastos (${b.sols} jeitos)`);
  }
  const linhas=Object.entries(saida).map(([k,v])=>`  ${k}: ${JSON.stringify(v).replace(/"([a-zA-Z]+)":/g,'$1:').replace(/"/g,"'")},`);

@@ -85,7 +85,7 @@ details.card[open] summary::after{content:' ▴'}
 
   <h2>JÁ DECIDIDO</h2>
   <div class="card ok"><ul class="lst">
-    <li><b>Começar com 120 fases em 10 mundos</b>; dá para crescer para centenas depois. <b>Os mundos 1 a 5 já estão no jogo.</b></li>
+    <li><b>Começar com 120 fases em 10 mundos</b>; dá para crescer para centenas depois. <b>Os 10 mundos já estão no jogo.</b></li>
     <li><b>Da mecânica mais simples para a mais complexa:</b> primeiro o que só fica parado (estação, rochas), depois levar (órbita, nave), depois as regras novas (lixo, nebulosa, formar em cima, preso) e por último as auras, que mudam a regra de juntar.</li>
     <li><b>Um mundo inteiro para cada passo de uma mecânica.</b> Um passo novo da mesma mecânica (ex.: o lixo que racha, depois da estação) é outro mundo.</li>
     <li><b>As antigas não só voltam:</b> cada mundo explora como elas interagem com a novidade, cada fase com uma experiência nova.</li>
@@ -250,15 +250,15 @@ const MUNDOS = [
    it:[['estacao','A estação serve de batente: a peça para certinho na órbita ao lado'],['estacao','Órbita cercada de estações: só se chega por um lado'],['mureta','Órbita atrás das rochas: entrar pelo lado certo'],['mureta','As rochas como batente, com duas órbitas'],['estacao','Desafio: levar um Cometa entre estações (a primeira fase difícil)']]},
   {p:'nave1', txt:'Levar planetas até a nave, que os recolhe.', jeito:'qc', feito:true,
    it:[['mureta','A nave atrás das rochas'],['estacao','A estação de batente para a nave'],['orbita1','Órbita ou nave: escolher o destino de cada peça'],['mureta','A nave no fim do corredor'],['estacao','Desafio: nave longe, entre estações e rochas',['mureta']]]},
-  {p:'lixo1', txt:'Bloco fixo que racha com uma junção ao lado.', jeito:'pas',
+  {p:'lixo1', txt:'Bloco fixo que racha com uma junção ao lado.', jeito:'pas', feito:true,
    it:[['estacao','Lado a lado: o lixo racha, a estação não. Qual abrir primeiro?'],['orbita1','Órbita atrás do lixo: rachar para abrir o caminho'],['nave1','Abrir caminho até a nave'],['mureta','Lixo no fim do corredor de rochas'],['orbita1','Desafio: rachar e levar',['estacao']]]},
-  {p:'neb1', txt:'Desfazer a nuvem juntando em cima dela.', jeito:'qc',
+  {p:'neb1', txt:'Desfazer a nuvem juntando em cima dela.', jeito:'qc', feito:true,
    it:[['estacao','Nebulosa encostada na estação: o batente ajuda a juntar em cima'],['lixo1','A junção que desfaz a nebulosa racha o lixo ao lado'],['orbita1','Órbita coberta: levar até ela não limpa, é preciso juntar antes'],['nave1','Nebulosa no caminho da nave'],['mureta','Desafio: nebulosa atrás de rochas e lixo',['lixo1']]]},
-  {p:'orbita2', txt:'A junção tem que acontecer em cima da órbita.', jeito:'pas',
+  {p:'orbita2', txt:'A junção tem que acontecer em cima da órbita.', jeito:'pas', feito:true,
    it:[['neb1','Formar em cima da órbita coberta: limpa as duas de uma vez'],['lixo1','Formar na órbita ao lado do lixo: racha e cumpre'],['orbita1','Duas órbitas: numa leva, na outra forma'],['nave1','Formar e mandar para a nave'],['neb1','Desafio: formar em cima com nebulosa e lixo em volta',['lixo1']]]},
-  {p:'presa1', txt:'Soltar o planeta preso juntando um igual com ele.', jeito:'pas+qc',
+  {p:'presa1', txt:'Soltar o planeta preso juntando um igual com ele.', jeito:'pas+qc', feito:true,
    it:[['orbita1','Soltar o preso e levar até a órbita'],['neb1','Preso coberto de nebulosa: soltar desfaz as duas'],['nave1','Soltar o preso e mandar para a nave'],['lixo1','Rachar o lixo para alcançar o preso',['mureta']],['orbita2','Desafio: soltar formando em cima da órbita',['neb1']]]},
-  {p:'aura1', txt:'Cada aura só junta com a sua cor.', jeito:'qc',
+  {p:'aura1', txt:'Cada aura só junta com a sua cor.', jeito:'qc', feito:true,
    it:[['orbita2','A órbita pede uma cor'],['nave1','A nave pede uma cor'],['presa1','O preso roxo só solta com roxo'],['neb1','Duas cores para desfazer uma nebulosa',['estacao']],['lixo1','Desafio: rachar o lixo com a cor certa',['orbita1','mureta']]]},
 ];
 const DEPOIS = [

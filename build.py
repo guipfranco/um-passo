@@ -127,6 +127,7 @@ body.espaco .linkBtn{color:#8fe8ff}
 body.espaco #ovos{display:flex;justify-content:center;gap:30px;margin-top:6px}
 /* mapa da Jornada: mundos que ainda não têm fases */
 .mGrupo.breve{opacity:.55}
+.tile.some{transition:opacity .28s,scale .28s;opacity:0;scale:1.35}
 .mBreve{align-self:center;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#9a91c9;border:1.5px dashed rgba(160,140,255,.35);border-radius:999px;padding:5px 14px;margin:2px 0 10px}
 /* telas baixas: tudo cabe sem rolar (o nome do menu encolhe pelo ajustaMenu) */
 @media (max-height:760px){

@@ -102,6 +102,9 @@ function espTile(el,t){
     if(T.presa) ESP.SPR.gaiola(c,x,y,u,tm,'front'); });
 }
 // bloco (a peça que não sai): estação espacial
+// lixo espacial que racha: o desenho do lixo, com rachaduras quando tem mais de 1 de vida
+function espLixo(el,w){ el.innerHTML='<div class="face"></div>'; espCanvas(el.firstChild,1.1,1.1,(c,W,H,u,tm)=>{ ESP.SPR.lixo(c,W/2,H/2,u*.9,tm);
+  if(w.hp>1){ c.save(); c.fillStyle='#ffd877'; c.font=`800 ${u*.26}px 'Exo 2',sans-serif`; c.textAlign='center'; c.textBaseline='middle'; c.shadowColor='#000'; c.shadowBlur=u*.06; c.fillText(w.hp,W/2+u*.28,H/2-u*.28); c.restore(); } }); }
 function espParede(el){ el.innerHTML='<div class="face"></div>'; espCanvas(el.firstChild,1.1,1.1,(c,W,H,u,tm)=>ESP.SPR.estacao(c,W/2,H/2,u,tm)); }
 // mureta: fluxo de rochas entre as duas casas
 function espMureta(el,d){ const v=d==='v';
@@ -181,6 +184,7 @@ function icoMetaEsp(m){
   if(o.pontos) return `<svg class="mPl" viewBox="0 0 100 100"><path d="M50 12 L61 38 L89 40 L67 58 L74 86 L50 71 L26 86 L33 58 L11 40 L39 38Z" fill="#f2b33d" stroke="#2e2219" stroke-width="4" stroke-linejoin="round"/></svg>`;
   if(o.combo) return `<svg class="mPl" viewBox="0 0 100 100"><text x="50" y="64" text-anchor="middle" font-size="40" font-weight="700" fill="#ece3f7" font-family="Exo 2, sans-serif">2×</text></svg>`;
   if(o.terra) return `<svg class="mPl" viewBox="0 0 100 100">${nebInner()}</svg>`;
+  if(o.rache) return `<svg class="mPl" viewBox="0 0 100 100">${lixoInner()}</svg>`;
   const t=tAlvo(m); return t ? `<img class="mPl" data-t="${t}" alt="">` : '';
 }
 // a lista tem muitas fases: o planeta de cada uma só é gerado quando ela aparece na tela
@@ -197,6 +201,7 @@ const COMO_ESP = {
   alvo:'Órbita dourada: forme o planeta pedido em cima dela, juntando ali (maior também vale).',
   leve:'Órbita dourada: leve até ela exatamente o planeta pedido e pare em cima. Juntar em cima da órbita não vale.',
   terra:'Nebulosa escura: uma junção em cima desfaz a nuvem.',
+  rache:'Lixo espacial: um bloco fixo que racha e some quando acontece uma junção numa casa ao lado.',
   solte:'Gaiola de luz: o planeta preso não sai do lugar, mas aceita junção. Junte um igual nele para soltar.',
   carrinho:'Nave: o planeta do tamanho pedido, ou maior, que parar embaixo dela é recolhido.',
   combo:'Duas junções no mesmo arrasto contam uma vez.',
@@ -217,6 +222,7 @@ function explicaEsp(m){
   if(COMO_FASE_ESP[fase]) out.push(COMO_FASE_ESP[fase]);
   if(charDe(m)==='passinho') out.push(COMO_CHAR.passinho);
   for(const o of objsDe(m)) for(const k of Object.keys(COMO_ESP)) if(o[k]!==undefined && !out.includes(COMO_ESP[k])) out.push(COMO_ESP[k]);
+  if((m.mapa||[]).some(l=>/[L23]/.test(l)) || m.regras?.lixos){ if(!out.includes(COMO_ESP.rache)) out.push(COMO_ESP.rache); }
   if(m.regras?.spawns===0) out.push('Quebra-cabeça: não nasce peça nova. Pense antes de arrastar.');
   return out;
 }
@@ -426,12 +432,13 @@ function objetivoEsp(o){
   if(o.quebre) return o.quebre<=1 ? `Engula ${o.n} peça${o.n>1?'s':''} com o buraco negro` : `Engula ${qtd(o.n,o.quebre)} com o buraco negro`;
   if(o.leve) return (o.n||1)>1 ? `Leve ${artigo(rockName(o.leve))} ${rockName(o.leve)} até cada órbita dourada` : `Leve ${artigo(rockName(o.leve))} ${rockName(o.leve)} até a órbita dourada`;
   if(o.alvo) return (o.n||1)>1 ? `Forme ${artigo(rockName(o.alvo))} ${rockName(o.alvo)} em cada órbita dourada` : `Forme ${artigo(rockName(o.alvo))} ${rockName(o.alvo)} na órbita dourada`;
-  if(o.terra) return `Desfaça a nebulosa de ${o.terra} casas`;
+  if(o.rache) return o.rache>1 ? `Rache ${o.rache} lixos espaciais` : 'Rache o lixo espacial';
+  if(o.terra) return o.terra>1 ? `Desfaça a nebulosa de ${o.terra} casas` : 'Desfaça a nebulosa';
   if(o.carrinho) return `Leve ${qtd(o.n,o.carrinho)} até a nave`;
   return null;
 }
 function rotuloEsp(o){
-  if(o.quebre) return 'engolidas'; if(o.alvo) return 'órbitas douradas'; if(o.leve) return 'na órbita dourada'; if(o.carrinho) return 'na nave'; if(o.terra) return 'nebulosa desfeita';
+  if(o.quebre) return 'engolidas'; if(o.alvo) return 'órbitas douradas'; if(o.leve) return 'na órbita dourada'; if(o.carrinho) return 'na nave'; if(o.rache) return 'lixo rachado'; if(o.terra) return 'nebulosa desfeita';
   return null;
 }
 // ícone de cada mundo no cabeçalho da lista de fases

@@ -53,6 +53,7 @@ window.ROBO = (()=>{
     }
     for(const b of r.breaks) for(const ob of os) if(ob.quebre && b.t>=ob.quebre) g+=5;
     if(r.merges.length>=2 && os.some(o=>o.combo)) g+=3;
+    { const rache=os.some(o=>o.rache); for(const o of r.merges) if(S.walls.some(w=>w.hp>0 && Math.abs(w.x-o.x)+Math.abs(w.y-o.y)===1)) g+= rache?6:1.5; }
     if(S.carro && r.tiles.some(t=>t.x===S.carro.x&&t.y===S.carro.y&&t.t>=S.carro.t&&t.k!=='p')) g+=6;
     const perto=(x,y,t)=>{ let d=9; for(const q of r.tiles) if(q.t>=t && q.k!=='p' && !q.presa) d=Math.min(d,Math.abs(q.x-x)+Math.abs(q.y-y)); return Math.max(0,2-d*.5); };
     const juntou=new Set(r.merges.map(o=>o.id));

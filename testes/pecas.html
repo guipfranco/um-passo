@@ -1,4 +1,5 @@
 <!-- tempo: 60000 -->
+<meta charset="utf-8">
 <body style="margin:0"><iframe id="f" src="../index.html" width="390" height="760" style="border:0"></iframe><pre id="out" style="position:absolute;left:400px;top:0">x</pre>
 <script>
 // Peças e metas novas do Clássico: casa marcada, terra, presa, carrinho, sequência, duas de uma vez, restrição,
@@ -15,7 +16,7 @@ f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEven
   // nebulosa e planeta preso ainda não têm mundo na Jornada 2: o teste cria fases temporárias para eles
   w.eval(`MISSOES.push({g:4,nome:'Teste nebulosa',obj:{terra:4},estrelas:[3,6]},{g:4,nome:'Teste preso',obj:{solte:4,n:1},estrelas:[3,6]})`);
   for(const k of ['Primeira órbita','Teste nebulosa','Teste preso','Primeira nave','Duas de uma vez','Duas de uma vez, de novo','Sem pressa','Fim da entrada','Quebra-cabeça']){
-    const n=nome(k); w.eval(`missaoJoga(${n})`); await wait(80);
+    const n=nome(k); if(!n){ errs.push(`não achei a fase "${k}" (o jogo tem ${w.eval('MISSOES.length')} fases)`); continue; } w.eval(`missaoJoga(${n})`); await wait(80);
     const marcas=`alvos=${d.querySelectorAll('.alvoM').length} terra=${d.querySelectorAll('.terraM').length} carrinho=${d.querySelectorAll('.carroM').length} presas=${d.querySelectorAll('.corrente').length}`;
     const hud=`silhuetas=${d.querySelectorAll('#cMis .fila span').length} chips=${d.querySelectorAll('#cMis .chipM').length}`;
     await joga(12);
@@ -47,6 +48,6 @@ f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEven
   // tela de cada fase abre sem erro
   const tot=w.eval('MISSOES.length'); let ok=0; for(let n=1;n<=tot;n++){ w.eval(`missaoInfo(${n})`); if(q('#panel h2')?.textContent==='Fase '+n) ok++; }
   log.push('aberturas sem erro: '+ok+'/'+tot);
- }catch(e){errs.push('EXC '+e.message+' '+(e.stack||'').split('\n')[1])}
+ }catch(e){errs.push('EXC '+e.message+' '+(e.stack||'').split(String.fromCharCode(10)).slice(1,6).join(' <- '))}
  out.textContent=JSON.stringify({log,errs},null,1);};
 </script></body>

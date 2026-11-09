@@ -33,7 +33,7 @@ print(tabela.strip())
 if '--grava' in sys.argv:
     arq = AQUI.parent / 'src' / 'missoes_calib.js'
     velho = {int(k): [int(a), int(b), int(c)] for k, a, b, c in re.findall(r'(\d+):\[(\d+),(\d+),(\d+)\]', arq.read_text(encoding='utf-8'))}
-    velho.update({int(k): v for k, v in json.loads(js).items()})
+    velho.update({int(k): v for k, v in json.loads(js).items() if None not in v})   # NaN vira null: não grava
     linhas = ',\n'.join(f'  {k}:[{v[0]},{v[1]},{v[2]}]' for k, v in sorted(velho.items()))
     arq.write_text("// Arrastos e estrelas de cada fase do Clássico, calibrados com o robô (testes/calibrar/classico.html).\n"
                    "// fase: [arrastos, sobrando para ★★, sobrando para ★★★]. Os quebra-cabeças usam os valores de quebracabecas.js.\n"

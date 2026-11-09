@@ -4,7 +4,7 @@
 
 ## Modos (ordem do menu)
 
-- **Jornada** (o antigo Clássico de fases): 10 mundos de 12 fases, cada mundo apresenta um passo de uma mecânica, da mais simples para a mais complexa, e explora como ela interage com as antigas (o desenho está em `proposta.html`; o caminho real, gerado do jogo, em `caminho.html`). Os mundos 1 a 5 estão prontos; 6 a 10 aparecem como "em construção" (`breve:true` em MUNDOS). Cada fase tem uma ou mais metas e até 3 estrelas. Código em `src/classico.js`; mundos e fases em `src/missoes.js`; arrastos e estrelas em `src/missoes_calib.js` (`python testes/calibrar.py --grava`); quebra-cabeças em `src/quebracabecas.js` (gerados por `testes/calibrar/quebracabecas.html`).
+- **Jornada** (o antigo Clássico de fases): 10 mundos de 12 fases, cada mundo apresenta um passo de uma mecânica, da mais simples para a mais complexa, e explora como ela interage com as antigas (o desenho está em `proposta.html`; o caminho real, gerado do jogo, em `caminho.html`). Os 10 mundos estão prontos (um mundo com `breve:true` em MUNDOS aparece como "em construção"). O lixo espacial ('L' no mapa, meta `{rache:n}`) racha com junção na casa ao lado. Para calibrar quando o disco C: estiver cheio, rode com `TMP=E:	mp\edge` (o navegador sem janela guarda o perfil na pasta temporária). Cada fase tem uma ou mais metas e até 3 estrelas. Código em `src/classico.js`; mundos e fases em `src/missoes.js`; arrastos e estrelas em `src/missoes_calib.js` (`python testes/calibrar.py --grava`); quebra-cabeças em `src/quebracabecas.js` (gerados por `testes/calibrar/quebracabecas.html`).
 - **Mineração**: o roguelite (andares, mapa, loja, itens, fiscal).
 - **Laboratório**: testar qualquer regra; dele saem o Editor de níveis e o Catálogo.
 

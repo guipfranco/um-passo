@@ -1,4 +1,5 @@
 <!-- tempo: 120000 -->
+<meta charset="utf-8">
 <iframe id="f" src="../index.html?menu" width="400" height="820"></iframe><pre id="out">x</pre>
 <script>f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEventListener('error',e=>errs.push(e.message+' @'+e.lineno));w.addEventListener('unhandledrejection',e=>errs.push('rej '+e.reason));
  const wait=ms=>new Promise(r=>setTimeout(r,ms));const q=s=>d.querySelector(s);const vis=s=>q(s)&&!q(s).classList.contains('hidden');

@@ -5,6 +5,8 @@
 //   11 jeito de jogar (quebra-cabeça ou Passinho) · 12 final do mundo.
 // A primeira fase difícil é a 46 (o desafio do mundo 4); antes dela o robô casual cumpre quase sempre.
 // Mundos com breve:true ainda não têm fases (aparecem como "em construção" no mapa).
+// Lixo espacial no mapa: 'L' racha com 1 junção numa casa ao lado ('2' e '3' pedem mais). Meta {rache:n}.
+// Posições fixas: alvosPos, carroPos, presasPos, terraPos (da fase) ou pos (de cada meta, quando há duas metas de órbita).
 //
 // Metas (obj, ou objs para várias):
 //   {forme:t, n}       forme n pedrinhas do nível t            {cor:c, t, n}   na cor c (0 roxa, 1 verde)
@@ -23,11 +25,11 @@ const MUNDOS = [
   {nome:'Fluxos de rochas',  tema:3, fase:'comum', ico:'corredor',       desc:'Rochas entre as casas: as peças param nelas.'},
   {nome:'Órbitas',           tema:8, fase:'comum', ico:'comum',          desc:'Levar o planeta pedido até a órbita dourada.'},
   {nome:'Naves',             tema:5, fase:'comum', ico:'galeria',        desc:'Levar planetas até a nave, que os recolhe.'},
-  {nome:'Lixo espacial',     tema:7, fase:'comum', ico:'desmoronamento', desc:'O lixo racha com uma junção ao lado.', breve:true},
-  {nome:'Nebulosas',         tema:4, fase:'comum', ico:'desmoronamento', desc:'Desfazer a nuvem juntando em cima dela.', breve:true},
-  {nome:'Órbitas, parte 2',  tema:8, fase:'comum', ico:'comum',          desc:'Formar o planeta em cima da órbita.', breve:true},
-  {nome:'Planetas presos',   tema:4, fase:'comum', ico:'desmoronamento', desc:'Soltar o planeta preso juntando um igual com ele.', breve:true},
-  {nome:'Auras',             tema:6, fase:'cores', ico:'cores',          desc:'Cada aura só junta com a sua cor.', breve:true},
+  {nome:'Lixo espacial',     tema:7, fase:'comum', ico:'desmoronamento', desc:'O lixo racha com uma junção ao lado.'},
+  {nome:'Nebulosas',         tema:4, fase:'comum', ico:'desmoronamento', desc:'Desfazer a nuvem juntando em cima dela.'},
+  {nome:'Órbitas, parte 2',  tema:8, fase:'comum', ico:'comum',          desc:'Formar o planeta em cima da órbita.'},
+  {nome:'Planetas presos',   tema:4, fase:'comum', ico:'desmoronamento', desc:'Soltar o planeta preso juntando um igual com ele.'},
+  {nome:'Auras',             tema:6, fase:'cores', ico:'cores',          desc:'Cada aura só junta com a sua cor.'},
 ];
 const MISSOES = [
   // 1 · Entrada: juntar, formar, pontos; depois duas de uma vez
@@ -95,5 +97,70 @@ const MISSOES = [
   {g:4, livre:true, nome:'Nave longe', w:6, regras:{walls:3, edges:4}, obj:{carrinho:5, n:2}},
   {g:4, nome:'Quebra-cabeça da nave, de novo', ...QC.q14},
   {g:4, livre:true, nome:'Fim das naves', w:5, chefe:true, obj:{carrinho:6, n:1}},
+  // 6 · Lixo espacial: bloco fixo que racha com uma junção ao lado
+  {g:5, nome:'Primeiro lixo',     mapa:['....','.L..','....','....'], obj:{rache:1}},
+  {g:5, nome:'Dois lixos',        mapa:['L...','....','...L','....'], obj:{rache:2}},
+  {g:5, nome:'Lixo no 5x5',       mapa:['.....','.L...','...L.','.L...','.....'], obj:{rache:3}},
+  {g:5, nome:'Lixo no caminho',   mapa:['.....','.L.L.','.....','.L.L.','.....'], obj:{forme:5, n:1}},
+  {g:5, nome:'Quebra-cabeça do lixo', ...QC.q15},
+  {g:5, nome:'Lixo e estação',    mapa:['.....','.BL..','.....','..LB.','.....'], obj:{rache:2}},
+  {g:5, nome:'Órbita atrás do lixo', mapa:['....','.L..','....','....'], alvosPos:[[0,1]], obj:{leve:3, n:1}},
+  {g:5, nome:'Caminho até a nave', mapa:['....','..L.','....','....'], carroPos:[3,1], obj:{carrinho:4, n:1}},
+  {g:5, nome:'Lixo no corredor',  mapa:['.....','.....','L....','.....','.....'], muretas:[['h',1,1],['h',2,1],['h',3,1],['h',1,2],['h',2,2],['h',3,2]], objs:[{rache:1},{forme:5, n:1}]},
+  {g:5, nome:'Rachar e levar',    mapa:['.....','.B...','.....','...BL','...L.'], alvosPos:[[4,4]], obj:{leve:4, n:1}},
+  {g:5, nome:'Primeiro Passinho', char:'passinho', obj:{forme:4, n:1}},
+  {g:5, nome:'Fim do lixo', w:5,  chefe:true, mapa:['.....','.L.L.','..L..','.L.L.','.....'], objs:[{rache:5},{forme:6, n:1}]},
+  // 7 · Nebulosas: desfazer a nuvem juntando em cima dela
+  {g:6, nome:'Primeira nebulosa',          obj:{terra:2}},
+  {g:6, nome:'Mais nebulosa',              obj:{terra:4}},
+  {g:6, nome:'Nebulosa grande', w:5,       obj:{terra:8}},
+  {g:6, nome:'Nebulosa e cometa', w:5,     objs:[{terra:5},{forme:5, n:1}]},
+  {g:6, nome:'Quebra-cabeça da nebulosa',  ...QC.q16},
+  {g:6, nome:'Nebulosa na estação', mapa:['.....','.B...','.....','...B.','.....'], terraPos:[[2,1],[1,2],[3,2],[2,3]], obj:{terra:4}},
+  {g:6, livre:true, nome:'Nebulosa e lixo',     mapa:['.....','.L...','.....','...L.','.....'], terraPos:[[2,1],[1,2],[3,2],[2,3]], objs:[{terra:4},{rache:2}]},
+  {g:6, nome:'Órbita na nebulosa',  alvosPos:[[1,0]], terraPos:[[1,0]], objs:[{terra:1},{leve:3, n:1}]},
+  {g:6, livre:true, nome:'Nebulosa e nave', w:5, carroPos:[4,2], terraPos:[[3,2],[2,2]], objs:[{terra:2},{carrinho:4, n:1}]},
+  {g:6, livre:true, nome:'Nebulosa entre rochas e lixo', mapa:['.....','..L..','.....','..L..','.....'], muretas:[['v',1,2],['v',2,2]], terraPos:[[2,2],[1,1],[3,3],[1,3],[3,1]], objs:[{terra:5},{rache:2}]},
+  {g:6, nome:'Quebra-cabeça da nebulosa, de novo', ...QC.q17},
+  {g:6, livre:true, nome:'Fim das nebulosas', w:5, chefe:true, objs:[{terra:8},{forme:6, n:1}]},
+  // 8 · Órbitas, parte 2: a junção acontece em cima da órbita
+  {g:7, nome:'Formar na órbita',     alvosPos:[[0,0]], obj:{alvo:3, n:1}},
+  {g:7, nome:'Formar na beirada',    alvosPos:[[3,1]], obj:{alvo:4, n:1}},
+  {g:7, nome:'Duas órbitas de formar', w:5, alvosPos:[[0,0],[4,4]], obj:{alvo:3, n:2}},
+  {g:7, nome:'Cometa na órbita', w:5, alvosPos:[[4,4]], obj:{alvo:5, n:1}},
+  {g:7, nome:'Quebra-cabeça de formar na órbita', ...QC.q18},
+  {g:7, nome:'Órbita coberta',       alvosPos:[[0,0]], terraPos:[[0,0]], objs:[{alvo:4, n:1},{terra:1}]},
+  {g:7, nome:'Formar ao lado do lixo', mapa:['.L..','....','....','....'], alvosPos:[[0,0]], objs:[{alvo:4, n:1},{rache:1}]},
+  {g:7, livre:true, nome:'Leva numa, forma na outra', w:5, objs:[{leve:3, n:1, pos:[[0,4]]},{alvo:4, n:1, pos:[[4,0]]}]},
+  {g:7, livre:true, nome:'Formar e mandar para a nave', w:5, carroPos:[4,2], alvosPos:[[0,2]], objs:[{alvo:4, n:1},{carrinho:4, n:1}]},
+  {g:7, livre:true, nome:'Formar entre nebulosa e lixo', mapa:['.....','.L...','.....','...L.','.....'], alvosPos:[[2,2]], terraPos:[[2,2],[1,2],[3,2]], objs:[{alvo:4, n:1},{terra:3}]},
+  {g:7, nome:'Passinho no 5x5', char:'passinho', w:5, obj:{forme:5, n:1}},
+  {g:7, livre:true, nome:'Fim das órbitas, parte 2', w:5, chefe:true, alvosPos:[[0,0]], terraPos:[[1,1],[2,2],[3,3],[4,4]], objs:[{alvo:5, n:1},{terra:4}]},
+  // 9 · Planetas presos: soltar juntando um igual com ele
+  {g:8, nome:'Primeiro preso',        obj:{solte:3, n:1}},
+  {g:8, nome:'Preso maior',           obj:{solte:4, n:1}},
+  {g:8, nome:'Dois presos', w:5,      obj:{solte:3, n:2}},
+  {g:8, nome:'Preso de cometa', w:5,  obj:{solte:5, n:1}},
+  {g:8, nome:'Quebra-cabeça do preso', ...QC.q4},
+  {g:8, nome:'Soltar e levar', w:5,   presasPos:[[2,2]], alvosPos:[[2,4]], objs:[{solte:3, n:1},{leve:4, n:1}]},
+  {g:8, nome:'Preso na nebulosa',     presasPos:[[1,1]], terraPos:[[1,1]], objs:[{solte:3, n:1},{terra:1}]},
+  {g:8, nome:'Soltar e mandar para a nave', w:5, presasPos:[[2,2]], carroPos:[4,0], objs:[{solte:3, n:1},{carrinho:4, n:1}]},
+  {g:8, nome:'Preso atrás do lixo', mapa:['.....','.....','.L...','.....','.....'], muretas:[['h',0,1]], presasPos:[[0,2]], obj:{solte:4, n:1}},
+  {g:8, nome:'Soltar formando na órbita', w:5, presasPos:[[0,0]], terraPos:[[0,0],[1,0],[0,1]], objs:[{solte:4, n:1},{alvo:5, n:1, pos:[[0,0]]},{terra:3}]},
+  {g:8, nome:'Quebra-cabeça do preso no Passinho', ...QC.q19, char:'passinho'},
+  {g:8, nome:'Fim dos presos', w:5, chefe:true, objs:[{solte:5, n:1},{forme:6, n:1}]},
+  // 10 · Auras: cada aura só junta com a sua cor
+  {g:9, nome:'Roxa e verde',          obj:{forme:3, n:2}},
+  {g:9, nome:'Toda roxa',             obj:{cor:0, t:3, n:2}},
+  {g:9, nome:'Toda verde',            obj:{cor:1, t:3, n:2}},
+  {g:9, nome:'Auras no 5x5', w:5,     objs:[{cor:0, t:4, n:1},{cor:1, t:4, n:1}]},
+  {g:9, nome:'Quebra-cabeça das auras', fase:'cores', ...QC.q6},
+  {g:9, nome:'Órbita com auras',      alvosPos:[[0,0]], obj:{alvo:3, n:1}},
+  {g:9, nome:'Nave com auras',        carroPos:[3,1], obj:{carrinho:3, n:1}},
+  {g:9, nome:'Nebulosa com auras',    obj:{terra:3}},
+  {g:9, nome:'Lixo com auras', w:5, fase:'cores', mapa:['.....','.L...','.....','...L.','.....'], obj:{rache:2}},
+  {g:9, nome:'Asteroide roxo entre rochas', w:5, regras:{edges:4}, obj:{cor:0, t:4, n:1}},
+  {g:9, nome:'Quebra-cabeça das auras, de novo', fase:'cores', ...QC.q20},
+  {g:9, nome:'Fim das auras', w:6, chefe:true, obj:{forme:5, n:2}},
 ];
 MISSOES.forEach(m=>{ m.estrelas=m.estrelas||[3,6]; });

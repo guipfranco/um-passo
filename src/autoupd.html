@@ -1,7 +1,9 @@
 <script>
 // Atualiza sozinho: se o navegador abriu uma cópia antiga (o GitHub Pages guarda por 10 min),
 // busca a versão nova, atualiza o cache e recarrega uma vez.
+// Aberto direto do disco (testes, calibragem) não precisa: e a recarga no meio de um teste o quebraria.
 (async()=>{try{
+  if(location.protocol==='file:') return;
   const u=location.pathname, k='upd:'+u;
   const [velho,novo]=await Promise.all([fetch(u,{cache:'force-cache'}).then(r=>r.text()), fetch(u,{cache:'reload'}).then(r=>r.text())]);
   if(velho!==novo && !sessionStorage[k]){ sessionStorage[k]=1; location.reload(); }
