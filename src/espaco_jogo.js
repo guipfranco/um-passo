@@ -399,8 +399,12 @@ const COMO_ESP = {
   proibido:'Se formar o planeta proibido, a fase acaba.',
 };
 const COMO_FASE_ESP = {
-  cores:'Cada peça tem uma aura roxa ou verde: só junta com a mesma cor.',
+  cores:'Cada peça tem uma aura roxa ou verde: só junta com a mesma cor. A aura de duas cores junta com qualquer uma e fica da cor da outra.',
   picareta:'Nascem buracos negros: cada um engole o planeta da cor dele.',
+};
+const COMO_MAPA_ESP = {
+  estacao:'Estação: ocupa uma casa e nunca sai do lugar. As peças batem nela e param.',
+  rochas:'Fluxo de rochas: uma faixa de rochas entre duas casas. As peças param nela, como numa parede fina.',
 };
 function regrasEsp(m){
   const fase=faseDe(m), fm=formaDe(m), n=PATHS[fase].n, tam = fm ? `${fw(fm)}x${fh(fm)}` : `${m.w||n||4}x${m.h||m.w||n||4}`;
@@ -410,6 +414,10 @@ function explicaEsp(m){
   const fase=faseDe(m), out=[];
   if(n1(m)) out.push('Arraste para juntar peças iguais: duas iguais viram a do nível seguinte.');
   if(COMO_FASE_ESP[fase]) out.push(COMO_FASE_ESP[fase]);
+  // estação e fluxo de rochas também são novidades (textos de proposta.html): explicados na estreia, como as outras
+  const fm=formaDe(m);
+  if(m.regras?.walls || fm?.mapa?.some(l=>l.includes('B'))) out.push(COMO_MAPA_ESP.estacao);
+  if(m.regras?.edges || fm?.muretas?.length) out.push(COMO_MAPA_ESP.rochas);
   if(charDe(m)==='passinho') out.push(COMO_CHAR.passinho);
   for(const o of objsDe(m)) for(const k of Object.keys(COMO_ESP)) if(o[k]!==undefined && !out.includes(COMO_ESP[k])) out.push(COMO_ESP[k]);
   if((m.mapa||[]).some(l=>/[L23]/.test(l)) || m.regras?.lixos){ if(!out.includes(COMO_ESP.rache)) out.push(COMO_ESP.rache); }
@@ -635,7 +643,8 @@ function objetivoEsp(o){
   return null;
 }
 function rotuloEsp(o){
-  if(o.quebre) return 'engolidas'; if(o.alvo) return 'órbitas douradas'; if(o.leve) return 'na órbita dourada'; if(o.carrinho) return 'na nave'; if(o.rache) return 'lixo rachado'; if(o.terra) return 'nebulosa desfeita';
+  const varias=(o.n||1)>1;   // singular ou plural conforme a meta
+  if(o.quebre) return 'engolidas'; if(o.alvo) return varias?'órbitas douradas':'órbita dourada'; if(o.leve) return varias?'nas órbitas douradas':'na órbita dourada'; if(o.carrinho) return 'na nave'; if(o.rache) return o.rache>1?'lixos rachados':'lixo rachado'; if(o.terra) return 'nebulosa desfeita';
   return null;
 }
 // ícone de cada mundo no cabeçalho da lista de fases
