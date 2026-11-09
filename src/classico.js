@@ -412,7 +412,7 @@ function missaoResultado(ok, motivo){
 const REC_INF = () => +(localStorage.ptui_rec_inf||0);
 function infinitoJoga(){
   hideOverlay(); hideCoach(); VEIO_DO_EDITOR=false;
-  S = {...freshState(), infinito:true, missao:0, tema:1, char:'rola', moves:0, extra:0, pontos:0, feitas:{}, coresF:{}, quebras:[], seqI:0, combos:0, soltas:0, maxForm:0, rachados:0};
+  S = {...freshState(), infinito:true, missao:0, tema:1, char:'rola', moves:0, extra:0, pontos:0, feitas:{}, coresF:{}, quebras:[], seqI:0, combos:0, soltas:0, maxForm:0, rachados:0, recAntes:REC_INF()};
   S.fiscal=FISCAIS[0];
   applyAndar(); startDay({...PATHS.comum, forma:null, caverna:false, energy:999-CFG.energy, semEnergia:true, w:4, h:4});
   limpaMarcas(); document.body.classList.add('modoCla','modoInf'); $('#btnPause').textContent='☰';
@@ -422,12 +422,14 @@ function infinitoJoga(){
 function montaInfinitoHud(){ $('#cMis').innerHTML=`<div><b id="cRec">${REC_INF()}</b><small>recorde</small></div>`; $('#ptsP').style.display=''; }
 function hudInfinito(){ $('#cArr').textContent=S.moves||0; $('#cPts').textContent=S.pontos||0; const r=$('#cRec'); if(r) r.textContent=Math.max(REC_INF(),S.pontos||0); }
 function checaInfinito(){
+  // o recorde fica guardado na hora: sair, recomeçar ou fechar o jogo no meio da partida não o perde
+  if((S.pontos||0)>REC_INF()) localStorage.ptui_rec_inf=S.pontos;
   if(anyMove()) return;
   S.phase='fimI'; setBanner(null,'não cabe mais nada');
   const est=S; setTimeout(()=>{ if(S===est && S.phase==='fimI') infinitoFim(); },650);
 }
 function infinitoFim(){
-  const rec=S.pontos>REC_INF(); if(rec) localStorage.ptui_rec_inf=S.pontos;
+  const rec=S.pontos>S.recAntes; if(S.pontos>REC_INF()) localStorage.ptui_rec_inf=S.pontos;
   if(rec) SFX.pagou(); else SFX.naoDeu();
   const t=Math.max(1,S.maxForm||1), E=espFig();
   showOverlay(`${E?'<canvas id="espRes"></canvas>':''}<h2>Fim de jogo</h2><p>Maior peça: ${rockName(t)}</p>
