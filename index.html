@@ -626,7 +626,7 @@ body.rola #stage{touch-action:none}
 <div id="coach" class="hidden"><div class="cav" id="coachAv"></div><div><p id="coachText"></p><button class="btn b" id="coachOk">Ok</button></div></div>
 
 <script>
-const VERSAO="6468543f";
+const VERSAO="b514e879";
 // ===================== CONFIG =====================
 let W = 4, H = 4, N = 4;      // largura e altura do tabuleiro (N = maior lado)
 const CFG = {
@@ -4597,11 +4597,13 @@ let AC=null, BUS=null, NB=null;
 function ctxAudio(){
   try{
     if(!AC){ AC=new (window.AudioContext||window.webkitAudioContext)(); BUS=AC.createGain(); BUS.gain.value=.9; BUS.connect(AC.destination); }
-    if(AC.state==='suspended') AC.resume();
+    if(AC.state==='suspended' && !document.hidden) AC.resume();   // escondido, fica parado (ver visibilitychange)
     return AC;
   }catch(e){ return null; }
 }
 function ac(){ return sound ? ctxAudio() : null; }
+// jogo em segundo plano (trocou de app, bloqueou a tela, outra aba): o som para e volta quando o jogo reaparece
+document.addEventListener('visibilitychange',()=>{ if(AC) (document.hidden ? AC.suspend() : AC.resume()).catch(()=>{}); });
 
 // ===================== MÚSICA =====================
 // Trilha por tela (todas sintetizadas, vindas do Gabinete). TRIM iguala o volume entre elas.
@@ -4874,7 +4876,9 @@ $('#btnEdit').onclick=()=>labEditar(!S.editando);
 $('#btnAssovio').onclick=assoviar;
 $('#btnPause').onclick=pauseMenu;
 document.querySelectorAll('.musBtn').forEach(b=>{ b.onclick=toggleMusic; b.style.opacity=music?1:.4; });
-addEventListener('pointerdown',()=>{ if(AC&&AC.state==='suspended') AC.resume(); else if(!AC&&music){ ctxAudio(); trilha(musKey); } },{capture:true});
+// destrava o áudio no primeiro toque. No celular o navegador só libera o som quando o dedo sobe (pointerup), não quando encosta
+const destravaAudio=()=>{ if(AC&&AC.state==='suspended') AC.resume(); else if(!AC&&music){ ctxAudio(); trilha(musKey); } };
+for(const t of ['pointerdown','pointerup','keydown']) addEventListener(t,destravaAudio,{capture:true});
 $('#mContinue').onclick=loadGame;
 $('#mCred').onclick=credits;
 $('#mLab').onclick=labPainel;
