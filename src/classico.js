@@ -67,7 +67,9 @@ const metaFeita = o => { const p=progObj(o); return p.at>=p.alvo; };
 const cumpriu = m => metasDe(m).every(metaFeita);
 const violou = m => objsDe(m).find(o=>o.proibido && (S.maxForm||0)>=o.proibido);
 // fase livre (sem limite de arrastos): as estrelas vêm dos arrastos usados; tetoEst = máximo de arrastos para ★★ e para ★★★
-const tetoEst = m => [m.arrastos-m.estrelas[0], m.arrastos-m.estrelas[1]];
+// O ★★★ fica entre 75% e 88% do ★★: nem quase igual a ele, nem apertado demais (a calibragem sozinha dava os dois extremos).
+const tetoEst = m => { const t2=m.arrastos-m.estrelas[0], t3=m.arrastos-m.estrelas[1];
+  return [t2, Math.min(Math.round(t2*.88), Math.max(Math.round(t2*.75), t3))]; };
 const estrelasPor = (m,sobra,usados) => m.livre ? 1 + (usados<=tetoEst(m)[0]) + (usados<=tetoEst(m)[1]) : 1 + (sobra>=m.estrelas[0]) + (sobra>=m.estrelas[1]);
 const arrastosTxt = m => m.livre ? 'sem limite de arrastos' : `${m.arrastos||'?'} arrastos`;
 const metasEstTxt = (m,e=1) => m.livre ? `${e<2?`★★ em até ${tetoEst(m)[0]} arrastos · `:''}★★★ em até ${tetoEst(m)[1]}`
@@ -116,6 +118,13 @@ function flutuaPontos(r){
   for(const o of r.merges) if(o.k!=='p') f(o.x,o.y,VAL(o.t));
   for(const b of r.breaks) f(b.x,b.y,2*VAL(b.t));
 }
+// meta no letreiro da fase (a mesma da entrada)
+const metaLetreiro = m => metasDe(m).length>1 ? `${metasDe(m).length} metas` : objetivosTxt(m);
+// a comemoração de peça grande ("Asteroide!") toma o letreiro; 1,5 s depois da última a meta volta,
+// só se a fase ainda estiver em jogo (no fim, "missão cumprida!" e afins ficam)
+let voltaMetaT=0;
+function voltaMeta(){ clearTimeout(voltaMetaT); const est=S;
+  voltaMetaT=setTimeout(()=>{ if(S===est && S.missao && S.phase==='mine') setBanner(null, metaLetreiro(MISSOES[S.missao-1])); }, 1500); }
 // depois de cada arrasto: cumpriu, formou o proibido, acabaram os arrastos ou travou
 function checaMissao(){
   const m=MISSOES[S.missao-1];
@@ -402,8 +411,8 @@ function missaoJoga(n, opt={}){
   limpaMarcas(); montaPecasMissao(m);
   if(sv) restauraFase(sv.st);
   document.body.classList.add('modoCla'); $('#btnPause').textContent='☰'; $('#btnPause').title=''; montaMissaoHud(m); render();
-  // o nome da fase vai sem o ícone de peça (em "Rochas de batente" as rochas são o fluxo, não a peça Rocha)
-  setBanner(`Fase ${n}: ${noIco(nomeFaseCla(n))}${S.medalha?' · Passinho':''}`, metasDe(m).length>1 ? `${metasDe(m).length} metas` : objetivosTxt(m));
+  // o nome da fase vai sem o ícone de peça (no título, "Primeira rocha" é nome, não a meta)
+  setBanner(`Fase ${n}: ${noIco(nomeFaseCla(n))}${S.medalha?' · Passinho':''}`, metaLetreiro(m));
   pedeEncaixe();
 }
 function missaoResultado(ok, motivo){

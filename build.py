@@ -95,6 +95,9 @@ body.espaco .etq b{color:#f2b33d}
 /* ---- Clássico no espaço: telas no estilo neon ---- */
 body.espaco{color:#f3e9d7;font-family:'Exo 2',sans-serif}
 body.espaco h2,body.espaco .banner #bTitle,body.espaco .pill b{font-family:Orbitron,'Exo 2',sans-serif;letter-spacing:.02em}
+/* o til da Orbitron parece crase: ã e õ dos textos nela vêm na Exo 2 (tilOrbitron), com a altura da Orbitron (x 580/493, H 720/690) */
+body.espaco .til{font-family:'Exo 2',sans-serif;font-size:1.17em;line-height:0}
+body.espaco .til.M{font-size:1.04em}
 body.espaco .btn{font-family:'Exo 2',sans-serif !important;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:rgba(10,8,25,.55) !important;color:#ff8a7a !important;border:2px solid #ff8a7a !important;box-shadow:0 0 16px #ff8a7a55,inset 0 0 14px #ff8a7a2a !important;text-shadow:0 0 10px #ff8a7a;border-radius:14px !important}
 body.espaco .btn.g{color:#ffd36e !important;border-color:#ffd36e !important;box-shadow:0 0 16px #ffd36e66,inset 0 0 14px #ffd36e33 !important;text-shadow:0 0 10px #ffd36e}
 body.espaco .btn.b,body.espaco .btn.lab,body.espaco .btn.lab2{color:#6fe0ff !important;border-color:#6fe0ff !important;box-shadow:0 0 16px #6fe0ff55,inset 0 0 14px #6fe0ff2a !important;text-shadow:0 0 10px #6fe0ff}
