@@ -3,6 +3,7 @@
 # Uso:
 #   python publicar.py                      monta e publica o jogo
 #   python publicar.py fundo.html malha.html também publica esses rascunhos (com os arquivos que eles carregam)
+#   python publicar.py bastidores.html       a página de bastidores (leva junto a pasta bastidores/ com as fotos)
 # O clone do repositório público fica ao lado deste: ../2048-astros (git clone https://github.com/guipfranco/2048-astros).
 import os, re, shutil, subprocess, sys
 
@@ -22,6 +23,11 @@ for r in sys.argv[1:]:
     for src in re.findall(r'<script[^>]+src="([^"#?]+)', html):
         if not src.startswith('http'):
             arquivos.append(src)
+    # a pasta de mesmo nome, se houver (ex.: bastidores/ com as fotos de bastidores.html)
+    pasta = os.path.join(AQUI, os.path.splitext(r)[0])
+    if os.path.isdir(pasta):
+        for raiz, _, fs in os.walk(pasta):
+            arquivos += [os.path.relpath(os.path.join(raiz, f), AQUI).replace(os.sep, '/') for f in fs]
 
 for a in dict.fromkeys(arquivos):
     origem, destino = os.path.join(AQUI, a), os.path.join(PUB, a)

@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Bastidores do 2048 Astros</title>
+<meta name="description" content="Como um jogo nasceu em três dias de conversa com o Claude, quase tudo pelo celular.">
+<meta property="og:title" content="Bastidores do 2048 Astros">
+<meta property="og:description" content="Como um jogo nasceu em três dias de conversa com o Claude, quase tudo pelo celular.">
+<meta property="og:image" content="https://guipfranco.github.io/um-passo/bastidores/previa.jpg">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0b0a18">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;500;600;700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+*{box-sizing:border-box}
+html{background:#0b0a18;scroll-behavior:smooth}
+body{margin:0;color:#e8e4ff;font:400 16px/1.5 'Exo 2',system-ui,sans-serif;-webkit-tap-highlight-color:transparent;overflow-x:hidden}
+a{color:#7fe7ff}
+.orb{font-family:Orbitron,'Exo 2',sans-serif;font-weight:900;letter-spacing:.06em}
+
+/* ---------- abertura: a galáxia das versões ---------- */
+#hero{position:relative;height:100vh;height:100svh;min-height:560px;overflow:hidden;
+  background:radial-gradient(120% 80% at 50% 30%,#1a1340 0%,#0b0a18 62%)}
+#gal{position:absolute;inset:0;width:100%;height:100%;touch-action:pan-y;cursor:crosshair}
+.heroTxt{position:absolute;left:0;right:0;bottom:0;padding:0 20px calc(26px + env(safe-area-inset-bottom));text-align:center;pointer-events:none}
+.kicker{font:700 12px 'Exo 2',sans-serif;letter-spacing:.32em;color:#a49bd6}
+h1{margin:4px 0 6px;white-space:nowrap;font:900 clamp(26px,8.6vw,64px)/1 Orbitron,sans-serif;letter-spacing:.05em;color:#f4fbff;
+  text-shadow:0 0 18px rgba(110,230,255,.75),0 0 42px rgba(110,230,255,.35)}
+.lead{margin:0 auto 14px;max-width:440px;font-size:17px;color:#cfc8f2}
+#ticker{pointer-events:auto;margin:0 auto;max-width:440px;min-height:62px;padding:9px 14px;border-radius:14px;
+  background:rgba(20,16,44,.72);border:1.5px solid rgba(140,200,255,.22);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);text-align:left}
+#ticker .tq{display:flex;gap:8px;align-items:center;font:700 12px 'Exo 2',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#a49bd6}
+#ticker .tq i{width:9px;height:9px;border-radius:50%;background:var(--c,#6ee6ff);box-shadow:0 0 8px var(--c,#6ee6ff);flex:none}
+#ticker .tm{font-size:15px;line-height:1.3;color:#f1eeff;margin-top:2px}
+.dica{margin:10px 0 0;font-size:13px;color:#8f86c4}
+.desce{pointer-events:auto;display:inline-block;margin-top:8px;font-size:22px;color:#7fe7ff;text-decoration:none;animation:boia 2s ease-in-out infinite}
+@keyframes boia{50%{transform:translateY(5px)}}
+
+main{max-width:720px;margin:0 auto;padding:0 16px}
+section.bloco{padding:56px 0 8px}
+h2{margin:0 0 6px;font:900 clamp(20px,5.6vw,28px)/1.15 Orbitron,sans-serif;letter-spacing:.06em;color:#9fe9ff}
+.sub{margin:0 0 22px;color:#b9b1e6;font-size:16px}
+
+/* ---------- números ---------- */
+.nums{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:620px){.nums{grid-template-columns:repeat(3,1fr)}}
+.num{background:rgba(22,17,44,.78);border:1.5px solid rgba(255,255,255,.1);border-radius:16px;padding:14px 14px 12px}
+.num b{display:block;font:900 30px/1 Orbitron,sans-serif;color:#fff;text-shadow:0 0 14px rgba(110,230,255,.45)}
+.num span{display:block;margin-top:6px;font-size:13.5px;line-height:1.3;color:#b9b1e6}
+
+/* ---------- o ciclo ---------- */
+.ciclo{position:relative;width:min(100%,340px);aspect-ratio:1;margin:6px auto 18px}
+.ciclo svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.passo{position:absolute;width:112px;margin:-38px 0 0 -56px;text-align:center}
+.passo i{display:grid;place-items:center;width:46px;height:46px;margin:0 auto 4px;border-radius:50%;font:900 17px Orbitron,sans-serif;color:#0b0a18;
+  background:var(--c);box-shadow:0 0 16px var(--c)}
+.passo b{display:block;font:700 13.5px/1.2 'Exo 2',sans-serif;color:#fff}
+.miolo{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;font:700 12px 'Exo 2',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#a49bd6}
+.miolo b{display:block;font:900 15px Orbitron,sans-serif;letter-spacing:.06em;color:#f4fbff;text-shadow:0 0 10px rgba(110,230,255,.6)}
+.passos{display:grid;gap:10px;margin:0 0 26px}
+.passos div{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start}
+.passos div i{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;font:900 13px Orbitron,sans-serif;color:#0b0a18;background:var(--c)}
+.passos p{margin:0;color:#cfc8f2}
+.passos p b{color:#fff}
+.real{border:1.5px solid rgba(140,200,255,.22);border-radius:18px;padding:14px 14px 6px;background:rgba(18,14,38,.7)}
+.real h3{margin:0 0 10px;font:800 15px 'Exo 2',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#a49bd6}
+.ev{display:grid;grid-template-columns:52px 1fr;gap:10px;padding:0 0 12px;position:relative}
+.ev::before{content:'';position:absolute;left:25px;top:22px;bottom:0;width:1.5px;background:rgba(140,200,255,.18)}
+.ev:last-child::before{display:none}
+.ev time{font:700 13px Orbitron,sans-serif;color:#7fe7ff;padding-top:3px}
+.ev p{margin:0;font-size:15px;color:#d9d3fb}
+.ev p em{font-style:normal;color:#fff}
+.ev.ok time{color:#8dffb0}
+
+/* ---------- a linha do tempo ---------- */
+.linha{position:relative;padding-bottom:20px}
+.linha>svg{position:absolute;left:0;top:0;width:100%;pointer-events:none;overflow:visible}
+.cap{position:relative;padding:34px 0 6px}
+.no{position:relative;width:96px;height:96px;margin-left:10%;border-radius:50%;
+  background:radial-gradient(circle at 50% 45%,rgba(40,30,80,.95),rgba(14,11,32,.95));border:2px solid color-mix(in srgb,var(--c) 70%,transparent);
+  box-shadow:0 0 22px color-mix(in srgb,var(--c) 35%,transparent)}
+.cap:nth-child(even) .no{margin-left:auto;margin-right:10%}
+.no img{position:absolute;left:50%;top:50%;width:84%;height:84%;margin:-42% 0 0 -42%;object-fit:contain}
+.no .ant{width:50%;height:50%;margin:-25% 0 0 -25%;opacity:0}
+.no .atual{opacity:0;transform:scale(.3)}
+.no .nv{position:absolute;left:-6px;top:-6px;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;
+  font:900 12px Orbitron,sans-serif;color:#0b0a18;background:var(--c);box-shadow:0 0 10px var(--c);z-index:2}
+.no .nome{position:absolute;left:50%;bottom:-24px;transform:translateX(-50%);white-space:nowrap;font:700 12px 'Exo 2',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--c)}
+.no::after{content:'';position:absolute;inset:-2px;border-radius:50%;border:2px solid var(--c);opacity:0;pointer-events:none}
+.cap.vis .no .ant.a{animation:juntaA .75s ease-in forwards}
+.cap.vis .no .ant.b{animation:juntaB .75s ease-in forwards}
+.cap.vis .no .atual{animation:nasce .7s .68s cubic-bezier(.3,1.7,.5,1) forwards,flutua 5s 1.5s ease-in-out infinite}
+.cap.vis .no::after{animation:anel .9s .68s ease-out}
+@keyframes juntaA{0%{opacity:0;transform:translateX(-80px)}15%{opacity:1}85%{opacity:1;transform:translateX(0)}100%{opacity:0;transform:translateX(0)}}
+@keyframes juntaB{0%{opacity:0;transform:translateX(80px)}15%{opacity:1}85%{opacity:1;transform:translateX(0)}100%{opacity:0;transform:translateX(0)}}
+@keyframes nasce{to{opacity:1;transform:scale(1)}}
+@keyframes flutua{0%,100%{translate:0 0}50%{translate:0 -3px}}
+@keyframes anel{0%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(1.7)}}
+.cartao{position:relative;margin-top:36px;background:#16122d;border:1.5px solid rgba(255,255,255,.1);border-radius:20px;padding:16px 15px 14px;
+  opacity:0;transform:translateY(24px);transition:opacity .6s .2s,transform .6s .2s}
+.cap.vis .cartao{opacity:1;transform:none}
+.quando{font:700 12.5px 'Exo 2',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#a49bd6}
+.quando b{color:var(--c);font-weight:800}
+.cartao h3{margin:3px 0 12px;font:900 21px/1.15 Orbitron,sans-serif;letter-spacing:.04em;color:#fff}
+.quem{font:700 11px 'Exo 2',sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#8f86c4;margin:10px 0 5px}
+.quem.g{text-align:right}
+.fala{display:block;width:fit-content;max-width:90%;margin:0 0 6px auto;padding:9px 13px;border-radius:16px 16px 4px 16px;
+  background:rgba(110,230,255,.1);border:1px solid rgba(110,230,255,.3);color:#eafaff;font-size:15.5px;line-height:1.42}
+.claude{max-width:94%;padding:10px 13px;border-radius:16px 16px 16px 4px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.13);color:#ddd7fb;font-size:15.5px;line-height:1.45}
+.claude b{color:#fff}
+.decide{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;margin:0 0 6px}
+.decide span{padding:6px 10px;border-radius:12px;background:rgba(110,230,255,.08);border:1px solid rgba(110,230,255,.25);font-size:14px;color:#eafaff}
+.fotos{display:flex;gap:10px;justify-content:center;margin:14px 0 2px}
+.fotos figure{margin:0;flex:0 1 46%;max-width:230px;text-align:center}
+.fotos.um figure{flex-basis:64%}
+.fotos img{display:block;width:100%;border-radius:16px;border:1.5px solid rgba(140,200,255,.25);background:#0b0a18;cursor:zoom-in}
+.fotos figcaption{margin-top:5px;font-size:12.5px;line-height:1.3;color:#9a92cc}
+.links{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.links a{font:600 13px 'Exo 2',sans-serif;text-decoration:none;color:#bdf3ff;padding:5px 10px;border-radius:999px;border:1px solid rgba(110,230,255,.35);background:rgba(110,230,255,.06)}
+.links a::before{content:'↗ ';opacity:.7}
+
+/* nomes que ficaram pelo caminho */
+.nomes{display:flex;flex-wrap:wrap;gap:7px;margin:4px 0 10px}
+.nomes span{position:relative;padding:6px 11px;border-radius:12px;border:1px solid rgba(255,255,255,.16);font:700 14px 'Exo 2',sans-serif;color:#cfc8f2;background:rgba(255,255,255,.04)}
+.nomes span::after{content:'';position:absolute;left:8px;right:8px;top:50%;height:2px;background:#ff6f91;transform:scaleX(0);transform-origin:left;transition:transform .35s}
+.cap.vis .nomes span.x::after{transform:scaleX(1)}
+.nomes span.x{transition:color .3s}
+.cap.vis .nomes span.x{color:#8c84b8}
+.nomes span.fim{font:900 15px Orbitron,sans-serif;color:#fff;border-color:#6ee6ff;box-shadow:0 0 14px rgba(110,230,255,.5);background:rgba(40,90,140,.35)}
+/* agentes em paralelo */
+.agentes{margin:12px 0 4px;padding:12px;border-radius:14px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.08)}
+.ag{display:grid;grid-template-columns:78px 1fr;gap:8px;align-items:center;margin:5px 0;font:600 13px 'Exo 2',sans-serif;color:#cfc8f2}
+.ag i{display:block;height:8px;border-radius:5px;background:linear-gradient(90deg,var(--c),color-mix(in srgb,var(--c) 30%,transparent));transform:scaleX(0);transform-origin:left;transition:transform 1.6s ease-out}
+.cap.vis .ag i{transform:scaleX(1)}
+.ag:nth-child(2) i{transition-delay:.15s}.ag:nth-child(3) i{transition-delay:.3s}.ag:nth-child(4) i{transition-delay:.45s}
+.agentes p{margin:8px 0 0;font-size:14px;color:#ddd7fb}
+.agentes p b{color:#8dffb0}
+/* medidor */
+.fps{font:600 13px/1.6 ui-monospace,Consolas,monospace;color:#8dffb0;background:rgba(0,0,0,.55);border:1px solid rgba(141,255,176,.3);border-radius:10px;padding:8px 11px;width:fit-content;margin:10px 0 2px}
+.fps b{font-size:17px}
+
+.fimLinha{text-align:center;padding:30px 0 0;color:#b9b1e6;font-size:16px}
+.fimLinha b{display:block;font:900 18px Orbitron,sans-serif;letter-spacing:.06em;color:#f4fbff;margin-bottom:4px}
+
+/* ---------- dicas ---------- */
+.dicas{display:grid;gap:10px}
+.dicaItem{background:rgba(22,17,44,.78);border:1.5px solid rgba(255,255,255,.1);border-radius:16px;padding:12px 14px}
+.dicaItem h4{margin:0 0 6px;font:800 16px 'Exo 2',sans-serif;color:#fff}
+.dicaItem h4 i{font:900 13px Orbitron,sans-serif;font-style:normal;color:#6fe0ff;margin-right:8px}
+.dicaItem q{display:block;font-size:15px;color:#cde9f5;quotes:'“' '”'}
+
+/* ---------- fim ---------- */
+.final{text-align:center;padding:56px 0 30px}
+.btn{display:inline-block;padding:15px 30px;border-radius:16px;border:2px solid #6ee6ff;color:#fff;text-decoration:none;
+  font:900 17px Orbitron,sans-serif;letter-spacing:.08em;background:rgba(40,90,140,.35);box-shadow:0 0 22px rgba(110,230,255,.45),inset 0 0 14px rgba(110,230,255,.25)}
+.rasc{margin:26px 0 0}
+.rasc p{margin:0 0 8px;color:#b9b1e6;font-size:14.5px}
+.rasc .links{justify-content:center}
+footer{max-width:720px;margin:0 auto;padding:20px 16px calc(34px + env(safe-area-inset-bottom));text-align:center;font-size:13px;color:#7f77b0}
+
+#luz{position:fixed;inset:0;z-index:50;display:none;place-items:center;background:rgba(5,4,14,.92);padding:16px;cursor:zoom-out}
+#luz.on{display:grid}
+#luz img{max-width:100%;max-height:100%;border-radius:16px;border:1.5px solid rgba(140,200,255,.3)}
+
+@media (prefers-reduced-motion:reduce){
+  .no .atual{opacity:1;transform:none}.cartao{opacity:1;transform:none}
+  .cap.vis .no .ant,.cap.vis .no .atual,.cap.vis .no::after{animation:none}.desce{animation:none}
+}
+</style>
+</head>
+<body>
+
+<header id="hero">
+  <canvas id="gal" aria-label="Galáxia com um ponto de luz para cada versão publicada do jogo"></canvas>
+  <div class="heroTxt">
+    <div class="kicker">BASTIDORES</div>
+    <h1>2048 ASTROS</h1>
+    <p class="lead">Como um jogo nasceu em três dias de conversa com o Claude, quase tudo pelo celular.</p>
+    <div id="ticker"><div class="tq"><i></i><span id="tq">06/11 · 21h19</span></div><div class="tm" id="tm">Protótipo inicial do Um Passo</div></div>
+    <p class="dica">Cada ponto de luz é uma versão publicada. Toque em um.</p>
+    <a class="desce" href="#numeros" aria-label="Descer">↓</a>
+  </div>
+</header>
+
+<main>
+  <section class="bloco" id="numeros">
+    <h2>EM NÚMEROS</h2>
+    <p class="sub">Do primeiro protótipo, na noite de 6 de novembro, até hoje.</p>
+    <div class="nums">
+      <div class="num"><b data-n="142">0</b><span>versões publicadas</span></div>
+      <div class="num"><b data-n="3">0</b><span>dias, do primeiro protótipo ao jogo de hoje</span></div>
+      <div class="num"><b data-n="22">0</b><span>páginas de rascunho para comparar e escolher</span></div>
+      <div class="num"><b data-n="120">0</b><span>fases, em 10 mundos</span></div>
+      <div class="num"><b data-n="18">0</b><span>corpos celestes, da Poeira à Galáxia</span></div>
+      <div class="num"><b data-n="0">0</b><span>linhas de código digitadas pelo Guilherme</span></div>
+    </div>
+  </section>
+
+  <section class="bloco" id="ciclo">
+    <h2>COMO FUNCIONA</h2>
+    <p class="sub">Um ciclo curto, repetido centenas de vezes.</p>
+    <div class="ciclo" id="cicloV">
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <ellipse cx="50" cy="50" rx="36" ry="36" fill="none" stroke="rgba(140,200,255,.22)" stroke-width=".5" stroke-dasharray="1.6 1.6"/>
+        <circle r="1.6" fill="#fff"><animateMotion dur="9s" repeatCount="indefinite" path="M50,14 A36,36 0 1,1 49.99,14"/></circle>
+      </svg>
+      <div class="miolo">o jogo<b>NO AR</b></div>
+      <div class="passo" style="left:50%;top:14%;--c:#6ee6ff"><i>1</i><b>Pede, do jeito que fala</b></div>
+      <div class="passo" style="left:86%;top:50%;--c:#b59cff"><i>2</i><b>Vê opções lado a lado</b></div>
+      <div class="passo" style="left:50%;top:86%;--c:#ffd23f"><i>3</i><b>Joga e reage</b></div>
+      <div class="passo" style="left:14%;top:50%;--c:#8dffb0"><i>4</i><b>Está no ar</b></div>
+    </div>
+    <div class="passos">
+      <div style="--c:#6ee6ff"><i>1</i><p><b>Pede, do jeito que fala.</b> Mensagens ditadas no celular, sem termo técnico: “o fundo tá feio e parado”.</p></div>
+      <div style="--c:#b59cff"><i>2</i><p><b>Vê opções lado a lado.</b> Para tudo que é questão de gosto, o Claude monta uma página de rascunho com 3 a 5 jeitos, jogáveis, para comparar.</p></div>
+      <div style="--c:#ffd23f"><i>3</i><p><b>Joga e reage.</b> Testa no próprio celular e conta o que sentiu, com print quando ajuda: “tem um certo delay”.</p></div>
+      <div style="--c:#8dffb0"><i>4</i><p><b>Está no ar.</b> Testes automáticos jogam o jogo num navegador; se tudo passa, o link atualiza em 2 minutos.</p></div>
+    </div>
+    <div class="real">
+      <h3>Um ciclo de verdade · 9 de novembro</h3>
+      <div class="ev"><time>00h30</time><p>Guilherme: <em>“Ela me lembrou também campo gravitacional… à medida que for formando planetas maiores, essa malha ficar mais deformada.”</em></p></div>
+      <div class="ev"><time>00h36</time><p>Claude publica uma página com cinco jeitos de malha da gravidade.</p></div>
+      <div class="ev"><time>01h02</time><p>Guilherme: <em>“Eu gosto da primeira opção… Eu gosto de parecer que ela é um buraco, que ela afunda.”</em></p></div>
+      <div class="ev ok"><time>01h12</time><p>A malha escolhida entra no jogo, no ar.</p></div>
+      <div class="ev"><time>01h19</time><p>Guilherme: <em>“Quando eu faço duas ondas em sequência de planetas grandes, o fundo tá ficando branco e nunca mais voltando.”</em></p></div>
+      <div class="ev ok"><time>01h22</time><p>Causa achada e corrigida; no ar de novo.</p></div>
+    </div>
+  </section>
+
+  <section class="bloco" id="historia">
+    <h2>DE POEIRA A GALÁXIA</h2>
+    <p class="sub">A história contada como uma partida: cada capítulo junta dois do anterior e vira o corpo seguinte.</p>
+    <div class="linha" id="linha"><svg id="trilha" aria-hidden="true"></svg></div>
+    <div class="fimLinha"><b>A escada acaba na Galáxia.</b>O jogo, não.</div>
+  </section>
+
+  <section class="bloco" id="dicas">
+    <h2>COMO PEDIR</h2>
+    <p class="sub">O que mais fez diferença, nas palavras do próprio Guilherme.</p>
+    <div class="dicas">
+      <div class="dicaItem"><h4><i>01</i>Peça opções, não uma resposta</h4><q>Faz um rascunho de como ficaria em cada caso para eu ver.</q></div>
+      <div class="dicaItem"><h4><i>02</i>Corte o que sobrou</h4><q>Acho que você tomou muitas liberdades aí. Mas tem um caminho interessante que está começando a ser criado.</q></div>
+      <div class="dicaItem"><h4><i>03</i>Diga o porquê do seu gosto</h4><q>Eu gosto de parecer que ela é um buraco, que ela afunda.</q></div>
+      <div class="dicaItem"><h4><i>04</i>Conte o que sentiu jogando</h4><q>Tenho a impressão que tem um certo delay. Às vezes parece meio travado.</q></div>
+      <div class="dicaItem"><h4><i>05</i>Peça referências</h4><q>Acho que tá com muita cara de artefato do Claude. Você não pode pesquisar algumas referências pra ver?</q></div>
+      <div class="dicaItem"><h4><i>06</i>Peça para ir direto ao ponto</h4><q>Seja mais conciso aqui e diz exatamente onde está o que eu preciso ver.</q></div>
+      <div class="dicaItem"><h4><i>07</i>Deixe trabalhar em paralelo</h4><q>Pode fazer todas, acho que pode delegar para subagentes para ser mais eficiente.</q></div>
+    </div>
+  </section>
+
+  <section class="final">
+    <a class="btn" href="./">JOGAR 2048 ASTROS</a>
+    <div class="rasc">
+      <p>Alguns rascunhos de verdade, do jeito que o Guilherme viu:</p>
+      <div class="links">
+        <a href="planetas.html">planetas</a><a href="fundo.html">fundo</a><a href="malha.html">malha</a><a href="som.html">som</a>
+        <a href="angulos.html">ângulos</a><a href="entrada.html">entrada da fase</a><a href="menu-planetas.html">menu</a><a href="caminho.html">caminho das fases</a>
+      </div>
+    </div>
+  </section>
+</main>
+<footer>Página montada pelo Claude em 10/11/2026, a partir do histórico do projeto: as 142 versões guardadas no git e as mensagens do Guilherme.</footer>
+<div id="luz"><img alt=""></div>
+
+<script>
+const COMMITS=[{"h": "353cde3", "d": "2026-11-06T21:19", "m": "Protótipo inicial do Um Passo"}, {"h": "f92b4aa", "d": "2026-11-06T21:32", "m": "Nível teste: arrasto move o tabuleiro todo e você dobra"}, {"h": "9a16245", "d": "2026-11-06T21:56", "m": "Grid 4x4, inimigos em tons de vermelho e jogador dourado"}, {"h": "2761667", "d": "2026-11-06T22:13", "m": "Arrasto desliza até o fim e encostar num maior mata"}, {"h": "3209cc3", "d": "2026-11-06T22:41", "m": "Luta teste: 2048 3x3 com combate e baralho"}, {"h": "9ea7e26", "d": "2026-11-06T23:03", "m": "Mockup de interface da mina (5 telas)"}, {"h": "2ae3316", "d": "2026-11-06T23:18", "m": "Rascunhos de três estilos visuais para a mina"}, {"h": "15ca344", "d": "2026-11-06T23:36", "m": "Mina: 2048 de rochas com revelação estilo loot box"}, {"h": "4849d37", "d": "2026-11-07T00:01", "m": "Laboratório de som: efeitos em três versões e simulação da música"}, {"h": "10faacc", "d": "2026-11-07T00:04", "m": "Som estilo Threes: arrasto e fusão com timbre por nível"}, {"h": "2dfaf6c", "d": "2026-11-07T00:14", "m": "Páginas se atualizam sozinhas quando há versão nova"}, {"h": "a7a866b", "d": "2026-11-07T00:17", "m": "Músicas lo-fi (espera, prorroga, segredo) para o laboratório de som"}, {"h": "9b3f863", "d": "2026-11-07T00:25", "m": "Rascunhos dos quatro bichinhos com o torrão de terra"}, {"h": "8712ab5", "d": "2026-11-07T00:43", "m": "Pedrinhas vivas que cospem o minério e torrão quando a energia acaba"}, {"h": "0ba0d27", "d": "2026-11-07T00:54", "m": "Proposta de progressão: amigos, mapa, combos e álbum"}, {"h": "c2b5b31", "d": "2026-11-07T01:07", "m": "Confirmação ao encerrar o dia e proposta de progressão v2"}, {"h": "82573a9", "d": "2026-11-07T01:23", "m": "Itens com níveis, mapa da mina, paredes, fiscal e energia guardada"}, {"h": "b8e862e", "d": "2026-11-07T01:26", "m": "Personagens Rola (2048) e Passinho (Threes), fileiras e itens de pedra"}, {"h": "0aeb707", "d": "2026-11-07T01:42", "m": "Cara de jogo: menu, tutorial jogável, mapa em tela própria e fim de partida"}, {"h": "a4614fc", "d": "2026-11-07T01:46", "m": "Trilha sonora por tela com as músicas do Gabinete"}, {"h": "1fb2640", "d": "2026-11-07T01:53", "m": "Ptui!: tutorial com holofote e balão que aponta para cada parte"}, {"h": "6b98f12", "d": "2026-11-07T01:56", "m": "Ícones nos textos e o que cada pedrinha cospe"}, {"h": "c30668d", "d": "2026-11-07T02:00", "m": "Lojinha depois de cada lugar, minérios com formato próprio e muretas"}, {"h": "35fb6dd", "d": "2026-11-07T02:09", "m": "Mapa com trilhas e ícones vetoriais; tutorial rola até o fiscal"}, {"h": "388d2b4", "d": "2026-11-07T02:17", "m": "Fases sem energia: Avalanche, Duas cores e Salão 5x5; Túnel e Gruta rica"}, {"h": "3e96070", "d": "2026-11-07T02:20", "m": "Menos texto: descrições curtas e tutorial de uma frase por balão"}, {"h": "ffea1c9", "d": "2026-11-07T02:22", "m": "Prévia do arrasto: pedrinhas seguem o dedo e só confirmam ao soltar"}, {"h": "0a0c9f0", "d": "2026-11-07T02:29", "m": "Laboratório de fases e modo Picareta e rocha"}, {"h": "393cedc", "d": "2026-11-07T02:50", "m": "Laboratório editável e pedrinhas que evoluem além do nível 7"}, {"h": "12ecf5e", "d": "2026-11-07T02:54", "m": "Cavernas: tabuleiros com formato (buracos, blocos e muretas)"}, {"h": "d1ad28d", "d": "2026-11-07T03:00", "m": "Construtor de níveis, Assovio e catálogo de elementos de fase"}, {"h": "47ac8d3", "d": "2026-11-07T03:06", "m": "Ferramentas, 13 minérios e pedrinha rara"}, {"h": "d548b31", "d": "2026-11-07T03:10", "m": "Laboratório como entrada, tabuleiros retangulares longos e cuspe rápido"}, {"h": "f47b378", "d": "2026-11-07T03:12", "m": "Pontuação por fase e recordes"}, {"h": "c9061a7", "d": "2026-11-07T03:21", "m": "Menu com Laboratório em primeiro, laboratório organizado e pedrinhas expressivas"}, {"h": "f0556de", "d": "2026-11-07T03:27", "m": "Código-fonte em src/ e build.py para montar o index.html"}, {"h": "16d12cb", "d": "2026-11-07T03:32", "m": "Catálogo dentro do jogo e editor de níveis"}, {"h": "61a25e3", "d": "2026-11-07T03:38", "m": "Testes do jogo no repositório (testes/rodar.py) e CLAUDE.md"}, {"h": "a69f106", "d": "2026-11-07T03:48", "m": "Nada cortado no celular: tabuleiro do tamanho que cabe, página rola quando não cabe"}, {"h": "e57327d", "d": "2026-11-07T03:52", "m": "Laboratório: tipo de jogo e personagem viram seções com explicação"}, {"h": "7ba374c", "d": "2026-11-07T17:06", "m": "Modo Clássico: 20 fases com missão e estrelas; menu Clássico, Mineração, Laboratório"}, {"h": "032dff5", "d": "2026-11-07T17:15", "m": "Rascunhos de cenário (escavação, galeria, gruta, bancada)"}, {"h": "331e89e", "d": "2026-11-07T17:37", "m": "Rascunhos de cenário: casas marcadas de forma mais sutil"}, {"h": "a2a769b", "d": "2026-11-07T17:45", "m": "Rascunhos de cenário: sem pedras decorativas; Galeria com casas mais discretas"}, {"h": "28285a0", "d": "2026-11-07T17:49", "m": "Rascunhos de cenário: sem cristais, lanternas e minério no carrinho"}, {"h": "a8f815c", "d": "2026-11-07T17:50", "m": "Rascunhos de cenário: casas redondas na Galeria"}, {"h": "e291d16", "d": "2026-11-07T17:53", "m": "Rascunhos de cenário: bases das casas irregulares na Galeria e na Gruta"}, {"h": "156a45f", "d": "2026-11-07T17:56", "m": "Rascunhos de cenário: teste de rastros de arrasto entre as casas (liga/desliga)"}, {"h": "d84f98d", "d": "2026-11-07T18:13", "m": "Clássico: figura da missão (pedrinha-alvo e receita); rastros mais naturais; rascunhos de pontuação"}, {"h": "b4a4d09", "d": "2026-11-07T18:22", "m": "Clássico: nome embaixo de cada pedrinha da missão; ícone também no plural e no título"}, {"h": "9350388", "d": "2026-11-07T18:26", "m": "Nome de pedrinha no texto em negrito, na cor dela, com rótulo suave atrás"}, {"h": "d2d63e5", "d": "2026-11-07T18:33", "m": "Ícone do nome da pedrinha mais alto; rascunhos do aviso de junção no arrasto"}, {"h": "b2efe52", "d": "2026-11-07T18:39", "m": "Aviso de junção vira Encosto; rascunhos de progresso da missão"}, {"h": "64548ff", "d": "2026-11-07T18:43", "m": "Rascunhos de progresso: silhuetas da missão dentro do painel de cima"}, {"h": "441eb7c", "d": "2026-11-07T19:02", "m": "Clássico sem dinheiro: missão encerra a fase, estrelas por arrastos que sobram, pontos do 2048"}, {"h": "c641ef6", "d": "2026-11-07T19:19", "m": "Cenário no jogo: Gruta e Galeria vistas de cima, casas como manchas no chão"}, {"h": "ffafb40", "d": "2026-11-07T19:21", "m": "Propostas de progressão do Clássico (progressao.html)"}, {"h": "27d333d", "d": "2026-11-07T19:45", "m": "Progressão: até onde dá para subir (medido) e progressões de subida"}, {"h": "d8e458b", "d": "2026-11-07T20:17", "m": "Progressão: decisão (A sem ordem fixa e B), plano dos 8 mundos"}, {"h": "e523b90", "d": "2026-11-07T22:01", "m": "Clássico com 8 mundos de 12 fases, metas novas e peças novas"}, {"h": "36beedd", "d": "2026-11-07T22:33", "m": "Robô novo com táticas do 2048 (expectimax) para medir e calibrar"}, {"h": "ffee5e4", "d": "2026-11-07T23:36", "m": "Rascunhos do Ptui no espaço: escada nova, tabuleiro e página de opinião"}, {"h": "0016d5f", "d": "2026-11-08T01:32", "m": "Calibração escolhe sozinha o melhor robô em cada fase (canto ou meta)"}, {"h": "d698634", "d": "2026-11-08T01:41", "m": "Rascunhos do espaço, rodada 2: o que o Guilherme pediu na opinião"}, {"h": "c5cd04c", "d": "2026-11-08T02:17", "m": "Rascunhos do espaço, rodada 3: tamanhos e maquetes das telas"}, {"h": "c472dc5", "d": "2026-11-08T02:32", "m": "Rascunhos do espaço, rodada 4: quatro opções de fonte e botão para o menu"}, {"h": "7cb7df6", "d": "2026-11-08T02:45", "m": "Rascunhos do espaço, rodada 5: menu neon e telas no mesmo estilo"}, {"h": "b9c2269", "d": "2026-11-08T02:49", "m": "Rascunhos do espaço: versão nos scripts para o celular não usar a cópia velha"}, {"h": "38f11cf", "d": "2026-11-08T02:55", "m": "Rascunhos do espaço, rodada 6: ícone do planeta na tela de derrota"}, {"h": "39063f7", "d": "2026-11-08T03:02", "m": "Rascunhos do espaço: ícone da derrota sem o círculo em volta"}, {"h": "daefc6a", "d": "2026-11-08T03:10", "m": "Clássico no espaço, etapa 1 (liga com ?espaco): tabuleiro, peças e fundo"}, {"h": "94d96f0", "d": "2026-11-08T03:10", "m": "Remove a cópia antiga do motor na raiz (agora em src/espaco.js)"}, {"h": "d19ca84", "d": "2026-11-08T03:14", "m": "Etiqueta do nome no texto: alinhada com o texto de fora e com respiro"}, {"h": "5cf19f8", "d": "2026-11-08T10:50", "m": "Clássico no espaço, etapa 2 (com ?espaco): menu, lista de fases, janelas e painel no estilo neon"}, {"h": "a29177d", "d": "2026-11-08T10:54", "m": "Clássico no espaço, etapa 3 (com ?espaco): nomes dos mundos e das fases"}, {"h": "7ec441f", "d": "2026-11-08T11:05", "m": "Jornada e Clássico sem fim no menu do espaço; metas duplas que não faziam sentido; Recomeçar no menu da fase"}, {"h": "7c9303d", "d": "2026-11-08T11:12", "m": "Espaço: fundos e buraco negro em 3D, cada peça com seu jeito de girar; quebra-cabeças com mais folga"}, {"h": "19d94d2", "d": "2026-11-08T11:21", "m": "Espaço: muretas e objetos filmados em ciclo (fase 25 leve de novo), arrasto em qualquer lugar da tela, Gelo e Rocha"}, {"h": "72ccf1d", "d": "2026-11-08T11:25", "m": "Meta nova: levar até a casa marcada (antes de formar em cima dela)"}, {"h": "1168d4b", "d": "2026-11-08T11:31", "m": "Espaço: Clássico como primeiro botão do menu; tocar na peça não abre mais a ficha na Jornada e no Clássico"}, {"h": "bab5373", "d": "2026-11-08T11:36", "m": "Espaço: planetas redondos do tabuleiro desenhados pela placa de vídeo (WebGL)"}, {"h": "16b87b0", "d": "2026-11-08T11:43", "m": "Espaço: voltar do celular, menu na lista de fases, Clássico só com pontos, nome 2048 Stars"}, {"h": "cdbf76f", "d": "2026-11-08T11:52", "m": "Fase 66 vira uma de cada cor; rascunho do tamanho das peças"}, {"h": "a6361a5", "d": "2026-11-08T12:00", "m": "2048 Stars: planetas do menu em órbita atrás do nome, Opções e Como jogar novos"}, {"h": "741dcba", "d": "2026-11-08T12:20", "m": "2048 Stars vira o padrão; peças pequenas menores com brilho; fases 6 e 7 só de combos"}, {"h": "cd4ab5a", "d": "2026-11-08T13:51", "m": "Menu Novo jogo / Continuar / Clássico; robô casual define o limite de arrastos (96 fases recalibradas); fase 35 com órbitas no meio; partidas anotadas no aparelho"}, {"h": "86449d1", "d": "2026-11-08T14:02", "m": "Fases sem limite de arrastos (24 fases): só acabam se o tabuleiro encher; estrelas pelos arrastos usados"}, {"h": "7109712", "d": "2026-11-08T14:06", "m": "Rascunho: opções de prévia do link para o WhatsApp"}, {"h": "0211bfa", "d": "2026-11-08T14:11", "m": "Prévia do link para WhatsApp (opção D: nome em neon e Saturno)"}, {"h": "d1d4ae7", "d": "2026-11-08T14:18", "m": "Menu: cinturão de pedras e só os planetas já descobertos, com profundidade; céu sem cruzes; tudo cabe em telas baixas"}, {"h": "1612340", "d": "2026-11-08T14:26", "m": "Levar só vale com a peça exata chegando andando; desenho do caminho da Jornada (caminho.html), gerado do jogo"}, {"h": "73d48e9", "d": "2026-11-08T14:27", "m": "CLAUDE.md: como manter o desenho do caminho"}, {"h": "8732882", "d": "2026-11-08T16:29", "m": "Caminho: mapa geral, caminho em blocos por mundo e ordem das novidades; fase a fase fechado"}, {"h": "1a42631", "d": "2026-11-08T17:50", "m": "Proposta de caminho novo (proposta.html): referências, molde de mundo, famílias, mapa e combinações escolhidas"}, {"h": "0c51cd2", "d": "2026-11-08T18:42", "m": "Proposta: o que é cada mecânica (cenas animadas), decisões, lembranças nos mundos seguintes, primeira fase difícil na 46"}, {"h": "b07d78e", "d": "2026-11-08T19:01", "m": "Proposta: um mundo por passo de mecânica, interações planejadas por fase, Passinho e quebra-cabeça como jeitos de jogar, conta de até onde dá para misturar, mundos depois da 120"}, {"h": "129d6b3", "d": "2026-11-08T19:29", "m": "Jornada 2: mundos 1 a 5 (60 fases) por ordem de complexidade, 6 quebra-cabeças novos (com órbita), calibragem nova; 6 a 10 em construção"}, {"h": "2bf0f34", "d": "2026-11-08T21:01", "m": "Jornada 2 completa: mundos 6 a 10 (lixo que racha, nebulosas, formar na órbita, presos, auras), quebra-cabeças novos, 120 fases calibradas; testes estáveis (UTF-8 nas páginas de teste, sem recarga automática fora do site)"}, {"h": "b6b90f0", "d": "2026-11-08T23:53", "m": "Rascunho do fundo e das casas: nebulosa viva, camadas, reação à jogada, passagens e 4 estilos de casa"}, {"h": "f0afa1a", "d": "2026-11-09T00:08", "m": "Tabuleiro no meio do espaço livre (Jornada e Clássico) e toque fora fecha as janelas com volta"}, {"h": "f5a5abe", "d": "2026-11-09T00:18", "m": "Rascunho do som do espaço: três músicas sintetizadas e efeitos novos para comparar com os de hoje"}, {"h": "cd2dc66", "d": "2026-11-09T00:36", "m": "Rascunho da malha da gravidade: cinco jeitos, em tom só, deformando mais com planetas maiores e onda só no recorde"}, {"h": "c1463cd", "d": "2026-11-09T00:49", "m": "Som do espaço no jogo: efeitos novos e trilhas eletrônicas (Estação, Órbita, Pulsar)"}, {"h": "8a7e855", "d": "2026-11-09T00:51", "m": "CLAUDE.md: caminho da pasta temporária escrito certo"}, {"h": "f46277c", "d": "2026-11-09T01:12", "m": "Fundo vivo e malha da gravidade no jogo: nebulosa que se mexe, camadas, passagens, névoa a cada junção, anel e onda só no recorde"}, {"h": "aadeabb", "d": "2026-11-09T01:22", "m": "Céu não fica mais branco depois de recordes seguidos: um relógio só, raio nunca negativo e o céu zera o modo de desenho a cada quadro"}, {"h": "334d43d", "d": "2026-11-09T01:27", "m": "Rascunho da tela de entrada da fase: cartão limpo, lado a lado e metas em blocos"}, {"h": "7462d52", "d": "2026-11-09T01:45", "m": "Relatar bug ou sugestão (pausa e Opções): foto da tela, onde no jogo, aparelho, versão, estado da partida e erros recentes"}, {"h": "b4b04d8", "d": "2026-11-09T01:55", "m": "Entrada da fase nova (jeito A): uma coluna com respiro, estrelas em caixinhas, explicação só na estreia; botão de relatar fica escondido até o canal estar pronto"}, {"h": "bd4879a", "d": "2026-11-09T11:05", "m": "Arrasto mais leve: jogada na hora no arrasto rápido, malha mais barata e só redesenhada quando mexe, nebulosa em camada própria, peças paradas sem redesenho, medidor ?fps; malha mais transparente sumindo para fora do tabuleiro"}, {"h": "f9420ec", "d": "2026-11-09T11:49", "m": "Menu: Jogar ou Continuar como botão principal, começar do zero vai para as Opções; estações, lixo e rochas das bordas giram cada um no seu compasso"}, {"h": "c7182c5", "d": "2026-11-09T12:11", "m": "Rascunho de ângulos e cometa: poeira e gelo, rocha e asteroide, cometa novo e inclinação dos planetas"}, {"h": "c266b29", "d": "2026-11-09T12:22", "m": "Pedrinhas com ângulos variados: Poeira e Gelo em nuvem redonda num eixo próprio, Rocha e Asteroide em cambalhota, cometa compacto sem a faixa de luz; planetas como estavam"}, {"h": "ee88a6b", "d": "2026-11-09T14:52", "m": "Arrasto: um dedo por gesto, voltar rápido não confirma a jogada e as teclas não atrapalham os campos de texto"}, {"h": "fcab5fe", "d": "2026-11-09T15:24", "m": "O jogo passa a se chamar 2048 Astros: título, logo do menu e prévia do WhatsApp (120 fases); comando publicar.py para o repositório público separado"}, {"h": "a0e3948", "d": "2026-11-09T15:35", "m": "Espaço: planetas e nebulosa voltam quando a placa de vídeo perde o contexto"}, {"h": "c7bcfb3", "d": "2026-11-09T15:35", "m": "Música eletrônica: pula o que atrasou em vez de despejar notas"}, {"h": "4a319dc", "d": "2026-11-09T15:36", "m": "Espaço: menos desenho à toa por quadro"}, {"h": "e4a188f", "d": "2026-11-09T15:36", "m": "Jornada: continuar a fase sem repetir peças, planeta preso fixo sem dividir a casa, explicações de estação, fluxo de rochas e aura de duas cores, concordância nos textos"}, {"h": "88a70b3", "d": "2026-11-09T15:44", "m": "Junta o trabalho de um agente: revisao/graficos"}, {"h": "e0785af", "d": "2026-11-09T16:04", "m": "Junta o trabalho de um agente: revisao/jornada"}, {"h": "a22ffd6", "d": "2026-11-09T16:04", "m": "Som: destrava no primeiro toque do celular e para quando o jogo sai da tela"}, {"h": "1eaee04", "d": "2026-11-09T16:11", "m": "Clássico: o recorde fica guardado assim que é batido"}, {"h": "58f1286", "d": "2026-11-09T16:11", "m": "Telas do espaço: textos e encaixe em telas pequenas"}, {"h": "74779d6", "d": "2026-11-09T16:12", "m": "Junta o trabalho de um agente: revisao/entrada"}, {"h": "50f6d70", "d": "2026-11-09T16:29", "m": "Junta o trabalho de um agente: revisao/telas"}, {"h": "89e4697", "d": "2026-11-09T16:43", "m": "Testes: PARALELO define quantos navegadores rodam ao mesmo tempo"}, {"h": "6c3b078", "d": "2026-11-09T17:18", "m": "Progresso: vitória gravada na hora, Clássico salvo, avisos e recorde visível"}, {"h": "617a3e6", "d": "2026-11-09T17:48", "m": "Textos: estrelas sem limite, nomes do fluxo, Jogar do Como jogar, letreiro e til"}, {"h": "4fb304b", "d": "2026-11-09T18:13", "m": "Junta o trabalho de um agente: melhoria/progresso"}, {"h": "b22a10b", "d": "2026-11-09T20:39", "m": "Desempenho: preparo no tempo ocioso, céu guardado, limite nos filmes, logo pela placa de vídeo"}, {"h": "171f4e2", "d": "2026-11-09T20:46", "m": "Junta o trabalho de um agente: melhoria/textos"}, {"h": "fb98c9e", "d": "2026-11-09T20:49", "m": "Junta o trabalho de um agente: melhoria/desempenho"}, {"h": "572a84a", "d": "2026-11-09T21:50", "m": "Rascunho do tamanho dos planetas no menu: hoje, real comprimido, escala real, famílias em degraus e sistema solar"}, {"h": "36f5c82", "d": "2026-11-09T22:22", "m": "Menu como sistema solar: planetas descobertos nas órbitas reais, tamanho real comprimido, Lua em volta da Terra e o Sol atrás do nome"}, {"h": "3a4161b", "d": "2026-11-09T22:26", "m": "Menu: os planetas da metade de trás da órbita passam atrás do Sol"}, {"h": "06abfaf", "d": "2026-11-09T22:43", "m": "Rascunho: planetas sem passar por cima do nome (nome sempre na frente ou sistema acima do nome)"}, {"h": "012e229", "d": "2026-11-09T22:47", "m": "Menu do espaço sem a frase embaixo do nome"}, {"h": "4e2e569", "d": "2026-11-09T23:28", "m": "Menu: sistema solar acima do nome, órbitas em escala logarítmica (gigantes afastados), tudo encolhe conforme aparecem; botões só com o nome"}, {"h": "66f55da", "d": "2026-11-09T23:41", "m": "Menu: texto de baixo só nos botões de continuar, no mesmo estilo do nome do botão"}, {"h": "96c16cc", "d": "2026-11-10T00:48", "m": "Mapa da Jornada volta a rolar com o dedo: o bloqueio de puxar para atualizar fica só na página, não no corpo"}, {"h": "ecec40d", "d": "2026-11-10T01:05", "m": "Mapa da Jornada: o \"‹ Menu\" fica preso no topo enquanto o mapa rola"}];
+const ESCADA=['Poeira','Gelo','Rocha','Asteroide','Cometa','Plutão','Lua','Mercúrio','Marte','Vênus','Terra','Netuno','Urano','Saturno','Júpiter','Sol','Supernova','Galáxia'];
+const arq=n=>{ const i=ESCADA.indexOf(n); return 'bastidores/corpos/'+String(i+1).padStart(2,'0')+'-'+n.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase()+'.webp'; };
+const F='bastidores/fotos/';
+// capítulos: o corpo de cada um, o commit em que começa e o que aconteceu
+const CAPS=[
+ {corpo:'Poeira',c:'#d9c7a3',ini:'353cde3',quando:'06/11 · 20h56',titulo:'A ideia',
+  falas:['Eu tô querendo criar um jogo inspirado no 2048, mais especificamente no Threes, que é o jogo que gerou o 2048 e é muito mais gostosinho de jogar.',
+         'Eu não tô em casa, então preciso que você crie repositório para conseguir acessar.'],
+  claude:'O primeiro protótipo, chamado <b>Um Passo</b>, entra no ar 23 minutos depois, num link que abre no celular.',
+  fotos:[['01-ideia.jpg','Um Passo, o primeiro protótipo']]},
+ {corpo:'Gelo',c:'#9fe8ff',ini:'f92b4aa',quando:'06/11 · 21h30 às 23h40',titulo:'Errar rápido',
+  falas:['Acho que você tomou muitas liberdades aí. Mas tem um caminho interessante que está começando a ser criado.',
+         'Acho que parte legal desse jogo tá em mexer tudo e alterar tudo de uma vez.',
+         'Em vez de atacar, pode ser uma mecânica de mineração, sabe? A pessoa vai minerando. E vai fundindo os minérios para virar minérios melhores.'],
+  claude:'Em duas horas, seis protótipos: arrastar o tabuleiro inteiro, inimigos vermelhos, combate com baralho. Fica a <b>mina</b>: um 2048 de rochas que, no fim do dia, revelam o minério que têm dentro.',
+  fotos:[['02-mina.jpg','A mina, às 23h36']]},
+ {corpo:'Rocha',c:'#ff8a4c',ini:'4849d37',quando:'07/11 · 0h às 2h30',titulo:'Cara de jogo',
+  falas:['Acho que tá com muita cara de artefato do Claude. Você não pode pesquisar algumas referências pra ver?',
+         'Vamos de Balatro.',
+         'Acho que ia ser engraçado se elas cuspissem assim a pedra.',
+         'O jogo precisa ter cara de jogo, sabe? Você precisa ter um novo jogo, um menu inicial, a explicação tem que ser num tutorial.'],
+  claude:'Nasce o <b>Ptui!</b>: pedrinhas vivas que cospem o minério, mapa com caminhos, lojinha, fiscal, tutorial com balões e trilha sonora com músicas que o próprio Guilherme tinha composto para outro projeto.',
+  fotos:[['03-ptui.jpg','O menu do Ptui!'],['03c-ptui-cospe.jpg','Fim do dia: as pedrinhas cospem o minério']]},
+ {corpo:'Asteroide',c:'#b8b0a4',ini:'0a0c9f0',quando:'07/11 · 2h30 às 4h',titulo:'O laboratório',
+  falas:['Eu quero trabalhar numa versão mais teste do jogo para entender as dinâmicas que seriam mais interessantes.',
+         'Poxa, é muito legal esse lance dos muros e de grids irregulares.',
+         'Como ainda estou validando a mecânica do jogo, você acha que já convém fazer teste automático?'],
+  claude:'Um <b>laboratório</b> para testar qualquer regra, um editor de fases de qualquer formato e um catálogo de tudo que existe no jogo. E os <b>testes automáticos</b>: desde então, toda mudança passa por eles antes de ir ao ar.',
+  fotos:[['04-lab.jpg','O laboratório']]},
+ {corpo:'Cometa',c:'#7fd3ff',ini:'7ba374c',quando:'07/11 · 17h às 22h30',titulo:'Uma meta por fase',
+  falas:['Eu tô pensando em fazer uma versão do jogo que seja mais estilo Candy Crush, que você tenha um objetivo em cada nível.',
+         'Eu acho que as casas estão marcadas de uma forma muito intensa. Eu gostaria que fosse mais sutil.',
+         'Uma técnica que você pode considerar é sempre tentar manter a maior peça num canto. Enfim, dar uma pesquisada de táticas para resolver o 2048.'],
+  claude:'O modo <b>Clássico</b>: fases com missão e até 3 estrelas, cenário de gruta visto de cima, 8 mundos. E dois <b>robôs</b> que jogam cada fase dezenas de vezes para medir a dificuldade, um deles com as táticas de quem joga bem 2048.',
+  fotos:[['05-classico.jpg','Uma fase do Clássico, na gruta']]},
+ {corpo:'Lua',c:'#d6d8de',ini:'ffee5e4',quando:'07/11 23h30 a 08/11 3h',titulo:'A ida ao espaço',
+  decide:['Saturno antes de Júpiter','cada degrau com cor e silhueta próprias','sem carinhas','fonte neon'],
+  claude:'As pedrinhas viram <b>corpos celestes em 3D</b>, desenhados ao vivo e girando: 18 degraus, da Poeira à Galáxia. Seis rodadas de rascunho numa madrugada; a primeira escada voltou porque seis degraus pareciam pedras tortas iguais.',
+  fotos:[['06b-escada.jpg','A escada dos 18 corpos, no rascunho']],links:[['planetas.html','rascunho dos planetas'],['opiniao.html','página de opinião']]},
+ {corpo:'Terra',c:'#4fa3ff',ini:'5cf19f8',quando:'08/11 · 10h50 às 14h',titulo:'2048 Stars',
+  falas:['Não gosto de todos esses planetas aparecerem de cara.',
+         'Acho que não precisa ter um limite de arrasto em algumas fases. É só competição contra conseguir não perder e se sufocar no jogo.'],
+  claude:'O espaço vira o jogo padrão, com o nome <b>2048 Stars</b>. Os planetas passam a ser desenhados pela placa de vídeo (no Android do Guilherme, a Lua e Plutão não apareciam). No menu, só entram em órbita os planetas que a pessoa já formou.',
+  fotos:[['07-stars.jpg','Uma fase no espaço'],['07b-stars-menu.jpg','O menu de então']]},
+ {corpo:'Saturno',c:'#e8c77a',ini:'1612340',quando:'08/11 · 14h30 às 21h',titulo:'120 fases',
+  falas:['Me parece que tem muitas mecânicas novas sendo apresentadas em alguns lugares… é um pouco exponencial.',
+         'Eu acho que a questão não é só trazer uma mecânica antiga. É pensar como as mecânicas antigas interagem com a mecânica nova.',
+         'Eu gosto da ideia de só ter a primeira fase difícil bem mais pra frente.'],
+  claude:'Antes de mexer nas fases, um <b>desenho do caminho</b> inteiro: onde cada mecânica estreia, treina e se mistura. Depois, a <b>Jornada</b>: 10 mundos de 12 fases, uma novidade por mundo, todas calibradas pelos robôs.',
+  fotos:[['08-jornada.jpg','O mapa da Jornada']],links:[['caminho.html','desenho do caminho'],['proposta.html','proposta dos mundos']]},
+ {corpo:'Júpiter',c:'#e09a5a',ini:'b6b90f0',quando:'08/11 23h50 a 09/11 2h',titulo:'Céu vivo e som',
+  falas:['Eu acho que os cenários de fundo estão um pouco feios. Acho que pode ser um pouco mais dinâmicos.',
+         'Eu acho que o som órbita meio eletrônico foi o mais legal.'],
+  claude:'Nebulosa que se mexe, cometas e naves passando, a <b>malha da gravidade</b> afundando com o peso de cada planeta, efeitos de som por material e <b>três músicas eletrônicas</b> tocadas pelo próprio jogo, sem nenhum arquivo de áudio.',
+  fotos:[['09-ceu.jpg','Céu vivo e malha da gravidade']],links:[['fundo.html','rascunho do fundo'],['malha.html','rascunho da malha'],['som.html','rascunho do som']]},
+ {corpo:'Sol',c:'#ffd23f',ini:'bd4879a',quando:'09/11 · 11h às 15h',titulo:'A sensação',
+  falas:['Eu gostaria de melhorar um pouco a sensação do arrasto. Tenho a impressão que tem um certo delay. Eu acho que é uma sensação importante, de estar performando bem.',
+         'A mudança de ângulo eu não notei. As pedras estão sempre no eixo praticamente de 0 grau, girando.'],
+  claude:'Arrasto rápido vale na hora, sem esperar soltar o dedo; só se redesenha o que se mexe; um medidor escondido no endereço. E as pedrinhas ganham ângulos próprios: nuvens girando no seu eixo, rochas dando cambalhota. No celular do Guilherme:',
+  fps:true,links:[['angulos.html','rascunho dos ângulos']]},
+ {corpo:'Supernova',c:'#ff6fb1',ini:'fcab5fe',quando:'09/11 · 12h às 20h50',titulo:'O nome, e quatro revisores',
+  falas:['Eu queria repensar o nome do jogo… porque eu acho que tá americano sem necessidade.',
+         'Acho que quero algo mais simples. Tipo 2048 estrelas, ou algo assim. Enquanto fechamos o nome, gostaria de fazer uma revisão geral no jogo. Consegue orquestrar subagentes?',
+         'Vamos ficar com 2048 Astros.'],
+  nomes:true,agentes:true,
+  claude:'Enquanto os nomes iam e voltavam, <b>quatro agentes</b> revisaram o jogo ao mesmo tempo, cada um numa frente. As sugestões deles voltaram para o Guilherme decidir; as aprovadas, outros três agentes fizeram.',
+  fotos:[['previa.jpg','A prévia do link no WhatsApp']]},
+ {corpo:'Galáxia',c:'#b59cff',ini:'572a84a',quando:'09/11 21h50 a 10/11 1h',titulo:'Um sistema solar no menu',
+  falas:['Na tela inicial, quero que os planetas tenham tamanhos bem distintos, mais próximos às suas diferenças reais.',
+         'Faz na lógica de sistema solar, mas com mais distância entre os planetas e menor os planetas também.',
+         'Quando o sol aparecer, os planetas devem passar atrás do sol.'],
+  claude:'Cada planeta formado entra na <b>sua órbita real</b>, de Mercúrio a Plutão, em escala logarítmica (na escala de verdade, Plutão ficaria 100 vezes mais longe que Mercúrio). O tamanho é o real, comprimido, e a Lua gira em volta da Terra.',
+  fotos:[['10-hoje-menu.jpg','O menu hoje'],['10b-hoje-jogo.jpg','Uma partida hoje']],links:[['menu-planetas.html','rascunho do menu']]},
+];
+
+// cada versão ganha o capítulo em que caiu
+let capAt=0; COMMITS.forEach(c=>{ const k=CAPS.findIndex(x=>x.ini===c.h); if(k>=0) capAt=k; c.cap=capAt; c.marco=k>=0; });
+CAPS.forEach((cp,i)=>cp.qtd=COMMITS.filter(c=>c.cap===i).length);
+const fmt=d=>d.slice(8,10)+'/'+d.slice(5,7)+' · '+d.slice(11,13)+'h'+d.slice(14,16);
+
+// ---------- a linha do tempo ----------
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const linha=document.getElementById('linha');
+CAPS.forEach((cp,i)=>{
+  const ant=ESCADA[ESCADA.indexOf(cp.corpo)-1];
+  const s=document.createElement('section'); s.className='cap'; s.style.setProperty('--c',cp.c);
+  let h=`<div class="no">${ant?`<img class="ant a" src="${arq(ant)}" alt=""><img class="ant b" src="${arq(ant)}" alt="">`:''}<img class="atual" src="${arq(cp.corpo)}" alt="${cp.corpo}"><span class="nv">${i+1}</span><span class="nome">${cp.corpo}</span></div>`;
+  h+=`<div class="cartao"><div class="quando">${cp.quando} · <b>${cp.qtd} ${cp.qtd>1?'versões':'versão'}</b></div><h3>${cp.titulo}</h3>`;
+  if(cp.falas||cp.decide) h+=`<div class="quem g">Guilherme</div>`;
+  if(cp.decide) h+=`<div class="decide">${cp.decide.map(x=>`<span>${esc(x)}</span>`).join('')}</div>`;
+  if(cp.falas) h+=cp.falas.map(f=>`<span class="fala">${esc(f)}</span>`).join('');
+  if(cp.nomes) h+=`<div class="quem">Nomes que ficaram pelo caminho</div><div class="nomes">${['2048 Stars','Tropicosmo','Brilho Inútil','Caminho das Antas','Yacana','2048 Cosmos','Sonda 2048','2048 Estrelas'].map((n,k)=>`<span class="x" style="transition-delay:${.25+k*.22}s">${n}</span>`).join('')}<span class="fim">2048 ASTROS</span></div>`;
+  h+=`<div class="quem">Claude</div><div class="claude">${cp.claude}</div>`;
+  if(cp.fps) h+=`<div class="fps"><b>60 fps</b> · travadas 0<br>céu 0,5 ms · malha 0,6 ms · peças 2,0 ms</div>`;
+  if(cp.agentes) h+=`<div class="agentes">${[['Jornada','#b59cff'],['Telas','#6ee6ff'],['Gráficos','#ffd23f'],['Arrasto','#8dffb0']].map(([n,c])=>`<div class="ag" style="--c:${c}"><span>${n}</span><i></i></div>`).join('')}<p><b>17 defeitos</b> achados e corrigidos; depois, <b>15 melhorias</b> aprovadas e feitas.</p></div>`;
+  if(cp.fotos) h+=`<div class="fotos${cp.fotos.length<2?' um':''}">${cp.fotos.map(([f,l])=>`<figure><img src="${f==='previa.jpg'?f:F+f}" alt="${esc(l)}" loading="lazy"><figcaption>${esc(l)}</figcaption></figure>`).join('')}</div>`;
+  if(cp.links) h+=`<div class="links">${cp.links.map(([u,t])=>`<a href="${u}">${t}</a>`).join('')}</div>`;
+  h+=`</div>`;
+  s.innerHTML=h; linha.appendChild(s);
+});
+// a trilha tracejada entre os corpos, como no mapa da Jornada
+const trilha=document.getElementById('trilha');
+function desenhaTrilha(){
+  const b=linha.getBoundingClientRect(), pts=[...linha.querySelectorAll('.no')].map(n=>{ const r=n.getBoundingClientRect(); return [r.left-b.left+r.width/2, r.top-b.top+r.height/2]; });
+  trilha.setAttribute('height',b.height); trilha.setAttribute('viewBox',`0 0 ${b.width} ${b.height}`); trilha.style.height=b.height+'px';
+  let d=''; for(let i=1;i<pts.length;i++){ const [x0,y0]=pts[i-1],[x1,y1]=pts[i], m=(y1-y0)*.5; d+=`M${x0},${y0+50}C${x0},${y0+m}${' '}${x1},${y1-m}${' '}${x1},${y1-50}`; }
+  trilha.innerHTML=`<path d="${d}" fill="none" stroke="rgba(200,190,255,.28)" stroke-width="2" stroke-dasharray="5 7" stroke-linecap="round"/>`;
+}
+new ResizeObserver(desenhaTrilha).observe(linha); addEventListener('load',desenhaTrilha);
+
+// aparece ao rolar
+const io=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('vis'); io.unobserve(e.target); } }),{threshold:.18});
+document.querySelectorAll('.cap').forEach(s=>io.observe(s));
+const ioN=new IntersectionObserver(es=>es.forEach(e=>{ if(!e.isIntersecting) return; ioN.unobserve(e.target);
+  const el=e.target, alvo=+el.dataset.n, t0=performance.now(); const passo=t=>{ const k=Math.min(1,(t-t0)/1300); el.textContent=Math.round(alvo*(1-Math.pow(1-k,3))); if(k<1) requestAnimationFrame(passo); }; requestAnimationFrame(passo); }),{threshold:.6});
+document.querySelectorAll('.num b').forEach(b=>ioN.observe(b));
+
+// foto ampliada
+const luz=document.getElementById('luz');
+document.addEventListener('click',e=>{ const im=e.target.closest('.fotos img'); if(im){ luz.querySelector('img').src=im.src; luz.classList.add('on'); } });
+luz.addEventListener('click',()=>luz.classList.remove('on'));
+
+// ---------- a galáxia: um ponto de luz para cada versão, da mais antiga (no centro) à mais nova (na borda) ----------
+const cv=document.getElementById('gal'), g=cv.getContext('2d');
+let W=0,H=0,cx=0,cy=0,R=0,DPR=1;
+function tam(){ DPR=Math.min(2,devicePixelRatio||1); W=cv.clientWidth; H=cv.clientHeight; cv.width=Math.round(W*DPR); cv.height=Math.round(H*DPR);
+  cx=W/2; cy=H*(W<700?.31:.36); R=Math.min(W*.47,H*.32,420); }
+addEventListener('resize',tam); tam();
+let semente=11; const rnd=()=>(semente=(semente*16807)%2147483647)/2147483647;
+const N=COMMITS.length, INC=.56;
+COMMITS.forEach((c,i)=>{ const t=i/(N-1), braco=i%2; c.r=(.12+.88*Math.pow(t,.8))*(1+(rnd()-.5)*.1); c.th=braco*Math.PI+t*Math.PI*2.3+(rnd()-.5)*.3; });
+const poeira=Array.from({length:520},()=>{ const t=rnd(), braco=rnd()<.5?0:1; return {r:(.06+.98*Math.pow(t,.8))*(1+(rnd()-.5)*.35), th:braco*Math.PI+t*Math.PI*2.3+(rnd()-.5)*.9, a:.15+rnd()*.35, s:.4+rnd()*1.1}; });
+const fundo=Array.from({length:160},()=>({x:rnd(),y:rnd(),s:.3+rnd()*1.1,a:.2+rnd()*.5,f:rnd()*6}));
+const brilho={}; function sprite(cor){ if(brilho[cor]) return brilho[cor]; const s=document.createElement('canvas'); s.width=s.height=64; const x=s.getContext('2d');
+  const gr=x.createRadialGradient(32,32,0,32,32,32); gr.addColorStop(0,'#fff'); gr.addColorStop(.18,cor); gr.addColorStop(.45,cor+'55'); gr.addColorStop(1,cor+'00'); x.fillStyle=gr; x.fillRect(0,0,64,64); return brilho[cor]=s; }
+let mostra=0, sel=-1; const T0=performance.now()+700, DUR=5200;
+const tq=document.getElementById('tq'), tm=document.getElementById('tm'), tk=document.getElementById('ticker');
+function conta(i){ const c=COMMITS[i]; tq.textContent=fmt(c.d)+' · '+CAPS[c.cap].corpo; tm.textContent=c.m; tk.style.setProperty('--c',CAPS[c.cap].c); }
+let fimTexto=false;
+function pos(r,th,rot){ const a=th+rot; return [cx+Math.cos(a)*R*r, cy+Math.sin(a)*R*r*INC]; }
+function quadro(now){
+  const rot=now*.000035;
+  g.setTransform(DPR,0,0,DPR,0,0); g.clearRect(0,0,W,H);
+  for(const s of fundo){ g.globalAlpha=s.a*(.6+.4*Math.sin(now*.0012+s.f)); g.fillStyle='#fff'; g.beginPath(); g.arc(s.x*W,s.y*H,s.s,0,7); g.fill(); }
+  // núcleo
+  g.globalAlpha=1; const nu=g.createRadialGradient(cx,cy,0,cx,cy,R*.42); nu.addColorStop(0,'rgba(255,236,200,.55)'); nu.addColorStop(.25,'rgba(190,160,255,.22)'); nu.addColorStop(1,'rgba(120,90,220,0)');
+  g.fillStyle=nu; g.save(); g.translate(cx,cy); g.scale(1,INC); g.beginPath(); g.arc(0,0,R*.42,0,7); g.restore(); g.fill();
+  g.globalCompositeOperation='lighter';
+  for(const p of poeira){ const [x,y]=pos(p.r,p.th,rot); g.globalAlpha=p.a; g.fillStyle='#a99cff'; g.beginPath(); g.arc(x,y,p.s,0,7); g.fill(); }
+  const k=Math.max(0,Math.min(1,(now-T0)/DUR)), alvo=Math.floor(k*k*(3-2*k)*N);
+  if(alvo>mostra){ mostra=alvo; if(sel<0) conta(Math.max(0,mostra-1)); }
+  if(k>=1 && !fimTexto && sel<0){ fimTexto=true; tq.textContent='06/11 a 10/11'; tm.textContent=N+' versões em três dias. Toque num ponto de luz para ver o que mudou nele.'; tk.style.setProperty('--c','#6ee6ff'); }
+  for(let i=0;i<mostra;i++){ const c=COMMITS[i], [x,y]=pos(c.r,c.th,rot), cor=CAPS[c.cap].c, novo=i>mostra-4;
+    const z=(c.marco?15:9)*(novo?1.7:1)*(i===sel?1.9:1);
+    g.globalAlpha=i===sel?1:.9; g.drawImage(sprite(cor),x-z,y-z,z*2,z*2); c.x=x; c.y=y; }
+  g.globalCompositeOperation='source-over'; g.globalAlpha=1;
+  if(sel>=0){ const c=COMMITS[sel]; g.strokeStyle=CAPS[c.cap].c; g.lineWidth=1.5; g.beginPath(); g.arc(c.x,c.y,13+2*Math.sin(now*.006),0,7); g.stroke(); }
+  requestAnimationFrame(quadro);
+}
+requestAnimationFrame(quadro);
+cv.addEventListener('pointerdown',e=>{ const r=cv.getBoundingClientRect(), x=e.clientX-r.left, y=e.clientY-r.top; let mi=-1, md=26*26;
+  for(let i=0;i<mostra;i++){ const c=COMMITS[i]; if(c.x==null) continue; const d=(c.x-x)**2+(c.y-y)**2; if(d<md){ md=d; mi=i; } }
+  sel=mi; if(mi>=0) conta(mi); else { fimTexto=false; } });
+</script>
+</body>
+</html>
