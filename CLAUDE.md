@@ -18,7 +18,7 @@
 ## Som do espaço
 
 - Efeitos: `SONS_ESP` em `src/sfx.js` (cada corpo com o seu material; eco e delay próprios). No espaço eles substituem os da mina; a Mineração segue com os sons antigos.
-- Músicas: eletrônicas tocadas na hora, sem arquivo (`musica/eletronica.js`): Estação no menu e na lista de fases, Órbita nas fases da Jornada, Pulsar no Clássico (`qualTrilha` em `src/sfx.js`). Rascunho para ouvir e comparar: `som.html`.
+- Músicas: eletrônicas tocadas na hora, sem arquivo (`musica/eletronica.js`): Estação no menu e na lista de fases, Órbita nas fases da Jornada, Pulsar no Clássico (`qualTrilha` em `src/sfx.js`). A Estação é fixa; Órbita e Pulsar têm arranjo (`arranjo` em cada arquivo: ciclos de uns 80 s com partes, viradas e sorteio com semente; a Pulsar também troca melodia e tom). Todo ganho de nota nasce fechado (`fechado()`): sem isso o chimbal estala. Rascunho para ouvir e comparar: `som.html`.
 
 ## Montar e publicar
 
