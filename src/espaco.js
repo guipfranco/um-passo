@@ -444,11 +444,11 @@ function buildFundo(w,h,m,o={}){const D=DPR,g=mk(w,h),c=g.getContext('2d'),r=rng
     const L3=[-.55,.5,.67],astro=(nome,x,y,diam,a=.92)=>{const S0=Math.max(32,Math.min(720,Math.round(diam))),img=makePiece(byName(nome),S0).draw(3.7,L3,{outline:false});
       c.globalAlpha=a;c.drawImage(img,x-diam/2,y-diam/2,diam,diam);c.globalAlpha=1;};
     if(T==='gigante'){astro('Júpiter',w*1.04,h*1.08,Math.min(w,h)*1.05,.9);}
-    else if(T==='cinturao'){const ax=-.1*w,ay=(J?1.02:.9)*h,bx=1.1*w,by=(J?.6:.1)*h,nl=Math.hypot(by-ay,bx-ax),nx=-(by-ay)/nl,ny=(bx-ax)/nl,TAM=[8,12,18,26].map(v=>Math.round(v*D));
+    else if(T==='cinturao'){const ax=-.1*w,ay=(J?1.06:.9)*h,bx=1.1*w,by=(J?.84:.1)*h,nl=Math.hypot(by-ay,bx-ax),nx=-(by-ay)/nl,ny=(bx-ax)/nl,TAM=[8,12,18,26].map(v=>Math.round(v*D));
       for(let i=0;i<220;i++){const s=r(),off=(r()-.5)*(r()+r())*big*.12,sz=(.6+1.4*r())*D;c.fillStyle=`rgba(170,160,150,${(.25+.4*r()).toFixed(2)})`;c.fillRect(ax+(bx-ax)*s+nx*off,ay+(by-ay)*s+ny*off,sz,sz);}
       for(let i=0;i<46;i++){const s=r(),off=(r()-.5)*(r()+r())*big*.1,sz=TAM[(r()*r()*4)|0],M=mmul(rotAxis(r()-.5,r()-.5,r()-.5,r()*6),rotAxis(0,1,0,r()*6));
         c.globalAlpha=.9;c.drawImage(objImg('rochinha',sz,0,M),ax+(bx-ax)*s+nx*off-sz/2,ay+(by-ay)*s+ny*off-sz/2);c.globalAlpha=1;}
-      astro('Lua',w*.84,h*(J?.7:.12),big*.16);
+      astro('Lua',w*(J?.9:.84),h*(J?.93:.12),big*.16);   // no jogo, a lua e o cinturão ficam embaixo, longe do tabuleiro
       const rocks=Array.from({length:10},()=>({s:r(),off:(r()-.5)*big*.12,sz:TAM[2+((r()*2)|0)],sp:.006+.01*r(),ax:[r()-.5,r()-.5,r()-.5],w:.4+r()*.8,f:r()*6}));
       anim=(cx,t)=>{for(const k of rocks){const s=(k.s+t*k.sp)%1,x=ax+(bx-ax)*s+nx*k.off,y=ay+(by-ay)*s+ny*k.off;cx.drawImage(quadroObj('cint'+(k.sz%3),'rochinha',k.sz,k.f+t*k.w,32,TAU,rotRocha(k.sz%3)),x-k.sz/2,y-k.sz/2);}};}
     else if(T==='veu'){astro('Saturno',-w*.02,h*(J?.97:.07),big*(J?.6:.7),.9);}

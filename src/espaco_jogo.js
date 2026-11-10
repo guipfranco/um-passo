@@ -304,6 +304,12 @@ function ceuDesenha(t){
   // planeta) até cobrir; mais alto, sobra um pouco em cima e embaixo
   if(F.h!==h){ const s=Math.max(1,h/F.h); c.translate(w/2,h/2); c.scale(s,s); c.translate(-w/2,-F.h/2); }
   c.translate(-M+cx*.3,-M+cy*.3); ESP.drawFundo(c,ceuF,t); c.restore();
+  // no jogo, o que fica atrás do tabuleiro (a lua, o planeta do mundo, o cinturão de pedras) se apaga aos poucos: as
+  // pedras do fundo pareciam peças e a lua atrapalhava ver a partida. A nebulosa (outra camada) e as estrelas de fora seguem.
+  if(jogo){ const r=board.getBoundingClientRect(); if(r.width>20){ const a=r.width/2, b=r.height/2, R=Math.max(a,b)*1.9;
+    c.save(); c.globalCompositeOperation='destination-out'; c.translate(r.left+a, r.top+b); c.scale(a/Math.max(a,b), b/Math.max(a,b));
+    const g=c.createRadialGradient(0,0,R*.6,0,0,R); g.addColorStop(0,'rgba(0,0,0,.93)'); g.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=g; c.fillRect(-R,-R,2*R,2*R); c.restore(); } }
   if(jogo){ if(t>proxPass) novaPassagem(t,w,h); passagens(c,t,cx*.35,cy*.35); }
   c.save(); c.globalCompositeOperation='lighter';
   for(const j of aneisE){ const u=(t-j.t0)/1.6; if(u<0||u>1) continue; const R=Math.max(0,j.v*(t-j.t0)); c.lineWidth=6*(1-u)+1; c.strokeStyle=`rgba(${j.rgb},${(.22*(1-u)).toFixed(3)})`; c.beginPath(); c.arc(j.x,j.y,R,0,7); c.stroke(); }

@@ -4,13 +4,14 @@ let AC=null, BUS=null, NB=null;
 function ctxAudio(){
   try{
     if(!AC){ AC=new (window.AudioContext||window.webkitAudioContext)(); BUS=AC.createGain(); BUS.gain.value=.9; BUS.connect(AC.destination); }
-    if(AC.state==='suspended' && !document.hidden) AC.resume();   // escondido, fica parado (ver visibilitychange)
+    // parado ('suspended') ou, no iPhone, 'interrupted' (ligação, outro app tocando): volta. Escondido, fica parado (ver visibilitychange)
+    if(AC.state!=='running' && AC.state!=='closed' && !document.hidden) AC.resume().catch(()=>{});
     return AC;
   }catch(e){ return null; }
 }
 function ac(){ return sound ? ctxAudio() : null; }
 // jogo em segundo plano (trocou de app, bloqueou a tela, outra aba): o som para e volta quando o jogo reaparece
-document.addEventListener('visibilitychange',()=>{ if(AC) (document.hidden ? AC.suspend() : AC.resume()).catch(()=>{}); });
+document.addEventListener('visibilitychange',()=>{ if(AC && AC.state!=='closed') (document.hidden ? AC.suspend() : AC.resume()).catch(()=>{}); });
 
 // ===================== MÚSICA =====================
 // Trilha por tela (todas sintetizadas, vindas do Gabinete). TRIM iguala o volume entre elas.

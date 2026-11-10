@@ -654,8 +654,9 @@ $('#btnPause').onclick=pauseMenu;
 $('#btnOpc').onclick=()=>espOpcoes();
 document.querySelectorAll('.musBtn').forEach(b=>{ b.onclick=toggleMusic; b.style.opacity=music?1:.4; });
 // destrava o áudio no primeiro toque. No celular o navegador só libera o som quando o dedo sobe (pointerup), não quando encosta
-const destravaAudio=()=>{ if(AC&&AC.state==='suspended') AC.resume(); else if(!AC&&music){ ctxAudio(); trilha(musKey); } };
-for(const t of ['pointerdown','pointerup','keydown']) addEventListener(t,destravaAudio,{capture:true});
+// o iPhone só libera em toque que termina (touchend) ou clique, e pode deixar o áudio 'interrupted' (não só 'suspended')
+const destravaAudio=()=>{ if(AC&&AC.state!=='running'&&AC.state!=='closed') AC.resume().catch(()=>{}); else if(!AC&&music){ ctxAudio(); trilha(musKey); } };
+for(const t of ['pointerdown','pointerup','touchend','click','keydown']) addEventListener(t,destravaAudio,{capture:true});
 $('#mContinue').onclick=loadGame;
 $('#mCred').onclick=credits;
 $('#mLab').onclick=labPainel;

@@ -650,7 +650,7 @@ body.rola #stage{touch-action:none}
 <div id="coach" class="hidden"><div class="cav" id="coachAv"></div><div><p id="coachText"></p><button class="btn b" id="coachOk">Ok</button></div></div>
 
 <script>
-const VERSAO="85671f3d";
+const VERSAO="1aa09d83";
 // ===================== CONFIG =====================
 let W = 4, H = 4, N = 4;      // largura e altura do tabuleiro (N = maior lado)
 const CFG = {
@@ -3724,11 +3724,11 @@ function buildFundo(w,h,m,o={}){const D=DPR,g=mk(w,h),c=g.getContext('2d'),r=rng
     const L3=[-.55,.5,.67],astro=(nome,x,y,diam,a=.92)=>{const S0=Math.max(32,Math.min(720,Math.round(diam))),img=makePiece(byName(nome),S0).draw(3.7,L3,{outline:false});
       c.globalAlpha=a;c.drawImage(img,x-diam/2,y-diam/2,diam,diam);c.globalAlpha=1;};
     if(T==='gigante'){astro('Júpiter',w*1.04,h*1.08,Math.min(w,h)*1.05,.9);}
-    else if(T==='cinturao'){const ax=-.1*w,ay=(J?1.02:.9)*h,bx=1.1*w,by=(J?.6:.1)*h,nl=Math.hypot(by-ay,bx-ax),nx=-(by-ay)/nl,ny=(bx-ax)/nl,TAM=[8,12,18,26].map(v=>Math.round(v*D));
+    else if(T==='cinturao'){const ax=-.1*w,ay=(J?1.06:.9)*h,bx=1.1*w,by=(J?.84:.1)*h,nl=Math.hypot(by-ay,bx-ax),nx=-(by-ay)/nl,ny=(bx-ax)/nl,TAM=[8,12,18,26].map(v=>Math.round(v*D));
       for(let i=0;i<220;i++){const s=r(),off=(r()-.5)*(r()+r())*big*.12,sz=(.6+1.4*r())*D;c.fillStyle=`rgba(170,160,150,${(.25+.4*r()).toFixed(2)})`;c.fillRect(ax+(bx-ax)*s+nx*off,ay+(by-ay)*s+ny*off,sz,sz);}
       for(let i=0;i<46;i++){const s=r(),off=(r()-.5)*(r()+r())*big*.1,sz=TAM[(r()*r()*4)|0],M=mmul(rotAxis(r()-.5,r()-.5,r()-.5,r()*6),rotAxis(0,1,0,r()*6));
         c.globalAlpha=.9;c.drawImage(objImg('rochinha',sz,0,M),ax+(bx-ax)*s+nx*off-sz/2,ay+(by-ay)*s+ny*off-sz/2);c.globalAlpha=1;}
-      astro('Lua',w*.84,h*(J?.7:.12),big*.16);
+      astro('Lua',w*(J?.9:.84),h*(J?.93:.12),big*.16);   // no jogo, a lua e o cinturão ficam embaixo, longe do tabuleiro
       const rocks=Array.from({length:10},()=>({s:r(),off:(r()-.5)*big*.12,sz:TAM[2+((r()*2)|0)],sp:.006+.01*r(),ax:[r()-.5,r()-.5,r()-.5],w:.4+r()*.8,f:r()*6}));
       anim=(cx,t)=>{for(const k of rocks){const s=(k.s+t*k.sp)%1,x=ax+(bx-ax)*s+nx*k.off,y=ay+(by-ay)*s+ny*k.off;cx.drawImage(quadroObj('cint'+(k.sz%3),'rochinha',k.sz,k.f+t*k.w,32,TAU,rotRocha(k.sz%3)),x-k.sz/2,y-k.sz/2);}};}
     else if(T==='veu'){astro('Saturno',-w*.02,h*(J?.97:.07),big*(J?.6:.7),.9);}
@@ -4280,6 +4280,12 @@ function ceuDesenha(t){
   // planeta) até cobrir; mais alto, sobra um pouco em cima e embaixo
   if(F.h!==h){ const s=Math.max(1,h/F.h); c.translate(w/2,h/2); c.scale(s,s); c.translate(-w/2,-F.h/2); }
   c.translate(-M+cx*.3,-M+cy*.3); ESP.drawFundo(c,ceuF,t); c.restore();
+  // no jogo, o que fica atrás do tabuleiro (a lua, o planeta do mundo, o cinturão de pedras) se apaga aos poucos: as
+  // pedras do fundo pareciam peças e a lua atrapalhava ver a partida. A nebulosa (outra camada) e as estrelas de fora seguem.
+  if(jogo){ const r=board.getBoundingClientRect(); if(r.width>20){ const a=r.width/2, b=r.height/2, R=Math.max(a,b)*1.9;
+    c.save(); c.globalCompositeOperation='destination-out'; c.translate(r.left+a, r.top+b); c.scale(a/Math.max(a,b), b/Math.max(a,b));
+    const g=c.createRadialGradient(0,0,R*.6,0,0,R); g.addColorStop(0,'rgba(0,0,0,.93)'); g.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=g; c.fillRect(-R,-R,2*R,2*R); c.restore(); } }
   if(jogo){ if(t>proxPass) novaPassagem(t,w,h); passagens(c,t,cx*.35,cy*.35); }
   c.save(); c.globalCompositeOperation='lighter';
   for(const j of aneisE){ const u=(t-j.t0)/1.6; if(u<0||u>1) continue; const R=Math.max(0,j.v*(t-j.t0)); c.lineWidth=6*(1-u)+1; c.strokeStyle=`rgba(${j.rgb},${(.22*(1-u)).toFixed(3)})`; c.beginPath(); c.arc(j.x,j.y,R,0,7); c.stroke(); }
@@ -4935,13 +4941,14 @@ let AC=null, BUS=null, NB=null;
 function ctxAudio(){
   try{
     if(!AC){ AC=new (window.AudioContext||window.webkitAudioContext)(); BUS=AC.createGain(); BUS.gain.value=.9; BUS.connect(AC.destination); }
-    if(AC.state==='suspended' && !document.hidden) AC.resume();   // escondido, fica parado (ver visibilitychange)
+    // parado ('suspended') ou, no iPhone, 'interrupted' (ligação, outro app tocando): volta. Escondido, fica parado (ver visibilitychange)
+    if(AC.state!=='running' && AC.state!=='closed' && !document.hidden) AC.resume().catch(()=>{});
     return AC;
   }catch(e){ return null; }
 }
 function ac(){ return sound ? ctxAudio() : null; }
 // jogo em segundo plano (trocou de app, bloqueou a tela, outra aba): o som para e volta quando o jogo reaparece
-document.addEventListener('visibilitychange',()=>{ if(AC) (document.hidden ? AC.suspend() : AC.resume()).catch(()=>{}); });
+document.addEventListener('visibilitychange',()=>{ if(AC && AC.state!=='closed') (document.hidden ? AC.suspend() : AC.resume()).catch(()=>{}); });
 
 // ===================== MÚSICA =====================
 // Trilha por tela (todas sintetizadas, vindas do Gabinete). TRIM iguala o volume entre elas.
@@ -5216,8 +5223,9 @@ $('#btnPause').onclick=pauseMenu;
 $('#btnOpc').onclick=()=>espOpcoes();
 document.querySelectorAll('.musBtn').forEach(b=>{ b.onclick=toggleMusic; b.style.opacity=music?1:.4; });
 // destrava o áudio no primeiro toque. No celular o navegador só libera o som quando o dedo sobe (pointerup), não quando encosta
-const destravaAudio=()=>{ if(AC&&AC.state==='suspended') AC.resume(); else if(!AC&&music){ ctxAudio(); trilha(musKey); } };
-for(const t of ['pointerdown','pointerup','keydown']) addEventListener(t,destravaAudio,{capture:true});
+// o iPhone só libera em toque que termina (touchend) ou clique, e pode deixar o áudio 'interrupted' (não só 'suspended')
+const destravaAudio=()=>{ if(AC&&AC.state!=='running'&&AC.state!=='closed') AC.resume().catch(()=>{}); else if(!AC&&music){ ctxAudio(); trilha(musKey); } };
+for(const t of ['pointerdown','pointerup','touchend','click','keydown']) addEventListener(t,destravaAudio,{capture:true});
 $('#mContinue').onclick=loadGame;
 $('#mCred').onclick=credits;
 $('#mLab').onclick=labPainel;
