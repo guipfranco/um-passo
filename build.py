@@ -46,6 +46,7 @@ body.espaco .slot.void::before{display:none}
 body.espaco .tile .face{width:100% !important;height:100% !important;margin:0 !important;position:relative}
 #glPlan{display:none;position:absolute;left:calc(-1*var(--cell));top:calc(-1*var(--cell));width:calc(100% + 2*var(--cell));height:calc(100% + 2*var(--cell));pointer-events:none;z-index:5}
 body.espaco #glPlan{display:block}
+body.espaco #scrMenu .btn small{display:none}   /* no espaço os botões do menu ficam só com o nome */
 .relato{display:flex;flex-direction:column;gap:10px}
 body.espaco .panel:has(.ent){padding:18px 16px 16px}
 .ent{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;width:100%}

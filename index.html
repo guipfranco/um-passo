@@ -151,6 +151,7 @@ body.espaco .slot.void::before{display:none}
 body.espaco .tile .face{width:100% !important;height:100% !important;margin:0 !important;position:relative}
 #glPlan{display:none;position:absolute;left:calc(-1*var(--cell));top:calc(-1*var(--cell));width:calc(100% + 2*var(--cell));height:calc(100% + 2*var(--cell));pointer-events:none;z-index:5}
 body.espaco #glPlan{display:block}
+body.espaco #scrMenu .btn small{display:none}   /* no espaço os botões do menu ficam só com o nome */
 .relato{display:flex;flex-direction:column;gap:10px}
 body.espaco .panel:has(.ent){padding:18px 16px 16px}
 .ent{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;width:100%}
@@ -638,7 +639,7 @@ body.rola #stage{touch-action:none}
 <div id="coach" class="hidden"><div class="cav" id="coachAv"></div><div><p id="coachText"></p><button class="btn b" id="coachOk">Ok</button></div></div>
 
 <script>
-const VERSAO="e99888ac";
+const VERSAO="d054a9ae";
 // ===================== CONFIG =====================
 let W = 4, H = 4, N = 4;      // largura e altura do tabuleiro (N = maior lado)
 const CFG = {
@@ -4517,37 +4518,43 @@ function pedrinha(c,x,y,R,p,t){ c.save(); c.translate(x,y); c.rotate(p.rot+p.gir
   p.forma.forEach((k,i)=>{ const a=i/6*6.2832; i?c.lineTo(Math.cos(a)*R*k,Math.sin(a)*R*k):c.moveTo(Math.cos(a)*R*k,Math.sin(a)*R*k); }); c.closePath();
   c.fillStyle=p.c; c.fill(); c.fillStyle='rgba(255,240,215,.28)'; c.beginPath(); c.arc(-R*.25,-R*.25,R*.45,0,7); c.fill(); c.restore(); }
 // tamanho de cada nível na órbita do menu (px numa tela de 360)
-// menu como sistema solar (escolhido no rascunho menu-planetas.html, 2026-11-09): o nome no lugar do Sol, cada planeta
-// já descoberto na sua órbita, na ordem real, com o tamanho real comprimido (raiz quadrada do diâmetro, para os pequenos
-// continuarem visíveis). Os de dentro giram mais rápido. A Lua gira em volta da Terra. O cinturão de pedras fica onde
-// estaria o Cinturão de Kuiper, perto de Plutão. Quando a pessoa descobre o Sol, ele aparece atrás do nome.
+// menu como sistema solar acima do nome (rascunhos menu-planetas.html e menu-nome.html, 2026-11-09): o sistema gira em
+// cima e o nome fica embaixo, livre, sem planeta passando por cima dele. Cada planeta já descoberto fica na sua órbita, na
+// ordem real; as órbitas seguem a distância real em escala logarítmica, então as de fora ficam bem mais afastadas e os
+// gigantes longe um do outro. Tamanho real comprimido (raiz quadrada do diâmetro), e tudo encolhe um pouco a cada
+// gigante que aparece. A Lua gira em volta da Terra; o Sol fica no centro quando descoberto; o cinturão de pedras fica
+// por fora, onde estaria o Cinturão de Kuiper, junto de Plutão.
 const DIAM_KM={'Plutão':2377,'Lua':3474,'Mercúrio':4879,'Marte':6779,'Vênus':12104,'Terra':12742,'Netuno':49244,'Urano':50724,'Saturno':116460,'Júpiter':139820};
-const ORBITAS=[['Mercúrio',.30],['Vênus',.43],['Terra',.56],['Marte',.69],['Júpiter',.86],['Saturno',1.02],['Urano',1.17],['Netuno',1.31],['Plutão',1.45]];
+const DIST_UA={'Mercúrio':.39,'Vênus':.72,'Terra':1,'Marte':1.52,'Júpiter':5.2,'Saturno':9.54,'Urano':19.2,'Netuno':30.1,'Plutão':39.5};
+const ORDEM_SOL=['Mercúrio','Vênus','Terra','Marte','Júpiter','Saturno','Urano','Netuno','Plutão'];
+const raioOrb=n=>.16+.84*Math.log(DIST_UA[n]/.39)/Math.log(39.5/.39);   // de 0,16 (Mercúrio) a 1 (Plutão)
 const nivelDe=n=>ESP.LADDER.findIndex(x=>x.n===n)+1;
-// tamanho da caixa da peça: o corpo (Terra = 17, nenhum menor que 7) dividido pela parte da caixa que o corpo ocupa (anéis e brilho ficam de fora)
+// tamanho da caixa da peça: o corpo (Terra = 17, nenhum menor que 7) dividido pela parte da caixa que o corpo ocupa
 const tamLogo=n=>{ const def=ESP.byName(n), rs=(def.sp&&def.sp.rScale)||1; return Math.max(7,17*Math.sqrt(DIAM_KM[n]/12742))/rs; };
+const escalaLogo=d=>d>=16?.8:d>=14?.88:d>=12?1:1.15;   // tudo encolhe conforme aparecem os gigantes
 function espLogo(c,W,H,u,t){
-  const Q=Math.min(W/360, H/266), cx=W/2, cy=H*.5, rx=158*Q, ry=60*Q, tl=-.14, ct=Math.cos(tl), st=Math.sin(tl);
-  const lugar=(a,f=1,dy=0,kx=1)=>{ const x0=Math.cos(a)*rx*f*kx, y0=Math.sin(a)*ry*f+dy*ry; return [cx+x0*ct-y0*st, cy+x0*st+y0*ct]; };
-  const d=DESC(), corpos=[], KX=.78;   // KX: as órbitas dos planetas um pouco mais estreitas que o cinturão
-  ORBITAS.forEach(([n,f],i)=>{ if(nivelDe(n)>d) return; const a=t*.25*Math.pow(f,-1.5)+i*2.4, [x,y]=lugar(a,f,0,KX);
-    corpos.push({n, sz:tamLogo(n)*Q, x, y, z:Math.sin(a), esf:ESP.byName(n).kind==='sphere'}); });
-  if(nivelDe('Lua')<=d){ const terra=corpos.find(b=>b.n==='Terra'), a=t*1.3;
-    if(terra) corpos.push({n:'Lua', sz:tamLogo('Lua')*Q, x:terra.x+Math.cos(a)*15*Q, y:terra.y+Math.sin(a)*6*Q, z:terra.z+Math.sin(a)*.01, esf:true});
-    else { const f=.56, a2=t*.25*Math.pow(f,-1.5)+2*2.4, [x,y]=lugar(a2,f,0,KX); corpos.push({n:'Lua', sz:tamLogo('Lua')*Q, x, y, z:Math.sin(a2), esf:true}); } }
-  if(d>=nivelDe('Sol')) corpos.push({n:'Sol', sz:96*Q/((ESP.byName('Sol').sp||{}).rScale||1), x:cx, y:cy, z:-1, sol:true, esf:true});
+  const Q=Math.min(W/360, H/266), cx=W/2, nomeH=110*Q, ny=H-nomeH/2+2*Q, areaH=H-nomeH, scy=areaH/2+2*Q, d=DESC(), k=escalaLogo(d);
+  const rx=W/2-14*Q, ry=Math.min(.34*rx, areaH/2-22*Q*k), tl=-.1, ct=Math.cos(tl), st=Math.sin(tl);
+  const lugar=(a,f,dy=0)=>{ const x0=Math.cos(a)*rx*f, y0=Math.sin(a)*ry*f+dy*ry; return [cx+x0*ct-y0*st, scy+x0*st+y0*ct]; };
+  const corpos=[], giro=n=>t*.16*Math.pow(raioOrb(n)+.15,-1.5);   // os de dentro giram mais rápido
+  ORDEM_SOL.forEach((n,i)=>{ if(nivelDe(n)>d) return; const a=giro(n)+i*2.4, [x,y]=lugar(a,raioOrb(n));
+    corpos.push({n, sz:tamLogo(n)*Q*k, x, y, z:Math.sin(a), esf:ESP.byName(n).kind==='sphere'}); });
+  if(nivelDe('Lua')<=d){ const terra=corpos.find(b=>b.n==='Terra'), a=t*1.3, sz=tamLogo('Lua')*Q*k;
+    if(terra) corpos.push({n:'Lua', sz, x:terra.x+Math.cos(a)*13*Q*k, y:terra.y+Math.sin(a)*5*Q*k, z:terra.z+Math.sin(a)*.01, esf:true});
+    else { const a2=giro('Terra')+2*2.4, [x,y]=lugar(a2,raioOrb('Terra')); corpos.push({n:'Lua', sz, x, y, z:Math.sin(a2), esf:true}); } }
+  if(d>=nivelDe('Sol')) corpos.push({n:'Sol', sz:80*Q*k/((ESP.byName('Sol').sp||{}).rScale||1), x:cx, y:scy, z:0, sol:true, esf:true});
   const esf=corpos.filter(b=>b.esf), gl=esf.length>0 && glAtivo() && ESP.discosGL(esf.map(b=>({n:b.n, sz:b.sz, t})));
   if(gl) glSujo=true;
-  const pedras=cinto().map(p=>{ const a=p.a+t*.1*p.v, [x,y]=lugar(a,1+p.dr,p.dy); return {p,x,y,z:Math.sin(a)}; });
-  const poe=(lado)=>{ // lado<0: atrás do nome (metade de cima da órbita); lado>0: na frente (metade de baixo)
-    for(const q of pedras){ if((q.z<0)!==(lado<0)) continue; const k=.72+.4*(q.z+1)/2;
-      c.globalAlpha=.5+.5*(q.z+1)/2; if(q.p.pedra) pedrinha(c,q.x,q.y,q.p.s*Q*k,q.p,t); else { c.fillStyle=q.p.c; c.beginPath(); c.arc(q.x,q.y,q.p.s*Q*k,0,7); c.fill(); } }
-    c.globalAlpha=1;
-    corpos.filter(b=>(b.z<0)===(lado<0)).sort((a,b)=>(a.sol?1:0)-(b.sol?1:0)||a.z-b.z).forEach(b=>{ const esc=b.sol?1:.72+.28*(b.z+1)/2;   // o Sol por último na metade de trás: os planetas de trás passam atrás dele, e o nome fica na frente
-      if(gl && b.esf) ESP.drawPecaGL(c,b.n,b.x,b.y,b.sz,esc); else ESP.drawPeca(c,b.n,t,b.x,b.y,b.sz,1,true,esc); }); };
-  poe(-1);
-  c.drawImage(nomeLogo(W,H,Q,cx,cy),0,0);
-  poe(1);
+  const pedras=cinto().map(p=>{ const a=p.a+t*.1*p.v, [x,y]=lugar(a,1+p.dr*.5,p.dy*.5); return {p,x,y,z:Math.sin(a)}; });
+  const pedrasDe=(lado)=>{ for(const q of pedras){ if((q.z<0)!==(lado<0)) continue; const kk=(.72+.4*(q.z+1)/2)*k;
+      c.globalAlpha=.5+.5*(q.z+1)/2; if(q.p.pedra) pedrinha(c,q.x,q.y,q.p.s*Q*kk,q.p,t); else { c.fillStyle=q.p.c; c.beginPath(); c.arc(q.x,q.y,q.p.s*Q*kk,0,7); c.fill(); } }
+    c.globalAlpha=1; };
+  // de trás para a frente: pedras de trás, planetas de trás, o Sol (z = 0), planetas da frente, pedras da frente; o nome por último, embaixo
+  pedrasDe(-1);
+  corpos.slice().sort((a,b)=>a.z-b.z).forEach(b=>{ const esc=b.sol?1:.78+.22*(b.z+1)/2;
+    if(gl && b.esf) ESP.drawPecaGL(c,b.n,b.x,b.y,b.sz,esc); else ESP.drawPeca(c,b.n,t,b.x,b.y,b.sz,1,true,esc); });
+  pedrasDe(1);
+  c.drawImage(nomeLogo(W,H,Q,cx,H*.5),0,ny-H*.5);
 }
 // nome: 2048 grande e ASTROS embaixo, espaçado. Ele não se mexe: é pintado (com os dois brilhos) uma vez numa camada e só
 // copiado a cada quadro; pinta de novo quando o tamanho muda ou quando uma fonte acaba de carregar
@@ -4570,7 +4577,7 @@ function ajustaMenu(){
   const menu=$('#scrMenu'), lg=$('#logoEsp'); if(!lg || !menu.classList.contains('on') || !document.body.classList.contains('espaco')) return;
   const vis=[...menu.children].filter(e=>e.offsetParent!==null); if(!vis.length) return;
   const alto=vis[vis.length-1].getBoundingClientRect().bottom-vis[0].getBoundingClientRect().top, resto=alto-lg.offsetHeight;
-  const w=Math.min(360, innerWidth-16), h=Math.round(Math.max(110, Math.min(w*.74, innerHeight-28-resto)));
+  const w=Math.min(360, innerWidth-16), h=Math.round(Math.max(110, Math.min(w*.92, innerHeight-28-resto)));
   if(Math.abs(h-(lg._fh||0))>1) espCanvasFixo(lg, w, h, espLogo);
 }
 addEventListener('resize', ()=>requestAnimationFrame(ajustaMenu));
@@ -4603,7 +4610,7 @@ function espMenu(){
   if(document.fonts?.load){ document.fonts.load("900 40px Orbitron"); document.fonts.load("700 20px 'Exo 2'"); }
   let lg=$('#logoEsp');
   if(!lg){ lg=document.createElement('canvas'); lg.id='logoEsp'; menu.insertBefore(lg, menu.firstChild); }
-  const w=Math.min(360, innerWidth-16); if(!lg._fh) espCanvasFixo(lg, w, Math.round(w*.74), espLogo);
+  const w=Math.min(360, innerWidth-16); if(!lg._fh) espCanvasFixo(lg, w, Math.round(w*.92), espLogo);
   requestAnimationFrame(ajustaMenu); document.fonts?.ready?.then(()=>requestAnimationFrame(ajustaMenu));
   if(!$('#ovos')){
     const d=document.createElement('div'); d.id='ovos';
