@@ -22,16 +22,21 @@ export function cria(cfg) {
     dly.connect(lp); lp.connect(fb); fb.connect(dly); lp.connect(dg); dg.connect(sai);
     const ruido = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate); { const d = ruido.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; }
 
+    // Ganho que nasce fechado. O GainNode começa valendo 1, e o Chrome liga a fonte na amostra mais próxima de T mas só
+    // aplica o envelope a partir da primeira amostra depois de T: quando T cai um fio acima de uma amostra (na Órbita,
+    // a 100 bpm, toda nota cai em amostra redonda), a primeira amostra passava com ganho 1. No chiado (ruído no
+    // passa-altas) isso dava um pico de até 0,8 no chimbal e na palma, mais alto que a música inteira: o estalo.
+    const fechado = () => { const g = ctx.createGain(); g.gain.setValueAtTime(0, 0); return g; };
     const env = (g, T, a, v, d) => { g.gain.setValueAtTime(0.0001, T); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, v), T + a); g.gain.exponentialRampToValueAtTime(0.0001, T + a + d); };
     const saida = (g, o) => { let n = g; if (o.pan && ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.value = o.pan; g.connect(p); n = p; }
       n.connect(sai); if (o.rev) { const s = ctx.createGain(); s.gain.value = o.rev; n.connect(s); s.connect(rev); } if (o.dly) { const s = ctx.createGain(); s.gain.value = o.dly; n.connect(s); s.connect(dly); } };
-    const tom = o => { const { T, f, to = null, type = 'sine', a = 0.005, d = 0.2, v = 0.1, lp = null, q = 0.7 } = o, os = ctx.createOscillator(), g = ctx.createGain();
+    const tom = o => { const { T, f, to = null, type = 'sine', a = 0.005, d = 0.2, v = 0.1, lp = null, q = 0.7 } = o, os = ctx.createOscillator(), g = fechado();
       os.type = type; os.frequency.setValueAtTime(f, T); if (to) os.frequency.exponentialRampToValueAtTime(to, T + a + d);
       env(g, T, a, v, d); let n = os; if (lp) { const fl = ctx.createBiquadFilter(); fl.frequency.value = lp; fl.Q.value = q; os.connect(fl); n = fl; }
       n.connect(g); saida(g, o); os.start(T); os.stop(T + a + d + 0.1); };
-    const chiado = o => { const { T, f, type = 'bandpass', d = 0.05, v = 0.03, q = 1 } = o, s = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = ctx.createGain();
+    const chiado = o => { const { T, f, type = 'bandpass', d = 0.05, v = 0.03, q = 1 } = o, s = ctx.createBufferSource(), fl = ctx.createBiquadFilter(), g = fechado();
       s.buffer = ruido; fl.type = type; fl.frequency.value = f; fl.Q.value = q; env(g, T, 0.002, v, d); s.connect(fl); fl.connect(g); saida(g, o); s.start(T, Math.random() * 0.5); s.stop(T + d + 0.1); };
-    const pad = (T, ms, dur, v, lpf) => { for (const m of ms) { const g = ctx.createGain(), fl = ctx.createBiquadFilter(); fl.type = 'lowpass'; fl.Q.value = 0.5;
+    const pad = (T, ms, dur, v, lpf) => { for (const m of ms) { const g = fechado(), fl = ctx.createBiquadFilter(); fl.type = 'lowpass'; fl.Q.value = 0.5;
         fl.frequency.setValueAtTime(lpf * 0.55, T); fl.frequency.linearRampToValueAtTime(lpf, T + dur * 0.5); fl.frequency.linearRampToValueAtTime(lpf * 0.55, T + dur);
         g.gain.setValueAtTime(0, T); g.gain.linearRampToValueAtTime(v, T + dur * 0.35); g.gain.setValueAtTime(v, T + dur * 0.6); g.gain.linearRampToValueAtTime(0, T + dur);
         for (const dt of [-8, 8]) { const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = mtof(m); o.detune.value = dt; o.connect(fl); o.start(T); o.stop(T + dur + 0.1); }
