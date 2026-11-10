@@ -589,7 +589,7 @@ function espLogo(c,W,H,u,t){
     for(const q of pedras){ if((q.z<0)!==(lado<0)) continue; const k=.72+.4*(q.z+1)/2;
       c.globalAlpha=.5+.5*(q.z+1)/2; if(q.p.pedra) pedrinha(c,q.x,q.y,q.p.s*Q*k,q.p,t); else { c.fillStyle=q.p.c; c.beginPath(); c.arc(q.x,q.y,q.p.s*Q*k,0,7); c.fill(); } }
     c.globalAlpha=1;
-    corpos.filter(b=>(b.z<0)===(lado<0)).sort((a,b)=>(b.sol?1:0)-(a.sol?1:0)||a.z-b.z).forEach(b=>{ const esc=b.sol?1:.72+.28*(b.z+1)/2;
+    corpos.filter(b=>(b.z<0)===(lado<0)).sort((a,b)=>(a.sol?1:0)-(b.sol?1:0)||a.z-b.z).forEach(b=>{ const esc=b.sol?1:.72+.28*(b.z+1)/2;   // o Sol por último na metade de trás: os planetas de trás passam atrás dele, e o nome fica na frente
       if(gl && b.esf) ESP.drawPecaGL(c,b.n,b.x,b.y,b.sz,esc); else ESP.drawPeca(c,b.n,t,b.x,b.y,b.sz,1,true,esc); }); };
   poe(-1);
   c.drawImage(nomeLogo(W,H,Q,cx,cy),0,0);
