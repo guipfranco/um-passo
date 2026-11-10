@@ -46,7 +46,11 @@ body.espaco .slot.void::before{display:none}
 body.espaco .tile .face{width:100% !important;height:100% !important;margin:0 !important;position:relative}
 #glPlan{display:none;position:absolute;left:calc(-1*var(--cell));top:calc(-1*var(--cell));width:calc(100% + 2*var(--cell));height:calc(100% + 2*var(--cell));pointer-events:none;z-index:5}
 body.espaco #glPlan{display:block}
-body{overscroll-behavior:auto}   /* o 'sem puxar para atualizar' vale só na página (html): no corpo ele prendia o dedo e o mapa da Jornada não rolava */
+body{overscroll-behavior:auto}
+/* mapa da Jornada: a barra com o "‹ Menu" fica presa no topo enquanto o mapa rola por baixo, com uma faixa escura suave atrás */
+body.espaco.naLista .top{position:fixed;top:12px;left:0;right:0;margin:0 auto;z-index:30}
+body.espaco.naLista #shell{min-height:38px}
+body.espaco.naLista::before{content:'';position:fixed;left:0;right:0;top:0;height:70px;background:linear-gradient(rgba(11,10,24,.94),rgba(11,10,24,.6) 60%,rgba(11,10,24,0));z-index:29;pointer-events:none}   /* o 'sem puxar para atualizar' vale só na página (html): no corpo ele prendia o dedo e o mapa da Jornada não rolava */
 body.espaco #scrMenu .btn small{display:none}   /* no espaço os botões do menu ficam só com o nome... */
 body.espaco #scrMenu .btn.comSub small{display:block;margin-top:3px;font:600 11px 'Exo 2',sans-serif !important;letter-spacing:.14em;text-transform:uppercase;color:inherit !important;opacity:.72;text-shadow:none}   /* ...menos quando há algo para continuar: no mesmo estilo do nome */
 .relato{display:flex;flex-direction:column;gap:10px}
