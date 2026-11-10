@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2048 Astros · tamanho dos planetas no menu (rascunho)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+*{box-sizing:border-box}
+html,body{background:#0b0a18}
+body{margin:0;color:#e8e4ff;font-family:'Exo 2',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+main{max-width:460px;margin:0 auto;padding:14px 12px 48px;display:flex;flex-direction:column;gap:10px}
+h1{margin:2px 0 0;font:900 20px Orbitron,sans-serif;letter-spacing:.04em;color:#f4fbff;text-shadow:0 0 14px rgba(110,230,255,.7)}
+h2{margin:18px 0 0;font:900 13px Orbitron,sans-serif;letter-spacing:.12em;color:#9fe9ff}
+p{margin:0;font-size:15px;line-height:1.42;color:#c9c2ee}
+.rot{font:700 11.5px 'Exo 2',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#a49bd6;margin:4px 0 -4px}
+.ops{display:flex;gap:6px;flex-wrap:wrap}
+.op{flex:1 1 0;min-width:0;border:1.5px solid rgba(140,200,255,.3);border-radius:12px;padding:7px 4px;background:rgba(20,16,44,.7);color:#d8d2ff;
+  font:700 13px 'Exo 2',sans-serif;cursor:pointer;line-height:1.1}
+.op small{display:block;font-weight:400;font-size:11px;color:#a49bd6;margin-top:2px}
+.op.on{border-color:#6ee6ff;background:rgba(40,90,140,.45);color:#fff;box-shadow:0 0 12px rgba(110,230,255,.45)}
+.op.on small{color:#cfe9ff}
+#moldura{position:relative;width:100%;border-radius:22px;overflow:hidden;border:1.5px solid rgba(140,200,255,.22);background:#0b0a18}
+#jogo{border:0;display:block;transform-origin:0 0}
+.card{background:rgba(22,17,40,.82);border:1.5px solid rgba(255,255,255,.12);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.card.on{border-color:rgba(110,230,255,.6);box-shadow:0 0 14px rgba(110,230,255,.2)}
+.card h3{margin:0;font:800 15.5px 'Exo 2',sans-serif;color:#fff}
+.card h3 i{font-style:normal;font:900 12px Orbitron,sans-serif;color:#6fe0ff;margin-right:6px}
+.card p{font-size:14px}
+.nota{font-size:13px;color:#a49bd6}
+table{border-collapse:collapse;font-size:12.5px;color:#d8d0f0;width:100%}
+td,th{padding:3px 4px;text-align:right;border-bottom:1px solid rgba(255,255,255,.07)} td:first-child,th:first-child{text-align:left}
+th{color:#a49bd6;font-weight:600}
+</style>
+</head>
+<body>
+<main>
+  <h1>PLANETAS DO MENU</h1>
+  <p>O menu de verdade, com cinco jeitos de dar tamanho aos planetas em volta do nome. Escolha também até onde a pessoa já descobriu, porque o menu mostra só o que ela já formou.</p>
+  <div class="rot">Jeito</div>
+  <div class="ops" id="opsV"></div>
+  <div class="rot">Já descobriu até</div>
+  <div class="ops" id="opsD"></div>
+  <div id="moldura"><iframe id="jogo" src="index.html" width="390" height="700"></iframe></div>
+
+  <h2>OS JEITOS</h2>
+  <div class="card" data-v="hoje"><h3><i>0</i>Hoje</h3><p>Os 6 maiores já descobertos numa órbita só, com tamanhos parecidos: Júpiter sai menor que Saturno, a Terra quase do tamanho de Netuno e o Sol pouco maior que um planeta.</p></div>
+  <div class="card" data-v="raiz"><h3><i>A</i>Real, mas comprimido</h3><p>A ordem e as diferenças de verdade, só que suavizadas (pela raiz quadrada do tamanho real): Júpiter fica 3 vezes maior que a Terra, e a Terra 1,6 vez maior que Mercúrio. Todos continuam visíveis. O Sol tem um limite, senão não caberia.</p></div>
+  <div class="card" data-v="real"><h3><i>B</i>Escala real</h3><p>Proporção de verdade entre os planetas: Júpiter enorme, Netuno e Urano médios, a Terra pequena e Mercúrio, Lua e Plutão quase pontinhos. É o mais impressionante e o menos legível. Na escala real o Sol seria 10 vezes maior que Júpiter; aqui ele tem um limite.</p></div>
+  <div class="card" data-v="degraus"><h3><i>C</i>Famílias em degraus</h3><p>Quatro tamanhos bem separados: os pequenos rochosos, Terra e Vênus, os gigantes de gelo (Netuno e Urano) e os gigantes de gás (Saturno e Júpiter), com o Sol acima de todos. Fica claro quem é grande sem perder ninguém de vista.</p></div>
+  <div class="card" data-v="sistema"><h3><i>D</i>Sistema solar</h3><p>O nome no lugar do Sol (e o Sol de verdade aparece atrás dele quando a pessoa o descobre). Cada planeta na sua órbita, na ordem real, de Mercúrio a Plutão, com os tamanhos do jeito A. Os de dentro giram mais rápido, como no céu.</p></div>
+  <div class="card"><h3>Tamanho real (diâmetro)</h3>
+    <table><tr><th>corpo</th><th>km</th><th>vezes a Terra</th></tr>
+      <tr><td>Plutão</td><td>2.377</td><td>0,19</td></tr><tr><td>Lua</td><td>3.474</td><td>0,27</td></tr><tr><td>Mercúrio</td><td>4.879</td><td>0,38</td></tr>
+      <tr><td>Marte</td><td>6.779</td><td>0,53</td></tr><tr><td>Vênus</td><td>12.104</td><td>0,95</td></tr><tr><td>Terra</td><td>12.742</td><td>1</td></tr>
+      <tr><td>Netuno</td><td>49.244</td><td>3,9</td></tr><tr><td>Urano</td><td>50.724</td><td>4,0</td></tr><tr><td>Saturno</td><td>116.460</td><td>9,1</td></tr>
+      <tr><td>Júpiter</td><td>139.820</td><td>11</td></tr><tr><td>Sol</td><td>1.392.700</td><td>109</td></tr></table></div>
+</main>
+
+<script type="text/plain" id="codigo">
+// roda dentro do jogo (no iframe): troca o desenho do logo por um que dimensiona os planetas pelo jeito escolhido
+window.__V='raiz'; window.__D=18;
+window.REAL={'Plutão':2377,'Lua':3474,'Mercúrio':4879,'Marte':6779,'Vênus':12104,'Terra':12742,'Netuno':49244,'Urano':50724,'Saturno':116460,'Júpiter':139820,'Sol':1392700};
+window.tamLogo=function(k,n){
+  const V=__V, def=ESP.byName(n), rs=(def.sp&&def.sp.rScale)||1;
+  if(V==='hoje') return TAM_ORB[k];
+  const miuda={'Poeira':8,'Gelo':10,'Rocha':9,'Asteroide':9,'Cometa':12}[n]; if(miuda) return miuda*1.6;
+  if(n==='Supernova'||n==='Galáxia') return V==='real'?190:130;
+  let corpo;   // diâmetro do corpo, sem anéis nem brilho
+  if(V==='raiz') corpo=27*Math.sqrt(REAL[n]/12742);
+  else if(V==='real') corpo=Math.max(3.5,110*REAL[n]/139820);
+  else if(V==='degraus') corpo={'Plutão':13,'Lua':14,'Mercúrio':16,'Marte':18,'Vênus':25,'Terra':26,'Netuno':48,'Urano':50,'Saturno':76,'Júpiter':86,'Sol':120}[n];
+  else corpo=26*Math.sqrt(REAL[n]/12742);
+  if(n==='Sol') corpo=Math.min(corpo,V==='real'?190:120);
+  return corpo/rs;   // a caixa da peça inclui anel e brilho
+};
+window.espLogoV=function(c,W,H,u,t){
+  const V=__V, Q=Math.min(W/360,H/266), cx=W/2, cy=H*.5, rx=(V==='sistema'?136:158)*Q, ry=60*Q, tl=-.14, ct=Math.cos(tl), st=Math.sin(tl);
+  const lugar=(a,f=1,dy=0)=>{ const x0=Math.cos(a)*rx*f, y0=Math.sin(a)*ry*f+dy*ry; return [cx+x0*ct-y0*st, cy+x0*st+y0*ct]; };
+  const d=DESC(); let corpos;
+  if(V==='sistema'){
+    const ORD=[['Mercúrio',.42],['Vênus',.53],['Terra',.64],['Lua',.71],['Marte',.80],['Júpiter',.93],['Saturno',1.05],['Urano',1.16],['Netuno',1.26],['Plutão',1.34]];
+    corpos=ORD.filter(([n])=>ESP.LADDER.findIndex(x=>x.n===n)+1<=d).map(([n,f],i)=>{ const a=t*.45*Math.pow(f,-1.5)+i*2.4, [x,y]=lugar(a,f);
+      return {n,sz:tamLogo(0,n)*Q,x,y,z:Math.sin(a),esf:ESP.byName(n).kind==='sphere'}; });
+  } else {
+    const niveis=[]; for(let k=d;k>=2&&niveis.length<6;k--) niveis.push(k);
+    corpos=niveis.map((k,i)=>{ const a=t*.22+i*2*Math.PI/niveis.length, [x,y]=lugar(a), n=nomeNivelEsp(k); return {n,sz:tamLogo(k,n)*Q,x,y,z:Math.sin(a),esf:ESP.byName(n).kind==='sphere'}; });
+  }
+  const esf=corpos.filter(b=>b.esf), gl=esf.length>0 && glAtivo() && ESP.discosGL && ESP.discosGL(esf.map(b=>({n:b.n,sz:b.sz,t})));
+  if(gl) glSujo=true;
+  const pedras=cinto().map(p=>{ const a=p.a+t*.1*p.v, [x,y]=lugar(a,1+p.dr,p.dy); return {p,x,y,z:Math.sin(a)}; });
+  const poe=(lado)=>{
+    for(const q of pedras){ if((q.z<0)!==(lado<0)) continue; const k=.72+.4*(q.z+1)/2;
+      c.globalAlpha=.5+.5*(q.z+1)/2; if(q.p.pedra) pedrinha(c,q.x,q.y,q.p.s*Q*k,q.p,t); else { c.fillStyle=q.p.c; c.beginPath(); c.arc(q.x,q.y,q.p.s*Q*k,0,7); c.fill(); } }
+    c.globalAlpha=1;
+    corpos.filter(b=>(b.z<0)===(lado<0)).sort((a,b)=>a.z-b.z).forEach(b=>{ const esc=.72+.28*(b.z+1)/2;
+      if(gl && b.esf) ESP.drawPecaGL(c,b.n,b.x,b.y,b.sz,esc); else ESP.drawPeca(c,b.n,t,b.x,b.y,b.sz,1,true,esc); }); };
+  if(V==='sistema' && d>=16) ESP.drawPeca(c,'Sol',t,cx,cy,150*Q/.58,1,true,1);   // o Sol de verdade atrás do nome
+  poe(-1);
+  c.drawImage(nomeLogo(W,H,Q,cx,cy),0,0);
+  poe(1);
+};
+window.DESC=()=>window.__D;   // só no rascunho: não mexe no progresso guardado
+window.espLogo=window.espLogoV;
+</script>
+
+<script>
+const VARS=[['hoje','Hoje','como está'],['raiz','A · Real','comprimido'],['real','B · Escala','real'],['degraus','C · Famílias','em degraus'],['sistema','D · Sistema','solar']];
+const DESCS=[[11,'Terra','início'],[15,'Júpiter','meio'],[18,'Galáxia','tudo']];
+const q=new URLSearchParams(location.hash.slice(1));
+let V=q.get('v')||'raiz', D=+(q.get('d')||15), pronto=false;
+const fr=document.getElementById('jogo');
+function chips(){
+  const ov=document.getElementById('opsV'); ov.innerHTML='';
+  for(const [k,a,b] of VARS){ const e=document.createElement('button'); e.className='op'+(V===k?' on':''); e.innerHTML=`${a}<small>${b}</small>`; e.onclick=()=>{ V=k; chips(); aplica(); }; ov.appendChild(e); }
+  const od=document.getElementById('opsD'); od.innerHTML='';
+  for(const [n,a,b] of DESCS){ const e=document.createElement('button'); e.className='op'+(D===n?' on':''); e.innerHTML=`${a}<small>${b}</small>`; e.onclick=()=>{ D=n; chips(); aplica(); }; od.appendChild(e); }
+  for(const c of document.querySelectorAll('.card[data-v]')) c.classList.toggle('on',c.dataset.v===V);
+}
+function escala(){ const w=document.getElementById('moldura').clientWidth, k=Math.min(1,w/390); fr.style.transform=`scale(${k})`; document.getElementById('moldura').style.height=(560*k)+'px'; }
+function aplica(){ if(!pronto) return; const w=fr.contentWindow; w.__V=V; w.__D=D; const lg=w.document.getElementById('logoEsp'); if(lg) lg._d=w.espLogoV; }
+fr.onload=()=>{ const w=fr.contentWindow;
+  try{ w.eval('sound=false; music=false; showMenu();'); }catch(e){}
+  w.eval(document.getElementById('codigo').textContent);
+  pronto=true; aplica(); setTimeout(aplica,500); };
+chips(); escala(); addEventListener('resize',escala);
+</script>
+</body>
+</html>
