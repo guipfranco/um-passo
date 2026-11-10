@@ -639,12 +639,12 @@ function espMenu(){
   $('#mCla').onclick = missoesLista;
   $('#mCla').style.display = on && tem ? 'none' : '';
   if(!$('#mSegue')){ const b=document.createElement('button'); b.className='btn g big'; b.id='mSegue'; b.textContent='Continuar'; b.onclick=continuarEsp; $('#mCla').after(b); }
-  $('#mSegue').style.display = on && tem ? '' : 'none';
+  $('#mSegue').style.display = on && tem ? '' : 'none'; $('#mSegue').classList.add('comSub');   // o Continuar sempre diz de onde continua
   if(on && tem) $('#mSegue').innerHTML = `Continuar<small>fase ${faseAtual()} · ${est} ${est===1?'estrela':'estrelas'}</small>`;
   if(!$('#mInf')){ const b=document.createElement('button'); b.className='btn b big'; b.id='mInf'; b.innerHTML='Clássico<small>4x4 sem fim, até não caber mais nada</small>'; b.onclick=()=>infinitoJoga({retoma:true}); $('#mCla').after(b); }
   // com partida do Clássico salva, o botão continua de onde parou e diz isso na linha de baixo
   { const inf=infSalvo(), sub=$('#mInf small'); if(sub.dataset.txt==null) sub.dataset.txt=sub.textContent;
-    sub.textContent = inf ? `continuar · ${(inf.st.pontos||0).toLocaleString('pt-BR')} pontos` : sub.dataset.txt; }
+    sub.textContent = inf ? `continuar · ${(inf.st.pontos||0).toLocaleString('pt-BR')} pontos` : sub.dataset.txt; $('#mInf').classList.toggle('comSub', !!inf); }
   // o Clássico vem depois do Novo jogo e do Continuar
   $('#mSegue').after($('#mInf'));
   // Como jogar: no espaço abre o do 2048 Astros; fora dele, o tutorial da mina

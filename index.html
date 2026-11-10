@@ -151,7 +151,8 @@ body.espaco .slot.void::before{display:none}
 body.espaco .tile .face{width:100% !important;height:100% !important;margin:0 !important;position:relative}
 #glPlan{display:none;position:absolute;left:calc(-1*var(--cell));top:calc(-1*var(--cell));width:calc(100% + 2*var(--cell));height:calc(100% + 2*var(--cell));pointer-events:none;z-index:5}
 body.espaco #glPlan{display:block}
-body.espaco #scrMenu .btn small{display:none}   /* no espaço os botões do menu ficam só com o nome */
+body.espaco #scrMenu .btn small{display:none}   /* no espaço os botões do menu ficam só com o nome... */
+body.espaco #scrMenu .btn.comSub small{display:block;margin-top:3px;font:600 11px 'Exo 2',sans-serif !important;letter-spacing:.14em;text-transform:uppercase;color:inherit !important;opacity:.72;text-shadow:none}   /* ...menos quando há algo para continuar: no mesmo estilo do nome */
 .relato{display:flex;flex-direction:column;gap:10px}
 body.espaco .panel:has(.ent){padding:18px 16px 16px}
 .ent{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;width:100%}
@@ -639,7 +640,7 @@ body.rola #stage{touch-action:none}
 <div id="coach" class="hidden"><div class="cav" id="coachAv"></div><div><p id="coachText"></p><button class="btn b" id="coachOk">Ok</button></div></div>
 
 <script>
-const VERSAO="d054a9ae";
+const VERSAO="035fff93";
 // ===================== CONFIG =====================
 let W = 4, H = 4, N = 4;      // largura e altura do tabuleiro (N = maior lado)
 const CFG = {
@@ -4594,12 +4595,12 @@ function espMenu(){
   $('#mCla').onclick = missoesLista;
   $('#mCla').style.display = on && tem ? 'none' : '';
   if(!$('#mSegue')){ const b=document.createElement('button'); b.className='btn g big'; b.id='mSegue'; b.textContent='Continuar'; b.onclick=continuarEsp; $('#mCla').after(b); }
-  $('#mSegue').style.display = on && tem ? '' : 'none';
+  $('#mSegue').style.display = on && tem ? '' : 'none'; $('#mSegue').classList.add('comSub');   // o Continuar sempre diz de onde continua
   if(on && tem) $('#mSegue').innerHTML = `Continuar<small>fase ${faseAtual()} · ${est} ${est===1?'estrela':'estrelas'}</small>`;
   if(!$('#mInf')){ const b=document.createElement('button'); b.className='btn b big'; b.id='mInf'; b.innerHTML='Clássico<small>4x4 sem fim, até não caber mais nada</small>'; b.onclick=()=>infinitoJoga({retoma:true}); $('#mCla').after(b); }
   // com partida do Clássico salva, o botão continua de onde parou e diz isso na linha de baixo
   { const inf=infSalvo(), sub=$('#mInf small'); if(sub.dataset.txt==null) sub.dataset.txt=sub.textContent;
-    sub.textContent = inf ? `continuar · ${(inf.st.pontos||0).toLocaleString('pt-BR')} pontos` : sub.dataset.txt; }
+    sub.textContent = inf ? `continuar · ${(inf.st.pontos||0).toLocaleString('pt-BR')} pontos` : sub.dataset.txt; $('#mInf').classList.toggle('comSub', !!inf); }
   // o Clássico vem depois do Novo jogo e do Continuar
   $('#mSegue').after($('#mInf'));
   // Como jogar: no espaço abre o do 2048 Astros; fora dele, o tutorial da mina
