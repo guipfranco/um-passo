@@ -638,7 +638,7 @@ body.rola #stage{touch-action:none}
 <div id="coach" class="hidden"><div class="cav" id="coachAv"></div><div><p id="coachText"></p><button class="btn b" id="coachOk">Ok</button></div></div>
 
 <script>
-const VERSAO="b61a8222";
+const VERSAO="e99888ac";
 // ===================== CONFIG =====================
 let W = 4, H = 4, N = 4;      // largura e altura do tabuleiro (N = maior lado)
 const CFG = {
@@ -4578,7 +4578,7 @@ let TAG_MINA=null;
 function espMenu(){
   const on=espTela(), menu=$('#scrMenu'), tag=menu.querySelector('.tagline');
   if(TAG_MINA==null) TAG_MINA=tag.textContent;
-  tag.textContent = on ? 'junte poeira até virar galáxia' : TAG_MINA;
+  tag.textContent = on ? '' : TAG_MINA; tag.style.display = on ? 'none' : '';   // no espaço o menu fica sem frase embaixo do nome
   document.title = on ? '2048 Astros' : 'Ptui!';
   // no espaço: Jogar (sem progresso) ou Continuar (com progresso) e o Clássico (4x4 sem fim).
   // Começar do zero fica nas Opções ("Apagar o progresso"), para não competir com o Continuar.

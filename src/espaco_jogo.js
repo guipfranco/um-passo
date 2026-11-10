@@ -624,7 +624,7 @@ let TAG_MINA=null;
 function espMenu(){
   const on=espTela(), menu=$('#scrMenu'), tag=menu.querySelector('.tagline');
   if(TAG_MINA==null) TAG_MINA=tag.textContent;
-  tag.textContent = on ? 'junte poeira até virar galáxia' : TAG_MINA;
+  tag.textContent = on ? '' : TAG_MINA; tag.style.display = on ? 'none' : '';   // no espaço o menu fica sem frase embaixo do nome
   document.title = on ? '2048 Astros' : 'Ptui!';
   // no espaço: Jogar (sem progresso) ou Continuar (com progresso) e o Clássico (4x4 sem fim).
   // Começar do zero fica nas Opções ("Apagar o progresso"), para não competir com o Continuar.
