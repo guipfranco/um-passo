@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2048 Astros · planetas sem trombar no nome (rascunho)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+*{box-sizing:border-box}
+html,body{background:#0b0a18}
+body{margin:0;color:#e8e4ff;font-family:'Exo 2',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+main{max-width:460px;margin:0 auto;padding:14px 12px 48px;display:flex;flex-direction:column;gap:10px}
+h1{margin:2px 0 0;font:900 20px Orbitron,sans-serif;letter-spacing:.04em;color:#f4fbff;text-shadow:0 0 14px rgba(110,230,255,.7)}
+h2{margin:18px 0 0;font:900 13px Orbitron,sans-serif;letter-spacing:.12em;color:#9fe9ff}
+p{margin:0;font-size:15px;line-height:1.42;color:#c9c2ee}
+.rot{font:700 11.5px 'Exo 2',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#a49bd6;margin:4px 0 -4px}
+.ops{display:flex;gap:6px;flex-wrap:wrap}
+.op{flex:1 1 0;min-width:0;border:1.5px solid rgba(140,200,255,.3);border-radius:12px;padding:7px 4px;background:rgba(20,16,44,.7);color:#d8d2ff;
+  font:700 13px 'Exo 2',sans-serif;cursor:pointer;line-height:1.1}
+.op small{display:block;font-weight:400;font-size:11px;color:#a49bd6;margin-top:2px}
+.op.on{border-color:#6ee6ff;background:rgba(40,90,140,.45);color:#fff;box-shadow:0 0 12px rgba(110,230,255,.45)}
+.op.on small{color:#cfe9ff}
+#moldura{position:relative;width:100%;border-radius:22px;overflow:hidden;border:1.5px solid rgba(140,200,255,.22);background:#0b0a18}
+#jogo{border:0;display:block;transform-origin:0 0}
+.card{background:rgba(22,17,40,.82);border:1.5px solid rgba(255,255,255,.12);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.card.on{border-color:rgba(110,230,255,.6);box-shadow:0 0 14px rgba(110,230,255,.2)}
+.card h3{margin:0;font:800 15.5px 'Exo 2',sans-serif;color:#fff}
+.card h3 i{font-style:normal;font:900 12px Orbitron,sans-serif;color:#6fe0ff;margin-right:6px}
+.card p{font-size:14px}
+</style>
+</head>
+<body>
+<main>
+  <h1>PLANETAS E NOME</h1>
+  <p>O menu de verdade. Dois jeitos de os planetas não passarem por cima do nome, para comparar com o de hoje.</p>
+  <div class="rot">Jeito</div>
+  <div class="ops" id="opsV"></div>
+  <div class="rot">Já descobriu até</div>
+  <div class="ops" id="opsD"></div>
+  <div id="moldura"><iframe id="jogo" src="index.html" width="390" height="700"></iframe></div>
+
+  <h2>OS JEITOS</h2>
+  <div class="card" data-v="jogo"><h3><i>0</i>Hoje</h3><p>Os planetas da metade de trás passam atrás do nome, e os da metade da frente passam por cima dele.</p></div>
+  <div class="card" data-v="atras"><h3><i>A</i>Nome sempre na frente</h3><p>Tudo continua girando em volta do nome, mas os planetas passam sempre por trás dele: o nome nunca fica coberto. O cinturão de pedras segue passando na frente embaixo, para não perder a profundidade.</p></div>
+  <div class="card" data-v="acima"><h3><i>B</i>Sistema acima do nome</h3><p>O sistema solar gira em cima, com o Sol no centro dele e o cinturão por fora, e o nome fica embaixo, livre. Os planetas ficam sempre inteiros à vista e nunca encostam no nome.</p></div>
+</main>
+
+<script type="text/plain" id="codigo">
+// roda dentro do jogo (no iframe): variações do desenho do logo, usando as mesmas peças e órbitas do jogo
+window.__V='atras'; window.__D=18; window.espLogoJogo=espLogo;
+window.espLogoV=function(c,W,H,u,t){
+  const V=__V; if(V==='jogo') return espLogoJogo(c,W,H,u,t);
+  const Q=Math.min(W/360,H/266), cx=W/2, acima=V==='acima', scy=acima?H*.27:H*.5, ny=acima?H*.78:H*.5;
+  const rx=158*Q, ry=(acima?30:60)*Q, tl=-.14, ct=Math.cos(tl), st=Math.sin(tl);
+  const lugar=(a,f=1,dy=0,kx=1)=>{ const x0=Math.cos(a)*rx*f*kx, y0=Math.sin(a)*ry*f+dy*ry; return [cx+x0*ct-y0*st, scy+x0*st+y0*ct]; };
+  const d=DESC(), corpos=[], KX=.78;
+  ORBITAS.forEach(([n,f],i)=>{ if(nivelDe(n)>d) return; const a=t*.25*Math.pow(f,-1.5)+i*2.4, [x,y]=lugar(a,f,0,KX);
+    corpos.push({n,sz:tamLogo(n)*Q,x,y,z:Math.sin(a),esf:ESP.byName(n).kind==='sphere'}); });
+  if(nivelDe('Lua')<=d){ const terra=corpos.find(b=>b.n==='Terra'), a=t*1.3;
+    if(terra) corpos.push({n:'Lua',sz:tamLogo('Lua')*Q,x:terra.x+Math.cos(a)*15*Q,y:terra.y+Math.sin(a)*6*Q,z:terra.z+Math.sin(a)*.01,esf:true});
+    else { const f=.56, a2=t*.25*Math.pow(f,-1.5)+2*2.4, [x,y]=lugar(a2,f,0,KX); corpos.push({n:'Lua',sz:tamLogo('Lua')*Q,x,y,z:Math.sin(a2),esf:true}); } }
+  if(d>=nivelDe('Sol')) corpos.push({n:'Sol',sz:(acima?70:96)*Q/((ESP.byName('Sol').sp||{}).rScale||1),x:cx,y:scy,z:-1,sol:true,esf:true});
+  const esf=corpos.filter(b=>b.esf), gl=esf.length>0 && glAtivo() && ESP.discosGL(esf.map(b=>({n:b.n,sz:b.sz,t})));
+  if(gl) glSujo=true;
+  const pedras=cinto().map(p=>{ const a=p.a+t*.1*p.v, [x,y]=lugar(a,1+p.dr,p.dy); return {p,x,y,z:Math.sin(a)}; });
+  const pedrasDe=(lado)=>{ for(const q of pedras){ if((q.z<0)!==(lado<0)) continue; const k=.72+.4*(q.z+1)/2;
+      c.globalAlpha=.5+.5*(q.z+1)/2; if(q.p.pedra) pedrinha(c,q.x,q.y,q.p.s*Q*k,q.p,t); else { c.fillStyle=q.p.c; c.beginPath(); c.arc(q.x,q.y,q.p.s*Q*k,0,7); c.fill(); } }
+    c.globalAlpha=1; };
+  // planetas de trás, o Sol, depois os da frente (todos antes do nome)
+  const ordem=corpos.slice().sort((a,b)=>{ const za=a.sol?0:a.z, zb=b.sol?0:b.z; return za-zb; });
+  const planetas=()=>ordem.forEach(b=>{ const esc=b.sol?1:.72+.28*(b.z+1)/2;
+    if(gl && b.esf) ESP.drawPecaGL(c,b.n,b.x,b.y,b.sz,esc); else ESP.drawPeca(c,b.n,t,b.x,b.y,b.sz,1,true,esc); });
+  if(acima){ pedrasDe(-1); planetas(); pedrasDe(1); c.drawImage(nomeLogo(W,H,Q,cx,H*.5),0,ny-H*.5); return; }
+  pedrasDe(-1); planetas(); c.drawImage(nomeLogo(W,H,Q,cx,H*.5),0,0); pedrasDe(1);
+};
+window.DESC=()=>window.__D;   // só no rascunho: não mexe no progresso guardado
+window.espLogo=window.espLogoV;
+</script>
+
+<script>
+const VARS=[['jogo','Hoje','como está'],['atras','A · Nome','sempre na frente'],['acima','B · Sistema','acima do nome']];
+const DESCS=[[11,'Terra','início'],[15,'Júpiter','meio'],[18,'Galáxia','tudo']];
+const q=new URLSearchParams(location.hash.slice(1));
+let V=q.get('v')||'atras', D=+(q.get('d')||18), pronto=false;
+const fr=document.getElementById('jogo');
+function chips(){
+  const ov=document.getElementById('opsV'); ov.innerHTML='';
+  for(const [k,a,b] of VARS){ const e=document.createElement('button'); e.className='op'+(V===k?' on':''); e.innerHTML=`${a}<small>${b}</small>`; e.onclick=()=>{ V=k; chips(); aplica(); }; ov.appendChild(e); }
+  const od=document.getElementById('opsD'); od.innerHTML='';
+  for(const [n,a,b] of DESCS){ const e=document.createElement('button'); e.className='op'+(D===n?' on':''); e.innerHTML=`${a}<small>${b}</small>`; e.onclick=()=>{ D=n; chips(); aplica(); }; od.appendChild(e); }
+  for(const c of document.querySelectorAll('.card[data-v]')) c.classList.toggle('on',c.dataset.v===V);
+}
+function escala(){ const w=document.getElementById('moldura').clientWidth, k=Math.min(1,w/390); fr.style.transform=`scale(${k})`; document.getElementById('moldura').style.height=(560*k)+'px'; }
+function aplica(){ if(!pronto) return; const w=fr.contentWindow; w.__V=V; w.__D=D; const lg=w.document.getElementById('logoEsp'); if(lg) lg._d=w.espLogoV; }
+fr.onload=()=>{ const w=fr.contentWindow;
+  try{ w.eval('sound=false; music=false; showMenu();'); }catch(e){}
+  w.eval(document.getElementById('codigo').textContent);
+  pronto=true; aplica(); setTimeout(aplica,500); };
+chips(); escala(); addEventListener('resize',escala);
+</script>
+</body>
+</html>
