@@ -522,12 +522,19 @@ const ocache={};
 // Cada tamanho é um filme; quando os filmes passam de FILME_LIM bytes, os menos usados saem (como no vcache), mas nunca
 // um que tocou há pouco (FILME_USO ms): o que está na tela não é refilmado a cada quadro
 const fcache=new Map(),FILME_LIM=16e6,FILME_USO=2000;let fBytes=0;
-function quadroObj(filme,key,S,t,N,per,rot){const k=filme+'|'+S,agora=performance.now();let F=fcache.get(k);
+function filmeDe(filme,S,N){const k=filme+'|'+S,agora=performance.now();let F=fcache.get(k);
   if(F){if(agora-F.uso>100){fcache.delete(k);fcache.set(k,F);}}   // o mais usado por último fica no fim (os mais velhos saem primeiro)
   else{F={q:new Array(N),b:0};fcache.set(k,F);}
-  F.uso=agora;const i=Math.floor(((t%per+per)%per)/per*N)%N;
-  if(!F.q[i]){const cv=mk(S,S);cv.getContext('2d').drawImage(objImg(key,S,0,rot(i/N*per)),0,0);F.q[i]=cv;F.b+=S*S*4;fBytes+=S*S*4;if(fBytes>FILME_LIM)podaFilmes(agora);}
+  F.uso=agora;return F;}
+function quadroDe(F,key,S,i,N,per,rot){
+  if(!F.q[i]){const cv=mk(S,S);cv.getContext('2d').drawImage(objImg(key,S,0,rot(i/N*per)),0,0);F.q[i]=cv;F.b+=S*S*4;fBytes+=S*S*4;if(fBytes>FILME_LIM)podaFilmes(performance.now());}
   return F.q[i];}
+function quadroObj(filme,key,S,t,N,per,rot){const F=filmeDe(filme,S,N);return quadroDe(F,key,S,Math.floor(((t%per+per)%per)/per*N)%N,N,per,rot);}
+// o filme desenhado com o quadro seguinte se misturando aos poucos por cima: o giro fica liso (sem pular de quadro em
+// quadro, o que fazia a estação, o lixo e a nave parecerem fotos trocando devagar) sem guardar mais quadros
+function filmeSuave(c,filme,key,S,t,N,per,rot,x,y){const F=filmeDe(filme,S,N),p=((t%per+per)%per)/per*N,i=Math.floor(p)%N,f=p-Math.floor(p);
+  c.drawImage(quadroDe(F,key,S,i,N,per,rot),x,y);
+  if(f>.03){const a=c.globalAlpha;c.globalAlpha=a*f;c.drawImage(quadroDe(F,key,S,(i+1)%N,N,per,rot),x,y);c.globalAlpha=a;}}
 function podaFilmes(agora){for(const [k,F] of fcache){if(fBytes<=FILME_LIM*.75)break;if(agora-F.uso<FILME_USO)continue;
   for(const cv of F.q)if(cv)cv.width=cv.height=0;fBytes-=F.b;fcache.delete(k);}}
 const PER_EST=2*Math.PI/.55,PER_LIXO=2*Math.PI/1.1,PER_NAVE=2*Math.PI/.7,TAU=2*Math.PI;
@@ -552,8 +559,8 @@ const SPR={
       for(const [lw,st] of [[u*.07,`rgba(110,220,255,${back?.12:.25})`],[u*.022,`rgba(200,245,255,${back?.5:.95})`]]){c.strokeStyle=st;c.lineWidth=lw;
         for(const s of segs){if(s.length<2)continue;c.beginPath();s.forEach((q,i)=>i?c.lineTo(q[0],q[1]):c.moveTo(q[0],q[1]));c.stroke();}}}
     c.restore();},
-  estacao(c,x,y,u,t){const S=Math.round(u);c.drawImage(quadroObj('estacao','estacao',S,t,60,PER_EST,OBJDEF.estacao.rot),x-S/2,y-S/2);},
-  lixo(c,x,y,u,t){const S=Math.round(u);c.drawImage(quadroObj('lixo','lixo',S,t,48,PER_LIXO,OBJDEF.lixo.rot),x-S/2,y-S/2);
+  estacao(c,x,y,u,t){const S=Math.round(u);filmeSuave(c,'estacao','estacao',S,t,60,PER_EST,OBJDEF.estacao.rot,x-S/2,y-S/2);},
+  lixo(c,x,y,u,t){const S=Math.round(u);filmeSuave(c,'lixo','lixo',S,t,64,PER_LIXO,OBJDEF.lixo.rot,x-S/2,y-S/2);
     for(let i=0;i<3;i++){const a=t*1.6+i*2.1;c.fillStyle='#b8bec8';c.beginPath();c.arc(x+Math.cos(a)*u*.38,y+Math.sin(a)*u*.2,u*.018,0,7);c.fill();}},
   // mureta: fluxo de rochas 3D de a até b
   rochas(c,a,b,t,u){const N=6,L=Math.hypot(b[0]-a[0],b[1]-a[1]),px=-(b[1]-a[1])/L,py=(b[0]-a[0])/L,S=Math.round(u*.3);
@@ -566,7 +573,7 @@ const SPR={
     g.addColorStop(0,'rgba(140,235,255,.55)');g.addColorStop(1,'rgba(140,235,255,.04)');
     c.fillStyle=g;c.beginPath();c.moveTo(x-u*.06,top);c.lineTo(x+u*.06,top);c.lineTo(x+u*.27,bot);c.lineTo(x-u*.27,bot);c.closePath();c.fill();
     c.strokeStyle='rgba(200,250,255,.35)';c.lineWidth=u*.012;for(let i=0;i<3;i++){const k=(t*.7+i/3)%1,yy=top+(bot-top)*k,ww=u*(.06+.21*k);c.beginPath();c.moveTo(x-ww,yy);c.lineTo(x+ww,yy);c.stroke();}
-    drawPeca(c,n,t,x,y+u*.2,u*.42,.6,true);c.drawImage(quadroObj('nave','nave',S,t,48,PER_NAVE,OBJDEF.nave.rot),x-S/2,sy-S/2);},
+    drawPeca(c,n,t,x,y+u*.2,u*.42,.6,true);filmeSuave(c,'nave','nave',S,t,48,PER_NAVE,OBJDEF.nave.rot,x-S/2,sy-S/2);},
   // carrinho, opção B: portal 3D
   portal(c,x,y,u,t,n){const S=Math.round(u);c.save();c.translate(x,y);const g=c.createRadialGradient(0,0,0,0,0,u*.32);g.addColorStop(0,'rgba(170,240,255,.55)');g.addColorStop(1,'rgba(90,120,255,0)');c.fillStyle=g;c.beginPath();c.arc(0,0,u*.32,0,7);c.fill();
     c.rotate(-t*1.2);c.strokeStyle='rgba(190,240,255,.45)';c.lineWidth=u*.012;for(let k=0;k<3;k++){c.beginPath();for(let i=0;i<=30;i++){const a=i/30*4+k*2.09,r=u*.02+u*.25*i/30;i?c.lineTo(Math.cos(a)*r,Math.sin(a)*r):c.moveTo(Math.cos(a)*r,Math.sin(a)*r);}c.stroke();}c.restore();

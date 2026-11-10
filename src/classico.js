@@ -343,15 +343,18 @@ function missoesLista(){
   $('#btnPause').textContent='‹ Menu'; $('#btnPause').title='Voltar ao menu'; document.body.classList.add('naLista');
   const atual = (MISSOES.findIndex((m,i)=>!(r[i+1]?.e)) + 1) || MISSOES.length;
   const lado = ['center','flex-end','center','flex-start'], E=espFig();
+  // no espaço o mapa mostra só até algumas fases depois da atual: dali para a frente ainda é segredo (e não se rola sem fim)
+  const ATE = E ? Math.min(MISSOES.length, atual+3) : MISSOES.length;
   let html='';
   MUNDOS.forEach((g,gi)=>{
+    const pri=MISSOES.findIndex(m=>m.g===gi)+1; if(g.breve ? ATE<MISSOES.length : pri>ATE) return;
     html += `<div class="mGrupo ${g.breve?'breve':''}">${E?icoMundoEsp(gi):disc(g.ico||g.fase,null,'discSm')}<div><b>${gi+1} · ${nomeMundoCla(gi)[0]}</b><span>${nomeMundoCla(gi)[1]}</span></div></div>`;
     if(g.breve){ html += `<div class="mBreve">Em construção</div>`; return; }
-    MISSOES.forEach((m,k)=>{ if(m.g!==gi) return; const n=k+1, lib=liberada(n), sv=faseSalva(n);
+    MISSOES.forEach((m,k)=>{ if(m.g!==gi || k+1>ATE) return; const n=k+1, lib=liberada(n), sv=faseSalva(n);
       html += `<div class="mLinha" style="justify-content:${lado[n%4]}"><button class="mNo ${lib?'':'trava'} ${n===atual?'atual':''} ${m.chefe?'chefe':''}" data-m="${n}" ${lib?'':'disabled'}>${E?icoMetaEsp(m)+'<span class="mNum">'+n+'</span>':n}${estrelasHtml(r[n]?.e||0)}${r[n]?.pm?pegada:''}${sv?'<span class="emAndamento">…</span>':''}</button></div>`; });
   });
   const mb=$('#mapBody'); mb.style.height='';
-  mb.innerHTML = `<div class="mTrilha">${html}</div>`;
+  mb.innerHTML = `<div class="mTrilha">${html}</div>${ATE<MISSOES.length?'<div class="mFim"></div>':''}`;
   const tr=mb.querySelector('.mTrilha'), base=tr.getBoundingClientRect();
   const pts=[...tr.querySelectorAll('.mNo')].map(b=>{ const q=b.getBoundingClientRect(); return `${Math.round(q.left+q.width/2-base.left)},${Math.round(q.top+q.height/2-base.top)}`; });
   tr.insertAdjacentHTML('afterbegin', `<svg class="mCaminho" width="${Math.round(base.width)}" height="${Math.round(base.height)}"><polyline points="${pts.join(' ')}"/></svg>`);

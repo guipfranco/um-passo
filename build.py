@@ -50,7 +50,11 @@ body{overscroll-behavior:auto}
 /* mapa da Jornada: a barra com o "‹ Menu" fica presa no topo enquanto o mapa rola por baixo, com uma faixa escura suave atrás */
 body.espaco.naLista .top{position:fixed;top:12px;left:0;right:0;margin:0 auto;z-index:30}
 body.espaco.naLista #shell{min-height:38px}
-body.espaco.naLista::before{content:'';position:fixed;left:0;right:0;top:0;height:70px;background:linear-gradient(rgba(11,10,24,.94),rgba(11,10,24,.6) 60%,rgba(11,10,24,0));z-index:29;pointer-events:none}   /* o 'sem puxar para atualizar' vale só na página (html): no corpo ele prendia o dedo e o mapa da Jornada não rolava */
+#btnOpc{display:none}
+body.espaco.naLista #btnOpc{display:grid;place-items:center}
+body.espaco.naLista #btnSound{display:none}   /* no mapa, o botão de Opções (música, sons, créditos) no lugar do ♪ */
+body.espaco.naLista .top{gap:8px}
+body.espaco.naLista .top::before{content:'';position:fixed;left:0;right:0;top:0;height:70px;background:linear-gradient(rgba(11,10,24,.94),rgba(11,10,24,.6) 60%,rgba(11,10,24,0));z-index:-1;pointer-events:none}   /* o 'sem puxar para atualizar' vale só na página (html): no corpo ele prendia o dedo e o mapa da Jornada não rolava */
 body.espaco #scrMenu .btn small{display:none}   /* no espaço os botões do menu ficam só com o nome... */
 body.espaco #scrMenu .btn.comSub small{display:block;margin-top:3px;font:600 11px 'Exo 2',sans-serif !important;letter-spacing:.14em;text-transform:uppercase;color:inherit !important;opacity:.72;text-shadow:none}   /* ...menos quando há algo para continuar: no mesmo estilo do nome */
 .relato{display:flex;flex-direction:column;gap:10px}
@@ -169,7 +173,8 @@ body.espaco .mGrupo span{color:#b9a9d9}
 body.espaco .mNo{background:rgba(26,20,48,.9) !important;border:2px solid rgba(255,255,255,.22) !important;box-shadow:none !important;color:#f3eefc !important;overflow:visible}
 body.espaco .mNo.atual{border-color:#ffd36e !important;box-shadow:0 0 0 4px rgba(242,179,61,.25),0 0 22px rgba(242,179,61,.6) !important}
 body.espaco .mNo.trava .mPl{opacity:.3}
-body.espaco .mNo.chefe{border-color:#ff8a7a !important;box-shadow:0 0 16px #ff8a7a55 !important}
+body.espaco .mNo.trava{border-color:rgba(255,255,255,.12) !important;opacity:.62}
+body.espaco .mFim{height:120px;margin-top:-30px;position:relative;z-index:2;background:linear-gradient(rgba(11,10,24,0),#0b0a18 85%);pointer-events:none}   /* o mapa termina sumindo poucas fases depois da atual */
 body.espaco .mNo .mPl{position:absolute;left:12%;top:12%;width:76%;height:76%;object-fit:contain;pointer-events:none}
 body.espaco .mNo .mNum{position:absolute;left:-7px;top:-7px;min-width:22px;height:22px;border-radius:999px;background:#f2b33d;color:#3a2a08;font:700 12px/22px 'Exo 2',sans-serif;border:1.5px solid #2e2219;text-align:center;padding:0 4px}
 body.espaco .mNo.trava .mNum{background:#3a3352;color:#b9a9d9}
@@ -511,7 +516,7 @@ body = '''<div id="cenario"></div>
       <div class="pill silhP" id="cMis"></div>
       <div class="pill ptsP" id="ptsP"><div><b id="cPts">0</b><small>pontos</small></div></div>
     </div>
-    <div class="top wide"><button class="icon" id="btnPause">☰</button><div class="banner"><div id="bTitle"></div><span id="bSub"></span></div><button class="icon musBtn" id="btnSound">♪</button></div>
+    <div class="top wide"><button class="icon" id="btnPause">☰</button><div class="banner"><div id="bTitle"></div><span id="bSub"></span></div><button class="icon musBtn" id="btnSound">♪</button><button class="icon" id="btnOpc" aria-label="Opções" title="Opções"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 6h9M19 6h1M4 12h3M13 12h7M4 18h11M21 18h-1"/><circle cx="16" cy="6" r="2.4"/><circle cx="10" cy="12" r="2.4"/><circle cx="18" cy="18" r="2.4"/></svg></button></div>
     <div class="items wide" id="items"></div>
   </div>
 
@@ -646,6 +651,7 @@ $('#btnSell').onclick=sell;
 $('#btnEdit').onclick=()=>labEditar(!S.editando);
 $('#btnAssovio').onclick=assoviar;
 $('#btnPause').onclick=pauseMenu;
+$('#btnOpc').onclick=()=>espOpcoes();
 document.querySelectorAll('.musBtn').forEach(b=>{ b.onclick=toggleMusic; b.style.opacity=music?1:.4; });
 // destrava o áudio no primeiro toque. No celular o navegador só libera o som quando o dedo sobe (pointerup), não quando encosta
 const destravaAudio=()=>{ if(AC&&AC.state==='suspended') AC.resume(); else if(!AC&&music){ ctxAudio(); trilha(musKey); } };
