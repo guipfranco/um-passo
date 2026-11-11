@@ -180,10 +180,10 @@ body.espaco .ent h2{margin:0;font:800 23px 'Exo 2',sans-serif;letter-spacing:0;c
 </style>
 
 <script>
-const FASES=[[2,'simples'],[12,'duas metas'],[24,'sem limite'],[37,'novidade'],[41,'quebra-cabeça'],[56,'metas e lembrete'],[61,'lixo, estreia']];
+const FASES=[[5,'simples'],[2,'restrição'],[8,'duas metas'],[16,'sem limite'],[25,'novidade'],[27,'quebra-cabeça'],[37,'metas e lembrete'],[41,'lixo, estreia']];
 const VARS=[['A','A · Cartão','limpo'],['B','B · Lado','a lado'],['C','C · Metas','em blocos'],['hoje','Hoje','para comparar']];
 const q=new URLSearchParams(location.hash.slice(1));
-let V=q.get('v')||'A', F=+(q.get('f')||2), pronto=false;
+let V=q.get('v')||'A', F=+(q.get('f')||5), pronto=false;
 const fr=document.getElementById('jogo');
 function chips(){
   const ov=document.getElementById('opsV'); ov.innerHTML='';

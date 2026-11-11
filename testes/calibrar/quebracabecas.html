@@ -27,6 +27,8 @@ const SPECS = {
   q19:{w:4,h:4, alvo:4, obj:{solte:4,n:1}, presa:4, passinho:true, prof:[6,8]},
   q20:{w:4,h:4, alvo:5, obj:{forme:5,n:1}, cores:true, muretas:2, prof:[6,8]},
 };
+// Onde cada um está na Jornada (10 mundos de 8 fases): q1 fase 3, q9 7, q2 11, q10 15, q3 19, q11 23, q12 27, q13 31,
+// q5 35, q14 39, q15 43, q16 51, q17 55, q18 59, q4 67, q19 71, q6 75, q20 79. q7 (buraco negro) e q8 (Passinho) não estão em fase nenhuma.
 // #q9,q10 gera só esses (os outros ficam como estão em src/quebracabecas.js)
 const SO = location.hash.length>1 ? location.hash.slice(1).split(',') : null;
 f.onload=async()=>{ try{ await gera(); }catch(e){ out.textContent='ERRO '+e.message+' | '+e.stack; } };

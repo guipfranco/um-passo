@@ -685,13 +685,13 @@ html = '''<!doctype html>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#0b0a18">
 <title>2048 Astros</title>
-<meta name="description" content="O 2048 no espaço: 120 fases e um modo sem fim. De graça, sem instalar.">
+<meta name="description" content="O 2048 no espaço: 80 fases e um modo sem fim. De graça, sem instalar.">
 <!-- prévia do link (WhatsApp e afins); a imagem sai de previa.html, opção D -->
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pt_BR">
 <meta property="og:url" content="https://guipfranco.github.io/um-passo/">
 <meta property="og:title" content="2048 Astros">
-<meta property="og:description" content="O 2048 no espaço: 120 fases e um modo sem fim. De graça, sem instalar.">
+<meta property="og:description" content="O 2048 no espaço: 80 fases e um modo sem fim. De graça, sem instalar.">
 <meta property="og:image" content="https://guipfranco.github.io/um-passo/previa.jpg">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">

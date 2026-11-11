@@ -45,6 +45,35 @@ f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEven
   log.push(`lista depois: travadas=${d.querySelectorAll('.mNo.trava').length} atual=${q('.mNo.atual')?.dataset.m} banner=${q('#bSub').textContent}`);
   // na lista o botão do canto volta direto ao menu (sem a janela de pausa)
   w.eval('pauseMenu()'); await wait(50); log.push('menu='+q('#scrMenu').classList.contains('on')+' save mineração='+!!w.eval('localStorage.mina_save'));
+  // migração da Jornada 2 (12 fases por mundo) para a 3 (8): progresso de exemplo gravado como na versão 2, o jogo
+  // aberto de novo num iframe novo (a migração roda ao carregar) e onde a pessoa fica
+  const migra=async(ate, salva, partidas)=>{
+    const v2={}; for(let n=1;n<=ate;n++) v2[n]={e:2,t:100+n};
+    w.localStorage.ptui_jornada='2'; w.localStorage.mina_missoes=JSON.stringify(v2);
+    if(salva) w.localStorage.mina_cla_save=JSON.stringify({n:salva,pass:false,st:{}}); else w.localStorage.removeItem('mina_cla_save');
+    if(partidas) w.localStorage.ptui_partidas=JSON.stringify(partidas); else w.localStorage.removeItem('ptui_partidas');
+    const g=document.createElement('iframe'); g.width=390; g.height=760; g.style.cssText='position:absolute;left:0;top:0;border:0';
+    const pronto=new Promise(r=>g.onload=r); g.src='../index.html'; document.body.appendChild(g); await pronto; await wait(100);
+    const v=g.contentWindow, r=JSON.parse(v.localStorage.mina_missoes), tot=v.eval('MISSOES.length'), lib=[];
+    for(let n=1;n<=tot;n++) if(v.eval(`liberada(${n})`)) lib.push(n);
+    const res={versao:v.localStorage.ptui_jornada, vencidas:Object.keys(r).map(Number), estrelas:Object.values(r).map(x=>x.e).join(''), atual:v.eval('faseAtual()'),
+      liberadas:lib.length, ultimaLiberada:lib[lib.length-1], salva:JSON.parse(v.localStorage.mina_cla_save||'null')?.n??null,
+      partidas:v.localStorage.ptui_partidas||null, copia:!!v.localStorage.mina_missoes_v2};
+    g.remove(); return res; };
+  const seq=(a,b)=>Array.from({length:b-a+1},(_,i)=>a+i).join(',');
+  { const m=await migra(22, 22, [[22,1,30,5,0,'2026-11-09'],[2,1,10,3,0,'2026-11-09']]);   // a 22 (Salão de estações) continuou igual, agora 13; a 2 saiu
+    log.push('migração, 1 a 22 vencidas com 2 estrelas: '+JSON.stringify(m));
+    if(m.versao!=='3' || m.vencidas.join(',')!==seq(1,14) || m.estrelas!=='2'.repeat(14) || m.atual!==15 || m.ultimaLiberada!==15 || m.salva!==13 || m.partidas!=='[[13,1,30,5,0,"2026-11-09"]]' || !m.copia)
+      errs.push('migração 1 a 22 deu errado: '+JSON.stringify(m)); }
+  { const m=await migra(7, 19);   // parou na 8 (Pontos no 5x5, que saiu): segue no Primeiro cometa (agora 5); a 19 mudou de meta, a fase pela metade some
+    log.push('migração, 1 a 7 vencidas: '+JSON.stringify(m));
+    if(m.atual!==5 || m.vencidas.join(',')!==seq(1,4)+',6' || m.salva!==null) errs.push('migração 1 a 7 deu errado: '+JSON.stringify(m)); }
+  { const m=await migra(45);   // parou na 46 (Asteroide entre estações), que agora é a 30
+    log.push('migração, 1 a 45 vencidas: '+JSON.stringify({atual:m.atual, vencidas:m.vencidas.length, estrelas:m.estrelas}));
+    if(m.atual!==30 || m.vencidas.join(',')!==seq(1,29)) errs.push('migração 1 a 45 deu errado: '+JSON.stringify(m)); }
+  { const m=await migra(0);   // quem nunca jogou
+    if(m.vencidas.length || m.atual!==1 || m.versao!=='3') errs.push('migração sem progresso deu errado: '+JSON.stringify(m)); }
+  for(const k of ['mina_missoes','mina_cla_save','ptui_partidas','mina_missoes_v2','ptui_partidas_v2']) w.localStorage.removeItem(k);
  }catch(e){errs.push('EXC '+e.message+' '+(e.stack||'').split('\n')[1])}
  out.textContent=JSON.stringify({log,errs},null,1);};
 </script></body>
