@@ -9,7 +9,7 @@
 // do limite, ★★ até min+3, ★★★ até min+1 (ou o campo estrelas da fase); sem meta de pontos. Música: a Órbita, a da Jornada.
 // Só aparece com ?quebra no endereço (fica gravado no aparelho; ?quebra=0 esconde), no menu do espaço, abaixo do Clássico.
 (()=>{ const m=location.search.match(/[?&]quebra(?:=(\d))?/); if(m) localStorage.ptui_quebra = m[1]==='0' ? '0' : '1'; })();
-const quebraLigado = () => localStorage.ptui_quebra==='1' && espacoLigado();
+const quebraLigado = () => localStorage.ptui_quebra!=='0' && espacoLigado();   // oficial desde 2026-11-11: aparece para todos (?quebra=0 esconde)
 
 // ---------- dados ----------
 // completa as fases: nunca nasce peça, menor solução, limite, estrelas e a fase das cores ou do buraco negro (explicação)

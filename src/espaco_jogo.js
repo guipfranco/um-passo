@@ -708,7 +708,7 @@ function espMenu(){
   { const inf=infSalvo(), sub=$('#mInf small'); if(sub.dataset.txt==null) sub.dataset.txt=sub.textContent;
     sub.textContent = inf ? `continuar · ${(inf.st.pontos||0).toLocaleString('pt-BR')} pontos` : sub.dataset.txt; $('#mInf').classList.toggle('comSub', !!inf); }
   // o Clássico vem depois do Novo jogo e do Continuar; o Frenesi (em teste, só com ?frenesi) logo abaixo dele
-  // os modos em teste logo abaixo dele: Quebra-cabeças (só com ?quebra) e Frenesi (só com ?frenesi)
+  // logo abaixo dele, os modos Quebra-cabeças e Frenesi (oficiais desde 2026-11-11)
   $('#mSegue').after($('#mInf')); freMenu(on); qjMenu(on);
   // Como jogar: no espaço abre o do 2048 Astros; fora dele, o tutorial da mina
   const tut=$('#mTut'); if(tut.onclick!==comoJogarEsp) TUT_MINA=tut.onclick; tut.onclick = on ? comoJogarEsp : TUT_MINA;

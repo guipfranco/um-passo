@@ -13,7 +13,7 @@ f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEven
  try{ w.eval('sound=false; music=false; localStorage.ptui_rec_inf=777; localStorage.removeItem("ptui_fre_vi2")');
   // menu: o Frenesi abaixo do Clássico
   const bts=[...d.querySelectorAll('.menuBtns > button')].filter(b=>w.getComputedStyle(b).display!=='none').map(b=>b.id);
-  confere(vis('#mFre') && bts.indexOf('mFre')===bts.indexOf('mInf')+1, 'menu: '+bts.join(' '));
+  confere(vis('#mFre') && bts.indexOf('mFre')>bts.indexOf('mInf') && bts.indexOf('mFre')<bts.indexOf('mTut'), 'menu: '+bts.join(' '));   // logo abaixo do Clássico (e do Quebra-cabeças)
   q('#mFre').click(); await wait(80);
   confere(/Frenesi/.test(q('#panel h2')?.textContent||''), 'explicação da primeira vez: '+q('#panel h2')?.textContent);
   q('#frJoga').click(); await wait(200);

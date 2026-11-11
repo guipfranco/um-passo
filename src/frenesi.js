@@ -13,7 +13,7 @@
 // Guardado à parte do Clássico: ptui_fre_rod (maior rodada), ptui_rec_fre (pontos), ptui_fre_corr (maior corrente),
 // ptui_fre_mult (maior multiplicador), a partida em andamento em ptui_fre_save, e ptui_fre_vi2 (já viu a explicação).
 (()=>{ const m=location.search.match(/[?&]frenesi(?:=(\d))?/); if(m) localStorage.ptui_frenesi = m[1]==='0' ? '0' : '1'; })();
-const frenesiLigado = () => localStorage.ptui_frenesi==='1' && espacoLigado();
+const frenesiLigado = () => localStorage.ptui_frenesi!=='0' && espacoLigado();   // oficial desde 2026-11-11: aparece para todos (?frenesi=0 esconde)
 // degraus: a partir de que corrente valem, o multiplicador, a cor das luzes, as duas cores da nebulosa e a janela
 // (segundos que a barra leva para esvaziar depois de uma junção)
 const DEGRAUS=[
