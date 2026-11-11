@@ -216,7 +216,7 @@ function show(id){
   document.body.classList.toggle('lock', id==='scrGame');
   document.body.classList.toggle('jogo', id==='scrGame');
   if(id!=='scrGame') desenhaCenario();
-  document.body.classList.remove('semHud','modoCla','modoInf','modoFre','naLista');
+  document.body.classList.remove('semHud','modoCla','modoInf','modoFre','modoQj','naLista');
   if(id!=='scrMenu') guardaVolta(); else if(history.state&&history.state.ptui) history.back();
   scrollTo(0,0);
 }
@@ -537,9 +537,11 @@ function move(dx,dy){
   if(!S || S.phase!=='mine' || overlayOpen() || coachBlock || S.editando || S.ferrAtiva || !$('#scrGame').classList.contains('on')) return;
   if(S.tut===1 && dy!==0){ coach('Para o <b>lado</b>! ↔', null, null, '#board'); return; }
   if(S.missao && !S.semEnergia && S.energy<=0) return; // acabaram os arrastos: a fase já vai terminar
+  if(S.qj?.trava) return;   // quebra-cabeça sem saída: só desfazendo ou recomeçando (quebra.js)
   const r=slide(S.tiles,dx,dy);
   if(!r.moved) return;
   S.undoSnap = foto();
+  if(S.qj) qjGuarda();   // quebra-cabeça: o estado de antes do arrasto vai para a pilha do desfazer
   for(const g of r.gone){ const el=els.get(g.id); els.delete(g.id); if(el){ el.style.zIndex=0; el.style.transform=pos(g.x,g.y); setTimeout(()=>el.remove(),120); } }
   for(const b of r.breaks) quebrar(b);
   S.tiles=r.tiles;
@@ -1369,7 +1371,7 @@ function pauseMenu(){
     ${inDay && !cla?'<p style="font-size:13px">Sair agora recomeça o dia.</p>':''}`);
   $('#pCont').onclick=hideOverlay; FORA=hideOverlay; if($('#pRel')) $('#pRel').onclick=relatar;
   // recomeçar a fase (no espaço o botão Recomeçar sai da tela e fica só aqui); no Clássico com pontos, confirma antes
-  if($('#pReset')) $('#pReset').onclick=()=>{ hideOverlay(); if(S.infinito) recomecaInfinito(); else missaoJoga(S.missao, S.medalha?{passinho:true}:{}); };
+  if($('#pReset')) $('#pReset').onclick=()=>{ hideOverlay(); if(S.infinito) recomecaInfinito(); else if(S.qj) qjRecomeca(); else missaoJoga(S.missao, S.medalha?{passinho:true}:{}); };
   if($('#pRules')) $('#pRules').onclick=quickRules;
   if($('#pPedras')) $('#pPedras').onclick=()=>pedrapedia(pauseMenu);
   $('#pSound').onclick=()=>{ toggleSound(); hideOverlay(); pauseMenu(); };

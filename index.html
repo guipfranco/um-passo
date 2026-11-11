@@ -444,6 +444,21 @@ body.espaco .freRes{display:grid;grid-template-columns:1fr 1fr}
   .freApaga{animation-duration:1.2s;opacity:.3}
   .freBonus .icoFre,#freRelogio.pouco{animation:none}
 }
+/* ---- Quebra-cabeças (modo em teste, só com ?quebra): desfazer e recomeçar no painel, no lugar dos pontos (só o ícone:
+   com o nome embaixo, o painel apertava o dos arrastos nos celulares) ---- */
+#mQj{display:none}
+body.espaco #mQj{display:block;color:#8fe3a0 !important;border-color:#8fe3a0 !important;box-shadow:0 0 16px #8fe3a055,inset 0 0 14px #8fe3a022 !important;text-shadow:0 0 10px #8fe3a0}
+#qjP{display:none}
+body.modoQj .hudCla #ptsP{display:none !important}
+body.modoQj .hudCla #qjP{display:flex;flex:none;gap:5px;padding:4px 5px}
+.qjB{display:flex;align-items:center;justify-content:center;width:46px;height:46px;padding:0;border-radius:12px;border:1.5px solid rgba(111,224,255,.5);background:rgba(111,224,255,.08);color:#bfefff;cursor:pointer;touch-action:manipulation;transition:border-color .2s,box-shadow .2s,opacity .2s}
+.qjB svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.qjB:disabled{opacity:.3;cursor:default}
+.qjB:not(:disabled):active{transform:scale(.94)}
+#qjP.chama .qjB:not(:disabled){border-color:#ffd36e;color:#ffe9a8;box-shadow:0 0 12px #ffd36e66}   /* sem saída: os botões chamam */
+.perf{font-size:12.5px !important;color:#9f93c9 !important;letter-spacing:.02em;margin:0 !important}
+.perf b{color:#d8d0f0}
+@media (max-width:370px){ .qjB{width:42px;height:42px} }
 #ovos button{width:30px;height:30px;padding:4px;border:0;background:none;color:rgba(207,198,255,.42);filter:drop-shadow(0 0 4px rgba(207,198,255,.35));cursor:pointer}
 #ovos svg{width:22px;height:22px;display:block}\n
 .logo{display:flex;align-items:flex-end;justify-content:center;height:130px}
@@ -735,6 +750,7 @@ body.rola #stage{touch-action:none}
       <div class="pill arrP"><span class="ic en">⚡</span><div class="arr"><div class="linha"><b id="cArr"></b><small>arrastos</small></div><div class="tr"><i id="cTr"></i><span id="cS3">★</span><span id="cS2">★</span><span id="cS1">★</span></div></div></div>
       <div class="pill silhP" id="cMis"></div>
       <div class="pill ptsP" id="ptsP"><div><b id="cPts">0</b><small>pontos</small></div></div>
+      <div class="pill qjP" id="qjP"><button class="qjB" id="qjDesfaz" aria-label="Desfazer" title="Desfazer (Z)"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button><button class="qjB" id="qjRecomeca" aria-label="Recomeçar" title="Recomeçar (R)"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button></div>
     </div>
     <div class="top wide"><button class="icon" id="btnPause">☰</button><div class="banner"><div id="bTitle"></div><span id="bSub"></span></div><button class="icon musBtn" id="btnSound">♪</button><button class="icon" id="btnOpc" aria-label="Opções" title="Opções"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 6h9M19 6h1M4 12h3M13 12h7M4 18h11M21 18h-1"/><circle cx="16" cy="6" r="2.4"/><circle cx="10" cy="12" r="2.4"/><circle cx="18" cy="18" r="2.4"/></svg></button></div>
     <div class="items wide" id="items"></div>
@@ -764,7 +780,7 @@ body.rola #stage{touch-action:none}
 <div id="coach" class="hidden"><div class="cav" id="coachAv"></div><div><p id="coachText"></p><button class="btn b" id="coachOk">Ok</button></div></div>
 
 <script>
-const VERSAO="a9f90c5a";
+const VERSAO="fd282992";
 // ===================== CONFIG =====================
 let W = 4, H = 4, N = 4;      // largura e altura do tabuleiro (N = maior lado)
 const CFG = {
@@ -1597,7 +1613,7 @@ function show(id){
   document.body.classList.toggle('lock', id==='scrGame');
   document.body.classList.toggle('jogo', id==='scrGame');
   if(id!=='scrGame') desenhaCenario();
-  document.body.classList.remove('semHud','modoCla','modoInf','modoFre','naLista');
+  document.body.classList.remove('semHud','modoCla','modoInf','modoFre','modoQj','naLista');
   if(id!=='scrMenu') guardaVolta(); else if(history.state&&history.state.ptui) history.back();
   scrollTo(0,0);
 }
@@ -1918,9 +1934,11 @@ function move(dx,dy){
   if(!S || S.phase!=='mine' || overlayOpen() || coachBlock || S.editando || S.ferrAtiva || !$('#scrGame').classList.contains('on')) return;
   if(S.tut===1 && dy!==0){ coach('Para o <b>lado</b>! ↔', null, null, '#board'); return; }
   if(S.missao && !S.semEnergia && S.energy<=0) return; // acabaram os arrastos: a fase já vai terminar
+  if(S.qj?.trava) return;   // quebra-cabeça sem saída: só desfazendo ou recomeçando (quebra.js)
   const r=slide(S.tiles,dx,dy);
   if(!r.moved) return;
   S.undoSnap = foto();
+  if(S.qj) qjGuarda();   // quebra-cabeça: o estado de antes do arrasto vai para a pilha do desfazer
   for(const g of r.gone){ const el=els.get(g.id); els.delete(g.id); if(el){ el.style.zIndex=0; el.style.transform=pos(g.x,g.y); setTimeout(()=>el.remove(),120); } }
   for(const b of r.breaks) quebrar(b);
   S.tiles=r.tiles;
@@ -2750,7 +2768,7 @@ function pauseMenu(){
     ${inDay && !cla?'<p style="font-size:13px">Sair agora recomeça o dia.</p>':''}`);
   $('#pCont').onclick=hideOverlay; FORA=hideOverlay; if($('#pRel')) $('#pRel').onclick=relatar;
   // recomeçar a fase (no espaço o botão Recomeçar sai da tela e fica só aqui); no Clássico com pontos, confirma antes
-  if($('#pReset')) $('#pReset').onclick=()=>{ hideOverlay(); if(S.infinito) recomecaInfinito(); else missaoJoga(S.missao, S.medalha?{passinho:true}:{}); };
+  if($('#pReset')) $('#pReset').onclick=()=>{ hideOverlay(); if(S.infinito) recomecaInfinito(); else if(S.qj) qjRecomeca(); else missaoJoga(S.missao, S.medalha?{passinho:true}:{}); };
   if($('#pRules')) $('#pRules').onclick=quickRules;
   if($('#pPedras')) $('#pPedras').onclick=()=>pedrapedia(pauseMenu);
   $('#pSound').onclick=()=>{ toggleSound(); hideOverlay(); pauseMenu(); };
@@ -2876,9 +2894,16 @@ function migraJornada3(){
     localStorage.ptui_partidas=JSON.stringify(JSON.parse(localStorage.ptui_partidas).map(p=>{ const n=J3_ANTIGA.indexOf(p[0])+1; return n ? [n,...p.slice(1)] : null; }).filter(Boolean)); }
 }
 if(localStorage.ptui_jornada==='2'){ try{ migraJornada3(); }catch(e){} localStorage.ptui_jornada='3'; }
-const MISS = () => JSON.parse(localStorage.mina_missoes||'{}');
+// ---------- jornada atual ----------
+// O mapa de mundos, a entrada da fase, o jogo da fase e o resultado servem à Jornada e ao modo Quebra-cabeças
+// (quebra.js, em teste): cada um com os seus mundos, fases e chaves de armazenamento. JA é a jornada aberta (a do mapa
+// ou da fase em jogo); quem entra pelo menu diz qual (missoesLista(JORNADA) ou missoesLista(QUEBRA)).
+const JORNADA = {id:'jornada', nome:'Jornada', mundos:MUNDOS, fases:MISSOES, chave:'mina_missoes', salvo:'mina_cla_save'};
+let JA = JORNADA;
+const MISS = (j=JA) => JSON.parse(localStorage[j.chave]||'{}');
+const faseM = () => JA.fases[S.missao-1];   // a fase em jogo
 const liberada = n => n===1 || (MISS()[n-1]?.e||0) > 0;
-const mundoDe = m => MUNDOS[m.g];
+const mundoDe = m => JA.mundos[m.g];
 const faseDe = m => m.fase || (m.forma||m.mapa ? 'caverna' : mundoDe(m).fase);
 const charDe = m => m.char || mundoDe(m).char || 'rola';
 const objsDe = m => m.objs || [m.obj];
@@ -2982,6 +3007,7 @@ function recolheCarro(){
 }
 function flutuaPontos(r){
   if(S.frenesi) return freFlutua(r);   // Frenesi: com o multiplicador (frenesi.js)
+  if(S.qj) return;   // Quebra-cabeças: sem pontos na tela, o pedido é só a ordem dos arrastos
   const f=(x,y,v)=>{ const el=document.createElement('div'); el.className='flut'; el.textContent='+'+v; el.style.transform=pos(x,y); board.appendChild(el); setTimeout(()=>el.remove(),950); };
   for(const o of r.merges) if(o.k!=='p') f(o.x,o.y,VAL(o.t));
   for(const b of r.breaks) f(b.x,b.y,2*VAL(b.t));
@@ -2992,14 +3018,16 @@ const metaLetreiro = m => metasDe(m).length>1 ? `${metasDe(m).length} metas` : o
 // só se a fase ainda estiver em jogo (no fim, "missão cumprida!" e afins ficam)
 let voltaMetaT=0;
 function voltaMeta(){ clearTimeout(voltaMetaT); const est=S;
-  voltaMetaT=setTimeout(()=>{ if(S===est && S.missao && S.phase==='mine') setBanner(null, metaLetreiro(MISSOES[S.missao-1])); }, 1500); }
+  voltaMetaT=setTimeout(()=>{ if(S===est && S.missao && S.phase==='mine' && !S.qj?.trava) setBanner(null, metaLetreiro(faseM())); }, 1500); }
 // depois de cada arrasto: cumpriu, formou o proibido, acabaram os arrastos ou travou
+// (nos Quebra-cabeças não cumprir não acaba a fase: ela fica parada até desfazer ou recomeçar, qjTravou em quebra.js)
 function checaMissao(){
-  const m=MISSOES[S.missao-1];
-  const est=S, acaba=(ok,txt,motivo)=>{ S.phase='fimM'; localStorage.removeItem('mina_cla_save'); anotaPartida(ok, motivo); if(ok) gravaVitoria(); setBanner(null,txt); if(ok) SFX.pagou();
+  const m=faseM();
+  const est=S, acaba=(ok,txt,motivo)=>{ if(!ok && JA.quebra) return qjTravou(txt,motivo);
+    S.phase='fimM'; localStorage.removeItem(JA.salvo); if(!JA.quebra) anotaPartida(ok, motivo); if(ok) gravaVitoria(); setBanner(null,txt); if(ok) SFX.pagou();
     setTimeout(()=>{ if(S===est && S.phase==='fimM') missaoResultado(ok,motivo); }, ok?800:650); };   // só se ainda estiver nessa fase
   const v=violou(m); if(v) return acaba(false,'não podia!',`Você formou ${artigo(rockName(v.proibido))} ${rockName(v.proibido)}.`);
-  if(cumpriu(m)) return acaba(true,'missão cumprida!');
+  if(cumpriu(m)) return acaba(true, JA.quebra?'resolvido!':'missão cumprida!');
   if(S.energy<=0) return acaba(false,'acabaram os arrastos','Acabaram os arrastos.');
   if(!anyMove()) return acaba(false,'não cabe mais nada','Não cabia mais nada no tabuleiro.');
   salvaFase();
@@ -3008,10 +3036,11 @@ function checaMissao(){
 // Uma vez por partida (S.res); a tela de resultado só mostra, e o "recorde" compara com o que havia antes desta vitória.
 function gravaVitoria(){
   if(S.res) return S.res;
-  const n=S.missao, m=MISSOES[n-1], e=estrelasPor(m,Math.max(0,S.energy),S.moves||0), r=MISS(), ant=r[n]||{};
+  const n=S.missao, m=faseM(), e=estrelasPor(m,Math.max(0,S.energy),S.moves||0), r=MISS(), ant=r[n]||{};
   S.res={e, rec: ant.t!=null && S.pontos>ant.t};
   r[n]={...ant, e:Math.max(e,ant.e||0), t:Math.max(S.pontos,ant.t||0)}; if(S.medalha) r[n].pm=true;
-  localStorage.mina_missoes=JSON.stringify(r);
+  if(JA.quebra){ S.res.rec = ant.a!=null && S.moves<ant.a; r[n].a=Math.min(S.moves, ant.a??Infinity); }   // quebra-cabeça: o recorde é o menor número de arrastos
+  localStorage[JA.chave]=JSON.stringify(r);
   return S.res;
 }
 
@@ -3041,8 +3070,9 @@ function dadosPartidas(volta){
 // ---------- fase em andamento: salvar e continuar ----------
 const CAMPOS_SAVE = ['tiles','walls','edges','alvos','terraTot','carro','energy','moves','pontos','feitas','coresF','quebras','seqI','combos','soltas','presasTot','maxForm','next','rachados'];
 const estadoFase = () => { const st={}; for(const k of CAMPOS_SAVE) st[k]=S[k]; st.terra=[...(S.terra||[])]; return st; };
-function salvaFase(){ localStorage.mina_cla_save=JSON.stringify({n:S.missao, pass:!!S.medalha, st:estadoFase()}); }
-const faseSalva = n => { const sv=JSON.parse(localStorage.mina_cla_save||'null'); return sv && sv.n===n ? sv : null; };
+// nos Quebra-cabeças vão junto o começo da fase e a pilha do desfazer (S.qj, quebra.js)
+function salvaFase(){ localStorage[JA.salvo]=JSON.stringify({n:S.missao, pass:!!S.medalha, st:estadoFase(), ...(S.qj?{qj:qjSalvo()}:{})}); }
+const faseSalva = n => { const sv=JSON.parse(localStorage[JA.salvo]||'null'); return sv && sv.n===n ? sv : null; };
 function restauraFase(st){
   for(const el of els.values()) el.remove(); els.clear(); limpaMarcas();
   for(const k of CAMPOS_SAVE) if(st[k]!==undefined) S[k]=st[k];
@@ -3170,7 +3200,8 @@ function montaMissaoHud(m){
   $('#ptsP').style.display = ms.some(o=>o.pontos) || ms.length>1 || rest ? 'none' : '';
 }
 function hudMissao(){
-  const m=MISSOES[S.missao-1], tot=m.arrastos||999, sobra=Math.max(0,S.energy), [e2,e3]=m.estrelas||[0,0];
+  if(JA.quebra) qjHud();
+  const m=faseM(), tot=m.arrastos||999, sobra=Math.max(0,S.energy), [e2,e3]=m.estrelas||[0,0];
   const rot=$('#cArr').nextElementSibling;
   if(m.livre){ const [t2,t3]=tetoEst(m), us=S.moves||0, tr=$('#cTr');
     $('#cArr').textContent=us; if(rot) rot.textContent='arrastos · sem limite';
@@ -3202,27 +3233,30 @@ function formaDe(m){
   return null;
 }
 const pegada = `<svg class="pegada" viewBox="0 0 100 100"><ellipse cx="34" cy="58" rx="13" ry="20" fill="#7a5a44"/><ellipse cx="66" cy="42" rx="13" ry="20" fill="#7a5a44"/></svg>`;
-function missoesLista(){
+// j: a jornada a abrir (vindo do menu); sem ela, a que já estava aberta (voltar da fase, "Ver fases")
+function missoesLista(j){
+  if(j?.fases) JA=j;
+  const FS=JA.fases;
   hideOverlay(); hideCoach(); VEIO_DO_EDITOR=false;
   show('scrMap'); trilha('menu'); document.body.classList.add('semHud');
   S = {...freshState(), missao:0, phase:'lista'}; S.fiscal=FISCAIS[0]; applyAndar(); clearBoard(); render();
   const r=MISS(), total=Object.values(r).reduce((a,x)=>a+(x.e||0),0);
-  setBanner(espFig()?'Jornada':'Clássico', `${total} de ${MISSOES.length*3} estrelas`);
+  setBanner(espFig()?JA.nome:'Clássico', `${total} de ${FS.length*3} estrelas`);
   $('#btnPause').textContent='‹ Menu'; $('#btnPause').title='Voltar ao menu'; document.body.classList.add('naLista');
-  const atual = (MISSOES.findIndex((m,i)=>!(r[i+1]?.e)) + 1) || MISSOES.length;
+  const atual = (FS.findIndex((m,i)=>!(r[i+1]?.e)) + 1) || FS.length;
   const lado = ['center','flex-end','center','flex-start'], E=espFig();
   // no espaço o mapa mostra só até algumas fases depois da atual: dali para a frente ainda é segredo (e não se rola sem fim)
-  const ATE = E ? Math.min(MISSOES.length, atual+3) : MISSOES.length;
+  const ATE = E ? Math.min(FS.length, atual+3) : FS.length;
   let html='';
-  MUNDOS.forEach((g,gi)=>{
-    const pri=MISSOES.findIndex(m=>m.g===gi)+1; if(g.breve ? ATE<MISSOES.length : pri>ATE) return;
+  JA.mundos.forEach((g,gi)=>{
+    const pri=FS.findIndex(m=>m.g===gi)+1; if(g.breve ? ATE<FS.length : pri>ATE) return;
     html += `<div class="mGrupo ${g.breve?'breve':''}">${E?icoMundoEsp(gi):disc(g.ico||g.fase,null,'discSm')}<div><b>${gi+1} · ${nomeMundoCla(gi)[0]}</b><span>${nomeMundoCla(gi)[1]}</span></div></div>`;
     if(g.breve){ html += `<div class="mBreve">Em construção</div>`; return; }
-    MISSOES.forEach((m,k)=>{ if(m.g!==gi || k+1>ATE) return; const n=k+1, lib=liberada(n), sv=faseSalva(n);
+    FS.forEach((m,k)=>{ if(m.g!==gi || k+1>ATE) return; const n=k+1, lib=liberada(n), sv=faseSalva(n);
       html += `<div class="mLinha" style="justify-content:${lado[n%4]}"><button class="mNo ${lib?'':'trava'} ${n===atual?'atual':''} ${m.chefe?'chefe':''}" data-m="${n}" ${lib?'':'disabled'}>${E?icoMetaEsp(m)+'<span class="mNum">'+n+'</span>':n}${estrelasHtml(r[n]?.e||0)}${r[n]?.pm?pegada:''}${sv?'<span class="emAndamento">…</span>':''}</button></div>`; });
   });
   const mb=$('#mapBody'); mb.style.height='';
-  mb.innerHTML = `<div class="mTrilha">${html}</div>${ATE<MISSOES.length?'<div class="mFim"></div>':''}`;
+  mb.innerHTML = `<div class="mTrilha">${html}</div>${ATE<FS.length?'<div class="mFim"></div>':''}`;
   const tr=mb.querySelector('.mTrilha'), base=tr.getBoundingClientRect();
   const pts=[...tr.querySelectorAll('.mNo')].map(b=>{ const q=b.getBoundingClientRect(); return `${Math.round(q.left+q.width/2-base.left)},${Math.round(q.top+q.height/2-base.top)}`; });
   tr.insertAdjacentHTML('afterbegin', `<svg class="mCaminho" width="${Math.round(base.width)}" height="${Math.round(base.height)}"><polyline points="${pts.join(' ')}"/></svg>`);
@@ -3233,7 +3267,7 @@ function missoesLista(){
 }
 function missaoInfo(n){
   if(espFig()) return entradaEsp(n);   // no espaço, a entrada nova (espaco_jogo.js)
-  const m=MISSOES[n-1], fase=faseDe(m), fm=formaDe(m), b=MISS()[n], sv=faseSalva(n);
+  const m=JA.fases[n-1], fase=faseDe(m), fm=formaDe(m), b=MISS()[n], sv=faseSalva(n);
   const explica=[];
   if(fase!=='comum' && fase!=='caverna' || n===1) explica.push(PATHS[fase].como||PATHS[fase].desc);
   if(charDe(m)==='passinho') explica.push(COMO_CHAR.passinho);
@@ -3260,17 +3294,17 @@ function missaoInfo(n){
 // só há um lugar para fase pela metade: começar outra fase apaga a que estava salva, então pergunta antes.
 // Começar de novo a própria fase salva não pergunta (o botão já diz isso). Voltar reabre a tela de onde veio.
 function comecaFase(n, opt={}, volta=()=>missaoInfo(n)){
-  const sv=JSON.parse(localStorage.mina_cla_save||'null');
-  if(!sv || sv.n===n || !MISSOES[sv.n-1]) return missaoJoga(n,opt);
+  const sv=JSON.parse(localStorage[JA.salvo]||'null');
+  if(!sv || sv.n===n || !JA.fases[sv.n-1]) return missaoJoga(n,opt);
   showOverlay(`<h2>Começar a fase ${n}?</h2><p>A fase ${sv.n}, ${noIco(nomeFaseCla(sv.n))}, está pela metade e será perdida.</p>
     <button class="btn g" id="fSim">Começar</button><button class="btn dim" id="fNao">Voltar</button>`);
   $('#fSim').onclick=()=>missaoJoga(n,opt); $('#fNao').onclick=volta; FORA=volta;
 }
 function missaoJoga(n, opt={}){
-  const m=MISSOES[n-1], fase=faseDe(m), fm=formaDe(m);
+  const m=JA.fases[n-1], fase=faseDe(m), fm=formaDe(m);
   hideOverlay(); VEIO_DO_EDITOR=false;
   const sv = opt.retoma ? faseSalva(n) : null;
-  if(!sv) localStorage.removeItem('mina_cla_save');
+  if(!sv) localStorage.removeItem(JA.salvo);
   const pass = !!(opt.passinho || sv?.pass);
   S = {...freshState(), missao:n, tema:mundoDe(m).tema, char: pass?'passinho':charDe(m), medalha: pass && charDe(m)!=='passinho',
        moves:0, extra:0, pontos:0, feitas:{}, coresF:{}, quebras:[], seqI:0, combos:0, soltas:0, maxForm:0, rachados:0};
@@ -3278,16 +3312,19 @@ function missaoJoga(n, opt={}){
   for(const [k,v] of Object.entries(m.itens||{})) S.lv[k]=v;
   const p = {...PATHS[fase], ...(m.regras||{}), forma:fm, caverna:false, energy:(m.arrastos||999)-CFG.energy, semEnergia:!!m.livre};
   if(m.w){ p.w=m.w; p.h=m.h||m.w; }
+  if(JA.quebra) p.spawns=0;   // quebra-cabeça: nunca nasce peça nova
   applyAndar(); startDay(p);
   limpaMarcas(); montaPecasMissao(m);
   if(sv) restauraFase(sv.st);
+  if(JA.quebra) qjComeca(sv);   // começo da fase e pilha do desfazer (quebra.js)
   document.body.classList.add('modoCla'); $('#btnPause').textContent='☰'; $('#btnPause').title=''; montaMissaoHud(m); render();
   // o nome da fase vai sem o ícone de peça (no título, "Primeira rocha" é nome, não a meta)
   setBanner(`Fase ${n}: ${noIco(nomeFaseCla(n))}${S.medalha?' · Passinho':''}`, metaLetreiro(m));
   pedeEncaixe();
 }
 function missaoResultado(ok, motivo){
-  const n=S.missao, m=MISSOES[n-1], sobra=Math.max(0,S.energy);
+  if(JA.quebra) return qjResultado();   // quebra-cabeça: só a vitória chega aqui (quebra.js)
+  const n=S.missao, m=faseM(), sobra=Math.max(0,S.energy);
   if(!ok){
     SFX.naoDeu();
     const falta=metasDe(m).filter(o=>!metaFeita(o)).map(o=>{ const p=progObj(o); return `${objetivoTxt(o)}: ${Math.min(p.at,p.alvo)} de ${p.alvo}`; });
@@ -3298,7 +3335,7 @@ function missaoResultado(ok, motivo){
     showOverlay(`${espFig()&&tAlvo(m)?'<canvas id="espRes"></canvas>':''}<h2>${S.medalha?'Medalha do Passinho!':'Missão cumprida!'}</h2>${estrelasHtml(e,'estr grande')}
       <p>${m.livre?`Em <b>${S.moves||0}</b> arrasto${S.moves===1?'':'s'}`:sobra===1?'Sobrou <b>1</b> arrasto':`Sobraram <b>${sobra}</b> arrastos`} · <b>${S.pontos}</b> pontos${rec?' (recorde!)':''}</p>
       ${e<3?`<p class="metas">${metasEstTxt(m,e)}</p>`:''}
-      ${n<MISSOES.length?'<button class="btn g" id="mProx">Próxima fase</button>':'<p>Você terminou todas as fases!</p>'}
+      ${n<JA.fases.length?'<button class="btn g" id="mProx">Próxima fase</button>':'<p>Você terminou todas as fases!</p>'}
       <button class="btn dim" id="mDeNovo">Jogar de novo</button><button class="btn dim" id="mLista">Ver fases</button>`);
     if($('#mProx')) $('#mProx').onclick=()=>{ missoesLista(); missaoInfo(n+1); };
     SFX.estrelas(e);
@@ -4247,7 +4284,7 @@ function preparaOcioso(){
   let prox=null;
   try{ prox=MISSOES[faseAtual()-1]; }catch(e){}
   textura('jupiter');
-  try{ const mu=ESP.MUNDOS_ESP[(Math.max(1,mundoDe(prox).tema)-1)%ESP.MUNDOS_ESP.length], nome=PLANETA_FUNDO[mu.tipo]; if(nome) textura(ESP.byName(nome).tex); }catch(e){}
+  try{ const mu=ESP.MUNDOS_ESP[(Math.max(1,MUNDOS[prox.g].tema)-1)%ESP.MUNDOS_ESP.length], nome=PLANETA_FUNDO[mu.tipo]; if(nome) textura(ESP.byName(nome).tex); }catch(e){}
   // a meta da próxima fase (planeta grande e receita da janela da fase), depois a escada na ordem em que ela sobe
   try{ const tA=prox && tAlvo(prox); if(tA){ nivel(tA); if(tA>1) nivel(tA-1); } }catch(e){}
   // a camada dos planetas redondos (WebGL: contexto e programas) antes do primeiro planeta redondo nascer num arrasto
@@ -4627,20 +4664,21 @@ function regrasEsp(m){
   return `${tam} · ${arrastosTxt(m)}${charDe(m)==='passinho'?' · Passinho':''}${m.regras?.spawns===0?' · não nasce peça nova':''}`;
 }
 function explicaEsp(m){
-  const fase=faseDe(m), out=[];
+  const fase=faseDe(m), out=[], Q=JA.quebra;
+  if(Q && n1(m)) out.push(COMO_QJ.modo);   // Quebra-cabeças: o modo se explica na primeira fase (quebra.js)
   if(n1(m)) out.push('Arraste para juntar peças iguais: duas iguais viram a do nível seguinte.');
-  if(COMO_FASE_ESP[fase]) out.push(COMO_FASE_ESP[fase]);
+  if(COMO_FASE_ESP[fase]) out.push(Q && COMO_QJ[fase] || COMO_FASE_ESP[fase]);
   // estação e fluxo de rochas também são novidades (textos de proposta.html): explicados na estreia, como as outras
   const fm=formaDe(m);
   if(m.regras?.walls || fm?.mapa?.some(l=>l.includes('B'))) out.push(COMO_MAPA_ESP.estacao);
   if(m.regras?.edges || fm?.muretas?.length) out.push(COMO_MAPA_ESP.rochas);
-  if(charDe(m)==='passinho') out.push(COMO_CHAR.passinho);
+  if(charDe(m)==='passinho') out.push(Q ? COMO_QJ.passinho : COMO_CHAR.passinho);
   for(const o of objsDe(m)) for(const k of Object.keys(COMO_ESP)) if(o[k]!==undefined && !out.includes(COMO_ESP[k])) out.push(COMO_ESP[k]);
   if((m.mapa||[]).some(l=>/[L23]/.test(l)) || m.regras?.lixos){ if(!out.includes(COMO_ESP.rache)) out.push(COMO_ESP.rache); }
-  if(m.regras?.spawns===0) out.push('Quebra-cabeça: não nasce peça nova. Pense antes de arrastar.');
+  if(m.regras?.spawns===0 && !Q) out.push('Quebra-cabeça: não nasce peça nova. Pense antes de arrastar.');
   return out;
 }
-const n1 = m => MISSOES.indexOf(m)===0;
+const n1 = m => JA.fases.indexOf(m)===0;
 
 // planeta grande nas janelas (fase, vitória, derrota)
 function espPlanetaGrande(cv, t, modo){
@@ -4658,7 +4696,7 @@ function espPlanetaGrande(cv, t, modo){
 // ---------- descobertas: o céu do menu mostra só o que a pessoa já formou ----------
 // ptui_desc = maior nível já formado no espaço. Sem registro ainda, parte das fases já cumpridas.
 function DESC(){
-  if(localStorage.ptui_desc==null){ let mx=1; const r=MISS(); for(const k of Object.keys(r)){ const m=MISSOES[k-1]; const t=m&&r[k].e&&tAlvo(m); if(t>mx) mx=t; } localStorage.ptui_desc=mx; }
+  if(localStorage.ptui_desc==null){ let mx=1; const r=MISS(JORNADA); for(const k of Object.keys(r)){ const m=MISSOES[k-1]; const t=m&&r[k].e&&tAlvo(m); if(t>mx) mx=t; } localStorage.ptui_desc=mx; }
   return +localStorage.ptui_desc||1;
 }
 function espDescobre(r){ if(!espacoLigado()) return; let mx=0; for(const o of r.merges) if(o.t>mx) mx=o.t; if(mx>DESC()) localStorage.ptui_desc=Math.min(mx,ESP.LADDER.length); }
@@ -4777,9 +4815,9 @@ function espMenu(){
   document.title = on ? '2048 Astros' : 'Ptui!';
   // no espaço: Jogar (sem progresso) ou Continuar (com progresso) e o Clássico (4x4 sem fim).
   // Começar do zero fica nas Opções ("Apagar o progresso"), para não competir com o Continuar.
-  const tem=temProgresso(), r=MISS(), est=Object.values(r).reduce((a,x)=>a+(x.e||0),0);
+  const tem=temProgresso(), r=MISS(JORNADA), est=Object.values(r).reduce((a,x)=>a+(x.e||0),0);
   $('#mCla').innerHTML = on ? 'Jogar<small>a jornada, fase a fase</small>' : 'Clássico<small>uma missão em cada fase</small>';
-  $('#mCla').onclick = missoesLista;
+  JA=JORNADA; $('#mCla').onclick = ()=>missoesLista(JORNADA);   // no menu, a jornada aberta volta a ser a Jornada
   $('#mCla').style.display = on && tem ? 'none' : '';
   if(!$('#mSegue')){ const b=document.createElement('button'); b.className='btn g big'; b.id='mSegue'; b.textContent='Continuar'; b.onclick=continuarEsp; $('#mCla').after(b); }
   $('#mSegue').style.display = on && tem ? '' : 'none'; $('#mSegue').classList.add('comSub');   // o Continuar sempre diz de onde continua
@@ -4789,7 +4827,8 @@ function espMenu(){
   { const inf=infSalvo(), sub=$('#mInf small'); if(sub.dataset.txt==null) sub.dataset.txt=sub.textContent;
     sub.textContent = inf ? `continuar · ${(inf.st.pontos||0).toLocaleString('pt-BR')} pontos` : sub.dataset.txt; $('#mInf').classList.toggle('comSub', !!inf); }
   // o Clássico vem depois do Novo jogo e do Continuar; o Frenesi (em teste, só com ?frenesi) logo abaixo dele
-  $('#mSegue').after($('#mInf')); freMenu(on);
+  // os modos em teste logo abaixo dele: Quebra-cabeças (só com ?quebra) e Frenesi (só com ?frenesi)
+  $('#mSegue').after($('#mInf')); freMenu(on); qjMenu(on);
   // Como jogar: no espaço abre o do 2048 Astros; fora dele, o tutorial da mina
   const tut=$('#mTut'); if(tut.onclick!==comoJogarEsp) TUT_MINA=tut.onclick; tut.onclick = on ? comoJogarEsp : TUT_MINA;
   if(!$('#mOpc')){ const b=document.createElement('button'); b.className='btn dim big'; b.id='mOpc'; b.textContent='Opções'; b.onclick=espOpcoes; tut.after(b); }
@@ -4810,23 +4849,23 @@ function espMenu(){
 }
 
 // ---------- novo jogo e continuar ----------
-const temProgresso = () => Object.keys(MISS()).length>0 || !!localStorage.mina_cla_save;
-function faseAtual(){ const r=MISS(); return (MISSOES.findIndex((m,i)=>!(r[i+1]?.e)) + 1) || MISSOES.length; }
+const temProgresso = () => Object.keys(MISS(JORNADA)).length>0 || !!localStorage.mina_cla_save;
+function faseAtual(){ const r=MISS(JORNADA); return (MISSOES.findIndex((m,i)=>!(r[i+1]?.e)) + 1) || MISSOES.length; }
 // sem progresso, vai direto ao mapa; com progresso, pergunta antes de apagar tudo
 function novoJogoEsp(volta){
-  if(!temProgresso()){ missoesLista(); return; }
+  if(!temProgresso()){ missoesLista(JORNADA); return; }
   janelaMenu();
   showOverlay(`<h2>Começar do zero?</h2><p>Suas estrelas e as fases liberadas serão apagadas.</p>
     <button class="btn g" id="nZera">Começar do zero</button><button class="btn dim" id="nVolta">Voltar</button>`);
-  $('#nZera').onclick=()=>{ localStorage.removeItem('mina_missoes'); localStorage.removeItem('mina_cla_save'); hideOverlay(); missoesLista(); };
+  $('#nZera').onclick=()=>{ localStorage.removeItem('mina_missoes'); localStorage.removeItem('mina_cla_save'); hideOverlay(); missoesLista(JORNADA); };
   const sai = typeof volta==='function' ? volta : fechaJanelaMenu;
   $('#nVolta').onclick=sai; FORA=sai;
 }
 // fase pela metade: volta nela; senão abre o mapa já com a próxima fase
 function continuarEsp(){
   const sv=JSON.parse(localStorage.mina_cla_save||'null');
-  if(sv && MISSOES[sv.n-1]){ missoesLista(); missaoJoga(sv.n,{retoma:true}); return; }
-  missoesLista(); missaoInfo(faseAtual());
+  if(sv && MISSOES[sv.n-1]){ missoesLista(JORNADA); missaoJoga(sv.n,{retoma:true}); return; }
+  missoesLista(JORNADA); missaoInfo(faseAtual());
 }
 
 // ---------- opções ----------
@@ -4906,7 +4945,7 @@ function comoJogarEsp(p){
   if(cv) espCanvasFixo(cv, w, p===0 ? Math.round(w/4*1.3) : Math.round(w/6*(1.36*2+1.36)), p===0 ? cjArrasto : cjEscada);
   $('#cjAnt').onclick=()=>{ if(p) comoJogarEsp(p-1); else fechaJanelaMenu(); }; FORA=fechaJanelaMenu;
   // Jogar faz o mesmo que o botão principal do menu: continua a Jornada ou, sem progresso, abre o mapa dela
-  $('#cjProx').onclick=()=>{ if(p<ult) comoJogarEsp(p+1); else if(temProgresso()) continuarEsp(); else missoesLista(); };
+  $('#cjProx').onclick=()=>{ if(p<ult) comoJogarEsp(p+1); else if(temProgresso()) continuarEsp(); else missoesLista(JORNADA); };
 }
 
 // ---------- til na Orbitron ----------
@@ -4934,8 +4973,8 @@ new MutationObserver(rs=>{ for(const r of rs){
 const MUNDOS_NOME_ESP = MUNDOS.map(m=>[m.nome, m.desc]);
 const FASES_NOME_ESP = {};   // a Jornada 2 já nasce com os nomes do espaço em missoes.js
 // nome da fase e do mundo conforme o modo (mina ou espaço)
-const nomeFaseCla = n => (espFig() && FASES_NOME_ESP[n]) || MISSOES[n-1].nome;
-const nomeMundoCla = gi => espFig() ? MUNDOS_NOME_ESP[gi] : [MUNDOS[gi].nome, MUNDOS[gi].desc];
+const nomeFaseCla = n => (espFig() && JA===JORNADA && FASES_NOME_ESP[n]) || JA.fases[n-1].nome;
+const nomeMundoCla = gi => espFig() && JA===JORNADA ? MUNDOS_NOME_ESP[gi] : [JA.mundos[gi].nome, JA.mundos[gi].desc];
 // textos das metas que mudam no espaço (null: usa o texto de sempre)
 function objetivoEsp(o){
   if(o.quebre) return o.quebre<=1 ? `Engula ${o.n} peça${o.n>1?'s':''} com o buraco negro` : `Engula ${qtd(o.n,o.quebre)} com o buraco negro`;
@@ -4952,11 +4991,14 @@ function rotuloEsp(o){
   if(o.solte) return (artigo(rockName(o.solte))==='uma'?'solta':'solto')+(varias?'s':'');   // Rocha solta, Asteroide solto
   return null;
 }
-// ícone de cada mundo no cabeçalho da lista de fases
+// ícone de cada mundo no cabeçalho da lista de fases: o da Jornada pela ordem dos mundos; nos Quebra-cabeças, o campo ico
+// do mundo (planeta, estacao, rochas, orbita, nave, lixo, nebulosa, gaiola, aura; ver quebra.js)
+const ICO_JORNADA = ['planeta','estacao','rochas','orbita','nave','lixo','nebulosa','orbita','gaiola','aura'];
 function icoMundoEsp(gi){
   const img = u => `<image href="${u}" x="4" y="4" width="92" height="92"/>`;
   const orbita = () => `<image href="${fotoEsp('orbita',FOTOS_ESP.orbita)}" x="0" y="0" width="100" height="100"/>`;
-  const inner = [()=>planetaInner(1), estacaoInner, ()=>img(urlObj('rochinha')), orbita, ()=>img(urlObj('nave')), lixoInner, nebInner, orbita, gaiolaInner, ()=>planetaInner(6,0)][gi] || (()=>planetaInner(1));
+  const ICO = {planeta:()=>planetaInner(1), estacao:estacaoInner, rochas:()=>img(urlObj('rochinha')), orbita, nave:()=>img(urlObj('nave')), lixo:lixoInner, nebulosa:nebInner, gaiola:gaiolaInner, aura:()=>planetaInner(6,0)};
+  const inner = ICO[JA===JORNADA ? ICO_JORNADA[gi] : JA.mundos[gi]?.ico] || ICO.planeta;
   return `<svg class="espIco" viewBox="0 0 100 100">${inner()}</svg>`;
 }
 
@@ -4988,9 +5030,9 @@ async function fotoDaTela(){
 }
 function ondeNoJogo(){
   if(!S) return 'início';
-  if(S.missao) return `Jornada, fase ${S.missao} (${nomeFaseCla(S.missao)})${S.phase&&S.phase!=='mine'?' · '+S.phase:''}`;
+  if(S.missao) return `${JA.nome}, fase ${S.missao} (${nomeFaseCla(S.missao)})${S.phase&&S.phase!=='mine'?' · '+S.phase:''}`;
   if(S.infinito) return S.frenesi ? 'Frenesi' : 'Clássico';
-  if(S.phase==='lista') return 'mapa da Jornada';
+  if(S.phase==='lista') return JA.quebra ? 'mapa dos Quebra-cabeças' : 'mapa da Jornada';
   if($('#scrMenu')?.classList.contains('on')) return 'menu';
   return S.lab ? 'Laboratório' : 'Mineração';
 }
@@ -5038,30 +5080,34 @@ async function relatar(){
 // tamanho e arrastos em etiquetas, as estrelas em três caixinhas (as já ganhas acesas) e um botão só. O Voltar é o ✕
 // (tocar fora também fecha). A explicação longa só aparece na fase em que a novidade estreia; nas outras ela fica
 // guardada num "como funciona" que abre com um toque.
-let ESTREIA=null;   // texto da explicação -> fase em que ela aparece pela primeira vez
+// texto da explicação -> fase em que ela aparece pela primeira vez, em cada jornada (a Jornada e os Quebra-cabeças)
+const ESTREIA=new Map();
 function estreiaDe(txt){
-  if(!ESTREIA){ ESTREIA=new Map(); MISSOES.forEach((m,i)=>{ for(const t of explicaEsp(m)) if(!ESTREIA.has(t)) ESTREIA.set(t,i+1); }); }
-  return ESTREIA.get(txt)||0;
+  let e=ESTREIA.get(JA); if(!e){ ESTREIA.set(JA, e=new Map()); JA.fases.forEach((m,i)=>{ for(const t of explicaEsp(m)) if(!e.has(t)) e.set(t,i+1); }); }
+  return e.get(txt)||0;
 }
 function entradaEsp(n){
-  const m=MISSOES[n-1], b=MISS()[n], sv=faseSalva(n), ms=metasDe(m), proib=objsDe(m).find(o=>o.proibido), fase=faseDe(m), fm=formaDe(m), np=PATHS[fase].n;
+  const m=JA.fases[n-1], b=MISS()[n], sv=faseSalva(n), ms=metasDe(m), proib=objsDe(m).find(o=>o.proibido), fase=faseDe(m), fm=formaDe(m), np=PATHS[fase].n;
   const um=ms.length===1 && !proib, o=ms[0], tA=tAlvo(m), qtd=um ? (o.n||o.terra||o.rache||o.solte||1) : 0;
   const tam=fm?`${fw(fm)}x${fh(fm)}`:`${m.w||np||4}x${m.h||m.w||np||4}`;
   const chips=[tam, m.livre?'sem limite de arrastos':arrastosTxt(m)];
-  if(m.regras?.spawns===0) chips.push('quebra-cabeça'); if(charDe(m)==='passinho') chips.push('Passinho');
-  const est = m.livre ? (()=>{ const [t2,t3]=tetoEst(m); return ['cumprir',`até ${t2} arrastos`,`até ${t3} arrastos`]; })()
+  if(m.regras?.spawns===0 && !JA.quebra) chips.push('quebra-cabeça'); if(charDe(m)==='passinho') chips.push('Passinho');
+  // nos Quebra-cabeças as estrelas dizem em quantos arrastos (e embaixo, discreto, o melhor possível: a menor solução)
+  const est = JA.quebra ? qjTetos(m).map(t=>`em até ${t}`)
+            : m.livre ? (()=>{ const [t2,t3]=tetoEst(m); return ['cumprir',`até ${t2} arrastos`,`até ${t3} arrastos`]; })()
                       : ['cumprir',`sobrando ${m.estrelas[0]}`,`sobrando ${m.estrelas[1]}`];
   const exp=explicaEsp(m), novas=exp.filter(t=>estreiaDe(t)===n), velhas=exp.filter(t=>estreiaDe(t)!==n);
   const metas = um ? `<div class="meta">${objetivoTxt(o)}</div>`
     : `<div class="metasL">${ms.map(x=>`<div>${iconeObj(x)}<span>${objetivoTxt(x)}</span></div>`).join('')}${proib?`<div class="proib">${iconeObj(proib)}<span>Não forme ${artigo(rockName(proib.proibido))} ${rockName(proib.proibido)}</span></div>`:''}</div>`;
   const receita = um && o.forme>=2 ? `<div class="rec">${icoPlaneta(o.forme-1)}<i>+</i>${icoPlaneta(o.forme-1)}<i>=</i>${icoPlaneta(o.forme)}</div>` : '';
-  const passinho = b?.e && charDe(m)!=='passinho', ganhou=b?.e||0;
+  const passinho = b?.e && charDe(m)!=='passinho' && !JA.quebra, ganhou=b?.e||0;
   showOverlay(`<div class="ent"><button class="fecha" id="mVolta" aria-label="Voltar">✕</button>
     <div class="num">FASE ${n}</div><h2>${noIco(nomeFaseCla(n))}${m.chefe?' · fim do mundo':''}</h2>
     ${tA?`<div class="pl"><canvas id="espInfo"></canvas>${um&&qtd>1&&!o.pontos?`<b class="xN">×${qtd}</b>`:''}</div>`:''}
     ${metas}${receita}
     <div class="chips">${chips.map(c=>`<span>${c}</span>`).join('')}</div>
     <div class="estr3">${est.map((t,i)=>`<div class="${i<ganhou?'ok':''}"><b>${'★'.repeat(i+1)}</b><small>${t}</small></div>`).join('')}</div>
+    ${JA.quebra?qjPerfeito(m,b):''}
     ${novas.map(t=>`<div class="novo"><i>NOVO</i>${t}</div>`).join('')}
     ${velhas.length?`<details class="lembra"><summary>como funciona</summary>${velhas.map(t=>`<p>${t}</p>`).join('')}</details>`:''}
     ${sv?`<button class="btn g" id="mCont">Continuar</button><button class="btn dim pequeno" id="mJoga">começar de novo</button>`:'<button class="btn g" id="mJoga">Jogar</button>'}
@@ -5595,6 +5641,182 @@ function freCeu(c,t){
 }
 // força das reações do fundo a cada arrasto (espJogada): 0 no ×1, 1 no ×20
 const freForca = () => S && S.frenesi && S.fre ? S.fre.deg/TOPO : 0;
+// ===================== QUEBRA-CABEÇAS: MUNDOS E FASES =====================
+// O modo Quebra-cabeças (em teste, só com ?quebra; código em quebra.js): nenhuma peça nova nasce, o pedido é só a ordem
+// certa dos arrastos. Versão inicial: os 20 quebra-cabeças de quebracabecas.js em 6 mundos (a definitiva vem com 100+).
+//
+// QJ_MUNDOS: {nome, desc, tema, ico}
+//   tema: 1 a 8, o céu do mundo (o mesmo tema dos mundos da Jornada)
+//   ico:  desenho do mundo no mapa: planeta, estacao, rochas, orbita, nave, lixo, nebulosa, gaiola ou aura
+//         (sem ico, sai da meta da primeira fase do mundo)
+// QJ_FASES: no formato dos quebra-cabeças de quebracabecas.js, mais g (o mundo, contando do 0), nome e min
+//   {g, nome, mapa, pecas, regras:{spawns:0}, obj, arrastos, estrelas, muretas?, carroPos?, presasPos?, alvosPos?,
+//    terraPos?, char?, min}
+//   mapa:     linhas do tabuleiro ('.' casa, 'B' estação, 'L' lixo espacial, '#' sem casa)
+//   pecas:    [x, y, nível, cor?, tipo?] (cor 0 roxa, 1 verde, 2 das duas; tipo 'p' buraco negro, 'r' planeta comum)
+//   obj:      a meta, como nas fases da Jornada (missoes.js); objs para várias
+//   arrastos: limite (★ é cumprir dentro dele); min: menor solução achada pela busca
+//   estrelas: [sobrando para ★★, sobrando para ★★★]; sem o campo: ★★ até min+3 e ★★★ até min+1 arrastos
+//   char:     'passinho' (tudo anda uma casa por arrasto)
+// Cores nas peças viram fase 'cores' e buraco negro vira fase 'picareta' sozinhos (quebra.js); fase:'...' força outra.
+const QJ_MUNDOS = [
+  {nome:'Primeiros passos', desc:'Nenhuma peça nova: cada arrasto conta.', tema:1, ico:'planeta'},
+  {nome:'Estações e fluxos', desc:'O que não sai do lugar decide o caminho.', tema:2, ico:'estacao'},
+  {nome:'Órbitas', desc:'Levar e formar o planeta certo na órbita.', tema:8, ico:'orbita'},
+  {nome:'Lixo e naves', desc:'Rachar o lixo e encher a nave.', tema:5, ico:'nave'},
+  {nome:'Nebulosas e presos', desc:'Juntar no lugar certo.', tema:4, ico:'nebulosa'},
+  {nome:'Auras e Passinho', desc:'Cores, buraco negro e um passo de cada vez.', tema:6, ico:'aura'},
+];
+const QJ_FASES = [
+  // 1 · Primeiros passos
+  {g:0, nome:'Primeiro quebra-cabeça', mapa:['....','....','....','....'],pecas:[[0,0,3],[2,2,2],[3,3,2],[1,0,2],[0,1,2],[0,2,2],[2,3,2]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:9,estrelas:[2,4], min:4},
+  {g:0, nome:'Cometa sem sobras', mapa:['....','....','....','....'],pecas:[[3,1,2],[2,1,2],[0,1,2],[3,2,3],[1,1,3],[3,0,1],[0,3,1],[3,3,2]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:10,estrelas:[2,4], min:5},
+  // 2 · Estações e fluxos
+  {g:1, nome:'Entre duas estações', mapa:['.B..','..B.','....','....'],pecas:[[2,2,3],[3,3,2],[0,1,2],[3,0,2],[1,1,2],[3,1,2],[1,3,2],[2,3,2],[2,0,1]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:10,estrelas:[2,4], min:5},
+  {g:1, nome:'Fluxo no caminho', mapa:['....','....','....','....'],pecas:[[1,2,3],[0,3,2],[0,1,2],[1,0,2],[3,1,2],[1,3,2],[2,1,2],[2,0,1]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:10,estrelas:[2,4],muretas:[['v',2,0],['h',0,0],['h',0,1]], min:5},
+  {g:1, nome:'Três estações', mapa:['B...','...B','....','..B.'],pecas:[[1,3,3],[1,0,2],[0,2,3],[2,0,3],[2,1,1],[1,2,1]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:11,estrelas:[2,4], min:6},
+  {g:1, nome:'Estação e fluxos', mapa:['....','.B..','....','....'],pecas:[[2,1,3],[3,2,3],[2,3,2],[0,3,2],[1,0,2],[2,2,2],[0,1,2]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:11,estrelas:[2,4],muretas:[['v',2,3],['v',1,2],['h',1,1],['h',3,0]], min:6},
+  // 3 · Órbitas
+  {g:2, nome:'Órbita certa', mapa:['....','....','....','....'],pecas:[[3,0,3],[2,2,3],[3,2,2],[0,3,1]],regras:{spawns:0},obj:{leve:4,n:1},arrastos:9,estrelas:[2,4],alvosPos:[[2,3]], min:4},
+  {g:2, nome:'Formar na órbita', mapa:['....','....','....','....'],pecas:[[2,2,2],[0,3,1],[0,1,1],[3,0,1],[2,1,1],[1,2,1],[3,2,1]],regras:{spawns:0},obj:{alvo:4,n:1},arrastos:10,estrelas:[2,4],alvosPos:[[0,0]], min:5},
+  {g:2, nome:'Órbita atrás da estação', mapa:['B...','..B.','....','....'],pecas:[[1,0,2],[3,2,2],[2,0,1],[1,3,1],[3,0,1],[2,3,1]],regras:{spawns:0},obj:{leve:4,n:1},arrastos:10,estrelas:[2,4],alvosPos:[[3,3]], min:5},
+  // 4 · Lixo e naves
+  {g:3, nome:'Dois lixos', mapa:['..L.','....','....','...L'],pecas:[[2,2,2],[3,2,2],[1,2,2],[0,0,1],[3,1,1]],regras:{spawns:0},obj:{rache:2},arrastos:10,estrelas:[2,4], min:5},
+  {g:3, nome:'Nave no canto', mapa:['....','....','....','....'],pecas:[[2,3,2],[3,2,2],[3,1,1],[2,1,1],[0,0,1],[1,0,1],[1,3,2]],regras:{spawns:0},obj:{carrinho:4,n:1},arrastos:11,estrelas:[2,4],carroPos:[0,2], min:6},
+  {g:3, nome:'Nave atrás do fluxo', mapa:['....','....','....','....'],pecas:[[2,2,3],[0,3,2],[1,2,1],[3,3,1],[3,2,1]],regras:{spawns:0},obj:{carrinho:4,n:1},arrastos:12,estrelas:[2,4],muretas:[['h',1,2],['v',2,0],['v',0,0]],carroPos:[0,0], min:7},
+  // 5 · Nebulosas e presos
+  {g:4, nome:'Três nebulosas', mapa:['....','....','....','....'],pecas:[[1,0,2],[2,1,2],[0,1,1],[3,3,1],[1,1,1],[2,3,1],[3,2,1],[3,0,1]],regras:{spawns:0},obj:{terra:3},arrastos:12,estrelas:[2,4],terraPos:[[0,3],[3,1],[2,0]], min:7},
+  {g:4, nome:'Nebulosas e estações', mapa:['....','..B.','B...','....'],pecas:[[3,0,2],[3,1,2],[2,2,3],[2,3,2],[0,1,2],[3,3,2],[1,3,2]],regras:{spawns:0},obj:{terra:3},arrastos:13,estrelas:[2,4],terraPos:[[3,2],[0,3],[2,0]], min:8},
+  {g:4, nome:'Planeta preso', mapa:['....','....','....','....'],pecas:[[0,0,4],[3,1,2]],regras:{spawns:0},obj:{solte:4,n:1},arrastos:11,estrelas:[2,4],presasPos:[[1,1]], min:6},
+  // 6 · Auras e Passinho
+  {g:5, nome:'Auras', mapa:['....','....','....','....'],pecas:[[2,0,2,1],[3,2,2,1],[1,1,3,1],[2,1,3,2],[2,2,2,0],[0,1,2,1],[0,3,2,1],[3,0,1,0]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:11,estrelas:[2,4], min:6},
+  {g:5, nome:'Auras entre fluxos', mapa:['....','....','....','....'],pecas:[[2,3,3,1],[2,2,2,1],[2,1,2,1],[1,1,2,2],[1,2,2,1],[0,1,2,2],[2,0,2,0],[1,0,1,1],[0,3,1,2]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:11,estrelas:[2,4],muretas:[['v',2,2],['h',1,0]], min:6},
+  {g:5, nome:'Buraco negro', mapa:['....','....','....','....'],pecas:[[1,3,3,null,'p'],[0,2,2,null,'r'],[1,2,1,null,'r'],[2,1,1,null,'r'],[2,3,1,null,'p'],[0,3,1,null,'p']],regras:{spawns:0},obj:{quebre:3,n:1},arrastos:11,estrelas:[2,4], min:6},
+  {g:5, nome:'Passinho', mapa:['....','....','....','....'],pecas:[[2,1,3],[2,2,2],[0,0,1],[2,3,1]],regras:{spawns:0},obj:{forme:4,n:1},arrastos:12,estrelas:[2,4], char:'passinho', min:7},
+  {g:5, nome:'Passinho e o preso', mapa:['....','....','....','....'],pecas:[[2,3,2],[0,0,1],[0,1,1],[3,2,2],[1,2,2],[0,2,1]],regras:{spawns:0},obj:{solte:4,n:1},arrastos:12,estrelas:[2,4],presasPos:[[3,1]], char:'passinho', min:7},
+];
+// ===================== QUEBRA-CABEÇAS (modo em teste) =====================
+// Uma jornada inteira só de quebra-cabeças: nenhuma peça nova nasce, o pedido é só a ordem certa dos arrastos.
+// Mundos e fases em quebra_fases.js. O mapa, a entrada da fase, o jogo da fase e a gravação são os da Jornada
+// (classico.js e espaco_jogo.js) com a jornada atual JA = QUEBRA: progresso em ptui_qj ({n: {e: estrelas, t: pontos,
+// a: menor número de arrastos}}) e a fase pela metade em ptui_qj_save (com o começo da fase e a pilha do desfazer, S.qj).
+// Na fase: desfazer sem limite (volta o arrasto contado) e recomeçar na hora (que também se desfaz, por isso sem
+// confirmação), os dois sempre à vista no painel de cima; no teclado, Z (ou Backspace) e R. Acabaram os arrastos, não há
+// saída ou formou o proibido: a fase não acaba, fica parada até desfazer ou recomeçar. Estrelas pelos arrastos: ★ dentro
+// do limite, ★★ até min+3, ★★★ até min+1 (ou o campo estrelas da fase); sem meta de pontos. Música: a Órbita, a da Jornada.
+// Só aparece com ?quebra no endereço (fica gravado no aparelho; ?quebra=0 esconde), no menu do espaço, abaixo do Clássico.
+(()=>{ const m=location.search.match(/[?&]quebra(?:=(\d))?/); if(m) localStorage.ptui_quebra = m[1]==='0' ? '0' : '1'; })();
+const quebraLigado = () => localStorage.ptui_quebra==='1' && espacoLigado();
+
+// ---------- dados ----------
+// completa as fases: nunca nasce peça, menor solução, limite, estrelas e a fase das cores ou do buraco negro (explicação)
+QJ_FASES.forEach(m=>{
+  m.regras={...(m.regras||{}), spawns:0};
+  if(m.min==null) m.min=Math.max(1,(m.arrastos||10)-5);
+  if(!m.arrastos) m.arrastos=m.min+5;
+  if(!m.estrelas) m.estrelas=[Math.max(0,m.arrastos-m.min-3), Math.max(0,m.arrastos-m.min-1)];
+  if(!m.fase){ const ps=m.pecas||[]; if(ps.some(p=>p[4]==='p')) m.fase='picareta'; else if(ps.some(p=>p[3]!=null)) m.fase='cores'; }
+});
+// desenho do mundo no mapa, quando o mundo não diz (icoMundoEsp): pela meta e pelo tabuleiro da primeira fase dele
+function qjIcoDe(m){
+  const o=metasDe(m)[0]||{};
+  if(o.leve||o.alvo) return 'orbita'; if(o.carrinho) return 'nave'; if(o.rache) return 'lixo'; if(o.terra) return 'nebulosa'; if(o.solte) return 'gaiola';
+  if(m.fase==='cores') return 'aura'; if((m.mapa||[]).some(l=>l.includes('B'))) return 'estacao'; if(m.muretas?.length) return 'rochas';
+  return 'planeta';
+}
+QJ_MUNDOS.forEach((g,gi)=>{ g.tema=g.tema||1; g.fase=g.fase||'comum'; if(!g.ico){ const m=QJ_FASES.find(f=>f.g===gi); g.ico=m?qjIcoDe(m):'planeta'; } });
+const QUEBRA = {id:'quebra', nome:'Quebra-cabeças', mundos:QJ_MUNDOS, fases:QJ_FASES, chave:'ptui_qj', salvo:'ptui_qj_save', quebra:true};
+// textos da entrada da fase que mudam neste modo (explicaEsp): cada um aparece como NOVO só na fase em que estreia
+const COMO_QJ = {
+  modo:'Quebra-cabeça: nenhuma peça nova nasce, o tabuleiro é só este. Ache a ordem certa dos arrastos. ↶ desfaz o último arrasto e ↻ recomeça a fase, quantas vezes quiser.',
+  passinho:'Passinho: tudo anda só uma casa por arrasto, como no Threes.',
+  picareta:'Buraco negro: dois iguais se juntam num maior; quando encontra um planeta do mesmo nível, engole o planeta.',
+};
+// arrastos para ★, ★★ e ★★★; e a meta de perfeição (a menor solução), discreta, na entrada da fase
+const qjTetos = m => [m.arrastos, m.arrastos-m.estrelas[0], m.arrastos-m.estrelas[1]];
+const qjPerfeito = (m,b) => `<div class="perf">melhor possível: <b>${m.min}</b> arrastos${b?.a!=null?` · seu melhor: ${b.a}`:''}</div>`;
+const qjAtual = () => { const r=MISS(QUEBRA); return (QJ_FASES.findIndex((m,i)=>!(r[i+1]?.e)) + 1) || QJ_FASES.length; };
+
+// ---------- menu ----------
+// botão logo abaixo do Clássico (só com ?quebra); com progresso, diz de onde continua
+function qjMenu(on){
+  let b=$('#mQj');
+  if(!quebraLigado()){ if(b) b.style.display='none'; return; }
+  if(!b){ b=document.createElement('button'); b.className='btn big'; b.id='mQj'; b.innerHTML='Quebra-cabeças<small></small>'; b.onclick=qjEntra; }
+  $('#mInf').after(b); b.style.display = on ? '' : 'none';
+  const est=Object.values(MISS(QUEBRA)).reduce((a,x)=>a+(x.e||0),0), tem=est>0 || !!localStorage[QUEBRA.salvo];
+  b.querySelector('small').textContent = tem ? `fase ${qjSalva()||qjAtual()} · ${est} ${est===1?'estrela':'estrelas'}` : 'só a ordem certa dos arrastos';
+  b.classList.toggle('comSub', tem);
+}
+const qjSalva = () => { const sv=JSON.parse(localStorage[QUEBRA.salvo]||'null'); return sv && QJ_FASES[sv.n-1] ? sv.n : 0; };
+// abre o mapa já com a entrada da fase de onde parou (a que está pela metade, ou a primeira sem estrela)
+function qjEntra(){ missoesLista(QUEBRA); missaoInfo(qjSalva()||qjAtual()); }
+
+// ---------- na fase ----------
+const qjFoto = () => JSON.parse(JSON.stringify(estadoFase()));
+// chamado por missaoJoga: o começo da fase (para recomeçar) e a pilha do desfazer; continuando, os da fase salva
+function qjComeca(sv){
+  S.qj = sv?.qj || {ini:qjFoto(), pilha:[], trava:null};
+  document.body.classList.add('modoQj');
+  if(S.qj.trava) setTimeout(()=>{ if(S.qj?.trava) qjTravou(S.qj.trava, true); });   // parou sem saída: continua parada
+}
+// antes de cada arrasto (move, jogo.js): o estado de agora vai para a pilha. Na memória, até 400 (cada recomeçar também
+// empilha); no salvo, as 60 últimas, para gravar a cada arrasto continuar barato
+function qjGuarda(){ S.qj.pilha.push(qjFoto()); if(S.qj.pilha.length>400) S.qj.pilha.shift(); }
+const qjSalvo = () => ({...S.qj, pilha:S.qj.pilha.slice(-60)});
+const qjPode = () => !!S?.qj && S.phase==='mine' && !overlayOpen() && $('#scrGame').classList.contains('on');
+// volta a um estado guardado. As peças que continuam (mesmo id) deslizam de volta para a casa de antes e só a que mudou
+// de nível é redesenhada; as que tinham sumido (juntadas, recolhidas pela nave) voltam; o lixo é refeito (a vida dele)
+function qjVolta(st){
+  for(const k of CAMPOS_SAVE) if(st[k]!==undefined) S[k]=st[k];
+  S.terra=new Set(st.terra||[]); S.qj.trava=null;
+  const ids=new Set([...S.tiles, ...S.walls.filter(w=>!w.lixo), ...(S.edges||[])].map(o=>o.id));
+  for(const [id,el] of els) if(!ids.has(id)){ el.remove(); els.delete(id); }
+  render(); salvaFase(); SFX.arrastar();
+}
+function qjDesfaz(){
+  if(!qjPode() || !S.qj.pilha.length) return;
+  qjVolta(S.qj.pilha.pop()); setBanner(null, metaLetreiro(faseM()));
+}
+// recomeçar vai para a pilha também: o desfazer volta para onde estava (nada se perde, então não pergunta)
+function qjRecomeca(){
+  if(!qjPode() || !(S.moves>0 || S.qj.trava)) return;
+  S.qj.pilha.push(qjFoto()); qjVolta(JSON.parse(JSON.stringify(S.qj.ini)));
+  setBanner(null, 'de volta ao começo · ↶ desfaz'); voltaMeta();
+}
+// sem saída (acabaram os arrastos, não cabe mais nada, formou o proibido): a fase fica parada e os botões chamam
+// (quieto: ao continuar uma fase que já tinha parado assim)
+function qjTravou(txt, quieto){
+  S.qj.trava=txt; setBanner(null, `${txt} · ↶ desfaça`); salvaFase(); qjHud();
+  if(quieto!==true) SFX.naoDeu();
+}
+function qjHud(){
+  const d=$('#qjDesfaz'), r=$('#qjRecomeca'), p=$('#qjP'); if(!d || !S?.qj) return;
+  const semD=!S.qj.pilha.length, semR=!(S.moves>0 || S.qj.trava), tr=!!S.qj.trava;
+  if(d.disabled!==semD) d.disabled=semD; if(r.disabled!==semR) r.disabled=semR;
+  if(p.classList.contains('chama')!==tr) p.classList.toggle('chama', tr);
+}
+$('#qjDesfaz').onclick=qjDesfaz; $('#qjRecomeca').onclick=qjRecomeca;
+addEventListener('keydown',e=>{ if(!S?.qj || e.ctrlKey||e.metaKey||e.altKey||e.target.closest?.('input,textarea')) return;
+  const k=e.key.toLowerCase(); if(k==='z'||k==='backspace'){ e.preventDefault(); qjDesfaz(); } else if(k==='r'){ e.preventDefault(); qjRecomeca(); } });
+
+// ---------- vitória ----------
+// (não cumprir não chega aqui: qjTravou). Os arrastos usados, as estrelas e, discreto, o melhor possível
+function qjResultado(){
+  const n=S.missao, m=faseM(), {e,rec}=gravaVitoria(), us=S.moves||0, perf=us<=m.min, [,t2,t3]=qjTetos(m), tA=tAlvo(m);
+  const falta = e<3 ? `${e<2?`★★ em até ${t2} · `:''}★★★ em até ${t3} arrastos` : '';
+  showOverlay(`${tA?'<canvas id="espRes"></canvas>':''}<h2>${perf?'Perfeito!':'Resolvido!'}</h2>${estrelasHtml(e,'estr grande')}
+    <p>Em <b>${us}</b> arrasto${us===1?'':'s'}${rec?' (seu recorde!)':''}</p>
+    <p class="perf">${perf?'a menor solução possível':`melhor possível: <b>${m.min}</b> arrastos`}</p>
+    ${falta?`<p class="metas">${falta}</p>`:''}
+    ${n<QJ_FASES.length?'<button class="btn g" id="mProx">Próxima fase</button>':'<p>Você resolveu todos os quebra-cabeças!</p>'}
+    <button class="btn dim" id="mDeNovo">Jogar de novo</button><button class="btn dim" id="mLista">Ver fases</button>`);
+  if(tA) espPlanetaGrande($('#espRes'),tA,'vit');
+  SFX.estrelas(e);
+  if($('#mProx')) $('#mProx').onclick=()=>{ missoesLista(); missaoInfo(n+1); };
+  $('#mDeNovo').onclick=()=>comecaFase(n, {}, qjResultado);
+  $('#mLista').onclick=()=>missoesLista();
+}
 function setBanner(title,sub){ if(title!==null) $('#bTitle').innerHTML=enrich(title); $('#bSub').innerHTML=enrich(sub||''); }
 function anim(id,name){ const el=els.get(id); if(!el) return; const f=el.firstChild;
   // o pulo da junção vai por uma animação do navegador: tirar e pôr a classe com um offsetWidth no meio obrigava a refazer
@@ -5931,7 +6153,7 @@ for(const t of ['pointerdown','pointerup','touchend','click','keydown']) addEven
 $('#mContinue').onclick=loadGame;
 $('#mCred').onclick=credits;
 $('#mLab').onclick=labPainel;
-$('#mCla').onclick=missoesLista;
+$('#mCla').onclick=()=>missoesLista(JORNADA);
 $('#mEd').onclick=editorLista;
 $('#mCat').onclick=()=>catalogo(showMenu);
 $('#mNew').onclick=newGameClick;

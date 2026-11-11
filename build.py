@@ -9,11 +9,12 @@ classico = rd('classico.js')
 espaco = ('var ESP=(()=>{' + rd('espaco.js') + '\nreturn {buildTextures,preaquece,filaOciosa,texTarefa,makePiece,drawPeca,drawPecaVar,pecaImg,temPeca,pecaPrepara,soltaPeca,glPronto,glDesenha,discosGL,drawPecaGL,vrDe,buildFundo,drawFundo,SPR,LADDER,MUNDOS_ESP,byName,kDe,ST,objImg,DPR,PASSO_VAR};\n})();\n'
           + rd('espaco_jogo.js'))
 frenesi = rd('frenesi.js')   # modo em teste (só com ?frenesi)
+quebra = rd('quebra_fases.js') + rd('quebra.js')   # modo em teste (só com ?quebra)
 cfg, svg, logic, helpers, sfx, css, autoupd = rd('config.js'), rd('svg.js'), rd('jogo.js'), rd('helpers.js'), rd('sfx.js'), rd('css.css'), rd('autoupd.html')
 gi = rd('gi.js')
 # versão do jogo nos relatos de bug: um resumo do código-fonte (muda só quando o código muda)
 import hashlib
-VERSAO = hashlib.sha1((cfg + missoes + gi + svg + logic + classico + espaco + frenesi + helpers + sfx).encode('utf-8')).hexdigest()[:8]
+VERSAO = hashlib.sha1((cfg + missoes + gi + svg + logic + classico + espaco + frenesi + quebra + helpers + sfx).encode('utf-8')).hexdigest()[:8]
 css = css.replace('width:calc(4*var(--cell) + 5*var(--gap));height:calc(4*var(--cell) + 5*var(--gap))', 'width:calc(var(--w,4)*var(--cell) + (var(--w,4) + 1)*var(--gap));height:calc(var(--h,4)*var(--cell) + (var(--h,4) + 1)*var(--gap))')
 css = css.replace('touch-action:none;user-select:none;-webkit-user-select:none;overscroll-behavior:none;overflow:hidden}', 'user-select:none;-webkit-user-select:none;overscroll-behavior:none;overflow-x:hidden}\nbody.lock{overflow:hidden}\n#scrGame{touch-action:none}')
 
@@ -340,6 +341,21 @@ body.espaco .freRes{display:grid;grid-template-columns:1fr 1fr}
   .freApaga{animation-duration:1.2s;opacity:.3}
   .freBonus .icoFre,#freRelogio.pouco{animation:none}
 }
+/* ---- Quebra-cabeças (modo em teste, só com ?quebra): desfazer e recomeçar no painel, no lugar dos pontos (só o ícone:
+   com o nome embaixo, o painel apertava o dos arrastos nos celulares) ---- */
+#mQj{display:none}
+body.espaco #mQj{display:block;color:#8fe3a0 !important;border-color:#8fe3a0 !important;box-shadow:0 0 16px #8fe3a055,inset 0 0 14px #8fe3a022 !important;text-shadow:0 0 10px #8fe3a0}
+#qjP{display:none}
+body.modoQj .hudCla #ptsP{display:none !important}
+body.modoQj .hudCla #qjP{display:flex;flex:none;gap:5px;padding:4px 5px}
+.qjB{display:flex;align-items:center;justify-content:center;width:46px;height:46px;padding:0;border-radius:12px;border:1.5px solid rgba(111,224,255,.5);background:rgba(111,224,255,.08);color:#bfefff;cursor:pointer;touch-action:manipulation;transition:border-color .2s,box-shadow .2s,opacity .2s}
+.qjB svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.qjB:disabled{opacity:.3;cursor:default}
+.qjB:not(:disabled):active{transform:scale(.94)}
+#qjP.chama .qjB:not(:disabled){border-color:#ffd36e;color:#ffe9a8;box-shadow:0 0 12px #ffd36e66}   /* sem saída: os botões chamam */
+.perf{font-size:12.5px !important;color:#9f93c9 !important;letter-spacing:.02em;margin:0 !important}
+.perf b{color:#d8d0f0}
+@media (max-width:370px){ .qjB{width:42px;height:42px} }
 #ovos button{width:30px;height:30px;padding:4px;border:0;background:none;color:rgba(207,198,255,.42);filter:drop-shadow(0 0 4px rgba(207,198,255,.35));cursor:pointer}
 #ovos svg{width:22px;height:22px;display:block}\n
 .logo{display:flex;align-items:flex-end;justify-content:center;height:130px}
@@ -630,6 +646,7 @@ body = '''<div id="cenario"></div>
       <div class="pill arrP"><span class="ic en">⚡</span><div class="arr"><div class="linha"><b id="cArr"></b><small>arrastos</small></div><div class="tr"><i id="cTr"></i><span id="cS3">★</span><span id="cS2">★</span><span id="cS1">★</span></div></div></div>
       <div class="pill silhP" id="cMis"></div>
       <div class="pill ptsP" id="ptsP"><div><b id="cPts">0</b><small>pontos</small></div></div>
+      <div class="pill qjP" id="qjP"><button class="qjB" id="qjDesfaz" aria-label="Desfazer" title="Desfazer (Z)"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button><button class="qjB" id="qjRecomeca" aria-label="Recomeçar" title="Recomeçar (R)"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button></div>
     </div>
     <div class="top wide"><button class="icon" id="btnPause">☰</button><div class="banner"><div id="bTitle"></div><span id="bSub"></span></div><button class="icon musBtn" id="btnSound">♪</button><button class="icon" id="btnOpc" aria-label="Opções" title="Opções"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 6h9M19 6h1M4 12h3M13 12h7M4 18h11M21 18h-1"/><circle cx="16" cy="6" r="2.4"/><circle cx="10" cy="12" r="2.4"/><circle cx="18" cy="18" r="2.4"/></svg></button></div>
     <div class="items wide" id="items"></div>
@@ -775,7 +792,7 @@ for(const t of ['pointerdown','pointerup','touchend','click','keydown']) addEven
 $('#mContinue').onclick=loadGame;
 $('#mCred').onclick=credits;
 $('#mLab').onclick=labPainel;
-$('#mCla').onclick=missoesLista;
+$('#mCla').onclick=()=>missoesLista(JORNADA);
 $('#mEd').onclick=editorLista;
 $('#mCat').onclick=()=>catalogo(showMenu);
 $('#mNew').onclick=newGameClick;
@@ -822,7 +839,7 @@ html = '''<!doctype html>
 ''' + body + '''
 <script>
 const VERSAO="''' + VERSAO + '''";
-''' + cfg + missoes + gi + svg + logic + classico + espaco + frenesi + helpers + sfx + ui + '''</script>
+''' + cfg + missoes + gi + svg + logic + classico + espaco + frenesi + quebra + helpers + sfx + ui + '''</script>
 </body>
 </html>
 '''

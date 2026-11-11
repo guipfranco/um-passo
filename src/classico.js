@@ -39,9 +39,16 @@ function migraJornada3(){
     localStorage.ptui_partidas=JSON.stringify(JSON.parse(localStorage.ptui_partidas).map(p=>{ const n=J3_ANTIGA.indexOf(p[0])+1; return n ? [n,...p.slice(1)] : null; }).filter(Boolean)); }
 }
 if(localStorage.ptui_jornada==='2'){ try{ migraJornada3(); }catch(e){} localStorage.ptui_jornada='3'; }
-const MISS = () => JSON.parse(localStorage.mina_missoes||'{}');
+// ---------- jornada atual ----------
+// O mapa de mundos, a entrada da fase, o jogo da fase e o resultado servem à Jornada e ao modo Quebra-cabeças
+// (quebra.js, em teste): cada um com os seus mundos, fases e chaves de armazenamento. JA é a jornada aberta (a do mapa
+// ou da fase em jogo); quem entra pelo menu diz qual (missoesLista(JORNADA) ou missoesLista(QUEBRA)).
+const JORNADA = {id:'jornada', nome:'Jornada', mundos:MUNDOS, fases:MISSOES, chave:'mina_missoes', salvo:'mina_cla_save'};
+let JA = JORNADA;
+const MISS = (j=JA) => JSON.parse(localStorage[j.chave]||'{}');
+const faseM = () => JA.fases[S.missao-1];   // a fase em jogo
 const liberada = n => n===1 || (MISS()[n-1]?.e||0) > 0;
-const mundoDe = m => MUNDOS[m.g];
+const mundoDe = m => JA.mundos[m.g];
 const faseDe = m => m.fase || (m.forma||m.mapa ? 'caverna' : mundoDe(m).fase);
 const charDe = m => m.char || mundoDe(m).char || 'rola';
 const objsDe = m => m.objs || [m.obj];
@@ -145,6 +152,7 @@ function recolheCarro(){
 }
 function flutuaPontos(r){
   if(S.frenesi) return freFlutua(r);   // Frenesi: com o multiplicador (frenesi.js)
+  if(S.qj) return;   // Quebra-cabeças: sem pontos na tela, o pedido é só a ordem dos arrastos
   const f=(x,y,v)=>{ const el=document.createElement('div'); el.className='flut'; el.textContent='+'+v; el.style.transform=pos(x,y); board.appendChild(el); setTimeout(()=>el.remove(),950); };
   for(const o of r.merges) if(o.k!=='p') f(o.x,o.y,VAL(o.t));
   for(const b of r.breaks) f(b.x,b.y,2*VAL(b.t));
@@ -155,14 +163,16 @@ const metaLetreiro = m => metasDe(m).length>1 ? `${metasDe(m).length} metas` : o
 // só se a fase ainda estiver em jogo (no fim, "missão cumprida!" e afins ficam)
 let voltaMetaT=0;
 function voltaMeta(){ clearTimeout(voltaMetaT); const est=S;
-  voltaMetaT=setTimeout(()=>{ if(S===est && S.missao && S.phase==='mine') setBanner(null, metaLetreiro(MISSOES[S.missao-1])); }, 1500); }
+  voltaMetaT=setTimeout(()=>{ if(S===est && S.missao && S.phase==='mine' && !S.qj?.trava) setBanner(null, metaLetreiro(faseM())); }, 1500); }
 // depois de cada arrasto: cumpriu, formou o proibido, acabaram os arrastos ou travou
+// (nos Quebra-cabeças não cumprir não acaba a fase: ela fica parada até desfazer ou recomeçar, qjTravou em quebra.js)
 function checaMissao(){
-  const m=MISSOES[S.missao-1];
-  const est=S, acaba=(ok,txt,motivo)=>{ S.phase='fimM'; localStorage.removeItem('mina_cla_save'); anotaPartida(ok, motivo); if(ok) gravaVitoria(); setBanner(null,txt); if(ok) SFX.pagou();
+  const m=faseM();
+  const est=S, acaba=(ok,txt,motivo)=>{ if(!ok && JA.quebra) return qjTravou(txt,motivo);
+    S.phase='fimM'; localStorage.removeItem(JA.salvo); if(!JA.quebra) anotaPartida(ok, motivo); if(ok) gravaVitoria(); setBanner(null,txt); if(ok) SFX.pagou();
     setTimeout(()=>{ if(S===est && S.phase==='fimM') missaoResultado(ok,motivo); }, ok?800:650); };   // só se ainda estiver nessa fase
   const v=violou(m); if(v) return acaba(false,'não podia!',`Você formou ${artigo(rockName(v.proibido))} ${rockName(v.proibido)}.`);
-  if(cumpriu(m)) return acaba(true,'missão cumprida!');
+  if(cumpriu(m)) return acaba(true, JA.quebra?'resolvido!':'missão cumprida!');
   if(S.energy<=0) return acaba(false,'acabaram os arrastos','Acabaram os arrastos.');
   if(!anyMove()) return acaba(false,'não cabe mais nada','Não cabia mais nada no tabuleiro.');
   salvaFase();
@@ -171,10 +181,11 @@ function checaMissao(){
 // Uma vez por partida (S.res); a tela de resultado só mostra, e o "recorde" compara com o que havia antes desta vitória.
 function gravaVitoria(){
   if(S.res) return S.res;
-  const n=S.missao, m=MISSOES[n-1], e=estrelasPor(m,Math.max(0,S.energy),S.moves||0), r=MISS(), ant=r[n]||{};
+  const n=S.missao, m=faseM(), e=estrelasPor(m,Math.max(0,S.energy),S.moves||0), r=MISS(), ant=r[n]||{};
   S.res={e, rec: ant.t!=null && S.pontos>ant.t};
   r[n]={...ant, e:Math.max(e,ant.e||0), t:Math.max(S.pontos,ant.t||0)}; if(S.medalha) r[n].pm=true;
-  localStorage.mina_missoes=JSON.stringify(r);
+  if(JA.quebra){ S.res.rec = ant.a!=null && S.moves<ant.a; r[n].a=Math.min(S.moves, ant.a??Infinity); }   // quebra-cabeça: o recorde é o menor número de arrastos
+  localStorage[JA.chave]=JSON.stringify(r);
   return S.res;
 }
 
@@ -204,8 +215,9 @@ function dadosPartidas(volta){
 // ---------- fase em andamento: salvar e continuar ----------
 const CAMPOS_SAVE = ['tiles','walls','edges','alvos','terraTot','carro','energy','moves','pontos','feitas','coresF','quebras','seqI','combos','soltas','presasTot','maxForm','next','rachados'];
 const estadoFase = () => { const st={}; for(const k of CAMPOS_SAVE) st[k]=S[k]; st.terra=[...(S.terra||[])]; return st; };
-function salvaFase(){ localStorage.mina_cla_save=JSON.stringify({n:S.missao, pass:!!S.medalha, st:estadoFase()}); }
-const faseSalva = n => { const sv=JSON.parse(localStorage.mina_cla_save||'null'); return sv && sv.n===n ? sv : null; };
+// nos Quebra-cabeças vão junto o começo da fase e a pilha do desfazer (S.qj, quebra.js)
+function salvaFase(){ localStorage[JA.salvo]=JSON.stringify({n:S.missao, pass:!!S.medalha, st:estadoFase(), ...(S.qj?{qj:qjSalvo()}:{})}); }
+const faseSalva = n => { const sv=JSON.parse(localStorage[JA.salvo]||'null'); return sv && sv.n===n ? sv : null; };
 function restauraFase(st){
   for(const el of els.values()) el.remove(); els.clear(); limpaMarcas();
   for(const k of CAMPOS_SAVE) if(st[k]!==undefined) S[k]=st[k];
@@ -333,7 +345,8 @@ function montaMissaoHud(m){
   $('#ptsP').style.display = ms.some(o=>o.pontos) || ms.length>1 || rest ? 'none' : '';
 }
 function hudMissao(){
-  const m=MISSOES[S.missao-1], tot=m.arrastos||999, sobra=Math.max(0,S.energy), [e2,e3]=m.estrelas||[0,0];
+  if(JA.quebra) qjHud();
+  const m=faseM(), tot=m.arrastos||999, sobra=Math.max(0,S.energy), [e2,e3]=m.estrelas||[0,0];
   const rot=$('#cArr').nextElementSibling;
   if(m.livre){ const [t2,t3]=tetoEst(m), us=S.moves||0, tr=$('#cTr');
     $('#cArr').textContent=us; if(rot) rot.textContent='arrastos · sem limite';
@@ -365,27 +378,30 @@ function formaDe(m){
   return null;
 }
 const pegada = `<svg class="pegada" viewBox="0 0 100 100"><ellipse cx="34" cy="58" rx="13" ry="20" fill="#7a5a44"/><ellipse cx="66" cy="42" rx="13" ry="20" fill="#7a5a44"/></svg>`;
-function missoesLista(){
+// j: a jornada a abrir (vindo do menu); sem ela, a que já estava aberta (voltar da fase, "Ver fases")
+function missoesLista(j){
+  if(j?.fases) JA=j;
+  const FS=JA.fases;
   hideOverlay(); hideCoach(); VEIO_DO_EDITOR=false;
   show('scrMap'); trilha('menu'); document.body.classList.add('semHud');
   S = {...freshState(), missao:0, phase:'lista'}; S.fiscal=FISCAIS[0]; applyAndar(); clearBoard(); render();
   const r=MISS(), total=Object.values(r).reduce((a,x)=>a+(x.e||0),0);
-  setBanner(espFig()?'Jornada':'Clássico', `${total} de ${MISSOES.length*3} estrelas`);
+  setBanner(espFig()?JA.nome:'Clássico', `${total} de ${FS.length*3} estrelas`);
   $('#btnPause').textContent='‹ Menu'; $('#btnPause').title='Voltar ao menu'; document.body.classList.add('naLista');
-  const atual = (MISSOES.findIndex((m,i)=>!(r[i+1]?.e)) + 1) || MISSOES.length;
+  const atual = (FS.findIndex((m,i)=>!(r[i+1]?.e)) + 1) || FS.length;
   const lado = ['center','flex-end','center','flex-start'], E=espFig();
   // no espaço o mapa mostra só até algumas fases depois da atual: dali para a frente ainda é segredo (e não se rola sem fim)
-  const ATE = E ? Math.min(MISSOES.length, atual+3) : MISSOES.length;
+  const ATE = E ? Math.min(FS.length, atual+3) : FS.length;
   let html='';
-  MUNDOS.forEach((g,gi)=>{
-    const pri=MISSOES.findIndex(m=>m.g===gi)+1; if(g.breve ? ATE<MISSOES.length : pri>ATE) return;
+  JA.mundos.forEach((g,gi)=>{
+    const pri=FS.findIndex(m=>m.g===gi)+1; if(g.breve ? ATE<FS.length : pri>ATE) return;
     html += `<div class="mGrupo ${g.breve?'breve':''}">${E?icoMundoEsp(gi):disc(g.ico||g.fase,null,'discSm')}<div><b>${gi+1} · ${nomeMundoCla(gi)[0]}</b><span>${nomeMundoCla(gi)[1]}</span></div></div>`;
     if(g.breve){ html += `<div class="mBreve">Em construção</div>`; return; }
-    MISSOES.forEach((m,k)=>{ if(m.g!==gi || k+1>ATE) return; const n=k+1, lib=liberada(n), sv=faseSalva(n);
+    FS.forEach((m,k)=>{ if(m.g!==gi || k+1>ATE) return; const n=k+1, lib=liberada(n), sv=faseSalva(n);
       html += `<div class="mLinha" style="justify-content:${lado[n%4]}"><button class="mNo ${lib?'':'trava'} ${n===atual?'atual':''} ${m.chefe?'chefe':''}" data-m="${n}" ${lib?'':'disabled'}>${E?icoMetaEsp(m)+'<span class="mNum">'+n+'</span>':n}${estrelasHtml(r[n]?.e||0)}${r[n]?.pm?pegada:''}${sv?'<span class="emAndamento">…</span>':''}</button></div>`; });
   });
   const mb=$('#mapBody'); mb.style.height='';
-  mb.innerHTML = `<div class="mTrilha">${html}</div>${ATE<MISSOES.length?'<div class="mFim"></div>':''}`;
+  mb.innerHTML = `<div class="mTrilha">${html}</div>${ATE<FS.length?'<div class="mFim"></div>':''}`;
   const tr=mb.querySelector('.mTrilha'), base=tr.getBoundingClientRect();
   const pts=[...tr.querySelectorAll('.mNo')].map(b=>{ const q=b.getBoundingClientRect(); return `${Math.round(q.left+q.width/2-base.left)},${Math.round(q.top+q.height/2-base.top)}`; });
   tr.insertAdjacentHTML('afterbegin', `<svg class="mCaminho" width="${Math.round(base.width)}" height="${Math.round(base.height)}"><polyline points="${pts.join(' ')}"/></svg>`);
@@ -396,7 +412,7 @@ function missoesLista(){
 }
 function missaoInfo(n){
   if(espFig()) return entradaEsp(n);   // no espaço, a entrada nova (espaco_jogo.js)
-  const m=MISSOES[n-1], fase=faseDe(m), fm=formaDe(m), b=MISS()[n], sv=faseSalva(n);
+  const m=JA.fases[n-1], fase=faseDe(m), fm=formaDe(m), b=MISS()[n], sv=faseSalva(n);
   const explica=[];
   if(fase!=='comum' && fase!=='caverna' || n===1) explica.push(PATHS[fase].como||PATHS[fase].desc);
   if(charDe(m)==='passinho') explica.push(COMO_CHAR.passinho);
@@ -423,17 +439,17 @@ function missaoInfo(n){
 // só há um lugar para fase pela metade: começar outra fase apaga a que estava salva, então pergunta antes.
 // Começar de novo a própria fase salva não pergunta (o botão já diz isso). Voltar reabre a tela de onde veio.
 function comecaFase(n, opt={}, volta=()=>missaoInfo(n)){
-  const sv=JSON.parse(localStorage.mina_cla_save||'null');
-  if(!sv || sv.n===n || !MISSOES[sv.n-1]) return missaoJoga(n,opt);
+  const sv=JSON.parse(localStorage[JA.salvo]||'null');
+  if(!sv || sv.n===n || !JA.fases[sv.n-1]) return missaoJoga(n,opt);
   showOverlay(`<h2>Começar a fase ${n}?</h2><p>A fase ${sv.n}, ${noIco(nomeFaseCla(sv.n))}, está pela metade e será perdida.</p>
     <button class="btn g" id="fSim">Começar</button><button class="btn dim" id="fNao">Voltar</button>`);
   $('#fSim').onclick=()=>missaoJoga(n,opt); $('#fNao').onclick=volta; FORA=volta;
 }
 function missaoJoga(n, opt={}){
-  const m=MISSOES[n-1], fase=faseDe(m), fm=formaDe(m);
+  const m=JA.fases[n-1], fase=faseDe(m), fm=formaDe(m);
   hideOverlay(); VEIO_DO_EDITOR=false;
   const sv = opt.retoma ? faseSalva(n) : null;
-  if(!sv) localStorage.removeItem('mina_cla_save');
+  if(!sv) localStorage.removeItem(JA.salvo);
   const pass = !!(opt.passinho || sv?.pass);
   S = {...freshState(), missao:n, tema:mundoDe(m).tema, char: pass?'passinho':charDe(m), medalha: pass && charDe(m)!=='passinho',
        moves:0, extra:0, pontos:0, feitas:{}, coresF:{}, quebras:[], seqI:0, combos:0, soltas:0, maxForm:0, rachados:0};
@@ -441,16 +457,19 @@ function missaoJoga(n, opt={}){
   for(const [k,v] of Object.entries(m.itens||{})) S.lv[k]=v;
   const p = {...PATHS[fase], ...(m.regras||{}), forma:fm, caverna:false, energy:(m.arrastos||999)-CFG.energy, semEnergia:!!m.livre};
   if(m.w){ p.w=m.w; p.h=m.h||m.w; }
+  if(JA.quebra) p.spawns=0;   // quebra-cabeça: nunca nasce peça nova
   applyAndar(); startDay(p);
   limpaMarcas(); montaPecasMissao(m);
   if(sv) restauraFase(sv.st);
+  if(JA.quebra) qjComeca(sv);   // começo da fase e pilha do desfazer (quebra.js)
   document.body.classList.add('modoCla'); $('#btnPause').textContent='☰'; $('#btnPause').title=''; montaMissaoHud(m); render();
   // o nome da fase vai sem o ícone de peça (no título, "Primeira rocha" é nome, não a meta)
   setBanner(`Fase ${n}: ${noIco(nomeFaseCla(n))}${S.medalha?' · Passinho':''}`, metaLetreiro(m));
   pedeEncaixe();
 }
 function missaoResultado(ok, motivo){
-  const n=S.missao, m=MISSOES[n-1], sobra=Math.max(0,S.energy);
+  if(JA.quebra) return qjResultado();   // quebra-cabeça: só a vitória chega aqui (quebra.js)
+  const n=S.missao, m=faseM(), sobra=Math.max(0,S.energy);
   if(!ok){
     SFX.naoDeu();
     const falta=metasDe(m).filter(o=>!metaFeita(o)).map(o=>{ const p=progObj(o); return `${objetivoTxt(o)}: ${Math.min(p.at,p.alvo)} de ${p.alvo}`; });
@@ -461,7 +480,7 @@ function missaoResultado(ok, motivo){
     showOverlay(`${espFig()&&tAlvo(m)?'<canvas id="espRes"></canvas>':''}<h2>${S.medalha?'Medalha do Passinho!':'Missão cumprida!'}</h2>${estrelasHtml(e,'estr grande')}
       <p>${m.livre?`Em <b>${S.moves||0}</b> arrasto${S.moves===1?'':'s'}`:sobra===1?'Sobrou <b>1</b> arrasto':`Sobraram <b>${sobra}</b> arrastos`} · <b>${S.pontos}</b> pontos${rec?' (recorde!)':''}</p>
       ${e<3?`<p class="metas">${metasEstTxt(m,e)}</p>`:''}
-      ${n<MISSOES.length?'<button class="btn g" id="mProx">Próxima fase</button>':'<p>Você terminou todas as fases!</p>'}
+      ${n<JA.fases.length?'<button class="btn g" id="mProx">Próxima fase</button>':'<p>Você terminou todas as fases!</p>'}
       <button class="btn dim" id="mDeNovo">Jogar de novo</button><button class="btn dim" id="mLista">Ver fases</button>`);
     if($('#mProx')) $('#mProx').onclick=()=>{ missoesLista(); missaoInfo(n+1); };
     SFX.estrelas(e);

@@ -1,0 +1,101 @@
+<!-- tempo: 60000 -->
+<meta charset="utf-8">
+<body style="margin:0"><iframe id="f" src="../index.html?quebra" width="390" height="760" style="border:0"></iframe><pre id="out" style="position:absolute;left:400px;top:0">x</pre>
+<script>
+// Quebra-cabeças (modo em teste, só com ?quebra): botão no menu abaixo do Clássico, mapa próprio, entrada da fase 1 com
+// a explicação do modo e o melhor possível, nenhuma peça nasce, desfazer (volta o arrasto contado), recomeçar (que também
+// se desfaz), a solução conhecida dá vitória com 3 estrelas, estrelas pelos arrastos, sem saída a fase fica parada até
+// desfazer, fase pela metade salva à parte e continuada com a pilha do desfazer, teclas Z e R, progresso separado da
+// Jornada (que continua igual), a trilha e ?quebra=0 esconde.
+f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEventListener('error',e=>errs.push(e.message+' @'+e.lineno));w.addEventListener('unhandledrejection',e=>errs.push('rej '+e.reason));
+ const wait=ms=>new Promise(r=>setTimeout(r,ms)); const q=s=>d.querySelector(s); const vis=s=>!!q(s) && w.getComputedStyle(q(s)).display!=='none';
+ const confere=(ok,txt)=>{ log.push((ok?'ok  ':'ERRO ')+txt); if(!ok) errs.push(txt); };
+ const ev=s=>w.eval(s);
+ try{ ev('sound=false; music=false; localStorage.removeItem("ptui_qj"); localStorage.removeItem("ptui_qj_save"); localStorage.mina_missoes=JSON.stringify({1:{e:2,t:10}}); localStorage.removeItem("mina_cla_save"); showMenu()');
+  // menu: o botão logo abaixo do Clássico
+  const bts=[...d.querySelectorAll('.menuBtns > button')].filter(b=>w.getComputedStyle(b).display!=='none').map(b=>b.id);
+  confere(vis('#mQj') && bts.indexOf('mQj')===bts.indexOf('mInf')+1, 'menu: '+bts.join(' '));
+  // abre o mapa dos Quebra-cabeças com a entrada da fase 1
+  q('#mQj').click(); await wait(150);
+  confere(ev('JA.id')==='quebra' && /Quebra-cabeças/.test(q('#bTitle').textContent) && d.querySelectorAll('.mGrupo').length>=1 && q('.mNo.atual')?.dataset.m==='1',
+    `mapa: ${q('#bTitle').textContent} · ${q('#bSub').textContent} · mundos=${d.querySelectorAll('.mGrupo').length} fases=${d.querySelectorAll('.mNo').length} atual=${q('.mNo.atual')?.dataset.m}`);
+  const ent=q('#panel .ent')?.innerText.replace(/\s+/g,' ')||'';
+  confere(q('.ent .num')?.textContent==='FASE 1' && /melhor possível: 4/.test(ent) && /NOVO ?Quebra-cabeça: nenhuma peça nova/.test(ent) && /em até 5/.test(ent) && !q('#mPass'), 'entrada: '+ent.slice(0,240));
+  q('#mJoga').click(); await wait(300);
+  const m=JSON.parse(ev('JSON.stringify(faseM())'));
+  confere(d.body.classList.contains('modoQj') && vis('#qjP') && !vis('#ptsP') && ev('S.path.spawns')===0 && q('#qjDesfaz').disabled && q('#qjRecomeca').disabled,
+    `jogo: modoQj=${d.body.classList.contains('modoQj')} botões=${vis('#qjP')} pontos=${vis('#ptsP')} nascem=${ev('S.path.spawns')} arrastos=${q('#cArr').textContent} música=${ev('qualTrilha("mina")')}`);
+  confere(ev('qualTrilha("mina")')==='orbita', 'trilha da fase: '+ev('qualTrilha("mina")'));
+  // a menor solução, pela busca (só formar: a meta da fase 1)
+  ev(`window.__chave=ts=>ts.map(t=>t.x+'.'+t.y+'.'+t.t+'.'+(t.c??'')).sort().join('|');
+    window.__sol=alvo=>{ let nivel=[{ts:S.tiles,cam:[]}], visto=new Set([__chave(S.tiles)]);
+      for(let p=1;p<=12;p++){ const prox=[]; for(const nd of nivel) for(const [dx,dy] of DIRS){ const r=slide(nd.ts,dx,dy); if(!r.moved) continue; const cam=[...nd.cam,[dx,dy]];
+        if(r.merges.some(o=>o.t>=alvo)) return cam; const k=__chave(r.tiles); if(visto.has(k)) continue; visto.add(k); prox.push({ts:r.tiles,cam}); } nivel=prox; } return null; }`);
+  const sol=JSON.parse(ev(`JSON.stringify(__sol(${m.obj.forme}))`)), ini=ev('__chave(S.tiles)'), n0=ev('S.tiles.length');
+  confere(sol && sol.length===m.min, `menor solução: ${sol?.length} arrastos (min da fase ${m.min}) ${JSON.stringify(sol)}`);
+  // um arrasto errado: nenhuma peça nasce; desfazer volta tudo, inclusive o arrasto contado
+  const errado=JSON.parse(ev(`JSON.stringify(DIRS.find(([dx,dy])=>{ const r=slide(S.tiles,dx,dy); return r.moved && !(dx===${sol[0][0]}&&dy===${sol[0][1]}); }))`));
+  const funde=ev(`slide(S.tiles,${errado}).merges.length`);
+  ev(`move(${errado})`); await wait(60);
+  confere(ev('S.moves')===1 && ev('S.tiles.length')===n0-funde && !q('#qjDesfaz').disabled, `arrasto errado ${errado}: arrastos=${ev('S.moves')} peças ${n0} → ${ev('S.tiles.length')} (juntou ${funde}, nenhuma nasceu) sobram=${q('#cArr').textContent}`);
+  q('#qjDesfaz').click(); await wait(60);
+  confere(ev('S.moves')===0 && ev('__chave(S.tiles)')===ini && ev('S.energy')===m.arrastos && q('#qjDesfaz').disabled && d.querySelectorAll('#board .tile[data-id]').length===n0,
+    `desfazer: arrastos=${ev('S.moves')} sobram=${ev('S.energy')} igual ao começo=${ev('__chave(S.tiles)')===ini} peças na tela=${d.querySelectorAll('#board .tile[data-id]').length}`);
+  // dois arrastos da solução, recomeçar (volta ao começo) e desfazer o recomeçar (volta aos dois arrastos)
+  ev(`move(${sol[0]}); move(${sol[1]})`); await wait(60); const dois=ev('__chave(S.tiles)');
+  q('#qjRecomeca').click(); await wait(60);
+  confere(ev('S.moves')===0 && ev('__chave(S.tiles)')===ini && !q('#qjDesfaz').disabled, `recomeçar: arrastos=${ev('S.moves')} igual ao começo=${ev('__chave(S.tiles)')===ini} letreiro="${q('#bSub').textContent}"`);
+  q('#qjDesfaz').click(); await wait(60);
+  confere(ev('S.moves')===2 && ev('__chave(S.tiles)')===dois, `desfazer o recomeçar: arrastos=${ev('S.moves')}`);
+  // teclas: Z desfaz, R recomeça
+  w.dispatchEvent(new w.KeyboardEvent('keydown',{key:'z'})); await wait(30); const z=ev('S.moves');
+  w.dispatchEvent(new w.KeyboardEvent('keydown',{key:'r'})); await wait(30);
+  confere(z===1 && ev('S.moves')===0, `teclas: Z → ${z} arrastos, R → ${ev('S.moves')}`);
+  // a solução: vitória, 3 estrelas, melhor possível, gravado à parte da Jornada
+  for(const [dx,dy] of sol){ ev(`move(${dx},${dy})`); await wait(40); }
+  for(let i=0;i<20 && !ev('overlayOpen()');i++) await wait(100);
+  const res=q('#panel')?.innerText.replace(/\s+/g,' ')||'', g=JSON.parse(ev('localStorage.ptui_qj||"{}"'));
+  confere(/Perfeito!/.test(q('#panel h2')?.textContent||'') && d.querySelectorAll('#panel .estr.grande i.on').length===3 && g[1]?.e===3 && g[1]?.a===m.min && !ev('localStorage.ptui_qj_save'),
+    `vitória: ${res.slice(0,120)} · gravado=${JSON.stringify(g)}`);
+  confere(ev('localStorage.mina_missoes')==='{"1":{"e":2,"t":10}}' && !ev('localStorage.mina_cla_save'), 'Jornada intocada: '+ev('localStorage.mina_missoes'));
+  // estrelas pelos arrastos: min+1 ★★★, min+3 ★★, até o limite ★
+  const est=JSON.parse(ev(`JSON.stringify([0,1,2,3,4,5].map(k=>{ const m=QJ_FASES[0], u=m.min+k; return estrelasPor(m, m.arrastos-u, u); }))`));
+  confere(est.join('')==='332211', `estrelas com min..min+5 arrastos: ${est.join(' ')}`);
+  // próxima fase liberada; sem saída a fase fica parada até desfazer
+  q('#mProx').click(); await wait(100);
+  confere(q('.ent .num')?.textContent==='FASE 2' && ev('liberada(2)') && !ev('liberada(3)'), 'próxima: '+q('.ent .num')?.textContent);
+  q('#mJoga').click(); await wait(200);
+  ev('S.energy=1; render()'); const ok1=JSON.parse(ev(`JSON.stringify(DIRS.find(([dx,dy])=>{ const r=slide(S.tiles,dx,dy); return r.moved && !r.merges.some(o=>o.t>=faseM().obj.forme); }))`));
+  ev(`move(${ok1})`); await wait(60);
+  const travou=ev('S.qj.trava'), mv=ev('S.moves'); ev(`move(${ok1[0]*-1},${ok1[1]*-1})`); await wait(30);
+  confere(/acabaram/.test(travou||'') && ev('S.phase')==='mine' && !ev('overlayOpen()') && ev('S.moves')===mv && q('#qjP').classList.contains('chama'),
+    `sem arrastos: trava="${travou}" letreiro="${q('#bSub').textContent}" fase continua=${ev('S.phase')} arrasto bloqueado=${ev('S.moves')===mv}`);
+  q('#qjDesfaz').click(); await wait(60);
+  confere(!ev('S.qj.trava') && ev('S.energy')===1 && ev('S.moves')===0 && !q('#qjP').classList.contains('chama'), `desfazer destrava: sobra=${ev('S.energy')} arrastos=${ev('S.moves')}`);
+  // fase pela metade: salva à parte (com a pilha), continuada de onde parou
+  ev('missaoJoga(2)'); await wait(100); ev(`move(${ok1}); move(${ok1[0]?0:1},${ok1[0]?1:0})`); await wait(60);
+  const sv=JSON.parse(ev('localStorage.ptui_qj_save||"null"')), mv2=ev('S.moves');
+  confere(sv?.n===2 && sv.qj?.pilha?.length===mv2 && !ev('localStorage.mina_cla_save'), `salvo: fase ${sv?.n} pilha=${sv?.qj?.pilha?.length} arrastos=${mv2}`);
+  ev('pauseMenu()'); await wait(30); q('#pExit').click(); await wait(100);
+  confere(ev('JA.id')==='quebra' && !!q('.mNo[data-m="2"] .emAndamento'), 'voltou ao mapa: '+q('#bTitle').textContent+' · fase 2 pela metade='+!!q('.mNo[data-m="2"] .emAndamento'));
+  q('.mNo[data-m="2"]').click(); await wait(50); q('#mCont').click(); await wait(200);
+  confere(ev('S.moves')===mv2 && ev('S.qj.pilha.length')===mv2, `continuou: arrastos=${ev('S.moves')} pilha=${ev('S.qj.pilha.length')}`);
+  q('#qjDesfaz').click(); await wait(60);
+  confere(ev('S.moves')===mv2-1, 'desfazer depois de continuar: '+ev('S.moves'));
+  // a Jornada continua a dela: menu, mapa, entrada e progresso
+  ev('showMenu()'); await wait(50);
+  confere(ev('JA.id')==='jornada' && /fase 2 · 3 estrelas/i.test(q('#mQj').textContent), 'menu de volta: JA='+ev('JA.id')+' · '+q('#mQj').textContent);
+  ev('missoesLista(JORNADA)'); await wait(80);
+  confere(/Jornada/.test(q('#bTitle').textContent) && q('#bSub').textContent==='2 de 240 estrelas' && q('.mNo.atual')?.dataset.m==='2', `Jornada: ${q('#bTitle').textContent} · ${q('#bSub').textContent} · atual=${q('.mNo.atual')?.dataset.m}`);
+  q('[data-m="1"]').click(); await wait(50);
+  confere(!q('.ent .perf') && /sobrando/.test(q('.ent .estr3')?.textContent||''), 'entrada da Jornada sem o melhor possível: '+q('.ent .estr3')?.textContent.replace(/\s+/g,' '));
+  ev('hideOverlay(); missaoJoga(1)'); await wait(100);
+  confere(!d.body.classList.contains('modoQj') && vis('#ptsP') && !vis('#qjP') && !ev('S.qj') && ev('S.path.spawns')!==0, `fase da Jornada: botões=${vis('#qjP')} pontos=${vis('#ptsP')} nascem=${ev('S.path.spawns')}`);
+  // ?quebra=0 esconde
+  ev(`localStorage.ptui_quebra='0'; showMenu()`); await wait(50);
+  confere(!vis('#mQj'), 'com ?quebra=0 o botão some: '+vis('#mQj'));
+  ev(`localStorage.ptui_quebra='1'`);
+  for(const k of ['ptui_qj','ptui_qj_save','mina_missoes','mina_cla_save']) w.localStorage.removeItem(k);
+ }catch(e){errs.push('EXC '+e.message+' '+(e.stack||'').split('\n')[1])}
+ out.textContent=JSON.stringify({log,errs},null,1);};
+</script></body>

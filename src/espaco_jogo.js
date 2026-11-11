@@ -165,7 +165,7 @@ function preparaOcioso(){
   let prox=null;
   try{ prox=MISSOES[faseAtual()-1]; }catch(e){}
   textura('jupiter');
-  try{ const mu=ESP.MUNDOS_ESP[(Math.max(1,mundoDe(prox).tema)-1)%ESP.MUNDOS_ESP.length], nome=PLANETA_FUNDO[mu.tipo]; if(nome) textura(ESP.byName(nome).tex); }catch(e){}
+  try{ const mu=ESP.MUNDOS_ESP[(Math.max(1,MUNDOS[prox.g].tema)-1)%ESP.MUNDOS_ESP.length], nome=PLANETA_FUNDO[mu.tipo]; if(nome) textura(ESP.byName(nome).tex); }catch(e){}
   // a meta da próxima fase (planeta grande e receita da janela da fase), depois a escada na ordem em que ela sobe
   try{ const tA=prox && tAlvo(prox); if(tA){ nivel(tA); if(tA>1) nivel(tA-1); } }catch(e){}
   // a camada dos planetas redondos (WebGL: contexto e programas) antes do primeiro planeta redondo nascer num arrasto
@@ -545,20 +545,21 @@ function regrasEsp(m){
   return `${tam} · ${arrastosTxt(m)}${charDe(m)==='passinho'?' · Passinho':''}${m.regras?.spawns===0?' · não nasce peça nova':''}`;
 }
 function explicaEsp(m){
-  const fase=faseDe(m), out=[];
+  const fase=faseDe(m), out=[], Q=JA.quebra;
+  if(Q && n1(m)) out.push(COMO_QJ.modo);   // Quebra-cabeças: o modo se explica na primeira fase (quebra.js)
   if(n1(m)) out.push('Arraste para juntar peças iguais: duas iguais viram a do nível seguinte.');
-  if(COMO_FASE_ESP[fase]) out.push(COMO_FASE_ESP[fase]);
+  if(COMO_FASE_ESP[fase]) out.push(Q && COMO_QJ[fase] || COMO_FASE_ESP[fase]);
   // estação e fluxo de rochas também são novidades (textos de proposta.html): explicados na estreia, como as outras
   const fm=formaDe(m);
   if(m.regras?.walls || fm?.mapa?.some(l=>l.includes('B'))) out.push(COMO_MAPA_ESP.estacao);
   if(m.regras?.edges || fm?.muretas?.length) out.push(COMO_MAPA_ESP.rochas);
-  if(charDe(m)==='passinho') out.push(COMO_CHAR.passinho);
+  if(charDe(m)==='passinho') out.push(Q ? COMO_QJ.passinho : COMO_CHAR.passinho);
   for(const o of objsDe(m)) for(const k of Object.keys(COMO_ESP)) if(o[k]!==undefined && !out.includes(COMO_ESP[k])) out.push(COMO_ESP[k]);
   if((m.mapa||[]).some(l=>/[L23]/.test(l)) || m.regras?.lixos){ if(!out.includes(COMO_ESP.rache)) out.push(COMO_ESP.rache); }
-  if(m.regras?.spawns===0) out.push('Quebra-cabeça: não nasce peça nova. Pense antes de arrastar.');
+  if(m.regras?.spawns===0 && !Q) out.push('Quebra-cabeça: não nasce peça nova. Pense antes de arrastar.');
   return out;
 }
-const n1 = m => MISSOES.indexOf(m)===0;
+const n1 = m => JA.fases.indexOf(m)===0;
 
 // planeta grande nas janelas (fase, vitória, derrota)
 function espPlanetaGrande(cv, t, modo){
@@ -576,7 +577,7 @@ function espPlanetaGrande(cv, t, modo){
 // ---------- descobertas: o céu do menu mostra só o que a pessoa já formou ----------
 // ptui_desc = maior nível já formado no espaço. Sem registro ainda, parte das fases já cumpridas.
 function DESC(){
-  if(localStorage.ptui_desc==null){ let mx=1; const r=MISS(); for(const k of Object.keys(r)){ const m=MISSOES[k-1]; const t=m&&r[k].e&&tAlvo(m); if(t>mx) mx=t; } localStorage.ptui_desc=mx; }
+  if(localStorage.ptui_desc==null){ let mx=1; const r=MISS(JORNADA); for(const k of Object.keys(r)){ const m=MISSOES[k-1]; const t=m&&r[k].e&&tAlvo(m); if(t>mx) mx=t; } localStorage.ptui_desc=mx; }
   return +localStorage.ptui_desc||1;
 }
 function espDescobre(r){ if(!espacoLigado()) return; let mx=0; for(const o of r.merges) if(o.t>mx) mx=o.t; if(mx>DESC()) localStorage.ptui_desc=Math.min(mx,ESP.LADDER.length); }
@@ -695,9 +696,9 @@ function espMenu(){
   document.title = on ? '2048 Astros' : 'Ptui!';
   // no espaço: Jogar (sem progresso) ou Continuar (com progresso) e o Clássico (4x4 sem fim).
   // Começar do zero fica nas Opções ("Apagar o progresso"), para não competir com o Continuar.
-  const tem=temProgresso(), r=MISS(), est=Object.values(r).reduce((a,x)=>a+(x.e||0),0);
+  const tem=temProgresso(), r=MISS(JORNADA), est=Object.values(r).reduce((a,x)=>a+(x.e||0),0);
   $('#mCla').innerHTML = on ? 'Jogar<small>a jornada, fase a fase</small>' : 'Clássico<small>uma missão em cada fase</small>';
-  $('#mCla').onclick = missoesLista;
+  JA=JORNADA; $('#mCla').onclick = ()=>missoesLista(JORNADA);   // no menu, a jornada aberta volta a ser a Jornada
   $('#mCla').style.display = on && tem ? 'none' : '';
   if(!$('#mSegue')){ const b=document.createElement('button'); b.className='btn g big'; b.id='mSegue'; b.textContent='Continuar'; b.onclick=continuarEsp; $('#mCla').after(b); }
   $('#mSegue').style.display = on && tem ? '' : 'none'; $('#mSegue').classList.add('comSub');   // o Continuar sempre diz de onde continua
@@ -707,7 +708,8 @@ function espMenu(){
   { const inf=infSalvo(), sub=$('#mInf small'); if(sub.dataset.txt==null) sub.dataset.txt=sub.textContent;
     sub.textContent = inf ? `continuar · ${(inf.st.pontos||0).toLocaleString('pt-BR')} pontos` : sub.dataset.txt; $('#mInf').classList.toggle('comSub', !!inf); }
   // o Clássico vem depois do Novo jogo e do Continuar; o Frenesi (em teste, só com ?frenesi) logo abaixo dele
-  $('#mSegue').after($('#mInf')); freMenu(on);
+  // os modos em teste logo abaixo dele: Quebra-cabeças (só com ?quebra) e Frenesi (só com ?frenesi)
+  $('#mSegue').after($('#mInf')); freMenu(on); qjMenu(on);
   // Como jogar: no espaço abre o do 2048 Astros; fora dele, o tutorial da mina
   const tut=$('#mTut'); if(tut.onclick!==comoJogarEsp) TUT_MINA=tut.onclick; tut.onclick = on ? comoJogarEsp : TUT_MINA;
   if(!$('#mOpc')){ const b=document.createElement('button'); b.className='btn dim big'; b.id='mOpc'; b.textContent='Opções'; b.onclick=espOpcoes; tut.after(b); }
@@ -728,23 +730,23 @@ function espMenu(){
 }
 
 // ---------- novo jogo e continuar ----------
-const temProgresso = () => Object.keys(MISS()).length>0 || !!localStorage.mina_cla_save;
-function faseAtual(){ const r=MISS(); return (MISSOES.findIndex((m,i)=>!(r[i+1]?.e)) + 1) || MISSOES.length; }
+const temProgresso = () => Object.keys(MISS(JORNADA)).length>0 || !!localStorage.mina_cla_save;
+function faseAtual(){ const r=MISS(JORNADA); return (MISSOES.findIndex((m,i)=>!(r[i+1]?.e)) + 1) || MISSOES.length; }
 // sem progresso, vai direto ao mapa; com progresso, pergunta antes de apagar tudo
 function novoJogoEsp(volta){
-  if(!temProgresso()){ missoesLista(); return; }
+  if(!temProgresso()){ missoesLista(JORNADA); return; }
   janelaMenu();
   showOverlay(`<h2>Começar do zero?</h2><p>Suas estrelas e as fases liberadas serão apagadas.</p>
     <button class="btn g" id="nZera">Começar do zero</button><button class="btn dim" id="nVolta">Voltar</button>`);
-  $('#nZera').onclick=()=>{ localStorage.removeItem('mina_missoes'); localStorage.removeItem('mina_cla_save'); hideOverlay(); missoesLista(); };
+  $('#nZera').onclick=()=>{ localStorage.removeItem('mina_missoes'); localStorage.removeItem('mina_cla_save'); hideOverlay(); missoesLista(JORNADA); };
   const sai = typeof volta==='function' ? volta : fechaJanelaMenu;
   $('#nVolta').onclick=sai; FORA=sai;
 }
 // fase pela metade: volta nela; senão abre o mapa já com a próxima fase
 function continuarEsp(){
   const sv=JSON.parse(localStorage.mina_cla_save||'null');
-  if(sv && MISSOES[sv.n-1]){ missoesLista(); missaoJoga(sv.n,{retoma:true}); return; }
-  missoesLista(); missaoInfo(faseAtual());
+  if(sv && MISSOES[sv.n-1]){ missoesLista(JORNADA); missaoJoga(sv.n,{retoma:true}); return; }
+  missoesLista(JORNADA); missaoInfo(faseAtual());
 }
 
 // ---------- opções ----------
@@ -824,7 +826,7 @@ function comoJogarEsp(p){
   if(cv) espCanvasFixo(cv, w, p===0 ? Math.round(w/4*1.3) : Math.round(w/6*(1.36*2+1.36)), p===0 ? cjArrasto : cjEscada);
   $('#cjAnt').onclick=()=>{ if(p) comoJogarEsp(p-1); else fechaJanelaMenu(); }; FORA=fechaJanelaMenu;
   // Jogar faz o mesmo que o botão principal do menu: continua a Jornada ou, sem progresso, abre o mapa dela
-  $('#cjProx').onclick=()=>{ if(p<ult) comoJogarEsp(p+1); else if(temProgresso()) continuarEsp(); else missoesLista(); };
+  $('#cjProx').onclick=()=>{ if(p<ult) comoJogarEsp(p+1); else if(temProgresso()) continuarEsp(); else missoesLista(JORNADA); };
 }
 
 // ---------- til na Orbitron ----------
@@ -852,8 +854,8 @@ new MutationObserver(rs=>{ for(const r of rs){
 const MUNDOS_NOME_ESP = MUNDOS.map(m=>[m.nome, m.desc]);
 const FASES_NOME_ESP = {};   // a Jornada 2 já nasce com os nomes do espaço em missoes.js
 // nome da fase e do mundo conforme o modo (mina ou espaço)
-const nomeFaseCla = n => (espFig() && FASES_NOME_ESP[n]) || MISSOES[n-1].nome;
-const nomeMundoCla = gi => espFig() ? MUNDOS_NOME_ESP[gi] : [MUNDOS[gi].nome, MUNDOS[gi].desc];
+const nomeFaseCla = n => (espFig() && JA===JORNADA && FASES_NOME_ESP[n]) || JA.fases[n-1].nome;
+const nomeMundoCla = gi => espFig() && JA===JORNADA ? MUNDOS_NOME_ESP[gi] : [JA.mundos[gi].nome, JA.mundos[gi].desc];
 // textos das metas que mudam no espaço (null: usa o texto de sempre)
 function objetivoEsp(o){
   if(o.quebre) return o.quebre<=1 ? `Engula ${o.n} peça${o.n>1?'s':''} com o buraco negro` : `Engula ${qtd(o.n,o.quebre)} com o buraco negro`;
@@ -870,11 +872,14 @@ function rotuloEsp(o){
   if(o.solte) return (artigo(rockName(o.solte))==='uma'?'solta':'solto')+(varias?'s':'');   // Rocha solta, Asteroide solto
   return null;
 }
-// ícone de cada mundo no cabeçalho da lista de fases
+// ícone de cada mundo no cabeçalho da lista de fases: o da Jornada pela ordem dos mundos; nos Quebra-cabeças, o campo ico
+// do mundo (planeta, estacao, rochas, orbita, nave, lixo, nebulosa, gaiola, aura; ver quebra.js)
+const ICO_JORNADA = ['planeta','estacao','rochas','orbita','nave','lixo','nebulosa','orbita','gaiola','aura'];
 function icoMundoEsp(gi){
   const img = u => `<image href="${u}" x="4" y="4" width="92" height="92"/>`;
   const orbita = () => `<image href="${fotoEsp('orbita',FOTOS_ESP.orbita)}" x="0" y="0" width="100" height="100"/>`;
-  const inner = [()=>planetaInner(1), estacaoInner, ()=>img(urlObj('rochinha')), orbita, ()=>img(urlObj('nave')), lixoInner, nebInner, orbita, gaiolaInner, ()=>planetaInner(6,0)][gi] || (()=>planetaInner(1));
+  const ICO = {planeta:()=>planetaInner(1), estacao:estacaoInner, rochas:()=>img(urlObj('rochinha')), orbita, nave:()=>img(urlObj('nave')), lixo:lixoInner, nebulosa:nebInner, gaiola:gaiolaInner, aura:()=>planetaInner(6,0)};
+  const inner = ICO[JA===JORNADA ? ICO_JORNADA[gi] : JA.mundos[gi]?.ico] || ICO.planeta;
   return `<svg class="espIco" viewBox="0 0 100 100">${inner()}</svg>`;
 }
 
@@ -906,9 +911,9 @@ async function fotoDaTela(){
 }
 function ondeNoJogo(){
   if(!S) return 'início';
-  if(S.missao) return `Jornada, fase ${S.missao} (${nomeFaseCla(S.missao)})${S.phase&&S.phase!=='mine'?' · '+S.phase:''}`;
+  if(S.missao) return `${JA.nome}, fase ${S.missao} (${nomeFaseCla(S.missao)})${S.phase&&S.phase!=='mine'?' · '+S.phase:''}`;
   if(S.infinito) return S.frenesi ? 'Frenesi' : 'Clássico';
-  if(S.phase==='lista') return 'mapa da Jornada';
+  if(S.phase==='lista') return JA.quebra ? 'mapa dos Quebra-cabeças' : 'mapa da Jornada';
   if($('#scrMenu')?.classList.contains('on')) return 'menu';
   return S.lab ? 'Laboratório' : 'Mineração';
 }
@@ -956,30 +961,34 @@ async function relatar(){
 // tamanho e arrastos em etiquetas, as estrelas em três caixinhas (as já ganhas acesas) e um botão só. O Voltar é o ✕
 // (tocar fora também fecha). A explicação longa só aparece na fase em que a novidade estreia; nas outras ela fica
 // guardada num "como funciona" que abre com um toque.
-let ESTREIA=null;   // texto da explicação -> fase em que ela aparece pela primeira vez
+// texto da explicação -> fase em que ela aparece pela primeira vez, em cada jornada (a Jornada e os Quebra-cabeças)
+const ESTREIA=new Map();
 function estreiaDe(txt){
-  if(!ESTREIA){ ESTREIA=new Map(); MISSOES.forEach((m,i)=>{ for(const t of explicaEsp(m)) if(!ESTREIA.has(t)) ESTREIA.set(t,i+1); }); }
-  return ESTREIA.get(txt)||0;
+  let e=ESTREIA.get(JA); if(!e){ ESTREIA.set(JA, e=new Map()); JA.fases.forEach((m,i)=>{ for(const t of explicaEsp(m)) if(!e.has(t)) e.set(t,i+1); }); }
+  return e.get(txt)||0;
 }
 function entradaEsp(n){
-  const m=MISSOES[n-1], b=MISS()[n], sv=faseSalva(n), ms=metasDe(m), proib=objsDe(m).find(o=>o.proibido), fase=faseDe(m), fm=formaDe(m), np=PATHS[fase].n;
+  const m=JA.fases[n-1], b=MISS()[n], sv=faseSalva(n), ms=metasDe(m), proib=objsDe(m).find(o=>o.proibido), fase=faseDe(m), fm=formaDe(m), np=PATHS[fase].n;
   const um=ms.length===1 && !proib, o=ms[0], tA=tAlvo(m), qtd=um ? (o.n||o.terra||o.rache||o.solte||1) : 0;
   const tam=fm?`${fw(fm)}x${fh(fm)}`:`${m.w||np||4}x${m.h||m.w||np||4}`;
   const chips=[tam, m.livre?'sem limite de arrastos':arrastosTxt(m)];
-  if(m.regras?.spawns===0) chips.push('quebra-cabeça'); if(charDe(m)==='passinho') chips.push('Passinho');
-  const est = m.livre ? (()=>{ const [t2,t3]=tetoEst(m); return ['cumprir',`até ${t2} arrastos`,`até ${t3} arrastos`]; })()
+  if(m.regras?.spawns===0 && !JA.quebra) chips.push('quebra-cabeça'); if(charDe(m)==='passinho') chips.push('Passinho');
+  // nos Quebra-cabeças as estrelas dizem em quantos arrastos (e embaixo, discreto, o melhor possível: a menor solução)
+  const est = JA.quebra ? qjTetos(m).map(t=>`em até ${t}`)
+            : m.livre ? (()=>{ const [t2,t3]=tetoEst(m); return ['cumprir',`até ${t2} arrastos`,`até ${t3} arrastos`]; })()
                       : ['cumprir',`sobrando ${m.estrelas[0]}`,`sobrando ${m.estrelas[1]}`];
   const exp=explicaEsp(m), novas=exp.filter(t=>estreiaDe(t)===n), velhas=exp.filter(t=>estreiaDe(t)!==n);
   const metas = um ? `<div class="meta">${objetivoTxt(o)}</div>`
     : `<div class="metasL">${ms.map(x=>`<div>${iconeObj(x)}<span>${objetivoTxt(x)}</span></div>`).join('')}${proib?`<div class="proib">${iconeObj(proib)}<span>Não forme ${artigo(rockName(proib.proibido))} ${rockName(proib.proibido)}</span></div>`:''}</div>`;
   const receita = um && o.forme>=2 ? `<div class="rec">${icoPlaneta(o.forme-1)}<i>+</i>${icoPlaneta(o.forme-1)}<i>=</i>${icoPlaneta(o.forme)}</div>` : '';
-  const passinho = b?.e && charDe(m)!=='passinho', ganhou=b?.e||0;
+  const passinho = b?.e && charDe(m)!=='passinho' && !JA.quebra, ganhou=b?.e||0;
   showOverlay(`<div class="ent"><button class="fecha" id="mVolta" aria-label="Voltar">✕</button>
     <div class="num">FASE ${n}</div><h2>${noIco(nomeFaseCla(n))}${m.chefe?' · fim do mundo':''}</h2>
     ${tA?`<div class="pl"><canvas id="espInfo"></canvas>${um&&qtd>1&&!o.pontos?`<b class="xN">×${qtd}</b>`:''}</div>`:''}
     ${metas}${receita}
     <div class="chips">${chips.map(c=>`<span>${c}</span>`).join('')}</div>
     <div class="estr3">${est.map((t,i)=>`<div class="${i<ganhou?'ok':''}"><b>${'★'.repeat(i+1)}</b><small>${t}</small></div>`).join('')}</div>
+    ${JA.quebra?qjPerfeito(m,b):''}
     ${novas.map(t=>`<div class="novo"><i>NOVO</i>${t}</div>`).join('')}
     ${velhas.length?`<details class="lembra"><summary>como funciona</summary>${velhas.map(t=>`<p>${t}</p>`).join('')}</details>`:''}
     ${sv?`<button class="btn g" id="mCont">Continuar</button><button class="btn dim pequeno" id="mJoga">começar de novo</button>`:'<button class="btn g" id="mJoga">Jogar</button>'}
