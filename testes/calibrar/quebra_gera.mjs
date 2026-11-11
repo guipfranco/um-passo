@@ -32,7 +32,7 @@ function trabalha({rec, seg, semente, pasta}){
     if(F.minArm1!=null && m.arm1<F.minArm1) continue;
     if(F.exige && !m.exige) continue;
     if(F.maxAcaso!=null && m.acaso>F.maxAcaso) continue;
-    if(F.pesa){ const p=M.pesos(f,{L:m.min+4}); if(M.falhas(p,{levar:F.levar??null, giroOk:!!F.giroOk}).length) continue; m.pesos=p; }
+    if(F.pesa){ const p=M.pesos(f,{L:m.min+4}); if(M.falhas(p,{levar:F.levar??null, giroOk:!!F.giroOk, lugar:F.lugar??null}).length) continue; m.pesos=p; }
     achados.push({rec:rec.id, g:rec.g, f, m});
     fs.writeFileSync(arq, JSON.stringify(achados));
   }

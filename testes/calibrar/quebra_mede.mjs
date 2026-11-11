@@ -28,7 +28,7 @@ if(modo==='qc'){
   for(let i=de-1;i<ate;i++){ const f=QJ_FASES[i], m=M.analisa(f,{folga:f.arrastos-f.min}), id=String(i+1);
     const vaga=QJ_FASES.slice(0,i).filter(q=>q.g===f.g).length, p=M.pesos(f,{L:f.arrastos});
     // as regras da vaga (quebra_receitas.mjs): onde girar pode resolver, quanto levar tem de custar
-    const rec=RECEITAS.find(r=>r.g===f.g && r.vaga===vaga), fal=M.falhas(p,{levar:rec?.filtro.levar??(vaga>=3?2:null), giroOk:rec?.filtro.giroOk??vaga<3});
+    const rec=RECEITAS.find(r=>r.g===f.g && r.vaga===vaga), fal=M.falhas(p,{levar:rec?.filtro.levar??(vaga>=3?2:null), giroOk:rec?.filtro.giroOk??vaga<3, lugar:rec?.filtro.lugar??null});
     // repetida: mesmo material e mesma meta que outra fase do mundo, ou que a fase anterior
     const igual=QJ_FASES.findIndex((q,j)=>j!==i && q.g===f.g && material(q)===material(f)); if(igual>=0) fal.push('repete a fase '+(igual+1));
     const prob=[]; if(m.min!==f.min) prob.push(`min ${m.min} ≠ ${f.min}`); if(f.arrastos!==f.min+4) prob.push('arrastos ≠ min+4');

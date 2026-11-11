@@ -49,7 +49,7 @@ function candV1(rec){
 const passa=(c,rec)=>{ const m=c.m, F=rec.filtro, [lo,hi]=rec.prof;
   if(m.min<lo || m.min>hi) return false;
   if(m.arm<F.minArm || m.arm>F.maxArm || m.guloso>F.maxGuloso || m.sols>F.maxSols) return false;
-  const p=m.pesos||M.pesos(c.f,{L:m.min+4}); return M.falhas(p,{levar:F.levar, giroOk:F.giroOk}).length===0; };
+  const p=m.pesos||M.pesos(c.f,{L:m.min+4}); return M.falhas(p,{levar:F.levar, giroOk:F.giroOk, lugar:F.lugar}).length===0; };
 const usados=new Set(), escolhidas=[];
 const mostra=(rec,c,nova,folga)=>{ console.log(`${rec.id} ${c.v1?'(v1 fase '+c.v1+') ':''}${nova?'(NOVA) ':''}${folga?'(FOLGA) ':''}${NOMES[rec.id]||'?'} | alvo arm ${Math.round(rec.armAlvo*100)}% | ${resumo(c.m)} pecas ${pecasDe(c.f)} ${tabuleiro(c.f)} ${meta(c.f)}${c.f.char?' passinho':''}`);
   for(const l of desenha(c.f)) console.log('      '+l); };
@@ -123,6 +123,7 @@ for(let g=0; g<MUNDOS.length; g++){
   });
 }
 function ajusta(f, a){ const g={...f};
+  if(a.tiraMureta){ g.muretas=(f.muretas||[]).filter(m=>m.join()!==a.tiraMureta.join()); if(!g.muretas.length) delete g.muretas; }
   if(a.tira) g.pecas=f.pecas.filter(p=>!(p[0]===a.tira[0]&&p[1]===a.tira[1]&&p[2]===a.tira[2]));
   if(a.semMeta){ const os=(f.objs||[f.obj]).filter(o=>!(a.semMeta in o)); delete g.obj; delete g.objs; if(os.length===1) g.obj=os[0]; else g.objs=os; }
   return g; }

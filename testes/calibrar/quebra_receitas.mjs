@@ -24,13 +24,15 @@ export function alvo(g,s){
 }
 // o guloso (o arrasto que mais junta) pode cumprir as 3 primeiras do modo e as estreias; depois cada vez menos
 const gulosoMax=(g,s)=> g===0 ? (s<3?1:.6) : [1,.7,.5,.4,.3,.3,.15,.15,.08,.08][s];
-// girar o tabuleiro pode resolver o mundo 1 inteiro, as 5 primeiras dos formatos e as 3 primeiras dos outros mundos
-const giroOk=(g,s)=> g===0 || (g===1 && s<5) || s<3;
+// girar o tabuleiro (com até min+1 arrastos, as ★★★ do modo) pode resolver o mundo 1 inteiro e as 3 primeiras dos outros
+const giroOk=(g,s)=> g===0 || s<3;
 const mundo=(g, vagas)=>vagas.forEach((spec,s)=>{ const a=alvo(g,s), {filtro={},prof,...sp}=spec;
   R.push({id:`m${g+1}v${String(s+1).padStart(2,'0')}`, g, vaga:s, prof:prof||a.prof, armAlvo:a.armAlvo,
     spec:{w:4,h:4,pecas:[3,6],...sp},
     filtro:{minArm:a.arm[0], maxArm:a.arm[1], maxGuloso:gulosoMax(g,s), maxSols:s<3?80:40, pesa:true, giroOk:giroOk(g,s),
-      levar:(sp.metas||[]).some(o=>o.leve||o.carrinho) ? (s<3?1:2) : null, ...filtro}, quantos:spec.quantos||8}); });
+      levar:(sp.metas||[]).some(o=>o.leve||o.carrinho) ? (s<3?1:2) : null,
+      lugar:(sp.metas||[]).some(o=>o.alvo) && s>0 ? 1 : null,   // a órbita de formar tem de custar (fora da estreia)
+      ...filtro}, quantos:spec.quantos||8}); });
 const forme=(t,n=1)=>({metas:[{forme:t,n}], material:Array(n).fill(t)});
 const F=nome=>({formas:FORMAS[nome].mapas, formato:nome});
 const cor=(t,c,n=1)=>({metas:[{cor:c,t,n}], material:Array(n).fill({t,c})});
@@ -48,13 +50,13 @@ for(let l=0;l<5;l++){ const col=[0,1,2,3,4].map(y=>[0,1,2,3,4].map(x=>x===2?(y==
 mundo(0,[
   {w:3,h:3, ...forme(3), pecas:[2,3]},
   {w:3,h:3, ...forme(4), pecas:[3,3]},
-  {...forme(4), pecas:[3,4]},
+  {metas:[{combo:1}], material:[2,2], pecas:[4,4]},   // revisão: a estreia da junção dupla (antes, o mesmo pedido da 2)
   {...forme(3,2), pecas:[4,5]},
   {w:3,h:3, ...forme(4), pecas:[4,5]},
   {...forme(5), pecas:[4,5]},
   {...forme(4,2), pecas:[4,6]},
   {w:3,h:3, ...forme(5), pecas:[4,5]},
-  {w:4,h:3, ...forme(5), pecas:[4,6]},
+  {w:3,h:3, ...forme(3,3), pecas:[5,7]},   // revisão: três rochas (antes, outro cometa logo depois do da 8)
   {...forme(4,2), proibido:5, pecas:[5,6], iscas:[1,1], nivelIsca:[4,4]},
 ]);
 // 2 · Formatos: o tabuleiro muda a ordem dos arrastos
@@ -62,18 +64,18 @@ mundo(1,[
   {...F('buraco4'), ...forme(4), pecas:[3,4]},
   {...F('faixa26'), ...forme(4), pecas:[3,5]},
   {...F('L4'), ...forme(5), pecas:[4,5]},
-  {...F('anel4'), ...forme(4), pecas:[4,5]},
-  {...F('faixa35'), ...forme(5), pecas:[4,6]},
+  {...F('escada4'), ...forme(3,2), pecas:[4,6], iscas:[0,1], nivelIsca:[1,2], prof:[6,7]},   // revisão: no anel, girar em volta sempre resolvia
+  {...F('buracos4'), ...forme(4,2), pecas:[5,6]},   // revisão: dois buracos (a faixa 3x5 era só um retângulo)
   {...F('escada5'), ...forme(5), pecas:[4,6]},
   {...F('T4'), ...forme(5), pecas:[4,6]},
   {...F('corredor5'), ...forme(5), pecas:[4,6]},
   {...F('torto5'), ...forme(5), pecas:[5,6]},
-  {w:5,h:5, buracos:5, formato:'faltando', ...forme(6), pecas:[5,7]},
+  {w:5,h:5, buracos:5, formato:'faltando', ...forme(5), pecas:[5,6], prof:[8,9]},   // revisão: min 10 passava do fim do mundo 3
 ]);
 // 3 · Estações
 mundo(2,[
   {blocos:1, ...forme(4), pecas:[3,3]},
-  {w:3,h:3, blocos:1, ...forme(4), pecas:[3,5]},
+  {w:3,h:3, blocos:1, ...forme(3,2), pecas:[4,5]},   // revisão: duas rochas (antes, o mesmo pedido da 21)
   {...F('faixa26'), blocos:1, ...forme(4), pecas:[3,5]},
   {blocos:2, ...forme(5), pecas:[4,6]},
   {...F('L4'), blocos:1, ...forme(5), pecas:[4,6]},
@@ -152,9 +154,9 @@ mundo(7,[
 // 9 · Órbitas, parte 2 (formar em cima)
 mundo(8,[
   {metas:[{alvo:3,n:1}], material:[3], pecas:[2,4]},
-  {w:3,h:3, metas:[{alvo:4,n:1}], material:[4], pecas:[3,5]},
+  {...F('L4'), metas:[{alvo:4,n:1}], material:[4], pecas:[3,5], iscas:[0,1]},   // revisão: a órbita no bolso do L (antes, ela não pesava)
   {...F('T4'), metas:[{alvo:4,n:1}], material:[4], pecas:[3,5], iscas:[0,1]},
-  {blocos:1, metas:[{alvo:4,n:1}], material:[4], pecas:[3,5], iscas:[0,1]},
+  {...F('U4'), blocos:1, metas:[{alvo:5,n:1}], material:[5], pecas:[4,6]},   // revisão: órbita que pesa e girar sem ★★★
   {...F('escada5'), metas:[{alvo:4,n:1},{terra:1}], material:[4], pecas:[4,5]},
   {metas:[{leve:3,n:1},{alvo:4,n:1}], material:[3,4], pecas:[4,6], iscas:[1,1], nivelIsca:[1,1]},
   {...F('corredor5'), metas:[{alvo:4,n:1}], material:[4], pecas:[4,5]},
@@ -169,9 +171,9 @@ mundo(9,[
   {w:3,h:3, metas:[{solte:4,n:1}], material:[4], pecas:[3,4]},
   {...F('L4'), metas:[{solte:4,n:1}], material:[4], pecas:[3,5], iscas:[0,1]},
   {metas:[{solte:3,n:1},{leve:4,n:1}], material:[3,4], pecas:[4,6], iscas:[1,1], nivelIsca:[1,1]},
-  {...F('rosca5'), metas:[{solte:4,n:1}], material:[4], pecas:[4,6], iscas:[0,1]},
+  {...F('cruz5'), metas:[{solte:4,n:1}], material:[4], pecas:[4,6], iscas:[1,1], nivelIsca:[1,2]},   // revisão: a rosquinha quase não pesava
   {metas:[{solte:3,n:2}], material:[3,3], pecas:[4,6]},
-  {passinho:true, blocos:1, metas:[{solte:4,n:1}], material:[4], pecas:[4,6], iscas:[0,1], filtro:{maxSols:150, minArm:0}},   // no Passinho a armadilha é menor (dá para voltar um passo): fase de respiro
+  {passinho:true, ...F('L4'), blocos:1, metas:[{solte:4,n:1}], material:[4], pecas:[4,6], iscas:[0,1], filtro:{maxSols:150, minArm:.35}},   // revisão: o respiro saía fora da curva
   {...F('escada5'), lixos:1, metas:[{solte:4,n:1},{rache:1}], material:[4], pecas:[4,6], iscas:[0,1]},
   {blocos:1, metas:[{solte:4,n:2}], material:[4,4], pecas:[5,7]},
 ]);

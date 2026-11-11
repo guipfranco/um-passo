@@ -240,7 +240,8 @@ function QuebraMedidor(env){
   //   mec        estações (B), buracos (#), muretas, lixo que não é meta, auras: sem elas, min ou soluções mudam
   //   levar      órbita de levar e nave: quantos arrastos custa levar além de só formar o planeta pedido
   //   giro       padrões fixos (girar nos dois sentidos, três direções em ciclo, ou alternar dois lados) que cumprem
-  //              com min arrastos (★★★)
+  //              com até min+1 arrastos (★★★ no modo Quebra-cabeças)
+  //   lugar      órbita de formar: quantos arrastos custa formar ali além de formar em qualquer casa
   //   inuteis    peças que dá para tirar sem mudar min, sem invalidar solução mínima e sem baixar a armadilha (uma peça
   //              que só arma a armadilha conta: tirá-la deixa a fase mais fácil)
   //   passinho   menor solução jogando no Passinho, com o mesmo limite (null: não cumpre; o jogo oferece a medalha)
@@ -268,6 +269,8 @@ function QuebraMedidor(env){
       out.mec.aura=pesa(mede({...comObjs(proib?[...semCor,proib]:semCor), pecas:f.pecas.map(p=>[p[0],p[1],p[2]])})); }
     // levar: a mesma fase pedindo só formar o planeta (órbita e nave viram 'forme')
     const lv=metas.find(o=>o.leve||o.carrinho);
+    if(metas.some(o=>o.alvo)){ const forme=metas.map(o=>o.alvo?{forme:o.alvo,n:o.n||1}:o);
+      const r=mede(comObjs(proib?[...forme,proib]:forme)); out.lugar = r.min==null ? null : min-r.min; }
     if(lv){ const forme=metas.map(o=>o.leve?{forme:o.leve,n:o.n||1}:o.carrinho?{forme:o.carrinho,n:o.n}:o);
       const r=mede(comObjs(proib?[...forme,proib]:forme)); out.levar = r.min==null ? null : min-r.min; }
     // padrões fixos de arrastar (o arrasto que não mexe nada não conta, como no jogo)
@@ -277,7 +280,7 @@ function QuebraMedidor(env){
     for(const ciclo of ciclos) for(let o=0;o<ciclo.length;o++) pad.push(ciclo.map((_,i)=>ciclo[(i+o)%ciclo.length]));
     out.giro=[];
     for(const pd of pad){ let st=ini, usados=0, parado=0, ok=false;
-      for(let i=0;usados<min && parado<pd.length;i++){ const res=passo(ctx,st,pd[i%pd.length]); if(!res){ parado++; continue; } parado=0; usados++;
+      for(let i=0;usados<min+1 && parado<pd.length;i++){ const res=passo(ctx,st,pd[i%pd.length]); if(!res){ parado++; continue; } parado=0; usados++;
         if(res.fim==='venceu'){ ok=true; break; } if(res.fim) break; st=res.ns; }
       if(ok){ const nome=pd.map(d=>NOMES[d]).join(''); if(!out.giro.includes(nome)) out.giro.push(nome); } }
     // peças que não fazem nada
@@ -297,6 +300,7 @@ function QuebraMedidor(env){
     for(const m of p.metas||[]) if(!m.pesa) a.push('meta de graça: '+m.meta);
     for(const [k,v] of Object.entries(p.mec||{})) if(!v) a.push(k+' de enfeite');
     if(opt.levar!=null && p.levar!=null && p.levar<opt.levar) a.push('levar custa '+p.levar);
+    if(opt.lugar!=null && p.lugar!=null && p.lugar<opt.lugar) a.push('órbita de enfeite: formar ali custa '+p.lugar);
     if(!opt.giroOk && p.giro?.length) a.push('girar resolve: '+p.giro[0]);
     if(!opt.inuteisOk && p.inuteis?.length) a.push('peça que não faz nada: '+JSON.stringify(p.inuteis[0]));
     return a;
