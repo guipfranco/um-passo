@@ -28,14 +28,16 @@ export const ORDEM=[];
 // ajustes nas que ficam ({tira:[x,y,t]}: tirar uma peça; {semMeta:'rache'}: tirar uma meta; {tiraMureta:[d,x,y]}): a
 // mureta ['v',0,1] da 37 era de enfeite; na 69 a meta de formar o asteroide saía quase de graça (só rachar já pede 12);
 // na 70 o Gelo em (4,4) sobrava
-export const AJUSTES={m4v07:{tiraMureta:['v',0,1]}, m7v09:{semMeta:'forme'}, m7v10:{tira:[4,4,2]}};
+// e, na segunda rodada: na 84 a estação fechava a casa (0,3), que ficava sem acesso: vira buraco (o jogo não muda; o
+// desenho passa a mostrar o gancho)
+export const AJUSTES={m4v07:{tiraMureta:['v',0,1]}, m7v09:{semMeta:'forme'}, m7v10:{tira:[4,4,2]}, m9v04:{buraco:[0,3]}};
 // as fases que vieram da versão 1 ficam com o nome de lá, menos onde o revisor pediu outro
 export const NOMES={
   m1v01:'Juntar duas vezes', m1v02:'Um asteroide', m1v03:'Duas num arrasto', m1v04:'Duas rochas', m1v05:'Asteroide apertado',
   m1v06:'Um cometa', m1v07:'Dois asteroides', m1v08:'Cometa no aperto', m1v09:'Três rochas', m1v10:'Asteroide de sobra',
-  m2v01:'Buraco no meio', m2v02:'Faixa comprida', m2v03:'Tabuleiro em L', m2v04:'Escada pequena', m2v05:'Dois buracos',
+  m2v01:'Buraco no meio', m2v02:'Faixa comprida', m2v03:'Tabuleiro em L', m2v04:'Degraus', m2v05:'Dois buracos',
   m2v06:'Escada', m2v07:'Tabuleiro em T', m2v08:'Serpentina', m2v09:'Tabuleiro torto', m2v10:'Casas faltando',
-  m3v01:'Primeira estação', m3v02:'Duas rochas e a estação', m3v03:'Estação na faixa', m3v04:'Duas estações', m3v05:'Estação no L',
+  m3v01:'Primeira estação', m3v02:'Estação na quina', m3v03:'Estação na faixa', m3v04:'Duas estações', m3v05:'Estação no L',
   m3v06:'Junção dupla no salão', m3v07:'Rosquinha com estações', m3v08:'Par de asteroides', m3v09:'Plutão na escada', m3v10:'Não encoste no asteroide',
   m4v01:'Parar no fluxo', m4v02:'Fluxo na faixa', m4v03:'Fluxo apertado', m4v04:'Fluxo no T', m4v05:'Três fluxos',
   m4v06:'Fluxo no U', m4v07:'Cometa nos desvios', m4v08:'Junção dupla no fluxo', m4v09:'Cruz de fluxos', m4v10:'Plutão no fluxo',
@@ -47,7 +49,7 @@ export const NOMES={
   m7v06:'Passinho no lixo', m7v07:'Porta de lixo duro', m7v08:'Lixo e nave', m7v09:'Lixos na faixa', m7v10:'Três lixos',
   m8v01:'Nuvem no canto', m8v02:'Nuvens na faixa', m8v03:'Poeira na nuvem', m8v04:'Nuvens no L', m8v05:'Nuvens e fluxos',
   m8v06:'Nuvem e órbita', m8v07:'Nuvens na escada', m8v08:'Passinho na nebulosa', m8v09:'Duas nuvens e um lixo', m8v10:'Três nuvens',
-  m9v01:'Rocha na órbita', m9v02:'Órbita no bolso', m9v03:'Formar no T', m9v04:'Cometa no U', m9v05:'Formar na escada',
+  m9v01:'Rocha na órbita', m9v02:'Órbita no bolso', m9v03:'Formar no T', m9v04:'Cometa no gancho', m9v05:'Formar na escada',
   m9v06:'Entrega e encaixe', m9v07:'Formar no corredor', m9v08:'Passinho na órbita', m9v09:'Cometa entre buracos', m9v10:'Duas órbitas',
   m10v01:'Rocha presa', m10v02:'Preso na faixa', m10v03:'Preso atrás da estação', m10v04:'Preso no L', m10v05:'Do preso à órbita',
   m10v06:'Preso na cruz', m10v07:'Duas rochas presas', m10v08:'Passinho e o preso', m10v09:'Soltar e rachar', m10v10:'Dois asteroides presos',

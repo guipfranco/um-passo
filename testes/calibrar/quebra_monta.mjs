@@ -123,6 +123,7 @@ for(let g=0; g<MUNDOS.length; g++){
   });
 }
 function ajusta(f, a){ const g={...f};
+  if(a.buraco){ const [x,y]=a.buraco; g.mapa=f.mapa.map((r,j)=>j===y?r.slice(0,x)+'#'+r.slice(x+1):r); }
   if(a.tiraMureta){ g.muretas=(f.muretas||[]).filter(m=>m.join()!==a.tiraMureta.join()); if(!g.muretas.length) delete g.muretas; }
   if(a.tira) g.pecas=f.pecas.filter(p=>!(p[0]===a.tira[0]&&p[1]===a.tira[1]&&p[2]===a.tira[2]));
   if(a.semMeta){ const os=(f.objs||[f.obj]).filter(o=>!(a.semMeta in o)); delete g.obj; delete g.objs; if(os.length===1) g.obj=os[0]; else g.objs=os; }
