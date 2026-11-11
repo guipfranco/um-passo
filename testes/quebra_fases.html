@@ -43,23 +43,26 @@ f.onload=async()=>{const w=f.contentWindow,errs=[],log=[];w.addEventListener('er
     sols.push(b.sol); });
   log.push(`busca: ${fases.length} fases em ${Date.now()-t0} ms`);
   // 2) no jogo de verdade
-  const joga=(q,sol,rot)=>{
-    w.eval(`MISSOES.push(${JSON.stringify({...q, nome:'teste '+q.nome})}); missaoJoga(MISSOES.length)`);
+  // as fases da jornada de quebra-cabeças jogam nela (JA=QUEBRA, pelo número); as de #qc entram na Jornada
+  const joga=(q,sol,rot,n)=>{
+    if(qc) w.eval(`JA=JORNADA; MISSOES.push(${JSON.stringify({...q, nome:'teste '+q.nome})}); missaoJoga(MISSOES.length)`);
+    else w.eval(`JA=QUEBRA; missaoJoga(${n})`);
     let fim=0;
     try{ for(let i=0;i<sol.length;i++){ const [dx,dy]=DIR[sol[i]]; const antes=w.eval('S.moves');
         w.eval(`move(${dx},${dy})`);
         if(w.eval('S.moves')!==antes+1) return `${rot}: arrasto ${i+1} (${sol[i]}) não mexeu`;
         if(w.eval('S.phase')==='fimM'){ fim=i+1; break; } }
       if(fim!==sol.length) return `${rot}: ${fim?'acabou no arrasto '+fim:'não acabou'} (solução de ${sol.length})`;
-      if(!w.eval('cumpriu(MISSOES[S.missao-1])')) return `${rot}: acabou sem cumprir (${w.eval('JSON.stringify(violou(MISSOES[S.missao-1])||null)')})`;
+      if(!w.eval('cumpriu(faseM())')) return `${rot}: acabou sem cumprir (${w.eval('JSON.stringify(violou(faseM())||null)')})`;
       return null;
-    } finally { w.eval('S.phase="fimM"; MISSOES.pop()'); }
+    } finally { w.eval(`S.phase="teste"; hideOverlay(); ${qc?'MISSOES.pop();':''}`); }   // fora de 'fimM': o resultado atrasado não abre
   };
   let ok=0, okG=0;
   fases.forEach((q,i)=>{ if(!sols[i]) return;
-    const e=joga(q,sols[i],`fase ${i+1} ${q.nome} (solução da busca)`); if(e) errs.push(e); else ok++;
+    const e=joga(q,sols[i],`fase ${i+1} ${q.nome} (solução da busca)`,i+1); if(e) errs.push(e); else ok++;
     const g=!qc && guard?.[i]; if(g){ if(g.nome!==q.nome) errs.push(`fase ${i+1}: medidas de outra fase (${g.nome})`);
-      const e2=joga(q,g.sol,`fase ${i+1} ${q.nome} (solução guardada)`); if(e2) errs.push(e2); else okG++; } });
+      const e2=joga(q,g.sol,`fase ${i+1} ${q.nome} (solução guardada)`,i+1); if(e2) errs.push(e2); else okG++; } });
+  w.eval('JA=JORNADA');
   log.push(`no jogo: ${ok} de ${fases.length} cumpridas no último arrasto da solução achada; ${okG} com a solução guardada`);
   if(!qc && !guard) errs.push('sem as soluções guardadas (calibrar/quebra_medidas.json)');
   if(!qc && guard && guard.length!==fases.length) errs.push(`quebra_medidas.json tem ${guard.length} fases, quebra_fases.js ${fases.length}`);

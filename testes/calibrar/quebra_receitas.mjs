@@ -39,6 +39,10 @@ const PORTAS=[];
 for(const c of [1,2]) for(let l=0;l<4;l++){
   const col=[0,1,2,3].map(y=>[0,1,2,3].map(x=>x===c?(y===l?'L':'#'):'.').join(''));
   PORTAS.push(col, [0,1,2,3].map(y=>[0,1,2,3].map(x=>col[x][y]).join(''))); }
+// 5x5 partido ao meio, a passagem é um lixo duro ('2': racha com duas junções ao lado)
+const PORTAS5=[];
+for(let l=0;l<5;l++){ const col=[0,1,2,3,4].map(y=>[0,1,2,3,4].map(x=>x===2?(y===l?'2':'#'):'.').join(''));
+  PORTAS5.push(col, [0,1,2,3,4].map(y=>[0,1,2,3,4].map(x=>col[x][y]).join(''))); }
 
 // 1 · Juntar: só peças, tabuleiros abertos e pequenos; ensina juntar, a ordem e o "sem formar"
 mundo(0,[
@@ -126,8 +130,8 @@ mundo(6,[
   {formas:PORTAS, formato:'porta', ...forme(3), pecas:[3,4]},
   {...F('L4'), lixos:1, metas:[{rache:1},{leve:3,n:1}], material:[3], pecas:[3,5], iscas:[0,1]},
   {lixos:1, lixoHp:2, metas:[{rache:1}], material:[3], pecas:[3,5], iscas:[0,1]},
-  {passinho:true, lixos:2, metas:[{rache:2}], material:[2,2], pecas:[4,5], filtro:{maxSols:150}},
-  {...F('anel4'), lixos:1, ...forme(4), pecas:[4,5]},
+  {passinho:true, lixos:2, metas:[{rache:2}], material:[3,2], pecas:[4,6], filtro:{maxSols:150}},
+  {formas:PORTAS5, formato:'porta', ...forme(5), pecas:[5,6]},
   {blocos:1, lixos:1, metas:[{rache:1},{carrinho:4,n:1}], material:[4], pecas:[4,5], iscas:[1,1], nivelIsca:[1,1]},
   {...F('faixa26'), lixos:2, metas:[{rache:2},{forme:4,n:1}], material:[4], pecas:[4,6]},
   {w:5,h:5, lixos:3, blocos:1, metas:[{rache:3}], material:[3,2], pecas:[5,7]},
@@ -139,7 +143,7 @@ mundo(7,[
   {w:3,h:3, metas:[{terra:2}], material:[3], pecas:[3,5], iscas:[0,1]},
   {...F('L4'), metas:[{terra:3}], material:[3,2], pecas:[4,6]},
   {muretas:2, metas:[{terra:2}], material:[3], pecas:[3,4]},
-  {metas:[{terra:2},{leve:3,n:1}], material:[3], pecas:[4,5], iscas:[0,1]},
+  {metas:[{terra:2},{leve:4,n:1}], material:[4], pecas:[4,6], iscas:[1,1], nivelIsca:[1,1]},
   {...F('escada5'), metas:[{terra:3}], material:[4], pecas:[4,6]},
   {passinho:true, metas:[{terra:2}], material:[3], pecas:[3,5], iscas:[0,1], filtro:{maxSols:150}},
   {...F('rosca5'), lixos:1, metas:[{terra:2},{rache:1}], material:[4], pecas:[4,6]},
@@ -167,7 +171,7 @@ mundo(9,[
   {metas:[{solte:3,n:1},{leve:4,n:1}], material:[3,4], pecas:[4,6], iscas:[1,1], nivelIsca:[1,1]},
   {...F('rosca5'), metas:[{solte:4,n:1}], material:[4], pecas:[4,6], iscas:[0,1]},
   {metas:[{solte:3,n:2}], material:[3,3], pecas:[4,6]},
-  {passinho:true, metas:[{solte:4,n:1}], material:[4], pecas:[3,5], iscas:[0,1], filtro:{maxSols:150}},
+  {passinho:true, blocos:1, metas:[{solte:4,n:1}], material:[4], pecas:[4,6], iscas:[0,1], filtro:{maxSols:150, minArm:0}},   // no Passinho a armadilha é menor (dá para voltar um passo): fase de respiro
   {...F('escada5'), lixos:1, metas:[{solte:4,n:1},{rache:1}], material:[4], pecas:[4,6], iscas:[0,1]},
   {blocos:1, metas:[{solte:4,n:2}], material:[4,4], pecas:[5,7]},
 ]);

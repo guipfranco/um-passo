@@ -6,6 +6,8 @@
 // de enfeite, levar barato, girar resolve, peça que não faz nada) e material repetido dentro do mundo.
 import fs from 'fs'; import vm from 'vm'; import path from 'path'; import {fileURLToPath} from 'url';
 import {medidor} from './quebra_slide.mjs';
+import {RECEITAS} from './quebra_receitas.mjs';
+import {formatoDe} from './quebra_formas.mjs';
 const AQUI=path.dirname(fileURLToPath(import.meta.url)), RAIZ=path.resolve(AQUI,'..','..');
 const M=medidor();
 const le=(arq,nomes)=>{ const ctx=vm.createContext({}); vm.runInContext(fs.readFileSync(path.join(RAIZ,'src',arq),'utf8')+`\n;globalThis.__r={${nomes.map(n=>`${n}:typeof ${n}!=='undefined'?${n}:null`).join(',')}};`, ctx); return ctx.__r; };
@@ -21,13 +23,14 @@ if(modo==='qc'){
   const fx=process.argv.find(a=>/^\d+-\d+$/.test(a)), [de,ate]=fx?fx.split('-').map(Number):[1,QJ_FASES.length];
   const ant=fs.existsSync(path.join(AQUI,'quebra_medidas.json')) ? JSON.parse(fs.readFileSync(path.join(AQUI,'quebra_medidas.json'),'utf8')) : null;
   const saida=[]; let erros=0, avisos=0;
-  const material=f=>JSON.stringify([f.pecas.map(p=>p[2]+(p[3]!=null?'c'+p[3]:'')).sort(), (f.objs||[f.obj]).map(o=>Object.keys(o).join())]);
+  // repetida: o mesmo material, a mesma meta, o mesmo tabuleiro e o mesmo jeito de jogar que outra fase do mundo
+  const material=f=>JSON.stringify([f.pecas.map(p=>p[2]+(p[3]!=null?'c'+p[3]:'')).sort(), f.objs||[f.obj], f.mapa.length+'x'+f.mapa[0].length+':'+(formatoDe(f.mapa)||'liso'), f.char||'rola']);
   for(let i=de-1;i<ate;i++){ const f=QJ_FASES[i], m=M.analisa(f,{folga:f.arrastos-f.min}), id=String(i+1);
     const vaga=QJ_FASES.slice(0,i).filter(q=>q.g===f.g).length, p=M.pesos(f,{L:f.arrastos});
-    const fal=M.falhas(p,{levar:vaga>=3?2:null, giroOk:vaga<3});   // girar resolver só vale nas três primeiras do mundo
+    // as regras da vaga (quebra_receitas.mjs): onde girar pode resolver, quanto levar tem de custar
+    const rec=RECEITAS.find(r=>r.g===f.g && r.vaga===vaga), fal=M.falhas(p,{levar:rec?.filtro.levar??(vaga>=3?2:null), giroOk:rec?.filtro.giroOk??vaga<3});
     // repetida: mesmo material e mesma meta que outra fase do mundo, ou que a fase anterior
-    const meta=q=>JSON.stringify(q.objs||[q.obj]);
-    const igual=QJ_FASES.findIndex((q,j)=>j!==i && q.g===f.g && material(q)===material(f) && meta(q)===meta(f)); if(igual>=0) fal.push('mesmo material e meta da fase '+(igual+1));
+    const igual=QJ_FASES.findIndex((q,j)=>j!==i && q.g===f.g && material(q)===material(f)); if(igual>=0) fal.push('repete a fase '+(igual+1));
     const prob=[]; if(m.min!==f.min) prob.push(`min ${m.min} ≠ ${f.min}`); if(f.arrastos!==f.min+4) prob.push('arrastos ≠ min+4');
     const c=M.confere(f,m.sol||''); if(c.cumpriu!==m.min) prob.push('solução não confere');
     const g=ant?.fases?.[i]; if(g && g.sol){ const c2=M.confere(f,g.sol); if(c2.cumpriu!==f.min) prob.push('solução guardada não confere'); }

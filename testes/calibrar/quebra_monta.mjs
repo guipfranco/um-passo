@@ -25,8 +25,9 @@ if(!tudo && fs.existsSync(ARQ)){ const c=vm.createContext({}); vm.runInContext(f
 const semExtras=q=>{ const f={...q}; for(const k of ['id','g','nome','arrastos','estrelas','min']) delete f[k]; return f; };
 const pecasDe=f=>f.pecas.length+(f.presasPos?.length||0);
 const meta=f=>JSON.stringify(f.objs||[f.obj]);
-const material=f=>JSON.stringify([f.pecas.map(p=>p[2]+(p[3]!=null?'c'+p[3]:'')).sort(), meta(f)]);
-const tabuleiro=f=>`${f.mapa[0].length}x${f.mapa.length}:${formatoDe(f.mapa)||'liso'}`;
+// repetida = o mesmo material, a mesma meta e o mesmo tabuleiro (o mesmo material num formato diferente é outra fase)
+const material=f=>JSON.stringify([f.pecas.map(p=>p[2]+(p[3]!=null?'c'+p[3]:'')).sort(), meta(f), f.mapa.length+'x'+f.mapa[0].length+':'+(formatoDe(f.mapa)||'liso'), f.char||'rola']);
+const tabuleiro=f=>`${f.mapa[0].length}x${f.mapa.length}:${formatoDe(f.mapa)||'liso'}${f.char==='passinho'?':passinho':''}`;
 const gMax=rec=>rec.filtro.maxGuloso;
 // nota: armadilha perto do alvo da vaga, guloso abaixo do teto, solução contraintuitiva, poucas peças
 const nota=(c,rec)=>{ const m=c.m;
@@ -36,7 +37,12 @@ const nota=(c,rec)=>{ const m=c.m;
 const mundoNovo=g=>g===0?0:g+1;
 const cacheV1=new Map();
 function candV1(rec){
-  return V1.filter(v=>mundoNovo(v.g)===rec.g).map(v=>{ if(!cacheV1.has(v.id)){ const f={...v.f}; for(const k of ['g','nome','arrastos','estrelas','min']) delete f[k];
+  // só na vaga do mesmo tipo: as mesmas metas, o mesmo jeito de jogar e a vaga sem formato pedido (as de formato são dos
+  // tabuleiros novos)
+  const tipo=f=>JSON.stringify([(f.objs||[f.obj]||f.metas).map(o=>Object.keys(o).filter(k=>k!=='n'&&k!=='pos'&&k!=='t').sort().join()).sort(), f.char||(f.passinho?'passinho':'rola')]);
+  const tr=tipo({objs:[...(rec.spec.metas||[]), ...(rec.spec.proibido?[{proibido:1}]:[])], char:rec.spec.passinho?'passinho':'rola'});
+  if(rec.spec.formato || rec.spec.formas) return [];
+  return V1.filter(v=>mundoNovo(v.g)===rec.g && tipo(v.f)===tr).map(v=>{ if(!cacheV1.has(v.id)){ const f={...v.f}; for(const k of ['g','nome','arrastos','estrelas','min']) delete f[k];
       const m=M.analisa(f,{folga:4}); m.pesos=M.pesos(f,{L:m.min+4}); cacheV1.set(v.id,{rec:rec.id, g:rec.g, f, m, v1:v.n}); }
     return {...cacheV1.get(v.id), rec:rec.id}; });
 }
@@ -45,30 +51,75 @@ const passa=(c,rec)=>{ const m=c.m, F=rec.filtro, [lo,hi]=rec.prof;
   if(m.arm<F.minArm || m.arm>F.maxArm || m.guloso>F.maxGuloso || m.sols>F.maxSols) return false;
   const p=m.pesos||M.pesos(c.f,{L:m.min+4}); return M.falhas(p,{levar:F.levar, giroOk:F.giroOk}).length===0; };
 const usados=new Set(), escolhidas=[];
+const mostra=(rec,c,nova,folga)=>{ console.log(`${rec.id} ${c.v1?'(v1 fase '+c.v1+') ':''}${nova?'(NOVA) ':''}${folga?'(FOLGA) ':''}${NOMES[rec.id]||'?'} | alvo arm ${Math.round(rec.armAlvo*100)}% | ${resumo(c.m)} pecas ${pecasDe(c.f)} ${tabuleiro(c.f)} ${meta(c.f)}${c.f.char?' passinho':''}`);
+  for(const l of desenha(c.f)) console.log('      '+l); };
+// candidatos de uma vaga: os do gerador e os da versão 1 que passam no filtro dela; sem nenhum, com folga (armadilha
+// ±25 pontos, guloso +0,15), avisado
+function candidatos(rec){
+  const arq=path.join(pasta, rec.id+'.json');
+  const todos=[...(fs.existsSync(arq) ? JSON.parse(fs.readFileSync(arq,'utf8')) : []), ...candV1(rec)];
+  for(const c of todos) c.formato=formatoDe(c.f.mapa);
+  if(TROCA[rec.id]!=null) return {lista:todos.filter(x=>x.m.sol===TROCA[rec.id] || idFase(x.f)===TROCA[rec.id]), folga:false};
+  let lista=todos.filter(x=>passa(x,rec));
+  if(lista.length) return {lista, folga:false};
+  const F=rec.filtro, rel={...rec, filtro:{...F, minArm:Math.max(0,F.minArm-.13), maxArm:F.maxArm+.13, maxGuloso:Math.min(1,F.maxGuloso+.15)}};
+  return {lista:todos.filter(x=>passa(x,rel)), folga:true};
+}
+// a melhor sequência do mundo (programação dinâmica): soma das notas, min nunca descendo, duas seguidas sem o mesmo
+// pedido no mesmo tabuleiro; repetição de fase ou de material no mundo é desfeita tirando o candidato e refazendo
+function melhorMundo(recs){
+  const C=recs.map(rec=>candidatos(rec)), proibidos=recs.map(()=>new Set());
+  for(let volta=0; volta<200; volta++){
+    const L=C.map((c,s)=>c.lista.filter(x=>!proibidos[s].has(idFase(x.f)) && !usados.has(idFase(x.f))));
+    const best=[], pai=[];
+    L.forEach((lista,s)=>{ best[s]=[]; pai[s]=[];
+      lista.forEach((c,i)=>{ const n=nota(c,recs[s]);
+        if(s===0){ best[s][i]=n; pai[s][i]=-1; return; }
+        let mb=-Infinity, mp=-1;
+        L[s-1].forEach((d,j)=>{ if(best[s-1][j]===-Infinity || d.m.min>c.m.min) return;
+          if(meta(d.f)===meta(c.f) && tabuleiro(d.f)===tabuleiro(c.f)) return;
+          if(idFase(d.f)===idFase(c.f)) return;
+          if(best[s-1][j]>mb){ mb=best[s-1][j]; mp=j; } });
+        best[s][i]= mp<0 ? -Infinity : mb+n; pai[s][i]=mp; }); });
+    const s1=L.length-1; let i=-1, mb=-Infinity; best[s1].forEach((v,k)=>{ if(v>mb){ mb=v; i=k; } });
+    if(i<0){ const vazia=L.findIndex(l=>!l.length);
+      return {erro: (vazia>=0 ? `vaga ${recs[vazia].id} sem candidato` : 'nenhuma sequência com o min subindo')+' | por vaga (min dos candidatos): '+L.map((l,s)=>recs[s].id.slice(-3)+':'+[...new Set(l.map(c=>c.m.min))].sort((x,y)=>x-y).join('/')).join(' ')}; }
+    const seq=[]; for(let s=s1;s>=0;s--){ seq.unshift(L[s][i]); i=pai[s][i]; }
+    // repetições fora das vizinhas: tira o candidato de nota menor e refaz
+    let rep=null; for(let a2=0;a2<seq.length && !rep;a2++) for(let b2=a2+1;b2<seq.length;b2++)
+      if(idFase(seq[a2].f)===idFase(seq[b2].f) || material(seq[a2].f)===material(seq[b2].f)){ rep=nota(seq[a2],recs[a2])<nota(seq[b2],recs[b2])?a2:b2; break; }
+    if(rep==null) return {seq, folga:C.map(c=>c.folga)};
+    proibidos[rep].add(idFase(seq[rep].f));
+  }
+  return {erro:'repetições demais'};
+}
 for(let g=0; g<MUNDOS.length; g++){
-  let minAnt=0; const recs=RECEITAS.filter(r=>r.g===g), doMundo=[];
+  const recs=RECEITAS.filter(r=>r.g===g);
+  const mantem=recs.map(rec=>{ const a=atuais?.[RECEITAS.indexOf(rec)]; return a && !REFAZER.includes(rec.id) ? a : null; });
+  if(mantem.every(Boolean)){   // o mundo fica como está (com os ajustes)
+    recs.forEach((rec,s)=>{ let f=semExtras(mantem[s]); if(AJUSTES[rec.id]) f=ajusta(f, AJUSTES[rec.id]);
+      const c={rec:rec.id, g, f, m:M.analisa(f,{folga:4}), mantida:true}; usados.add(idFase(f)); escolhidas.push({rec,c});
+      if(AJUSTES[rec.id]) mostra(rec,c,false,false); }); continue; }
+  if(!mantem.some(Boolean)){   // o mundo todo é escolhido de novo
+    const r=melhorMundo(recs);
+    if(r.erro){ console.log(`mundo ${g+1}: ${r.erro}`); continue; }
+    r.seq.forEach((c,s)=>{ usados.add(idFase(c.f)); escolhidas.push({rec:recs[s],c}); mostra(recs[s],c,false,r.folga[s]); }); continue; }
+  // algumas vagas refeitas: cada uma entre as vizinhas que ficam (min entre a anterior e a próxima)
+  let minAnt=0;
   recs.forEach((rec,j)=>{
-    const k=RECEITAS.indexOf(rec), atual=atuais?.[k];
-    if(atual && !REFAZER.includes(rec.id)){   // fica como está
-      let f=semExtras(atual); if(AJUSTES[rec.id]) f=ajusta(f, AJUSTES[rec.id]);
-      const c={rec:rec.id, g, f, m:M.analisa(f,{folga:4}), mantida:true};
-      minAnt=Math.max(minAnt,c.m.min); usados.add(idFase(f)); doMundo.push(c); escolhidas.push({rec,c}); return; }
-    const arq=path.join(pasta, rec.id+'.json');
-    let cands=[...(fs.existsSync(arq) ? JSON.parse(fs.readFileSync(arq,'utf8')) : []), ...candV1(rec)];
-    for(const c of cands) c.formato=formatoDe(c.f.mapa);
-    if(atual){ const fora=idFase(semExtras(atual)); cands=cands.filter(x=>idFase(x.f)!==fora); }
-    // teto: a próxima fase que fica (a curva não pode descer)
-    let teto=99; for(const r2 of recs.slice(j+1)){ const a2=atuais?.[RECEITAS.indexOf(r2)]; if(a2 && !REFAZER.includes(r2.id)){ teto=a2.min; break; } }
-    const ant=doMundo[doMundo.length-1], mats=new Set(doMundo.map(c=>material(c.f)));
-    const ok=cands.filter(x=>!usados.has(idFase(x.f)) && x.m.min>=minAnt && x.m.min<=teto && !mats.has(material(x.f))
-      && !(ant && meta(ant.f)===meta(x.f) && tabuleiro(ant.f)===tabuleiro(x.f)) && passa(x,rec));
-    let c;
-    if(TROCA[rec.id]!=null) c=cands.find(x=>x.m.sol===TROCA[rec.id] || idFase(x.f)===TROCA[rec.id]);
-    else c=ok.sort((a,b)=>nota(b,rec)-nota(a,rec))[0];
-    if(!c){ console.log(`${rec.id}: SEM CANDIDATO (${cands.length} no total, min anterior ${minAnt})`); return; }
-    minAnt=Math.max(minAnt,c.m.min); usados.add(idFase(c.f)); doMundo.push(c); escolhidas.push({rec,c});
-    console.log(`${rec.id} ${c.v1?'(v1 fase '+c.v1+') ':''}${atual?'(NOVA) ':''}${NOMES[rec.id]||'?'} | alvo arm ${Math.round(rec.armAlvo*100)}% | ${resumo(c.m)} pecas ${pecasDe(c.f)} ${tabuleiro(c.f)} ${meta(c.f)}${c.f.char?' passinho':''}`);
-    for(const l of desenha(c.f)) console.log('      '+l);
+    if(mantem[j]){ let f=semExtras(mantem[j]); if(AJUSTES[rec.id]) f=ajusta(f, AJUSTES[rec.id]);
+      const c={rec:rec.id, g, f, m:M.analisa(f,{folga:4}), mantida:true}; minAnt=Math.max(minAnt,c.m.min); usados.add(idFase(f)); escolhidas.push({rec,c}); return; }
+    const atual=atuais?.[RECEITAS.indexOf(rec)];
+    let {lista, folga}=candidatos(rec);
+    if(atual){ const fora=idFase(semExtras(atual)); lista=lista.filter(x=>idFase(x.f)!==fora); }
+    let teto=99; for(const k of recs.keys()) if(k>j && mantem[k]){ teto=mantem[k].min; break; }
+    const doMundo=escolhidas.filter(e=>e.rec.g===g).map(e=>e.c), ant=doMundo[doMundo.length-1];
+    const mats=new Set([...doMundo, ...mantem.filter(Boolean).map(a=>({f:semExtras(a)}))].map(c=>material(c.f)));
+    const ok=lista.filter(x=>!usados.has(idFase(x.f)) && x.m.min>=minAnt && x.m.min<=teto && !mats.has(material(x.f))
+      && !(ant && meta(ant.f)===meta(x.f) && tabuleiro(ant.f)===tabuleiro(x.f)));
+    const c=ok.sort((a,b)=>nota(b,rec)-nota(a,rec))[0];
+    if(!c){ console.log(`${rec.id}: SEM CANDIDATO (min anterior ${minAnt}, teto ${teto})`); return; }
+    minAnt=Math.max(minAnt,c.m.min); usados.add(idFase(c.f)); escolhidas.push({rec,c}); mostra(rec,c,true,folga);
   });
 }
 function ajusta(f, a){ const g={...f};
