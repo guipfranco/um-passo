@@ -183,10 +183,11 @@ function checaMissao(){
 // Uma vez por partida (S.res); a tela de resultado só mostra, e o "recorde" compara com o que havia antes desta vitória.
 function gravaVitoria(){
   if(S.res) return S.res;
-  const n=S.missao, m=faseM(), e=estrelasPor(m,Math.max(0,S.energy),S.moves||0), r=MISS(), ant=r[n]||{};
+  // (nos Quebra-cabeças, a partida com dica vale até ★★)
+  const n=S.missao, m=faseM(), e=Math.min(estrelasPor(m,Math.max(0,S.energy),S.moves||0), S.qj?.dicas?2:3), r=MISS(), ant=r[n]||{};
   S.res={e, rec: ant.t!=null && S.pontos>ant.t};
   r[n]={...ant, e:Math.max(e,ant.e||0), t:Math.max(S.pontos,ant.t||0)}; if(S.medalha) r[n].pm=true;
-  if(JA.quebra){ S.res.rec = ant.a!=null && S.moves<ant.a; r[n].a=Math.min(S.moves, ant.a??Infinity); }   // quebra-cabeça: o recorde é o menor número de arrastos
+  if(JA.quebra && !S.qj?.dicas){ S.res.rec = ant.a!=null && S.moves<ant.a; r[n].a=Math.min(S.moves, ant.a??Infinity); }   // quebra-cabeça: o recorde é o menor número de arrastos (sem dica)
   localStorage[JA.chave]=JSON.stringify(r);
   return S.res;
 }
