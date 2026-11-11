@@ -216,7 +216,7 @@ function show(id){
   document.body.classList.toggle('lock', id==='scrGame');
   document.body.classList.toggle('jogo', id==='scrGame');
   if(id!=='scrGame') desenhaCenario();
-  document.body.classList.remove('semHud','modoCla','modoInf','naLista');
+  document.body.classList.remove('semHud','modoCla','modoInf','modoFre','naLista');
   if(id!=='scrMenu') guardaVolta(); else if(history.state&&history.state.ptui) history.back();
   scrollTo(0,0);
 }
@@ -542,7 +542,7 @@ function move(dx,dy){
   for(const g of r.gone){ const el=els.get(g.id); els.delete(g.id); if(el){ el.style.zIndex=0; el.style.transform=pos(g.x,g.y); setTimeout(()=>el.remove(),120); } }
   for(const b of r.breaks) quebrar(b);
   S.tiles=r.tiles;
-  if(S.missao||S.infinito){ contaMissao(r); const rc=recolheCarro(); if(rc){ const el=els.get(rc.id); els.delete(rc.id); if(el){ el.style.transform=pos(rc.x,rc.y); el.classList.add('recolhe'); setTimeout(()=>el.remove(),350); } } }
+  if(S.missao||S.infinito){ contaMissao(r); if(S.frenesi) freJogada(r); const rc=recolheCarro(); if(rc){ const el=els.get(rc.id); els.delete(rc.id); if(el){ el.style.transform=pos(rc.x,rc.y); el.classList.add('recolhe'); setTimeout(()=>el.remove(),350); } } }
   const wasTired = S.energy<=0;
   S.moves=(S.moves||0)+1;
   if(!S.semEnergia){ if(S.energy>0) S.energy--; else S.tired++; }

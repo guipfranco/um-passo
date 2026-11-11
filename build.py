@@ -8,11 +8,12 @@ classico = rd('classico.js')
 # motor do espaço (o mesmo dos rascunhos) fechado num objeto, para os nomes dele não colidirem com os do jogo
 espaco = ('var ESP=(()=>{' + rd('espaco.js') + '\nreturn {buildTextures,preaquece,filaOciosa,texTarefa,makePiece,drawPeca,drawPecaVar,pecaImg,temPeca,pecaPrepara,soltaPeca,glPronto,glDesenha,discosGL,drawPecaGL,vrDe,buildFundo,drawFundo,SPR,LADDER,MUNDOS_ESP,byName,kDe,ST,objImg,DPR,PASSO_VAR};\n})();\n'
           + rd('espaco_jogo.js'))
+frenesi = rd('frenesi.js')   # modo em teste (só com ?frenesi)
 cfg, svg, logic, helpers, sfx, css, autoupd = rd('config.js'), rd('svg.js'), rd('jogo.js'), rd('helpers.js'), rd('sfx.js'), rd('css.css'), rd('autoupd.html')
 gi = rd('gi.js')
 # versão do jogo nos relatos de bug: um resumo do código-fonte (muda só quando o código muda)
 import hashlib
-VERSAO = hashlib.sha1((cfg + missoes + gi + svg + logic + classico + espaco + helpers + sfx).encode('utf-8')).hexdigest()[:8]
+VERSAO = hashlib.sha1((cfg + missoes + gi + svg + logic + classico + espaco + frenesi + helpers + sfx).encode('utf-8')).hexdigest()[:8]
 css = css.replace('width:calc(4*var(--cell) + 5*var(--gap));height:calc(4*var(--cell) + 5*var(--gap))', 'width:calc(var(--w,4)*var(--cell) + (var(--w,4) + 1)*var(--gap));height:calc(var(--h,4)*var(--cell) + (var(--h,4) + 1)*var(--gap))')
 css = css.replace('touch-action:none;user-select:none;-webkit-user-select:none;overscroll-behavior:none;overflow:hidden}', 'user-select:none;-webkit-user-select:none;overscroll-behavior:none;overflow-x:hidden}\nbody.lock{overflow:hidden}\n#scrGame{touch-action:none}')
 
@@ -215,6 +216,7 @@ body.espaco #ovos{display:flex;justify-content:center;gap:30px;margin-top:6px}
   body.espaco .cjNav .btn{padding-left:8px;padding-right:8px;letter-spacing:.06em}
   body.espaco .hudCla .arrP .ic{display:none}
   body.modoInf .hudCla #ptsP{min-width:120px}
+  body.espaco.modoFre .hudCla #ptsP{width:124px}
 }
 /* menu do espaço: música e créditos moram em Opções */
 body.espaco .menuFoot{display:none}
@@ -225,6 +227,61 @@ body.espaco .menuFoot{display:none}
 .cjDots i.on{background:#6ee6ff;box-shadow:0 0 8px rgba(110,230,255,.8)}
 .cjNav{display:flex;gap:8px}
 .cjNav .btn{flex:1}
+/* ---- Frenesi (modo em teste, só com ?frenesi): corrente, multiplicador e luzes que crescem a cada degrau ---- */
+#mFre{display:none}
+body.espaco #mFre{display:block;color:#ff7ad9 !important;border-color:#ff7ad9 !important;box-shadow:0 0 16px #ff7ad966,inset 0 0 14px #ff7ad933 !important;text-shadow:0 0 10px #ff7ad9}
+#freBar,#freBorda{display:none}
+body.modoFre #freBar{display:flex;align-items:center;gap:10px;margin:0 2px 12px;position:relative}
+body.modoFre #freBorda{display:block}
+body{--fc:#a9b8ff}
+#freMult{flex:none;min-width:94px;text-align:center;font:900 40px/1 Orbitron,'Exo 2',sans-serif;color:#fff;text-shadow:0 0 8px var(--fc),0 0 22px var(--fc),0 0 42px var(--fc);will-change:transform}
+body.fd0 #freMult{color:#b9b4e0;text-shadow:none;opacity:.6;font-size:32px}
+body.fd6 #freMult{color:#fff4fd}
+@keyframes freArco{to{filter:hue-rotate(360deg)}}
+#freInfo{flex:1;min-width:0;display:flex;flex-direction:column;gap:7px}
+#freLinha{display:flex;justify-content:space-between;gap:8px;font:700 11.5px 'Exo 2',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#d8d0f0;white-space:nowrap}
+#freTxt{overflow:hidden;text-overflow:ellipsis}
+#freVel{color:var(--fc);text-shadow:0 0 6px var(--fc)}
+#freTempo{height:10px;border-radius:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);overflow:hidden}
+#freTempo i{display:block;height:100%;width:100%;background:var(--fc);box-shadow:0 0 10px var(--fc);transform-origin:0 50%;transform:scaleX(0)}
+#freTempo.pouco i{background:#ff5a5a;animation:frePisca .3s steps(2) infinite}
+@keyframes frePisca{50%{opacity:.35}}
+#freBorda{position:fixed;inset:0;pointer-events:none;z-index:2}
+#freBorda i{position:absolute;inset:0;opacity:0;transition:opacity .5s;will-change:opacity;box-shadow:inset 0 0 80px 4px var(--fc),inset 0 0 16px 2px var(--fc)}
+body.fd6 #freBorda i:nth-child(2){animation:freOnda 2s ease-in-out infinite}
+body.fd6 #freBorda i:nth-child(3){animation:freOnda 2s ease-in-out -1s infinite}
+@keyframes freOnda{0%,100%{opacity:.1}50%{opacity:.85}}
+#freBorda i:nth-child(2){box-shadow:inset 0 0 80px 4px #ff4fc8,inset 0 0 16px 2px #ff4fc8}
+#freBorda i:nth-child(3){box-shadow:inset 0 0 80px 4px #4fe3ff,inset 0 0 16px 2px #4fe3ff}
+.freFlash{position:absolute;left:50%;top:56%;translate:-50% -50%;font:900 min(60px,14vw) Orbitron,'Exo 2',sans-serif;color:#fff;white-space:nowrap;pointer-events:none;z-index:60;text-shadow:0 0 10px var(--fc),0 0 28px var(--fc),0 0 60px var(--fc);animation:freFlash 1.1s ease-out forwards}
+.freFlash.topo{font-size:min(54px,12.5vw);color:#ffe9fb;animation:freFlash 1.3s ease-out forwards,freArco .8s linear infinite}
+.freFlash.vel{top:30%;font-size:min(26px,7vw);letter-spacing:.12em;text-transform:uppercase}
+@keyframes freFlash{0%{opacity:0;scale:.4}14%{opacity:1;scale:1.18}30%{scale:1}70%{opacity:1}100%{opacity:0;scale:1.25}}
+.flut.fre{z-index:40;font:900 calc(var(--cell)*var(--fs,.27)) Orbitron,'Exo 2',sans-serif;color:#fff;-webkit-text-stroke:0;white-space:nowrap;text-shadow:0 0 5px var(--fc),0 0 12px var(--fc);animation:freFlut 1s ease-out forwards}
+.flut.fre small{font-size:.6em;margin-left:2px;color:var(--fc);text-shadow:0 0 6px var(--fc)}
+@keyframes freFlut{0%{opacity:0;translate:0 10%;scale:.5}14%{opacity:1;scale:1.3}30%{scale:1}100%{opacity:0;translate:0 -75%}}
+.freApaga{position:fixed;inset:0;background:#04020c;pointer-events:none;z-index:3;animation:freApaga .75s ease-out forwards}
+@keyframes freApaga{from{opacity:.6}to{opacity:0}}
+.freCaiu{position:absolute;left:0;top:50%;min-width:94px;text-align:center;font:900 40px/1 Orbitron,'Exo 2',sans-serif;color:#8d84b8;pointer-events:none;animation:freCaiu .75s ease-in forwards}
+@keyframes freCaiu{from{translate:0 -50%;opacity:1}to{translate:0 40%;rotate:-16deg;opacity:0}}
+body.modoFre .hudCla #ptsP{width:150px;min-width:0}
+body.modoFre .hudCla #ptsP>div{width:100%}
+body.modoFre .hudCla #ptsP b{font-size:28px;height:30px;line-height:30px;contain:strict}   /* os pontos rolam sem refazer o layout da tela */
+body.modoFre .hudCla #ptsP b.longo{font-size:20px}
+body.modoFre.fd3 .etq,body.modoFre.fd4 .etq,body.modoFre.fd5 .etq,body.modoFre.fd6 .etq{box-shadow:0 0 9px var(--fc);border-color:var(--fc)}
+.freRes{display:flex;gap:6px;width:100%}
+.freRes>div{flex:1;min-width:0;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:8px 3px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.freRes b{font:900 20px Orbitron,'Exo 2',sans-serif;color:#fff}
+.freRes small{font-size:11px;line-height:1.15;color:#b9a9d9;text-align:center}
+.freRes em{font-style:normal;font:700 10px 'Exo 2',sans-serif;color:#ffd36e;text-transform:uppercase;letter-spacing:.08em}
+.freRecs{font-size:13px !important}
+@keyframes freFlashCalmo{0%{opacity:0}15%{opacity:1}70%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion: reduce){
+  .freFlash,.freFlash.topo{animation:freFlashCalmo 1.2s ease-out forwards}
+  #freTempo.pouco i,body.fd6 #freBorda i{animation:none !important}
+  body.fd6 #freBorda i:nth-child(n+2){opacity:.4}
+  .freApaga{animation-duration:1.2s;opacity:.3}
+}
 #ovos button{width:30px;height:30px;padding:4px;border:0;background:none;color:rgba(207,198,255,.42);filter:drop-shadow(0 0 4px rgba(207,198,255,.35));cursor:pointer}
 #ovos svg{width:22px;height:22px;display:block}\n
 .logo{display:flex;align-items:flex-end;justify-content:center;height:130px}
@@ -638,7 +695,7 @@ let endArmed=null;
 function resetEnd(){ clearTimeout(endArmed); endArmed=null; $('#btnEnd').textContent=S&&(S.missao||S.infinito)?'Recomeçar':S&&S.semEnergia?'Parar aqui':'Encerrar o dia'; $('#btnEnd').classList.remove('g'); }
 $('#btnEnd').onclick=()=>{
   if(coachBlock) return;
-  if(S && S.infinito){ if(S.phase==='mine') infinitoJoga(); return; }
+  if(S && S.infinito){ if(S.phase==='mine') (S.frenesi ? frenesiJoga : infinitoJoga)(); return; }
   if(S && S.missao){ if(S.phase==='mine') missaoJoga(S.missao); return; }
   if(S.energy<=0 || endArmed){ resetEnd(); endDay(); return; }
   $('#btnEnd').textContent=S.semEnergia?'Confirmar?':`Confirmar? (sobra ${S.energy}⚡)`;
@@ -707,7 +764,7 @@ html = '''<!doctype html>
 ''' + body + '''
 <script>
 const VERSAO="''' + VERSAO + '''";
-''' + cfg + missoes + gi + svg + logic + classico + espaco + helpers + sfx + ui + '''</script>
+''' + cfg + missoes + gi + svg + logic + classico + espaco + frenesi + helpers + sfx + ui + '''</script>
 </body>
 </html>
 '''

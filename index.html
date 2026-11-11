@@ -320,6 +320,7 @@ body.espaco #ovos{display:flex;justify-content:center;gap:30px;margin-top:6px}
   body.espaco .cjNav .btn{padding-left:8px;padding-right:8px;letter-spacing:.06em}
   body.espaco .hudCla .arrP .ic{display:none}
   body.modoInf .hudCla #ptsP{min-width:120px}
+  body.espaco.modoFre .hudCla #ptsP{width:124px}
 }
 /* menu do espaço: música e créditos moram em Opções */
 body.espaco .menuFoot{display:none}
@@ -330,6 +331,61 @@ body.espaco .menuFoot{display:none}
 .cjDots i.on{background:#6ee6ff;box-shadow:0 0 8px rgba(110,230,255,.8)}
 .cjNav{display:flex;gap:8px}
 .cjNav .btn{flex:1}
+/* ---- Frenesi (modo em teste, só com ?frenesi): corrente, multiplicador e luzes que crescem a cada degrau ---- */
+#mFre{display:none}
+body.espaco #mFre{display:block;color:#ff7ad9 !important;border-color:#ff7ad9 !important;box-shadow:0 0 16px #ff7ad966,inset 0 0 14px #ff7ad933 !important;text-shadow:0 0 10px #ff7ad9}
+#freBar,#freBorda{display:none}
+body.modoFre #freBar{display:flex;align-items:center;gap:10px;margin:0 2px 12px;position:relative}
+body.modoFre #freBorda{display:block}
+body{--fc:#a9b8ff}
+#freMult{flex:none;min-width:94px;text-align:center;font:900 40px/1 Orbitron,'Exo 2',sans-serif;color:#fff;text-shadow:0 0 8px var(--fc),0 0 22px var(--fc),0 0 42px var(--fc);will-change:transform}
+body.fd0 #freMult{color:#b9b4e0;text-shadow:none;opacity:.6;font-size:32px}
+body.fd6 #freMult{color:#fff4fd}
+@keyframes freArco{to{filter:hue-rotate(360deg)}}
+#freInfo{flex:1;min-width:0;display:flex;flex-direction:column;gap:7px}
+#freLinha{display:flex;justify-content:space-between;gap:8px;font:700 11.5px 'Exo 2',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#d8d0f0;white-space:nowrap}
+#freTxt{overflow:hidden;text-overflow:ellipsis}
+#freVel{color:var(--fc);text-shadow:0 0 6px var(--fc)}
+#freTempo{height:10px;border-radius:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);overflow:hidden}
+#freTempo i{display:block;height:100%;width:100%;background:var(--fc);box-shadow:0 0 10px var(--fc);transform-origin:0 50%;transform:scaleX(0)}
+#freTempo.pouco i{background:#ff5a5a;animation:frePisca .3s steps(2) infinite}
+@keyframes frePisca{50%{opacity:.35}}
+#freBorda{position:fixed;inset:0;pointer-events:none;z-index:2}
+#freBorda i{position:absolute;inset:0;opacity:0;transition:opacity .5s;will-change:opacity;box-shadow:inset 0 0 80px 4px var(--fc),inset 0 0 16px 2px var(--fc)}
+body.fd6 #freBorda i:nth-child(2){animation:freOnda 2s ease-in-out infinite}
+body.fd6 #freBorda i:nth-child(3){animation:freOnda 2s ease-in-out -1s infinite}
+@keyframes freOnda{0%,100%{opacity:.1}50%{opacity:.85}}
+#freBorda i:nth-child(2){box-shadow:inset 0 0 80px 4px #ff4fc8,inset 0 0 16px 2px #ff4fc8}
+#freBorda i:nth-child(3){box-shadow:inset 0 0 80px 4px #4fe3ff,inset 0 0 16px 2px #4fe3ff}
+.freFlash{position:absolute;left:50%;top:56%;translate:-50% -50%;font:900 min(60px,14vw) Orbitron,'Exo 2',sans-serif;color:#fff;white-space:nowrap;pointer-events:none;z-index:60;text-shadow:0 0 10px var(--fc),0 0 28px var(--fc),0 0 60px var(--fc);animation:freFlash 1.1s ease-out forwards}
+.freFlash.topo{font-size:min(54px,12.5vw);color:#ffe9fb;animation:freFlash 1.3s ease-out forwards,freArco .8s linear infinite}
+.freFlash.vel{top:30%;font-size:min(26px,7vw);letter-spacing:.12em;text-transform:uppercase}
+@keyframes freFlash{0%{opacity:0;scale:.4}14%{opacity:1;scale:1.18}30%{scale:1}70%{opacity:1}100%{opacity:0;scale:1.25}}
+.flut.fre{z-index:40;font:900 calc(var(--cell)*var(--fs,.27)) Orbitron,'Exo 2',sans-serif;color:#fff;-webkit-text-stroke:0;white-space:nowrap;text-shadow:0 0 5px var(--fc),0 0 12px var(--fc);animation:freFlut 1s ease-out forwards}
+.flut.fre small{font-size:.6em;margin-left:2px;color:var(--fc);text-shadow:0 0 6px var(--fc)}
+@keyframes freFlut{0%{opacity:0;translate:0 10%;scale:.5}14%{opacity:1;scale:1.3}30%{scale:1}100%{opacity:0;translate:0 -75%}}
+.freApaga{position:fixed;inset:0;background:#04020c;pointer-events:none;z-index:3;animation:freApaga .75s ease-out forwards}
+@keyframes freApaga{from{opacity:.6}to{opacity:0}}
+.freCaiu{position:absolute;left:0;top:50%;min-width:94px;text-align:center;font:900 40px/1 Orbitron,'Exo 2',sans-serif;color:#8d84b8;pointer-events:none;animation:freCaiu .75s ease-in forwards}
+@keyframes freCaiu{from{translate:0 -50%;opacity:1}to{translate:0 40%;rotate:-16deg;opacity:0}}
+body.modoFre .hudCla #ptsP{width:150px;min-width:0}
+body.modoFre .hudCla #ptsP>div{width:100%}
+body.modoFre .hudCla #ptsP b{font-size:28px;height:30px;line-height:30px;contain:strict}   /* os pontos rolam sem refazer o layout da tela */
+body.modoFre .hudCla #ptsP b.longo{font-size:20px}
+body.modoFre.fd3 .etq,body.modoFre.fd4 .etq,body.modoFre.fd5 .etq,body.modoFre.fd6 .etq{box-shadow:0 0 9px var(--fc);border-color:var(--fc)}
+.freRes{display:flex;gap:6px;width:100%}
+.freRes>div{flex:1;min-width:0;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:8px 3px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.freRes b{font:900 20px Orbitron,'Exo 2',sans-serif;color:#fff}
+.freRes small{font-size:11px;line-height:1.15;color:#b9a9d9;text-align:center}
+.freRes em{font-style:normal;font:700 10px 'Exo 2',sans-serif;color:#ffd36e;text-transform:uppercase;letter-spacing:.08em}
+.freRecs{font-size:13px !important}
+@keyframes freFlashCalmo{0%{opacity:0}15%{opacity:1}70%{opacity:1}100%{opacity:0}}
+@media (prefers-reduced-motion: reduce){
+  .freFlash,.freFlash.topo{animation:freFlashCalmo 1.2s ease-out forwards}
+  #freTempo.pouco i,body.fd6 #freBorda i{animation:none !important}
+  body.fd6 #freBorda i:nth-child(n+2){opacity:.4}
+  .freApaga{animation-duration:1.2s;opacity:.3}
+}
 #ovos button{width:30px;height:30px;padding:4px;border:0;background:none;color:rgba(207,198,255,.42);filter:drop-shadow(0 0 4px rgba(207,198,255,.35));cursor:pointer}
 #ovos svg{width:22px;height:22px;display:block}\n
 .logo{display:flex;align-items:flex-end;justify-content:center;height:130px}
@@ -650,7 +706,7 @@ body.rola #stage{touch-action:none}
 <div id="coach" class="hidden"><div class="cav" id="coachAv"></div><div><p id="coachText"></p><button class="btn b" id="coachOk">Ok</button></div></div>
 
 <script>
-const VERSAO="fb8c5168";
+const VERSAO="dd655acd";
 // ===================== CONFIG =====================
 let W = 4, H = 4, N = 4;      // largura e altura do tabuleiro (N = maior lado)
 const CFG = {
@@ -1483,7 +1539,7 @@ function show(id){
   document.body.classList.toggle('lock', id==='scrGame');
   document.body.classList.toggle('jogo', id==='scrGame');
   if(id!=='scrGame') desenhaCenario();
-  document.body.classList.remove('semHud','modoCla','modoInf','naLista');
+  document.body.classList.remove('semHud','modoCla','modoInf','modoFre','naLista');
   if(id!=='scrMenu') guardaVolta(); else if(history.state&&history.state.ptui) history.back();
   scrollTo(0,0);
 }
@@ -1809,7 +1865,7 @@ function move(dx,dy){
   for(const g of r.gone){ const el=els.get(g.id); els.delete(g.id); if(el){ el.style.zIndex=0; el.style.transform=pos(g.x,g.y); setTimeout(()=>el.remove(),120); } }
   for(const b of r.breaks) quebrar(b);
   S.tiles=r.tiles;
-  if(S.missao||S.infinito){ contaMissao(r); const rc=recolheCarro(); if(rc){ const el=els.get(rc.id); els.delete(rc.id); if(el){ el.style.transform=pos(rc.x,rc.y); el.classList.add('recolhe'); setTimeout(()=>el.remove(),350); } } }
+  if(S.missao||S.infinito){ contaMissao(r); if(S.frenesi) freJogada(r); const rc=recolheCarro(); if(rc){ const el=els.get(rc.id); els.delete(rc.id); if(el){ el.style.transform=pos(rc.x,rc.y); el.classList.add('recolhe'); setTimeout(()=>el.remove(),350); } } }
   const wasTired = S.energy<=0;
   S.moves=(S.moves||0)+1;
   if(!S.semEnergia){ if(S.energy>0) S.energy--; else S.tired++; }
@@ -2866,6 +2922,7 @@ function recolheCarro(){
   S.tiles=S.tiles.filter(x=>x!==t); c.n++; return t;
 }
 function flutuaPontos(r){
+  if(S.frenesi) return freFlutua(r);   // Frenesi: com o multiplicador (frenesi.js)
   const f=(x,y,v)=>{ const el=document.createElement('div'); el.className='flut'; el.textContent='+'+v; el.style.transform=pos(x,y); board.appendChild(el); setTimeout(()=>el.remove(),950); };
   for(const o of r.merges) if(o.k!=='p') f(o.x,o.y,VAL(o.t));
   for(const b of r.breaks) f(b.x,b.y,2*VAL(b.t));
@@ -3213,8 +3270,9 @@ function infinitoJoga(opt){
   setBanner('Clássico', 'junte até não caber mais nada'); pedeEncaixe();
 }
 function montaInfinitoHud(){ $('#cMis').innerHTML=`<div><b id="cRec">${REC_INF()}</b><small>recorde</small></div>`; $('#ptsP').style.display=''; }
-function hudInfinito(){ $('#cArr').textContent=S.moves||0; $('#cPts').textContent=S.pontos||0; const r=$('#cRec'); if(r) r.textContent=Math.max(REC_INF(),S.pontos||0); }
+function hudInfinito(){ if(S.frenesi) return hudFrenesi(); $('#cArr').textContent=S.moves||0; $('#cPts').textContent=S.pontos||0; const r=$('#cRec'); if(r) r.textContent=Math.max(REC_INF(),S.pontos||0); }
 function checaInfinito(){
+  if(S.frenesi) return checaFrenesi();   // o Frenesi guarda à parte (frenesi.js)
   // o recorde fica guardado na hora: sair, recomeçar ou fechar o jogo no meio da partida não o perde
   if((S.pontos||0)>REC_INF()) localStorage.ptui_rec_inf=S.pontos;
   if(anyMove()){ localStorage.ptui_inf_save=JSON.stringify({recAntes:S.recAntes, st:estadoFase()}); return; }
@@ -3224,11 +3282,12 @@ function checaInfinito(){
 }
 // Recomeçar pela pausa com pontos na partida: pergunta antes de perder a partida
 function recomecaInfinito(){
-  if(!(S.pontos>0)) return infinitoJoga();
+  const joga = S.frenesi ? frenesiJoga : infinitoJoga;
+  if(!(S.pontos>0)) return joga();
   const volta=()=>{ hideOverlay(); pauseMenu(); };
   showOverlay(`<h2>Recomeçar?</h2><p>A partida atual será perdida.</p>
     <button class="btn g" id="rSim">Recomeçar</button><button class="btn dim" id="rNao">Voltar</button>`);
-  $('#rSim').onclick=()=>infinitoJoga(); $('#rNao').onclick=volta; FORA=volta;
+  $('#rSim').onclick=()=>joga(); $('#rNao').onclick=volta; FORA=volta;
 }
 function infinitoFim(){
   const rec=S.pontos>S.recAntes; if(S.pontos>REC_INF()) localStorage.ptui_rec_inf=S.pontos;
@@ -3977,6 +4036,7 @@ function mostraMedidor(ms,a,b,c,d){
 function espLoop(ms){
   requestAnimationFrame(espLoop);
   const t=ms/1000, ceu=document.body.classList.contains('espaco'), p0=performance.now(); tQuadro=t; quadroN++;
+  if(S && S.frenesi) try{ freQuadro(t); }catch(e){ console.warn('frenesi',e); anotaErro('frenesi',e); }   // corrente e luzes do Frenesi (frenesi.js)
   // cada camada num try: um erro numa delas não pode travar as outras nem deixar o céu num modo de desenho errado
   if(ceu) try{ ceuDesenha(t); }catch(e){ console.warn('céu',e); anotaErro('céu',e); }
   const p1=performance.now();
@@ -4001,8 +4061,10 @@ function espLoop(ms){
   const p3=performance.now();
   if(ceu && GLON) glQuadro(t);
   const p4=performance.now();
-  custoMedio=custoMedio*.95+(p4-p0)*.05;
-  if(MEDE) mostraMedidor(ms,p1-p0,p2-p1,p3-p2,p4-p3);
+  if(S && S.frenesi) try{ frePinta(t); }catch(e){ console.warn('frenesi',e); anotaErro('frenesi',e); }   // barra, número e bordas do Frenesi
+  const p5=performance.now();
+  custoMedio=custoMedio*.95+(p5-p0)*.05;
+  if(MEDE) mostraMedidor(ms,p1-p0+(p5-p4),p2-p1,p3-p2,p4-p3);   // o Frenesi conta junto com o céu
 }
 // ---------- botão voltar do celular ----------
 // fora do menu há sempre uma entrada a mais no histórico (guardaVolta). Voltar: fecha a janela aberta; na lista de
@@ -4236,7 +4298,7 @@ function ceuDesenha(t){
   c.setTransform(1,0,0,1,0,0); c.globalCompositeOperation='source-over'; c.globalAlpha=1;
   // a névoa mais forte do momento (junção ou recorde)
   let pul=null; for(const j of brilhosE){ const u=(t-j.t0)/1.1; if(u<1){ const k=(1-u)*(j.forte?.9:.45); if(!pul||k>pul.k) pul={k,x:j.x,y:j.y,rgb:j.rgb}; } }
-  if(NEB.ok && (t-nebT>=1/30 || pul)){ nebT=t; NEB.desenha(w,h,t,[cx*.12,cy*.12],mu.neb,pul); }   // a nebulosa anda devagar: 30 quadros por segundo bastam
+  if(NEB.ok && (t-nebT>=1/30 || pul)){ nebT=t; NEB.desenha(w,h,t,[cx*.12,cy*.12],jogo&&S.frenesi?freNeb(mu.neb,t):mu.neb,pul); }   // a nebulosa anda devagar: 30 quadros por segundo bastam; no Frenesi, nas cores do degrau
   c.clearRect(0,0,w,h);
   c.save();
   // fundo feito para outra altura (até 15%): centrado na tela; mais baixo que ela, cresce por igual (sem achatar o
@@ -4251,8 +4313,9 @@ function ceuDesenha(t){
     c.fillStyle=g; c.fillRect(-R,-R,2*R,2*R); c.restore(); } }
   if(jogo){ if(t>proxPass) novaPassagem(t,w,h); passagens(c,t,cx*.35,cy*.35); }
   c.save(); c.globalCompositeOperation='lighter';
-  for(const j of aneisE){ const u=(t-j.t0)/1.6; if(u<0||u>1) continue; const R=Math.max(0,j.v*(t-j.t0)); c.lineWidth=6*(1-u)+1; c.strokeStyle=`rgba(${j.rgb},${(.22*(1-u)).toFixed(3)})`; c.beginPath(); c.arc(j.x,j.y,R,0,7); c.stroke(); }
+  for(const j of aneisE){ const u=(t-j.t0)/1.6; if(u<0||u>1) continue; const R=Math.max(0,j.v*(t-j.t0)); c.lineWidth=(j.w||6)*(1-u)+1; c.strokeStyle=`rgba(${j.rgb},${((j.a||.22)*(1-u)).toFixed(3)})`; c.beginPath(); c.arc(j.x,j.y,R,0,7); c.stroke(); }
   c.restore();
+  if(jogo && S.frenesi) freCeu(c,t);   // brilho e rastro das peças no Frenesi
   brilhosE=brilhosE.filter(j=>t-j.t0<1.2); aneisE=aneisE.filter(j=>t-j.t0<1.7);
 }
 // passagens ao longe: cometa, satélite piscando, chuva de meteoros e nave (uma por vez, a cada 6 a 10 s)
@@ -4324,7 +4387,7 @@ function malhaQuadro(t){
   const pa=g.P, pocos=[];
   for(const {el,fr} of pecasNoQuadro()) pocos.push({x:(fr.left+fr.width/2-g.r.left)*g.D+g.O, y:(fr.top+fr.height/2-g.r.top)*g.D+g.O, m:massaE(el._t.t)});
   // nada mudou desde o último desenho (peças paradas, sem onda nem tremor, rede assentada): o desenho anterior vale
-  const selo=pocos.map(q=>Math.round(q.x)+','+Math.round(q.y)+','+q.m.toFixed(2)).join(';'), calmo=!ondasM.length && !tremM.length;
+  const selo=pocos.map(q=>Math.round(q.x)+','+Math.round(q.y)+','+q.m.toFixed(2)).join(';')+(S.frenesi?'|'+freMalhaSelo(t):''), calmo=!ondasM.length && !tremM.length;
   if(!refaz && calmo && malhaParada && selo===malhaSelo) return;
   if(selo!==malhaSelo) malhaParada=false;
   malhaSelo=selo;
@@ -4339,9 +4402,11 @@ function malhaQuadro(t){
   for(const q of pocos){ const R=pa*(.38+.16*q.m), gr=c.createRadialGradient(q.x,q.y,0,q.x,q.y,R); gr.addColorStop(0,`rgba(0,0,0,${Math.min(.8,(.12+.12*q.m)*1.6).toFixed(3)})`); gr.addColorStop(1,'rgba(0,0,0,0)'); c.fillStyle=gr; c.fillRect(q.x-R,q.y-R,2*R,2*R); }
   // linhas na cor do mundo (clareada), bem transparentes; quanto mais fundo o poço, mais escura e fina a linha.
   // As linhas parecidas vão juntas num traço só (poucos traços por quadro em vez de centenas)
-  const tema=Math.max(1,(S.missao&&S.tema)||1), rgb=ESP.MUNDOS_ESP[(tema-1)%ESP.MUNDOS_ESP.length].neb[1].split(',').map(v=>Math.round(+v*.55+255*.45)).join(','), no=(i,j)=>MN.nos[j*NI+i];
+  const tema=Math.max(1,(S.missao&&S.tema)||1), no=(i,j)=>MN.nos[j*NI+i];
+  let rgb=ESP.MUNDOS_ESP[(tema-1)%ESP.MUNDOS_ESP.length].neb[1].split(',').map(v=>Math.round(+v*.55+255*.45)).join(',');
+  const ganho=S.frenesi?freMalhaGanho():1; if(S.frenesi) rgb=freMalhaCor(rgb);   // no Frenesi, na cor do degrau e mais acesa
   const potes=new Map();
-  const seg=(a,b,maior)=>{ const f=(a.f+b.f)/2; if(f<.02) return; const h=(a.h+b.h)/2, w=(a.w+b.w)/2, fundo=Math.min(.85,h*.32), al=Math.min(1,((maior?.17:.065)*(1-fundo)+w*.6)*f);
+  const seg=(a,b,maior)=>{ const f=(a.f+b.f)/2; if(f<.02) return; const h=(a.h+b.h)/2, w=(a.w+b.w)/2, fundo=Math.min(.85,h*.32), al=Math.min(1,((maior?.17:.065)*(1-fundo)+w*.6)*f*ganho);
     if(al<.008) return; const k=Math.round(al*60)+'|'+Math.max(1,Math.round((maior?1.2:.75)*(1-fundo*.5)*4)); let p=potes.get(k); if(!p) potes.set(k,p=[]); p.push(a.x,a.y,b.x,b.y); };
   for(let j=0;j<NJ;j++) for(let i=0;i<NI-1;i++) seg(no(i,j),no(i+1,j),j%MSUB===0);
   for(let i=0;i<NI;i++) for(let j=0;j<NJ-1;j++) seg(no(i,j),no(i,j+1),i%MSUB===0);
@@ -4351,14 +4416,16 @@ function malhaQuadro(t){
   ondasM=ondasM.filter(o=>t-o.t0<3); tremM=tremM.filter(o=>t-o.t0<1.2);
 }
 // chamado a cada arrasto que mexeu: tranco da câmera, névoa de cada junção, tremor da malha; recorde da partida: onda e anel
+// no Frenesi as reações crescem com o degrau (fk de 0 a 1; com menos movimento, o tranco não cresce)
 function espJogada(dx,dy,merges){
-  camE.vx+=dx*190; camE.vy+=dy*190; adiantaProximo();
+  const fk=freForca(), tr=190*(1+(POUCO_MOV?0:fk*1.4));
+  camE.vx+=dx*tr; camE.vy+=dy*tr; adiantaProximo();
   if(!merges||!merges.length) return;
   const g=geoTab(), t=tQuadro||performance.now()/1000;
   for(const o of merges){
     const bx=g.g0+(o.x+.5)*g.P, by=g.g0+(o.y+.5)*g.P, sx=g.r.left+bx/g.D, sy=g.r.top+by/g.D, rgb=corNivelRgb(o.t), rec=S.espMax!=null && o.t>S.espMax;
-    tremM.push({x:bx+g.O,y:by+g.O,t0:t,a:g.P*(.025+.004*o.t)});
-    brilhosE.push({x:sx,y:sy,t0:t,rgb,forte:rec});
+    tremM.push({x:bx+g.O,y:by+g.O,t0:t,a:g.P*(.025+.004*o.t)*(1+fk*(POUCO_MOV?.5:2.2))});
+    brilhosE.push({x:sx,y:sy,t0:t,rgb,forte:rec||fk>.45});
     if(rec){ S.espMax=o.t; ondasM.push({x:bx+g.O,y:by+g.O,t0:t,a:g.P*(.16+.012*o.t)}); aneisE.push({x:sx,y:sy,t0:t,v:g.P/g.D*3.4,rgb:'230,232,255'}); }
   }
 }
@@ -4620,8 +4687,8 @@ function espMenu(){
   // com partida do Clássico salva, o botão continua de onde parou e diz isso na linha de baixo
   { const inf=infSalvo(), sub=$('#mInf small'); if(sub.dataset.txt==null) sub.dataset.txt=sub.textContent;
     sub.textContent = inf ? `continuar · ${(inf.st.pontos||0).toLocaleString('pt-BR')} pontos` : sub.dataset.txt; $('#mInf').classList.toggle('comSub', !!inf); }
-  // o Clássico vem depois do Novo jogo e do Continuar
-  $('#mSegue').after($('#mInf'));
+  // o Clássico vem depois do Novo jogo e do Continuar; o Frenesi (em teste, só com ?frenesi) logo abaixo dele
+  $('#mSegue').after($('#mInf')); freMenu(on);
   // Como jogar: no espaço abre o do 2048 Astros; fora dele, o tutorial da mina
   const tut=$('#mTut'); if(tut.onclick!==comoJogarEsp) TUT_MINA=tut.onclick; tut.onclick = on ? comoJogarEsp : TUT_MINA;
   if(!$('#mOpc')){ const b=document.createElement('button'); b.className='btn dim big'; b.id='mOpc'; b.textContent='Opções'; b.onclick=espOpcoes; tut.after(b); }
@@ -4821,7 +4888,7 @@ async function fotoDaTela(){
 function ondeNoJogo(){
   if(!S) return 'início';
   if(S.missao) return `Jornada, fase ${S.missao} (${nomeFaseCla(S.missao)})${S.phase&&S.phase!=='mine'?' · '+S.phase:''}`;
-  if(S.infinito) return 'Clássico';
+  if(S.infinito) return S.frenesi ? 'Frenesi' : 'Clássico';
   if(S.phase==='lista') return 'mapa da Jornada';
   if($('#scrMenu')?.classList.contains('on')) return 'menu';
   return S.lab ? 'Laboratório' : 'Mineração';
@@ -4905,6 +4972,311 @@ function entradaEsp(n){
   if($('#mPass')) $('#mPass').onclick=()=>comecaFase(n,{passinho:true});
   if(tA) espPlanetaGrande($('#espInfo'),tA,'info');
 }
+
+// ===================== FRENESI (modo em teste; nome provisório) =====================
+// O Clássico (4x4 sem fim, acaba quando enche) com corrente de junções rápidas. Cada arrasto que junta peças antes de a
+// barra esvaziar soma na corrente (várias junções no mesmo arrasto somam mais); a corrente sobe o multiplicador por
+// degraus (×1, ×2, ×3, ×5, ×8, ×12, ×20) e os pontos de cada junção são multiplicados. A cada degrau o jogo esquenta:
+// nebulosa de outra cor pulsando na batida, malha mais acesa e tremendo, brilho e rastro nas peças, bordas da tela acesas,
+// tranco maior, números maiores, e a trilha (musica/frenesi.js) ganha camadas. No ×20 (FRENESI) as cores giram.
+// Se a barra esvaziar, a corrente cai e tudo desliga. Quanto mais alto o degrau, mais curta a janela; e a cada marco de
+// pontos a velocidade sobe (a janela de todos os degraus encurta um pouco).
+// Só aparece com ?frenesi no endereço (fica gravado no aparelho; ?frenesi=0 desliga), no menu do espaço, abaixo do Clássico.
+// Guardado à parte do Clássico: ptui_rec_fre (pontos), ptui_fre_corr (maior corrente), ptui_fre_mult (maior multiplicador),
+// a partida em andamento em ptui_fre_save, e ptui_fre_vi (já viu a explicação).
+(()=>{ const m=location.search.match(/[?&]frenesi(?:=(\d))?/); if(m) localStorage.ptui_frenesi = m[1]==='0' ? '0' : '1'; })();
+const frenesiLigado = () => localStorage.ptui_frenesi==='1' && espacoLigado();
+// degraus: a partir de que corrente valem, o multiplicador, a cor das luzes, as duas cores da nebulosa e a janela
+// (segundos que a barra leva para esvaziar depois de uma junção)
+const DEGRAUS=[
+  {min:0,  x:1,  cor:'#a9b8ff', jan:3.0},
+  {min:4,  x:2,  cor:'#4fe3ff', jan:2.8, neb:['25,105,200','80,225,255']},
+  {min:10, x:3,  cor:'#5dffa2', jan:2.6, neb:['15,140,90','110,255,170']},
+  {min:18, x:5,  cor:'#ffd84a', jan:2.3, neb:['215,150,25','255,226,110']},
+  {min:28, x:8,  cor:'#ff8f2e', jan:2.0, neb:['225,85,20','255,165,70']},
+  {min:40, x:12, cor:'#ff4fc8', jan:1.8, neb:['170,20,125','255,90,210']},
+  {min:56, x:20, cor:'#d9a8ff', jan:1.6},   // FRENESI: as cores giram
+];
+const TOPO=DEGRAUS.length-1;
+const MARCOS=[2000,6000,15000,35000,80000,160000];   // pontos em que a velocidade sobe
+const somaCorrente = n => 2*n-1;   // junções no mesmo arrasto: 1, 3, 5, 7
+const degrauDe = c => { let k=0; while(k<TOPO && c>=DEGRAUS[k+1].min) k++; return k; };
+const janelaDe = (k,vel) => DEGRAUS[k].jan*Math.max(.7, 1-.06*(vel-1));   // cada velocidade encurta 6% (até 30%)
+const REC_FRE = () => +(localStorage.ptui_rec_fre||0);
+const recFre = () => ({pts:REC_FRE(), corr:+(localStorage.ptui_fre_corr||0), mult:+(localStorage.ptui_fre_mult||1)});
+const freSalvo = () => JSON.parse(localStorage.ptui_fre_save||'null');
+const fmtN = n => (n||0).toLocaleString('pt-BR');
+const POUCO_MOV = matchMedia('(prefers-reduced-motion: reduce)').matches;   // menos tremor, sem flash nem pulsação forte
+
+// ---------- cores ----------
+const rgbDe = h => [1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const COR_DEG = DEGRAUS.map(d=>rgbDe(d.cor));
+function hslRgb(h,s,l){ h=((h%1)+1)%1; const f=n=>{ const k=(n+h*12)%12, a=s*Math.min(l,1-l); return Math.round(255*(l-a*Math.max(-1,Math.min(k-3,9-k,1)))); }; return [f(0),f(8),f(4)]; }
+const mistura = (a,b,f) => a.map((v,i)=>v+(b[i]-v)*f);
+const txtRgb = a => a.map(v=>Math.round(Math.max(0,v))).join(',');
+const arcoIris = (t,d=0) => hslRgb(t*.12+d,.9,.62);
+
+// estado só da tela (não vai para o salvo): degrau suavizado, cor atual, batida, rastros
+const FV={t:0, k:0, cor:COR_DEG[0], bat:0, pulso:0, caiT:-9, sobeT:-9, rastros:[], mostra:0, mus:null, pouco:false};
+
+// ---------- menu ----------
+// botão abaixo do Clássico (só com ?frenesi); com partida salva, diz de onde continua
+function freMenu(on){
+  let b=$('#mFre');
+  if(!frenesiLigado()){ if(b) b.style.display='none'; return; }
+  if(!b){ b=document.createElement('button'); b.className='btn big'; b.id='mFre'; b.innerHTML='Frenesi<small>corrente de junções rápidas</small>'; b.onclick=freEntra; }
+  $('#mInf').after(b); b.style.display = on ? '' : 'none';
+  const sv=freSalvo(), sub=b.querySelector('small'); if(sub.dataset.txt==null) sub.dataset.txt=sub.textContent;
+  sub.textContent = sv ? `continuar · ${fmtN(sv.st.pontos)} pontos` : sub.dataset.txt; b.classList.toggle('comSub', !!sv);
+}
+// na primeira vez, uma janela curta com as regras
+function freEntra(){
+  if(localStorage.ptui_fre_vi) return frenesiJoga({retoma:true});
+  janelaMenu();
+  showOverlay(`<h2>Frenesi</h2>
+    <p>O Clássico com corrente: junte peças rápido, uma junção logo depois da outra.</p>
+    <p>Cada junção antes de a barra esvaziar aumenta a corrente. A corrente sobe o multiplicador (×2, ×3, ×5, ×8, ×12 e ×20) e os pontos são multiplicados. Duas junções no mesmo arrasto valem mais.</p>
+    <p>Se a barra esvaziar, a corrente cai e volta ao ×1. Quanto mais alto o degrau, menos tempo.</p>
+    <button class="btn g" id="frJoga">Jogar</button><button class="btn dim" id="frVolta">Voltar</button>`);
+  $('#frJoga').onclick=()=>{ localStorage.ptui_fre_vi='1'; frenesiJoga({retoma:true}); };
+  $('#frVolta').onclick=fechaJanelaMenu; FORA=fechaJanelaMenu;
+}
+
+// ---------- partida ----------
+// {retoma:true}: continua a partida salva, se houver; sem isso começa uma nova e apaga a salva
+function frenesiJoga(opt){
+  const sv = opt?.retoma ? freSalvo() : null;
+  if(!sv) localStorage.removeItem('ptui_fre_save');
+  hideOverlay(); hideCoach(); VEIO_DO_EDITOR=false;
+  // infinito: tudo o que vale para o Clássico vale aqui (peças do espaço, painel, pausa); frenesi: o que muda
+  S = {...freshState(), infinito:true, frenesi:true, missao:0, tema:1, char:'rola', moves:0, extra:0, pontos:0, feitas:{}, coresF:{}, quebras:[], seqI:0, combos:0, soltas:0, maxForm:0, rachados:0,
+       recAntes: sv ? sv.recAntes : recFre()};
+  const f=sv?.fre||{};
+  S.fre={corr:0, deg:0, resta:0, jan:janelaDe(0,f.vel||1), maxCorr:f.maxCorr||0, maxMult:f.maxMult||1, vel:f.vel||1};
+  S.fiscal=FISCAIS[0];
+  applyAndar(); startDay({...PATHS.comum, forma:null, caverna:false, energy:999-CFG.energy, semEnergia:true, w:4, h:4});
+  limpaMarcas(); if(sv) restauraFase(sv.st);
+  document.body.classList.add('modoCla','modoInf','modoFre'); $('#btnPause').textContent='☰';
+  freMontaTela(); FV.mostra=S.pontos||0; FV.rastros=[]; FV.k=0; FV.caiT=-9;
+  montaFreHud(); render();
+  setBanner('Frenesi', 'junte rápido'); pedeEncaixe();
+  freVisual(0); freTexto();
+  if(musName==='frenesi') MUS?.intensidade?.(0);
+}
+function freMontaTela(){
+  if(!$('#freBar')){ const b=document.createElement('div'); b.id='freBar';
+    b.innerHTML='<div id="freMult">×1</div><div id="freInfo"><div id="freLinha"><span id="freTxt"></span><span id="freVel"></span></div><div id="freTempo"><i></i></div></div>';
+    $('#stage').insertBefore(b, board); }
+  if(!$('#freBorda')){ const o=document.createElement('div'); o.id='freBorda'; o.innerHTML='<i></i><i></i><i></i>'; document.body.appendChild(o); }
+}
+function montaFreHud(){ $('#cMis').innerHTML=`<div><b id="cRec">${fmtN(REC_FRE())}</b><small>recorde</small></div>`; $('#ptsP').style.display=''; }
+// chamado pelo render (hudInfinito): os pontos do painel sobem rolando (freQuadro), o recorde acompanha
+function hudFrenesi(){
+  $('#cArr').textContent=S.moves||0; const r=$('#cRec'); if(r) r.textContent=fmtN(Math.max(REC_FRE(),S.pontos||0));
+  if(POUCO_MOV || (S.pontos||0)<FV.mostra) mostraPontos(S.pontos||0);
+}
+function mostraPontos(v){ FV.mostra=v; const el=$('#cPts'); if(!el) return; const s=fmtN(v); el.textContent=s; el.classList.toggle('longo', s.length>7); }
+
+// cada arrasto que mexeu (move, depois de contaMissao): corrente, degrau, pontos multiplicados, velocidade
+function freJogada(r){
+  const F=S.fre, t=tQuadro||performance.now()/1000, js=r.merges.filter(o=>o.k!=='p'), n=js.length;
+  freRastros(r,t);
+  if(!n) return;
+  const antes=F.deg;
+  F.corr = (F.corr>0 ? F.corr : 0) + somaCorrente(n);
+  F.deg = degrauDe(F.corr); F.jan = janelaDe(F.deg,F.vel); F.resta = F.jan;
+  const m=DEGRAUS[F.deg].x, base=js.reduce((a,o)=>a+VAL(o.t),0);
+  S.pontos += base*(m-1);   // contaMissao já somou a base
+  F.maxCorr=Math.max(F.maxCorr,F.corr); F.maxMult=Math.max(F.maxMult,m);
+  SFX.corrente(F.corr);
+  if(F.deg>antes) freSobe(F.deg,t);
+  while(F.vel<=MARCOS.length && S.pontos>=MARCOS[F.vel-1]){ F.vel++; F.jan=janelaDe(F.deg,F.vel); F.resta=F.jan; freAcelera(); }
+  freTexto(); freBarra();
+}
+// números saltando de cada junção: o valor e o multiplicador, maiores e mais acesos a cada degrau
+function freFlutua(r){
+  const k=S.fre.deg, m=DEGRAUS[k].x, cor=k===TOPO?'#ff7ad9':DEGRAUS[k].cor;
+  for(const o of r.merges){ if(o.k==='p') continue;
+    const el=document.createElement('div'); el.className='flut fre'; el.style.transform=pos(o.x,o.y);
+    el.style.setProperty('--fc',cor); el.style.setProperty('--fs',(.27+.028*k).toFixed(3));
+    el.innerHTML=`+${fmtN(VAL(o.t))}${m>1?`<small>×${m}</small>`:''}`; board.appendChild(el); setTimeout(()=>el.remove(),1000); }
+}
+// depois de cada arrasto (no lugar do checaInfinito): recordes na hora, salvo, ou fim de jogo
+function checaFrenesi(){
+  const F=S.fre;
+  if((S.pontos||0)>REC_FRE()) localStorage.ptui_rec_fre=S.pontos;
+  if(F.maxCorr>+(localStorage.ptui_fre_corr||0)) localStorage.ptui_fre_corr=F.maxCorr;
+  if(F.maxMult>+(localStorage.ptui_fre_mult||1)) localStorage.ptui_fre_mult=F.maxMult;
+  if(anyMove()){ localStorage.ptui_fre_save=JSON.stringify({recAntes:S.recAntes, st:estadoFase(), fre:{maxCorr:F.maxCorr, maxMult:F.maxMult, vel:F.vel}}); return; }
+  localStorage.removeItem('ptui_fre_save');
+  S.phase='fimI'; setBanner(null,'não cabe mais nada');
+  if(F.corr>0) freCai(tQuadro||performance.now()/1000, true);
+  const est=S; setTimeout(()=>{ if(S===est && S.phase==='fimI') frenesiFim(); },650);
+}
+function frenesiFim(){
+  const F=S.fre, A=S.recAntes||{pts:0,corr:0,mult:1}, rp=S.pontos>A.pts, rc=F.maxCorr>A.corr, rm=F.maxMult>A.mult;
+  mostraPontos(S.pontos||0);
+  if(rp||rc||rm) SFX.pagou(); else SFX.naoDeu();
+  const t=Math.max(1,S.maxForm||1), R=recFre(), rec=b=>b?'<em>recorde!</em>':'';
+  showOverlay(`<canvas id="espRes"></canvas><h2>Fim de jogo</h2>
+    <div class="freRes"><div><b>${fmtN(S.pontos)}</b><small>pontos</small>${rec(rp)}</div><div><b>×${F.maxMult}</b><small>maior multiplicador</small>${rec(rm)}</div><div><b>${F.maxCorr}</b><small>maior corrente</small>${rec(rc)}</div></div>
+    <p>Maior peça: ${rockName(t)} · velocidade ${F.vel} · ${S.moves} arrastos</p>
+    ${rp&&rc&&rm?'':`<p class="freRecs">Seus recordes: ${fmtN(R.pts)} pontos · ×${R.mult} · corrente de ${R.corr}</p>`}
+    <button class="btn g" id="iDeNovo">Jogar de novo</button><button class="btn dim" id="iMenu">Menu</button>`);
+  espPlanetaGrande($('#espRes'),t,'vit');
+  $('#iDeNovo').onclick=()=>frenesiJoga(); $('#iMenu').onclick=()=>{ hideOverlay(); showMenu(); };
+}
+
+// ---------- subir, cair, acelerar ----------
+function freSobe(k,t){
+  FV.sobeT=t; freVisual(k);
+  freFlash(k===TOPO?'FRENESI!':'×'+DEGRAUS[k].x, k);
+  if(k===TOPO) SFX.frenesi(); else SFX.degrau(k);
+  if(musName==='frenesi') MUS?.acento?.(k===TOPO?1.5:1);
+  const g=geoTab(); if(!g.r.width) return;
+  // anel saindo do tabuleiro (céu) e onda na malha
+  aneisE.push({x:g.r.left+g.r.width/2, y:g.r.top+g.r.height/2, t0:t, v:g.r.width*(1.1+.1*k), rgb:txtRgb(COR_DEG[k]), a:.5, w:10});
+  if(!POUCO_MOV){ ondasM.push({x:g.O+g.r.width*g.D/2, y:g.O+g.r.height*g.D/2, t0:t, a:g.P*(.1+.02*k)}); camE.vy-=90+25*k;
+    $('#stage').animate?.([{transform:'scale(1)'},{transform:`scale(${1.02+.004*k})`},{transform:'scale(1)'}],{duration:260,easing:'ease-out'});
+    $('#freMult')?.animate?.([{transform:'scale(1.8)'},{transform:'scale(1)'}],{duration:320,easing:'cubic-bezier(.2,1.6,.4,1)'}); }
+}
+// a barra esvaziou: a corrente cai e tudo desliga (fim: o jogo acabou com a corrente acesa)
+function freCai(t,fim){
+  const F=S.fre, k=F.deg, c=F.corr, mult=DEGRAUS[k].x;
+  F.corr=0; F.deg=0; F.resta=0; F.jan=janelaDe(0,F.vel);
+  freVisual(0);   // (a barra zera junto)
+  if(k>=1){ FV.caiT=t; SFX.cai(k);
+    const ap=document.createElement('div'); ap.className='freApaga'; document.body.appendChild(ap); setTimeout(()=>ap.remove(),800);
+    const bar=$('#freBar'); if(bar){ const q=document.createElement('div'); q.className='freCaiu'; q.textContent='×'+mult; bar.appendChild(q); setTimeout(()=>q.remove(),800); }
+    const g=geoTab(); if(!POUCO_MOV && g.r.width) ondasM.push({x:g.O+g.r.width*g.D/2, y:g.O+g.r.height*g.D/2, t0:t, a:-g.P*.09}); }
+  freTexto(fim||k<1 ? null : `a corrente caiu · ${c}`);   // no ×1 a corrente curta cai sem alarde
+}
+function freAcelera(){ SFX.acelera(); freFlash('velocidade '+S.fre.vel, S.fre.deg, 'vel'); }
+// letreiro grande no meio do tabuleiro (degrau novo, FRENESI!, velocidade)
+function freFlash(txt,k,cls=''){
+  const st=$('#stage'); if(!st) return;
+  const el=document.createElement('div'); el.className='freFlash '+cls+(k===TOPO&&!cls?' topo':''); el.textContent=txt;
+  el.style.setProperty('--fc', DEGRAUS[k].cor); st.appendChild(el); setTimeout(()=>el.remove(),1300);
+}
+// cor do degrau no corpo da página (barra, número, bordas, etiquetas): muda só quando o degrau muda. O que pulsa
+// (bordas, número, barra) anda por animações do próprio navegador, fora da linha principal do jogo: escrever estilo a
+// cada quadro (como na primeira tentativa) refazia o layout e custava boa parte da folga do quadro.
+function freVisual(k){
+  const b=document.body; for(let i=0;i<=TOPO;i++) b.classList.toggle('fd'+i, i===k);
+  b.style.setProperty('--fc', DEGRAUS[k].cor);
+  const m=$('#freMult'); if(m) m.textContent='×'+DEGRAUS[k].x;
+  const bo=$('#freBorda'); if(bo){ FV.borda = k ? Math.min(.8,.15+.1*k) : 0; bo.firstChild.style.opacity = k===TOPO ? .35 : FV.borda; }
+  if(musName==='frenesi') MUS?.intensidade?.(k/TOPO);
+  freBarra();
+}
+// a barra do tempo esvazia sozinha (animação do navegador), da fração que falta até zero; pausa junto com o jogo
+function freBarra(){
+  const i=$('#freTempo')?.firstChild, F=S?.fre; if(!i || !F) return;
+  FV.barra?.cancel(); FV.barra=null;
+  if(F.corr>0 && F.resta>0){ FV.barra=i.animate([{transform:`scaleX(${Math.min(1,F.resta/F.jan)})`},{transform:'scaleX(0)'}],{duration:F.resta*1000, fill:'forwards'});
+    if(!FV.jogando) FV.barra.pause(); }
+}
+function freTexto(msg){
+  const F=S.fre, el=$('#freTxt'); if(!el) return;
+  if(msg){ el.textContent=msg; FV.msgAte=(tQuadro||0)+1.6; }
+  else if(F.corr<=0) el.textContent = (tQuadro||0)<(FV.msgAte||0) ? el.textContent : 'junte rápido para acender';
+  else if(F.deg===TOPO) el.textContent=`frenesi · corrente ${F.corr}`;
+  else { const p=DEGRAUS[F.deg+1]; el.textContent=`corrente ${F.corr} · ×${p.x} em ${p.min-F.corr}`; }
+  const v=$('#freVel'); if(v) v.textContent = F.vel>1 ? 'vel '+F.vel : '';
+}
+// rastro de luz atrás das peças que andaram (a partir do ×3); desenhado no céu (freCeu)
+function freRastros(r,t){
+  if(S.fre.deg<2 && FV.k<1.5) return;
+  const ant=new Map((S.undoSnap?.tiles||[]).map(q=>[q.id,q])), g=geoTab(); if(!g.r.width) return;
+  const tela=(x,y)=>[g.r.left+(g.g0+(x+.5)*g.P)/g.D, g.r.top+(g.g0+(y+.5)*g.P)/g.D];
+  for(const q of [...S.tiles,...r.gone]){ const a=ant.get(q.id); if(!a || (a.x===q.x && a.y===q.y)) continue;
+    FV.rastros.push({a:tela(a.x,a.y), b:tela(q.x,q.y), t0:t, cor:corNivelRgb(Math.max(1,q.t))}); }
+}
+
+// ---------- a cada quadro (espLoop) ----------
+function freQuadro(t){
+  if(!S || !S.frenesi || !S.fre) return;
+  const F=S.fre, dt=Math.min(.1,Math.max(0,t-FV.t)); FV.t=t;
+  const jogando = S.phase==='mine' && !overlayOpen() && $('#scrGame').classList.contains('on');
+  FV.jogando=jogando;
+  if(jogando && F.corr>0){ F.resta-=dt; if(F.resta<=0) freCai(t); }
+  if(F.corr<=0 && FV.msgAte && t>FV.msgAte){ FV.msgAte=0; freTexto(); }
+  // a música pode ter acabado de carregar: recebe o degrau atual
+  if(musName==='frenesi' && MUS && FV.mus!==MUS){ FV.mus=MUS; MUS.intensidade?.(F.deg/TOPO); }
+  // batida da música (ou um relógio de 120 bpm, sem música): as luzes pulsam no tempo
+  const b = musName==='frenesi' && MUS?.batida ? MUS.batida() : null, fase = b ? b.fase : (t*2)%1;
+  if(fase<FV.bat) freBatida(t);
+  FV.bat=fase; FV.pulso=Math.pow(1-fase,3);
+  // degrau suavizado: as cores vão mudando (sobem devagar, apagam rápido)
+  FV.k += (F.deg-FV.k)*Math.min(1, dt*(F.deg<FV.k?6:3.5));
+  const k0=Math.floor(FV.k), k1=Math.min(TOPO,k0+1);
+  FV.cor = mistura(COR_DEG[k0], COR_DEG[k1], FV.k-k0); if(FV.k>TOPO-1) FV.cor=mistura(FV.cor, arcoIris(t), FV.k-(TOPO-1));
+}
+// o que muda na página a cada quadro: no fim do quadro (espLoop), depois que o céu, a malha e as peças já leram as
+// posições, para não forçar o navegador a refazer o layout no meio do quadro
+function frePinta(t){
+  if(!S || !S.frenesi || !S.fre) return;
+  const F=S.fre;
+  // barra: pausa e volta com o jogo; vermelha piscando no fim
+  const b=FV.barra; if(b){ if(FV.jogando && b.playState==='paused') b.play(); else if(!FV.jogando && b.playState==='running') b.pause(); }
+  const tr=$('#freTempo'), pouco=F.corr>0 && F.resta<F.jan*.3; if(tr && tr._p!==pouco){ tr._p=pouco; tr.classList.toggle('pouco',pouco); }
+  // pontos rolando até o total, 20 vezes por segundo (o número fica numa caixa de tamanho fixo: não mexe no resto da tela)
+  const alvo=S.pontos||0; if(FV.mostra<alvo && t-(FV.ptsT||0)>.045){ FV.ptsT=t; mostraPontos(Math.min(alvo, FV.mostra+Math.max(1,Math.ceil((alvo-FV.mostra)*.3)))); }
+}
+// a cada tempo da música: a partir do ×8 a malha treme junto; no ×20 um anel sai do tabuleiro
+function freBatida(t){
+  const k=S.fre.deg; if(k<2 || POUCO_MOV || S.phase!=='mine') return;
+  // o número e as bordas dão um pulo na batida (animação do navegador, uma por tempo)
+  $('#freMult')?.animate([{scale:1.04+.025*k},{scale:1}],{duration:300,easing:'ease-out'});
+  const bo=$('#freBorda'); if(bo && k<TOPO) bo.firstChild.animate([{opacity:Math.min(1,FV.borda+.12+.04*k)},{opacity:FV.borda}],{duration:380,easing:'ease-out'});
+  if(k<4) return;
+  const g=geoTab(); if(!g.r.width) return;
+  tremM.push({x:g.O+g.r.width*g.D/2, y:g.O+g.r.height*g.D/2, t0:t, a:g.P*(.012+.008*(k-3))});
+  if(k===TOPO) aneisE.push({x:g.r.left+g.r.width/2, y:g.r.top+g.r.height/2, t0:t, v:g.r.width*.9, rgb:txtRgb(arcoIris(t)), a:.3, w:5});
+}
+// as duas cores da nebulosa (ceuDesenha): as do mundo no ×1, as do degrau acima, girando no ×20, pulsando na batida;
+// logo depois da queda, cinza e escura por um instante
+function freNeb(neb,t){
+  const k=FV.k, cai=Math.max(0,1-(t-FV.caiT)/1.1);
+  if(k<.02 && !cai) return neb;
+  const deg=(i,j)=>{ if(i===0) return rgbDe0(neb[j]); if(i===TOPO) return j ? arcoIris(t,.33) : hslRgb(t*.12,.85,.42); return rgbDe0(DEGRAUS[i].neb[j]); };
+  const k0=Math.floor(k), k1=Math.min(TOPO,k0+1), f=k-k0, luz=1+(POUCO_MOV?.04:.1+.05*k)*FV.pulso;
+  return [0,1].map(j=>{ let c=mistura(deg(k0,j),deg(k1,j),f).map(v=>v*luz);
+    if(cai){ const cinza=(c[0]+c[1]+c[2])/3*.45; c=c.map(v=>v+(cinza-v)*cai*.85); }
+    return txtRgb(c); });
+}
+const rgbDe0 = s => s.split(',').map(Number);
+// malha: a cor do mundo vai para a do degrau, mais acesa
+function freMalhaCor(rgb){ const k=FV.k; if(k<.03) return rgb; return txtRgb(mistura(rgbDe0(rgb), FV.cor, Math.min(.85,.2+.11*k))); }
+const freMalhaGanho = () => 1+.13*FV.k;
+const freMalhaSelo = t => Math.round(FV.k*12)+(FV.k>TOPO-.5?':'+Math.round(t*6):'');
+// brilho redondo de uma cor, pintado uma vez e só copiado (a cor vai em degraus de 16, o arco-íris em 24 tons)
+const HALO=new Map();
+function haloDe(rgb){
+  const q=rgb.map(v=>Math.min(255,Math.round(v/16)*16)), k=q.join(','); let s=HALO.get(k); if(s) return s;
+  s=document.createElement('canvas'); s.width=s.height=64; const c=s.getContext('2d'), g=c.createRadialGradient(32,32,5,32,32,32);
+  g.addColorStop(0,`rgba(${k},1)`); g.addColorStop(.45,`rgba(${k},.45)`); g.addColorStop(1,`rgba(${k},0)`); c.fillStyle=g; c.fillRect(0,0,64,64);
+  if(HALO.size>60) HALO.clear(); HALO.set(k,s); return s;
+}
+// no céu, atrás do tabuleiro: brilho na cor do degrau atrás de cada peça (pulsando) e os rastros
+function freCeu(c,t){
+  const k=FV.k; if(k<.05 && !FV.rastros.length) return;
+  c.save(); c.globalCompositeOperation='lighter';
+  const g=geoTab();
+  if(k>=.05){ c.globalAlpha=Math.min(.55,.1+.065*k)*(1+(POUCO_MOV?0:.6*FV.pulso)); let i=0;
+    const arco=k>TOPO-.5, um=arco?null:haloDe(FV.cor), hb=Math.floor(t*.12*24);
+    for(const {el,fr} of pecasNoQuadro()){ const x=fr.left+fr.width/2, y=fr.top+fr.height/2, R=g.cel*(.58+.05*k)*Math.max(1,kNivel(el._t.t)*.75);
+      c.drawImage(arco ? haloDe(hslRgb((hb+i*2)/24,.9,.62)) : um, x-R, y-R, 2*R, 2*R); i++; }
+    c.globalAlpha=1; }
+  const cel=g.cel;
+  for(const r of FV.rastros){ const u=(t-r.t0)/.38; if(u<0||u>1) continue; const [x0,y0]=r.a, [x1,y1]=r.b, gr=c.createLinearGradient(x0,y0,x1,y1);
+    gr.addColorStop(0,`rgba(${r.cor},0)`); gr.addColorStop(1,`rgba(${r.cor},${(.75*(1-u)).toFixed(3)})`);
+    c.strokeStyle=gr; c.lineWidth=cel*(.18+.04*Math.min(k,6))*(1-u*.6); c.lineCap='round'; c.beginPath(); c.moveTo(x0,y0); c.lineTo(x1,y1); c.stroke(); }
+  FV.rastros=FV.rastros.filter(r=>t-r.t0<.38);
+  c.restore();
+}
+// força das reações do fundo a cada arrasto (espJogada): 0 no ×1, 1 no ×20
+const freForca = () => S && S.frenesi && S.fre ? S.fre.deg/TOPO : 0;
 function setBanner(title,sub){ if(title!==null) $('#bTitle').innerHTML=enrich(title); $('#bSub').innerHTML=enrich(sub||''); }
 function anim(id,name){ const el=els.get(id); if(!el) return; const f=el.firstChild; f.classList.remove(name); void f.offsetWidth; f.classList.add(name); }
 function shake(level){ const c='shake'+Math.min(level,3); stage.classList.remove('shake1','shake2','shake3'); void stage.offsetWidth; stage.classList.add(c); }
@@ -4946,14 +5318,15 @@ document.addEventListener('visibilitychange',()=>{ if(AC && AC.state!=='closed')
 // ===================== MÚSICA =====================
 // Trilha por tela (todas sintetizadas, vindas do Gabinete). TRIM iguala o volume entre elas.
 const TRILHA = {menu:'lofi-prorroga', mapa:'armorial', mina:'lofi-espera', fiscal:'lofi-segredo', mercador:'bossa', fim:'sofrencia-lofi'};
-const TRIM = {'armorial':.55, 'bossa':.7, 'lofi-prorroga':.95, 'lofi-espera':.95, 'lofi-segredo':1, 'sofrencia-lofi':1.1, 'orbita':1.6, 'estacao':1.55, 'pulsar':1.45};   // as eletrônicas medidas contra o lo-fi
+const TRIM = {'armorial':.55, 'bossa':.7, 'lofi-prorroga':.95, 'lofi-espera':.95, 'lofi-segredo':1, 'sofrencia-lofi':1.1, 'orbita':1.6, 'estacao':1.55, 'pulsar':1.45, 'frenesi':1};   // as eletrônicas medidas contra o lo-fi (a Frenesi já sai mais alta: tem compressor e camadas)
 let music = localStorage.mina_music !== '0', MUS=null, musName=null, musKey=null, musBus=null, musFila=Promise.resolve();
 function trilha(k){ musKey=k; musFila=musFila.then(trocaMusica).catch(e=>console.warn(e)); }
 // no espaço (2048 Astros) as trilhas são eletrônicas: Estação no menu e na lista de fases, Órbita na Jornada, Pulsar no Clássico
+// e a Frenesi no Frenesi (em teste: a que tem camadas e lê a intensidade da corrente)
 function qualTrilha(k){
   if(typeof espacoLigado==='function' && espacoLigado()){
     if(k==='menu' && (S?.phase==='lista' || document.getElementById('scrMenu')?.classList.contains('on'))) return 'estacao';   // a troca roda depois que a tela já mudou
-    if(k==='mina' && S && (S.missao||S.infinito)) return S.infinito ? 'pulsar' : 'orbita';
+    if(k==='mina' && S && (S.missao||S.infinito)) return S.infinito ? (S.frenesi ? 'frenesi' : 'pulsar') : 'orbita';
   }
   return TRILHA[k];
 }
@@ -5099,11 +5472,20 @@ const SONS_ESP={
   derrota(){ tomE({f:392,to:98,a:.05,d:1.4,v:.08,type:'triangle',lp:1800,lpTo:200,rev:.4}); tomE({t:.15,f:294,to:73,a:.05,d:1.4,v:.06,type:'triangle',lp:1500,lpTo:150,rev:.4});
     ruidoE({f:700,to:90,d:1.2,v:.03,type:'lowpass'}); },
   botao(){ tomE({f:1100,to:1500,d:.045,v:.04}); },
+  // Frenesi: um bipe que sobe de nota a cada junção da corrente; o degrau novo sobe um arpejo (mais alto a cada degrau);
+  // no ×20, um acorde aberto com chuva de sinos; quando a corrente cai, tudo desce e apaga; velocidade nova: escadinha rápida
+  corrente(n){ const g=Math.min(n,16), p=ladoE(); sinoE({f:notaE(0,g+2),d:.22,v:.04,ratio:2,idx:.6,pan:p,rev:.25}); tomE({f:notaE(1,g+2),d:.05,v:.02,type:'square',lp:3500,pan:p}); },
+  degrau(k){ for(let i=0;i<4+k;i++) sinoE({t:i*.045,f:notaE(0,k*2+i+2),d:.5,v:.04,ratio:2,idx:.7,rev:.45,pan:-.5+i*.12});
+    ruidoE({f:700,to:9000,a:.03,d:.35,v:.035,q:1,rev:.4}); tomE({f:notaE(-1,k),a:.01,d:.5,v:.08,type:'triangle',lp:1200}); },
+  frenesi(){ [0,7,12,16,19,24].forEach((s,i)=>tomE({t:.02*i,f:110*Math.pow(2,s/12),a:.04,d:1.4,v:.04,type:'sawtooth',lp:3200,lpTo:900,rev:.5,pan:-.5+i*.2,det:i%2?8:-8}));
+    ruidoE({f:500,to:12000,a:.05,d:.6,v:.05,q:.8,rev:.5}); for(let i=0;i<12;i++) sinoE({t:.08+i*.04,f:notaE(1,i+2),d:.6,v:.03,ratio:2,idx:.6,rev:.5,pan:Math.sin(i)*.8}); },
+  cai(k){ tomE({f:notaE(1,Math.max(2,k*2)),to:60,a:.01,d:.7,v:.06,type:'sawtooth',lp:2600,lpTo:160,rev:.3}); ruidoE({f:3200,to:140,d:.6,v:.05,type:'lowpass'}); tomE({t:.04,f:120,to:38,d:.45,v:.1}); },
+  acelera(){ for(let i=0;i<6;i++) tomE({t:i*.05,f:notaE(1,i*2),d:.1,v:.03,type:'square',lp:4000,pan:-.4+i*.16}); },
 };
 // no espaço (fases da Jornada e Clássico) os sons de sempre viram os do espaço; a mina segue com os dela
 const somEsp = () => typeof espacoLigado==='function' && espacoLigado() && typeof S!=='undefined' && !!S && !!(S.missao||S.infinito);
 for(const [k,e] of [['arrastar','arrastar'],['fundir','fundir'],['pagou','vitoria'],['naoDeu','derrota']]){ const velho=SFX[k]; SFX[k]=(...a)=>somEsp()?SONS_ESP[e](...a):velho(...a); }
-for(const k of ['nasce','poucos','racha','nebulosa','estrelas']) SFX[k]=(...a)=>{ if(somEsp()) SONS_ESP[k](...a); };
+for(const k of ['nasce','poucos','racha','nebulosa','estrelas','corrente','degrau','frenesi','cai','acelera']) SFX[k]=(...a)=>{ if(somEsp()) SONS_ESP[k](...a); };
 SFX.botao=()=>{ if(typeof espTela==='function' && espTela()) SONS_ESP.botao(); };
 
 // ===================== UI =====================
@@ -5200,7 +5582,7 @@ let endArmed=null;
 function resetEnd(){ clearTimeout(endArmed); endArmed=null; $('#btnEnd').textContent=S&&(S.missao||S.infinito)?'Recomeçar':S&&S.semEnergia?'Parar aqui':'Encerrar o dia'; $('#btnEnd').classList.remove('g'); }
 $('#btnEnd').onclick=()=>{
   if(coachBlock) return;
-  if(S && S.infinito){ if(S.phase==='mine') infinitoJoga(); return; }
+  if(S && S.infinito){ if(S.phase==='mine') (S.frenesi ? frenesiJoga : infinitoJoga)(); return; }
   if(S && S.missao){ if(S.phase==='mine') missaoJoga(S.missao); return; }
   if(S.energy<=0 || endArmed){ resetEnd(); endDay(); return; }
   $('#btnEnd').textContent=S.semEnergia?'Confirmar?':`Confirmar? (sobra ${S.energy}⚡)`;

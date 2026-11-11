@@ -144,6 +144,7 @@ function recolheCarro(){
   S.tiles=S.tiles.filter(x=>x!==t); c.n++; return t;
 }
 function flutuaPontos(r){
+  if(S.frenesi) return freFlutua(r);   // Frenesi: com o multiplicador (frenesi.js)
   const f=(x,y,v)=>{ const el=document.createElement('div'); el.className='flut'; el.textContent='+'+v; el.style.transform=pos(x,y); board.appendChild(el); setTimeout(()=>el.remove(),950); };
   for(const o of r.merges) if(o.k!=='p') f(o.x,o.y,VAL(o.t));
   for(const b of r.breaks) f(b.x,b.y,2*VAL(b.t));
@@ -491,8 +492,9 @@ function infinitoJoga(opt){
   setBanner('Clássico', 'junte até não caber mais nada'); pedeEncaixe();
 }
 function montaInfinitoHud(){ $('#cMis').innerHTML=`<div><b id="cRec">${REC_INF()}</b><small>recorde</small></div>`; $('#ptsP').style.display=''; }
-function hudInfinito(){ $('#cArr').textContent=S.moves||0; $('#cPts').textContent=S.pontos||0; const r=$('#cRec'); if(r) r.textContent=Math.max(REC_INF(),S.pontos||0); }
+function hudInfinito(){ if(S.frenesi) return hudFrenesi(); $('#cArr').textContent=S.moves||0; $('#cPts').textContent=S.pontos||0; const r=$('#cRec'); if(r) r.textContent=Math.max(REC_INF(),S.pontos||0); }
 function checaInfinito(){
+  if(S.frenesi) return checaFrenesi();   // o Frenesi guarda à parte (frenesi.js)
   // o recorde fica guardado na hora: sair, recomeçar ou fechar o jogo no meio da partida não o perde
   if((S.pontos||0)>REC_INF()) localStorage.ptui_rec_inf=S.pontos;
   if(anyMove()){ localStorage.ptui_inf_save=JSON.stringify({recAntes:S.recAntes, st:estadoFase()}); return; }
@@ -502,11 +504,12 @@ function checaInfinito(){
 }
 // Recomeçar pela pausa com pontos na partida: pergunta antes de perder a partida
 function recomecaInfinito(){
-  if(!(S.pontos>0)) return infinitoJoga();
+  const joga = S.frenesi ? frenesiJoga : infinitoJoga;
+  if(!(S.pontos>0)) return joga();
   const volta=()=>{ hideOverlay(); pauseMenu(); };
   showOverlay(`<h2>Recomeçar?</h2><p>A partida atual será perdida.</p>
     <button class="btn g" id="rSim">Recomeçar</button><button class="btn dim" id="rNao">Voltar</button>`);
-  $('#rSim').onclick=()=>infinitoJoga(); $('#rNao').onclick=volta; FORA=volta;
+  $('#rSim').onclick=()=>joga(); $('#rNao').onclick=volta; FORA=volta;
 }
 function infinitoFim(){
   const rec=S.pontos>S.recAntes; if(S.pontos>REC_INF()) localStorage.ptui_rec_inf=S.pontos;
