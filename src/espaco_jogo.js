@@ -583,7 +583,37 @@ const nivelDe=n=>ESP.LADDER.findIndex(x=>x.n===n)+1;
 // tamanho da caixa da peça: o corpo (Terra = 17, nenhum menor que 7) dividido pela parte da caixa que o corpo ocupa
 const tamLogo=n=>{ const def=ESP.byName(n), rs=(def.sp&&def.sp.rScale)||1; return Math.max(7,17*Math.sqrt(DIAM_KM[n]/12742))/rs; };
 const escalaLogo=d=>d>=16?.8:d>=14?.88:d>=12?1:1.15;   // tudo encolhe conforme aparecem os gigantes
+// antes do Sol (pedido em 2026-11-10): os planetas descobertos giram em volta do nome, numa órbita só, espaçados por
+// igual e alternando grandes e pequenos (os gigantes não se juntam de um lado); passam sempre atrás do nome, e o cinturão
+// de pedras passa na frente embaixo. O sistema solar (espLogo) só aparece quando a pessoa forma o Sol: aí já descobriu
+// todos os planetas, e eles entram de uma vez nas órbitas reais.
+const solAceso=()=>DESC()>=nivelDe('Sol');
+const altLogo=w=>Math.round(w*(solAceso()?.92:.74));
+function espLogoAnel(c,W,H,u,t){
+  const Q=Math.min(W/360, H/266), cx=W/2, cy=H*.5, rx=W/2-16*Q, ry=Math.min(82*Q, H/2-18*Q), tl=-.1, ct=Math.cos(tl), st=Math.sin(tl), d=DESC();
+  const lugar=(a,f=1,dy=0)=>{ const x0=Math.cos(a)*rx*f, y0=Math.sin(a)*ry*f+dy*ry; return [cx+x0*ct-y0*st, cy+x0*st+y0*ct]; };
+  // tamanho real bem comprimido (Terra = 15, Júpiter = 31, Plutão = 9), para nenhum dominar o desenho
+  const tam=n=>{ const def=ESP.byName(n), rs=(def.sp&&def.sp.rScale)||1; return 15*Math.pow(DIAM_KM[n]/12742,.3)/rs; };
+  const lista=ORDEM_SOL.filter(n=>nivelDe(n)<=d).sort((a,b)=>DIAM_KM[b]-DIAM_KM[a]), anel=[];
+  for(let i=0,j=lista.length-1;i<=j;i++,j--){ anel.push(lista[i]); if(i!==j) anel.push(lista[j]); }   // grande, pequeno, grande...
+  const corpos=anel.map((n,i)=>{ const a=t*.12+i*2*Math.PI/anel.length, [x,y]=lugar(a); return {n, sz:tam(n)*Q, x, y, z:Math.sin(a), esf:ESP.byName(n).kind==='sphere'}; });
+  if(nivelDe('Lua')<=d){ const terra=corpos.find(b=>b.n==='Terra'), a=t*1.3, sz=tam('Lua')*Q;
+    if(terra) corpos.push({n:'Lua', sz, x:terra.x+Math.cos(a)*14*Q, y:terra.y+Math.sin(a)*5*Q, z:terra.z+Math.sin(a)*.01, esf:true});
+    else { const a2=t*.12+Math.PI, [x,y]=lugar(a2); corpos.push({n:'Lua', sz, x, y, z:Math.sin(a2), esf:true}); } }
+  const esf=corpos.filter(b=>b.esf), gl=esf.length>0 && glAtivo() && ESP.discosGL(esf.map(b=>({n:b.n, sz:b.sz, t})));
+  if(gl) glSujo=true;
+  const pedras=cinto().map(p=>{ const a=p.a+t*.1*p.v, [x,y]=lugar(a,1.08+p.dr,p.dy); return {p,x,y,z:Math.sin(a)}; });
+  const pedrasDe=(lado)=>{ for(const q of pedras){ if((q.z<0)!==(lado<0)) continue; const kk=.72+.4*(q.z+1)/2;
+      c.globalAlpha=.5+.5*(q.z+1)/2; if(q.p.pedra) pedrinha(c,q.x,q.y,q.p.s*Q*kk,q.p,t); else { c.fillStyle=q.p.c; c.beginPath(); c.arc(q.x,q.y,q.p.s*Q*kk,0,7); c.fill(); } }
+    c.globalAlpha=1; };
+  pedrasDe(-1);
+  corpos.slice().sort((a,b)=>a.z-b.z).forEach(b=>{ const esc=.76+.24*(b.z+1)/2;
+    if(gl && b.esf) ESP.drawPecaGL(c,b.n,b.x,b.y,b.sz,esc); else ESP.drawPeca(c,b.n,t,b.x,b.y,b.sz,1,true,esc); });
+  c.drawImage(nomeLogo(W,H,Q,cx,cy),0,0);
+  pedrasDe(1);
+}
 function espLogo(c,W,H,u,t){
+  if(!solAceso()) return espLogoAnel(c,W,H,u,t);
   const Q=Math.min(W/360, H/266), cx=W/2, nomeH=110*Q, ny=H-nomeH/2+2*Q, areaH=H-nomeH, scy=areaH/2+2*Q, d=DESC(), k=escalaLogo(d);
   const rx=W/2-14*Q, ry=Math.min(.34*rx, areaH/2-22*Q*k), tl=-.1, ct=Math.cos(tl), st=Math.sin(tl);
   const lugar=(a,f,dy=0)=>{ const x0=Math.cos(a)*rx*f, y0=Math.sin(a)*ry*f+dy*ry; return [cx+x0*ct-y0*st, scy+x0*st+y0*ct]; };
@@ -628,7 +658,7 @@ function ajustaMenu(){
   const menu=$('#scrMenu'), lg=$('#logoEsp'); if(!lg || !menu.classList.contains('on') || !document.body.classList.contains('espaco')) return;
   const vis=[...menu.children].filter(e=>e.offsetParent!==null); if(!vis.length) return;
   const alto=vis[vis.length-1].getBoundingClientRect().bottom-vis[0].getBoundingClientRect().top, resto=alto-lg.offsetHeight;
-  const w=Math.min(360, innerWidth-16), h=Math.round(Math.max(110, Math.min(w*.92, innerHeight-28-resto)));
+  const w=Math.min(360, innerWidth-16), h=Math.round(Math.max(110, Math.min(altLogo(w), innerHeight-28-resto)));
   if(Math.abs(h-(lg._fh||0))>1) espCanvasFixo(lg, w, h, espLogo);
 }
 addEventListener('resize', ()=>requestAnimationFrame(ajustaMenu));
@@ -661,7 +691,7 @@ function espMenu(){
   if(document.fonts?.load){ document.fonts.load("900 40px Orbitron"); document.fonts.load("700 20px 'Exo 2'"); }
   let lg=$('#logoEsp');
   if(!lg){ lg=document.createElement('canvas'); lg.id='logoEsp'; menu.insertBefore(lg, menu.firstChild); }
-  const w=Math.min(360, innerWidth-16); if(!lg._fh) espCanvasFixo(lg, w, Math.round(w*.92), espLogo);
+  const w=Math.min(360, innerWidth-16); if(!lg._fh) espCanvasFixo(lg, w, altLogo(w), espLogo);
   requestAnimationFrame(ajustaMenu); document.fonts?.ready?.then(()=>requestAnimationFrame(ajustaMenu));
   if(!$('#ovos')){
     const d=document.createElement('div'); d.id='ovos';
