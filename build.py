@@ -280,12 +280,65 @@ body.modoFre .fd6 .etq{box-shadow:0 0 9px #d9a8ff;border-color:#d9a8ff}
 .freRes small{font-size:11px;line-height:1.15;color:#b9a9d9;text-align:center}
 .freRes em{font-style:normal;font:700 10px 'Exo 2',sans-serif;color:#ffd36e;text-transform:uppercase;letter-spacing:.08em}
 .freRecs{font-size:13px !important}
+/* Frenesi em rodadas: relógio e meta no painel, cartas entre as rodadas, bônus no tabuleiro */
+#freMetaP{display:none}
+body.modoFre .hudCla #ptsP{display:none !important}
+body.modoFre .hudCla #freMetaP{display:flex;flex:none;width:150px;justify-content:center;text-align:center}
+#freMetaP>div{width:100%;display:flex;flex-direction:column;align-items:center}
+#frePts{display:block;width:100%;height:30px;line-height:30px;font-size:28px;contain:strict}
+#frePts.longo{font-size:20px}
+#freMetaP small{font-size:11px}
+#freMetaBar{display:block;width:84%;height:5px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden;margin-top:3px}
+#freMetaBar i{display:block;height:100%;background:#ffd36e;box-shadow:0 0 6px #ffd36e;transform-origin:0 50%;transform:scaleX(0);transition:transform .2s}
+body.modoFre .hudCla #cMis{min-width:96px}
+.freRel{display:flex;flex-direction:column;align-items:center}
+#freRelogio{display:block;width:88px;height:30px;line-height:30px;font-size:28px;contain:strict;color:#f3eefc}
+#freRelogio.pouco{color:#ff6a6a;animation:frePisca .5s steps(2) infinite}
+.freFlash.rod{top:48%;font-size:min(38px,9.5vw);text-transform:uppercase;letter-spacing:.04em;text-align:center}
+.freFlash small{display:block;font:700 15px 'Exo 2',sans-serif;letter-spacing:.1em;margin-top:6px;text-shadow:0 0 6px var(--fc)}
+.freCartas{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+.freCartas .num{font:900 12px Orbitron,sans-serif;letter-spacing:.2em;color:#6fe0ff}
+body.espaco .freCartas h2{margin:2px 0}
+.freSobra,.freProx{font-size:13px !important;margin:0 !important}
+.freMao{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;margin:4px 0}
+.freMao.n4{grid-template-columns:repeat(2,1fr)}
+.freMao.n1{grid-template-columns:1fr;width:60%}
+.freCarta{position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 6px 10px;border-radius:14px;background:rgba(10,8,25,.72);border:2px solid #6fe0ff;color:#d8e6f2;box-shadow:0 0 14px #6fe0ff44,inset 0 0 12px #6fe0ff22;cursor:pointer;font-family:'Exo 2',sans-serif}
+.freCarta.esp{border-color:#ffd36e;box-shadow:0 0 16px #ffd36e55,inset 0 0 12px #ffd36e22}
+.freCarta.bon{border-color:#ff7ad9;box-shadow:0 0 14px #ff7ad955,inset 0 0 12px #ff7ad922}
+.freCarta:active{transform:translateY(2px)}
+.freCarta b{font:800 14px 'Exo 2',sans-serif;color:#fff;line-height:1.1}
+.freCarta small{font-size:11.5px;line-height:1.25;color:#cfc4e6}
+.freCarta>i{position:absolute;top:-9px;right:-5px;font:800 10px 'Exo 2',sans-serif;font-style:normal;background:#ff7ad9;color:#1a0f2a;border-radius:8px;padding:1px 6px}
+.icoFre{width:52px;height:52px;flex:none;fill:none;stroke:currentColor;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;overflow:visible}
+.icoFre .novo{stroke:#ffd36e}.icoFre .cheio{fill:currentColor;stroke:none}.icoFre .escuro{fill:#05030c}.icoFre .roxo{stroke:#a77bdf}.icoFre .verde{stroke:#6fbf5a}
+.icoFre text{fill:currentColor;stroke:none;font-family:Orbitron,'Exo 2',sans-serif}
+.freCarta .icoFre{color:#6fe0ff}.freCarta.esp .icoFre{color:#ffd36e}.freCarta.bon .icoFre{color:#ff7ad9}
+span.icoFre.pl{display:flex;align-items:center;justify-content:center}
+span.icoFre.pl img.ico{width:46px;height:46px;margin:0;vertical-align:middle}
+.freBonus{position:absolute;left:0;top:0;width:var(--cell);height:var(--cell);z-index:1;pointer-events:none;display:flex;align-items:center;justify-content:center;color:#ffd84a;animation:freBonusIn .35s ease-out}
+.freBonus.relogio{color:#6fe0ff}.freBonus.buraco{color:#c08aff}.freBonus.coringa{color:#ffffff}
+.freBonus::before{content:'';position:absolute;inset:5%;border-radius:50%;border:2px dashed currentColor;opacity:.55}
+.freBonus .icoFre{width:62%;height:62%;animation:freBonusPulsa 1.1s ease-in-out infinite}
+@keyframes freBonusIn{from{scale:.3;opacity:0}}
+@keyframes freBonusPulsa{50%{scale:1.15}}
+.freBonus.some{transition:opacity .35s;opacity:0}
+.freBonus.pego{animation:freBonusPego .4s ease-out forwards}
+@keyframes freBonusPego{to{scale:1.9;opacity:0}}
+.freMotivo{color:#ffd36e !important;font-weight:700}
+body.espaco .freRes{display:grid;grid-template-columns:1fr 1fr}
+.freRes .rod b{color:#ffd36e;font-size:26px}
+.freCartasFim{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;color:#6fe0ff}
+.freCartasFim span{position:relative;display:inline-flex}
+.freCartasFim .icoFre,.freCartasFim img.ico{width:28px;height:28px;margin:0}
+.freCartasFim b{position:absolute;right:-6px;bottom:-5px;font:800 10px 'Exo 2',sans-serif;color:#1a0f2a;background:#6fe0ff;border-radius:6px;padding:0 3px}
 @keyframes freFlashCalmo{0%{opacity:0}15%{opacity:1}70%{opacity:1}100%{opacity:0}}
 @media (prefers-reduced-motion: reduce){
   .freFlash,.freFlash.topo{animation:freFlashCalmo 1.2s ease-out forwards}
   #freTempo.pouco i,#freBorda.fd6 i{animation:none !important}
   #freBorda.fd6 i:nth-child(n+2){opacity:.4}
   .freApaga{animation-duration:1.2s;opacity:.3}
+  .freBonus .icoFre,#freRelogio.pouco{animation:none}
 }
 #ovos button{width:30px;height:30px;padding:4px;border:0;background:none;color:rgba(207,198,255,.42);filter:drop-shadow(0 0 4px rgba(207,198,255,.35));cursor:pointer}
 #ovos svg{width:22px;height:22px;display:block}\n

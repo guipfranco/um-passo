@@ -518,10 +518,11 @@ function slide(tiles,dx,dy){
       const nx=cx+dx, ny=cy+dy; if(!inside(nx,ny) || edgeBetween(cx,cy,nx,ny)) break;
       const o=grid[ny][nx];
       if(!o){ grid[cy][cx]=null; grid[ny][nx]=t; cx=nx; cy=ny; continue; }
-      if(!o.wall && !o.m && o.t===t.t && t.t>0 && corOk(o,t)){
+      // coringa (jk, só no Frenesi): junta com qualquer peça e vira a seguinte da maior das duas
+      if(!o.wall && !o.m && t.t>0 && (o.t===t.t || ((o.jk||t.jk) && o.t>0)) && corOk(o,t)){
         grid[cy][cx]=null; t.x=nx; t.y=ny; merged=true;
         if(o.k && t.k && o.k!==t.k){ grid[ny][nx]=null; gone.push(t,o); breaks.push({x:nx,y:ny,t:o.t,r:o.r||t.r}); }
-        else { o.t++; o.c=corJunta(o,t); if(t.r) o.r=1; o.m=true; if(o.presa){ o.presa=0; o.solta=1; } gone.push(t); merges.push(o); }
+        else { o.t = (o.jk||t.jk) ? Math.max(o.t,t.t)+1 : o.t+1; if(o.jk||t.jk){ delete o.jk; delete o.c; } else o.c=corJunta(o,t); if(t.r) o.r=1; o.m=true; if(o.presa){ o.presa=0; o.solta=1; } gone.push(t); merges.push(o); }
       }
       break;
     }

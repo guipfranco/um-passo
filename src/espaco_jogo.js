@@ -48,7 +48,7 @@ function espLoop(ms){
   if(ceu && (custoMedio<9 || malhaVez) && document.body.classList.contains('modoCla') && telaJogo) try{ malhaQuadro(t); }catch(e){ console.warn('malha',e); anotaErro('malha',e); }
   const p2=performance.now();
   if(ESPC.size){
-    const cel=(typeof cellPx==='function'?cellPx():80)*ESP.DPR;
+    const cel=(typeof cellPx==='function'?cellPx():80)*ESP.DPR; let gastas=0;
     for(const cv of ESPC){
       if(!cv.isConnected){ ESPC.delete(cv); continue; }
       if(cv._fw && cv.offsetParent===null) continue;   // canvas fixo escondido (tela fechada): não desenha
@@ -56,7 +56,11 @@ function espLoop(ms){
       const W=cv._fw ? Math.round(cv._fw*ESP.DPR) : Math.max(8,Math.round(cel*cv._kx)), H=cv._fh ? Math.round(cv._fh*ESP.DPR) : Math.max(8,Math.round(cel*cv._ky));
       if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; cv._feito=false; }
       if(cv._estatico && cv._feito) continue;   // desenho que não muda com o tempo: o anterior continua valendo
-      if(cv._passo && cv._feito && t-cv._tq<cv._passo) continue;   // a pedrinha só muda de quadro a cada _passo: até lá o desenho é o mesmo
+      if(cv._passo && cv._feito){ if(t-cv._tq<cv._passo) continue;   // a pedrinha só muda de quadro a cada _passo: até lá o desenho é o mesmo
+        // as pedrinhas que só trocam de quadro dividem um orçamento de 4 ms por quadro: num aparelho lento, com muitas
+        // delas no tabuleiro, a que passou do orçamento troca de quadro no seguinte (gira um pouco mais devagar) em vez de
+        // todas juntas segurarem o quadro. As novas e as que mudaram de tamanho saem sempre.
+        if(gastas && performance.now()-p2>4) continue; gastas++; }
       const c=cv.getContext('2d'); c.clearRect(0,0,W,H); cv._d(c,W,H,cv._fw?W:cel,t); cv._feito=true; cv._tq=t;
     }
   }
@@ -77,6 +81,7 @@ addEventListener('popstate',()=>{
   // no resultado (fase ou Clássico acabados) fechar só a janela deixaria o tabuleiro parado sem botão: volta como o "Ver fases" e o "Menu"
   if(overlayOpen() && !menu && S && S.phase==='fimM'){ missoesLista(); return; }
   if(overlayOpen() && !menu && S && S.phase==='fimI'){ showMenu(); return; }
+  if(overlayOpen() && !menu && S && S.phase==='cartas'){ guardaVolta(); return; }   // Frenesi: a escolha da carta não se fecha com o voltar
   if(overlayOpen()){ hideOverlay(); if(!menu) guardaVolta(); return; }
   if(menu) return;
   if(S && S.phase==='lista'){ showMenu(); return; }
