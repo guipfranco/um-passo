@@ -80,12 +80,25 @@ f.onload=async()=>{const w=f.contentWindow,errs=[],log=[];w.addEventListener('er
       const ponto=Math.abs(A[ate]), ultima=lib[lib.length-1];
       const res=`venceu 1-${ate}: versão=${v.localStorage.ptui_qj_v} liberadas até ${ultima} (equivalente da antiga ${ate+1}: ${ponto}) cópia=${!!v.localStorage.ptui_qj_v1} salva=${sv?.n??null}`;
       log.push('migração: '+res);
-      if(v.localStorage.ptui_qj_v!=='2' || !v.localStorage.ptui_qj_v1 || ultima<ponto) errs.push('migração: '+res);
+      if(v.localStorage.ptui_qj_v!=='3' || !v.localStorage.ptui_qj_v1 || ultima<ponto) errs.push('migração: '+res);
       for(let n=1;n<=ate;n++) if(A[n-1]>0 && r[A[n-1]]?.e!==3) errs.push(`migração: a fase antiga ${n} continua como ${A[n-1]} mas perdeu as estrelas`);
       if(salva){ const k=A[salva-1]; if(k>0 ? sv?.n!==k : sv) errs.push(`migração: fase pela metade ${salva} → ${sv?.n} (esperado ${k>0?k:'nenhuma'})`); }
       g.remove(); };
     await migra(3, 4); await migra(30, 0);
-    L.removeItem('ptui_qj'); L.removeItem('ptui_qj_save'); L.removeItem('ptui_qj_v1'); L.removeItem('ptui_qj_save_v1'); L.ptui_qj_v='2'; }
+    // versão 2 → 3 (fases trocadas no lugar, QJ_TROCADAS): as estrelas ficam pelo número; a fase pela metade numa fase
+    // trocada recomeça, numa que não mudou continua
+    const T=w.eval('QJ_TROCADAS'), igual=[...Array(fases.length).keys()].map(k=>k+1).find(n=>!T.includes(n) && n>T[0]);
+    for(const [n,fica] of [[T[0],false],[igual,true]]){
+      const est={}; for(let k=1;k<=n;k++) est[k]={e:2,t:5,a:3};
+      L.ptui_qj_v='2'; L.ptui_qj=JSON.stringify(est); L.ptui_qj_save=JSON.stringify({n,pass:false,st:{},qj:{ini:{},pilha:[],trava:null}});
+      const g=document.createElement('iframe'); g.width=390; g.height=760; g.style.cssText='position:absolute;left:0;top:0;border:0';
+      const pronto=new Promise(r=>g.onload=r); g.src='../index.html'; document.body.appendChild(g); await pronto;
+      const v=g.contentWindow, r=JSON.parse(v.localStorage.ptui_qj||'{}'), sv=JSON.parse(v.localStorage.ptui_qj_save||'null');
+      const ok=v.localStorage.ptui_qj_v==='3' && Object.keys(r).length===n && r[n]?.e===2 && (fica ? sv?.n===n && r[n].a===3 : !sv && !!v.localStorage.ptui_qj_save_v2 && r[n].a===undefined);
+      log.push(`versão 2 → 3: fase ${n} pela metade (${fica?'não mudou':'trocada'}): versão=${v.localStorage.ptui_qj_v} estrelas mantidas=${r[n]?.e===2} seu melhor=${r[n]?.a} continua=${sv?.n===n}`);
+      if(!ok) errs.push(`migração 2 → 3 na fase ${n}: ${JSON.stringify({v:v.localStorage.ptui_qj_v, r:Object.keys(r).length, sv})}`);
+      g.remove(); L.removeItem('ptui_qj_save_v2'); }
+    L.removeItem('ptui_qj'); L.removeItem('ptui_qj_save'); L.removeItem('ptui_qj_v1'); L.removeItem('ptui_qj_save_v1'); L.ptui_qj_v='3'; }
  }catch(e){ if(e!==0) errs.push('EXC '+e.message+' | '+(e.stack||'').slice(0,300)); }
  out.textContent=JSON.stringify({log,errs});
 };

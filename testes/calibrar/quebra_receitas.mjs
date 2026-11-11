@@ -9,6 +9,11 @@
 //     anterior; o nível geral sobe de mundo para mundo (ARM_S1, ARM_FIM, MIN_S1, MIN_FIM).
 // Formatos de tabuleiro (quebra_formas.mjs): o mundo 2 é só deles, e eles aparecem em pelo menos um terço das fases
 // dos outros mundos. (A versão 1, de 10 mundos de 11 fases, está no histórico do git.)
+// Uma peça maior em vez de n menores (pedido do Guilherme, 2026-11-12: "é mais divertido formar a pedra superior do que
+// formar duas da pedra inferior"): a meta pede um planeta do nível de cima ({forme:t+1}, {carrinho:t+1}), e a junção
+// final faz parte do desafio. Pedir n do mesmo nível ({forme|cor|carrinho, n>=2}) só com a proibição do nível de cima,
+// quando não juntar as duas é o próprio quebra-cabeça; mundo() recusa o resto. Nas vagas trocadas, filtro.juncao pede que a
+// junção final pese (juncao em quebra_medidor.js: o par de baixo nem sempre junta no arrasto seguinte).
 import {FORMAS} from './quebra_formas.mjs';
 const R=[];
 //                  1    2    3    4    5    6    7    8    9   10   11
@@ -27,6 +32,8 @@ const gulosoMax=(g,s)=> g===0 ? (s<3?1:.6) : [1,.7,.5,.4,.3,.3,.15,.15,.08,.08][
 // girar o tabuleiro (com até min+1 arrastos, as ★★★ do modo) pode resolver o mundo 1 inteiro e as 3 primeiras dos outros
 const giroOk=(g,s)=> g===0 || s<3;
 const mundo=(g, vagas)=>vagas.forEach((spec,s)=>{ const a=alvo(g,s), {filtro={},prof,...sp}=spec;
+  if((sp.metas||[]).some(o=>(o.forme||o.cor!=null||o.carrinho) && (o.n||1)>=2) && !sp.proibido)
+    throw new Error(`receita m${g+1}v${s+1}: em vez de n peças de um nível, peça uma do nível de cima`);
   R.push({id:`m${g+1}v${String(s+1).padStart(2,'0')}`, g, vaga:s, prof:prof||a.prof, armAlvo:a.armAlvo,
     spec:{w:4,h:4,pecas:[3,6],...sp},
     filtro:{minArm:a.arm[0], maxArm:a.arm[1], maxGuloso:gulosoMax(g,s), maxSols:s<3?80:40, pesa:true, giroOk:giroOk(g,s),
@@ -51,12 +58,12 @@ mundo(0,[
   {w:3,h:3, ...forme(3), pecas:[2,3]},
   {w:3,h:3, ...forme(4), pecas:[3,3]},
   {metas:[{combo:1}], material:[2,2], pecas:[4,4]},   // revisão: a estreia da junção dupla (antes, o mesmo pedido da 2)
-  {...forme(3,2), pecas:[4,5]},
+  {...forme(4), pecas:[4,5], prof:[4,4]},   // antes: duas rochas (no mundo 1 a junção final sai sempre de graça: tabuleiro aberto e curto)
   {w:3,h:3, ...forme(4), pecas:[4,5]},
   {...forme(5), pecas:[4,5]},
-  {...forme(4,2), pecas:[4,6]},
+  {w:4,h:3, ...forme(5), pecas:[4,6], prof:[5,6]},   // antes: dois asteroides (idem)
   {w:3,h:3, ...forme(5), pecas:[4,5]},
-  {w:3,h:3, ...forme(3,3), pecas:[5,7]},   // revisão: três rochas (antes, outro cometa logo depois do da 8)
+  {w:3,h:3, ...forme(4), pecas:[5,7], iscas:[0,1], prof:[6,6], filtro:{juncao:.2}},   // antes: três rochas
   {...forme(4,2), proibido:5, pecas:[5,6], iscas:[1,1], nivelIsca:[4,4]},
 ]);
 // 2 · Formatos: o tabuleiro muda a ordem dos arrastos
@@ -64,8 +71,8 @@ mundo(1,[
   {...F('buraco4'), ...forme(4), pecas:[3,4]},
   {...F('faixa26'), ...forme(4), pecas:[3,5]},
   {...F('L4'), ...forme(5), pecas:[4,5]},
-  {...F('escada4'), ...forme(3,2), pecas:[4,6], iscas:[0,1], nivelIsca:[1,2], prof:[6,7]},   // revisão: no anel, girar em volta sempre resolvia
-  {...F('buracos4'), ...forme(4,2), pecas:[5,6]},   // revisão: dois buracos (a faixa 3x5 era só um retângulo)
+  {...F('escada4'), ...forme(4), pecas:[4,6], iscas:[0,1], nivelIsca:[1,2], prof:[6,7], filtro:{juncao:.2}},   // revisão: no anel, girar em volta sempre resolvia
+  {...F('buracos4'), ...forme(5), pecas:[5,6], prof:[7,7], filtro:{juncao:.2}},   // revisão: dois buracos (a faixa 3x5 era só um retângulo)
   {...F('escada5'), ...forme(5), pecas:[4,6]},
   {...F('T4'), ...forme(5), pecas:[4,6]},
   {...F('corredor5'), ...forme(5), pecas:[4,6]},
@@ -75,13 +82,13 @@ mundo(1,[
 // 3 · Estações
 mundo(2,[
   {blocos:1, ...forme(4), pecas:[3,3]},
-  {w:3,h:3, blocos:1, ...forme(3,2), pecas:[4,5]},   // revisão: duas rochas (antes, o mesmo pedido da 21)
+  {w:3,h:3, blocos:1, ...forme(4), pecas:[4,5], prof:[4,5], filtro:{juncao:.2}},   // antes: duas rochas
   {...F('faixa26'), blocos:1, ...forme(4), pecas:[3,5]},
   {blocos:2, ...forme(5), pecas:[4,6]},
   {...F('L4'), blocos:1, ...forme(5), pecas:[4,6]},
   {w:5,h:5, blocos:3, metas:[{combo:1}], material:[3,3], pecas:[4,6]},
   {...F('rosca5'), blocos:2, ...forme(5), pecas:[4,6]},
-  {blocos:2, ...forme(4,2), pecas:[4,6]},
+  {blocos:2, ...forme(5), pecas:[4,6], prof:[7,8], filtro:{juncao:.2}},   // antes: dois asteroides
   {...F('escada5'), blocos:2, ...forme(6), pecas:[5,7]},
   {blocos:2, ...forme(4,2), proibido:5, pecas:[5,6], iscas:[1,1], nivelIsca:[4,4]},
 ]);
@@ -118,12 +125,12 @@ mundo(5,[
   {...F('faixa35'), naveForaDoCanto:true, metas:[{carrinho:4,n:1}], material:[4], pecas:[3,4], iscas:[1,1], nivelIsca:[1,1]},
   {blocos:1, naveForaDoCanto:true, metas:[{carrinho:4,n:1}], material:[4], pecas:[3,5], iscas:[1,1], nivelIsca:[1,1]},
   {...F('U4'), metas:[{carrinho:4,n:1}], material:[4], pecas:[3,5], iscas:[1,1], nivelIsca:[1,1]},
-  {metas:[{carrinho:3,n:2}], material:[3,3], pecas:[4,6], iscas:[1,1], nivelIsca:[1,1]},
+  {metas:[{carrinho:4,n:1}], material:[4], pecas:[4,6], iscas:[1,1], nivelIsca:[1,1], filtro:{juncao:.2}},   // antes: duas rochas na nave
   {...F('corredor5'), metas:[{carrinho:4,n:1}], material:[4], pecas:[3,5], iscas:[1,1], nivelIsca:[1,1]},
   {metas:[{leve:3,n:1},{carrinho:4,n:1}], material:[3,4], pecas:[4,6], iscas:[1,1], nivelIsca:[1,1]},
   {...F('T4'), metas:[{carrinho:5,n:1}], material:[5], pecas:[4,6], iscas:[1,1], nivelIsca:[1,1]},
   {muretas:3, metas:[{carrinho:5,n:1}], material:[5], pecas:[4,6], iscas:[1,1], nivelIsca:[1,1]},
-  {...F('torto5'), metas:[{carrinho:4,n:2}], material:[4,4], pecas:[5,7], iscas:[1,1], nivelIsca:[1,1]},
+  {...F('torto5'), metas:[{carrinho:5,n:1}], material:[5], pecas:[5,7], iscas:[1,1], nivelIsca:[1,1], filtro:{juncao:.2}},   // antes: dois asteroides na nave
 ]);
 // 7 · Lixo espacial (o Passinho estreia aqui)
 mundo(6,[

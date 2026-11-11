@@ -20,7 +20,11 @@ const pasta=process.argv[2]||'E:/tmp/qpool2', escreve=process.argv.includes('--e
 const nomes=await import('./quebra_nomes.mjs'), {NOMES, MUNDOS, TROCA={}, AJUSTES={}}=nomes, REFAZER=refaz?nomes.REFAZER||[]:[];
 const M=medidor();
 const V1=JSON.parse(fs.readFileSync(path.join(AQUI,'quebra_v1.json'),'utf8')).fases;
-let atuais=null;
+let atuais=null, base=null;
+// --base=<arquivo>: a versão publicada de src/quebra_fases.js; o campo antes é contado em relação a ela (só os ids que
+// alguém pode ter jogado), não às gravações intermediárias
+const argBase=process.argv.find(a=>a.startsWith('--base='));
+if(argBase){ const c=vm.createContext({}); vm.runInContext(fs.readFileSync(argBase.slice(7),'utf8')+';globalThis.Q=QJ_FASES;',c); base=c.Q; }
 if(!tudo && fs.existsSync(ARQ)){ const c=vm.createContext({}); vm.runInContext(fs.readFileSync(ARQ,'utf8')+';globalThis.Q=QJ_FASES;',c); atuais=c.Q; }
 const semExtras=q=>{ const f={...q}; for(const k of ['id','g','nome','arrastos','estrelas','min']) delete f[k]; return f; };
 const pecasDe=f=>f.pecas.length+(f.presasPos?.length||0);
@@ -49,6 +53,7 @@ function candV1(rec){
 const passa=(c,rec)=>{ const m=c.m, F=rec.filtro, [lo,hi]=rec.prof;
   if(m.min<lo || m.min>hi) return false;
   if(m.arm<F.minArm || m.arm>F.maxArm || m.guloso>F.maxGuloso || m.sols>F.maxSols) return false;
+  if(F.juncao!=null && (m.juncao??0)<F.juncao) return false;
   const p=m.pesos||M.pesos(c.f,{L:m.min+4}); return M.falhas(p,{levar:F.levar, giroOk:F.giroOk, lugar:F.lugar}).length===0; };
 const usados=new Set(), escolhidas=[];
 const mostra=(rec,c,nova,folga)=>{ console.log(`${rec.id} ${c.v1?'(v1 fase '+c.v1+') ':''}${nova?'(NOVA) ':''}${folga?'(FOLGA) ':''}${NOMES[rec.id]||'?'} | alvo arm ${Math.round(rec.armAlvo*100)}% | ${resumo(c.m)} pecas ${pecasDe(c.f)} ${tabuleiro(c.f)} ${meta(c.f)}${c.f.char?' passinho':''}`);
@@ -123,6 +128,7 @@ for(let g=0; g<MUNDOS.length; g++){
   });
 }
 function ajusta(f, a){ const g={...f};
+  if(a.metaNova){ delete g.obj; delete g.objs; if(a.metaNova.length===1) g.obj=a.metaNova[0]; else g.objs=a.metaNova; }
   if(a.buraco){ const [x,y]=a.buraco; g.mapa=f.mapa.map((r,j)=>j===y?r.slice(0,x)+'#'+r.slice(x+1):r); }
   if(a.tiraMureta){ g.muretas=(f.muretas||[]).filter(m=>m.join()!==a.tiraMureta.join()); if(!g.muretas.length) delete g.muretas; }
   if(a.tira) g.pecas=f.pecas.filter(p=>!(p[0]===a.tira[0]&&p[1]===a.tira[1]&&p[2]===a.tira[2]));
@@ -135,7 +141,9 @@ if(escreve){
   const js=o=>JSON.stringify(o).replace(/"([a-zA-Z]+)":/g,'$1:').replace(/"/g,"'");
   const ids=escolhidas.map(({c})=>idFase(c.f));
   const linhas=escolhidas.map(({rec,c},i)=>{ const f=c.f;
-    const o={id:ids[i], g:rec.g, nome:NOMES[rec.id]||rec.id, mapa:f.mapa, pecas:f.pecas, regras:{spawns:0}};
+    // antes: os ids que a fase desta posição já teve (trocada no lugar, conta como a mesma: o progresso é por número)
+    const at=(base||atuais)?.[RECEITAS.indexOf(rec)], antes=[...(at?.antes||[]), ...(at && at.id!==ids[i] ? [at.id] : [])];
+    const o={id:ids[i], ...(antes.length?{antes}:{}), g:rec.g, nome:NOMES[rec.id]||rec.id, mapa:f.mapa, pecas:f.pecas, regras:{spawns:0}};
     if(f.objs) o.objs=f.objs; else o.obj=f.obj;
     o.arrastos=c.m.min+4;
     for(const k of ['muretas','carroPos','presasPos','alvosPos','terraPos','char','fase']) if(f[k]!=null) o[k]=f[k];
@@ -170,6 +178,9 @@ ${corpo.join('\n')}
 // migração do progresso da versão 1 (110 fases em 10 mundos de 11, até 2026-11-11): QJ_ANTIGA[n-1] é a fase nova da
 // fase n antiga. Positivo: a mesma fase (as estrelas vão junto). Negativo: a fase nova no ponto equivalente.
 const QJ_ANTIGA=[${antiga.join(',')}];
+// versão ${nomes.TROCADAS?.versao||'3'} (2026-11-12): fases trocadas no lugar (uma peça maior em vez de duas menores). As estrelas ficam (o progresso é
+// por número); a fase pela metade numa delas recomeça (qjMigra)
+const QJ_TROCADAS=[${(nomes.TROCADAS?.vagas||[]).map(v=>RECEITAS.findIndex(r=>r.id===v)+1).join(',')}];
 `;
   fs.writeFileSync(ARQ, txt);
   console.log(`gravado src/quebra_fases.js (${escolhidas.length} fases; da versão 1 continuam ${antiga.filter(x=>x>0).length})`);

@@ -253,14 +253,13 @@ function qjResultado(){
   $('#mLista').onclick=()=>missoesLista();
 }
 
-// ---------- migração do progresso (versão das fases em ptui_qj_v) ----------
+// ---------- migração do progresso (versão das fases em ptui_qj_v: '2' e depois '3') ----------
 // Versão 2 das fases (2026-11-12: 11 mundos de 10, curva mais suave). Roda uma vez: quem venceu fases da versão 1
 // continua com acesso ao ponto equivalente da lista nova (QJ_ANTIGA, em quebra_fases.js: positivo = a mesma fase, que
 // leva as estrelas; negativo = a fase nova no ponto equivalente). As fases novas antes desse ponto ficam vencidas com
 // 1 estrela; a fase pela metade continua só se for a mesma fase. O que havia fica copiado em ptui_qj_v1 e ptui_qj_save_v1.
 function qjMigra(){
-  if(localStorage.ptui_qj_v==='2') return;
-  try{
+  if(localStorage.ptui_qj_v!=='2' && localStorage.ptui_qj_v!=='3') try{
     const velho=JSON.parse(localStorage.ptui_qj||'{}'), novo={}, A=QJ_ANTIGA;
     let a=1; while(a<=A.length && velho[a]?.e>0) a++;   // a primeira antiga sem estrela: por onde a pessoa seguiria
     const ate = a>A.length ? QJ_FASES.length+1 : Math.abs(A[a-1]);
@@ -271,6 +270,15 @@ function qjMigra(){
     if(sv){ localStorage.ptui_qj_save_v1=localStorage.ptui_qj_save;
       if(A[sv.n-1]>0){ sv.n=A[sv.n-1]; localStorage.ptui_qj_save=JSON.stringify(sv); } else localStorage.removeItem('ptui_qj_save'); }
   }catch(e){}
-  localStorage.ptui_qj_v='2';
+  // versão 3 (2026-11-12): fases trocadas no lugar (QJ_TROCADAS: uma peça maior em vez de duas menores). As estrelas
+  // ficam, pelo número; o "seu melhor" (a: menos arrastos) delas sai, porque era de outra fase (e podia ficar abaixo do
+  // min novo); a fase pela metade numa delas recomeça (o tabuleiro ou a meta mudou), com cópia em ptui_qj_save_v2
+  if(localStorage.ptui_qj_v!=='3') try{
+    const r=JSON.parse(localStorage.ptui_qj||'{}'); let mudou=false;
+    for(const n of QJ_TROCADAS) if(r[n]?.a!=null){ delete r[n].a; mudou=true; }
+    if(mudou) localStorage.ptui_qj=JSON.stringify(r);
+    const sv=JSON.parse(localStorage.ptui_qj_save||'null');
+    if(sv && QJ_TROCADAS.includes(sv.n)){ localStorage.ptui_qj_save_v2=localStorage.ptui_qj_save; localStorage.removeItem('ptui_qj_save'); } }catch(e){}
+  localStorage.ptui_qj_v='3';
 }
 qjMigra();

@@ -20,6 +20,9 @@
 //           planeta formado; empate sorteado; não forma o planeta proibido se puder evitar.
 //   acaso   fração das partidas ao acaso que cumprem dentro do limite
 //   estados quantos estados a busca visitou
+//   juncao  meta de uma peça (formar ou levar à nave): dos estados em que o par do nível de baixo acabou de se formar,
+//           a fração em que a meta não sai no arrasto seguinte (falta ajeitar o par, ou ele se formou num lugar sem
+//           saída). 0: onde quer que o par se forme, ele junta logo (a junção final vem de graça)
 // E o que pesa na fase (pesos e falhas, mais abaixo): proibido alcançável, cada meta, cada mecânica e cada peça mudam
 // o quebra-cabeça; quanto custa levar; se girar o tabuleiro resolve; a menor solução no Passinho.
 (function(raiz){
@@ -145,8 +148,10 @@ function QuebraMedidor(env){
   function analisa(f, opt={}){
     const folga=opt.folga??4, maxMin=opt.maxMin??20, maxEst=opt.maxEst??1500000, semente=opt.semente??12345;
     const {ctx,ini}=contexto(f); if(ctx.problemas.length) return {problemas:ctx.problemas};
-    const ids=new Map(), ed=[], dep=[];
-    ids.set(chave(ctx,ini),0); ed.push(-9,-9,-9,-9); dep.push(0);
+    const ids=new Map(), ed=[], dep=[], cntT=[];
+    const um=ctx.metas.length===1 && (ctx.metas[0].forme||ctx.metas[0].carrinho) && (ctx.metas[0].n||1)===1 ? ctx.metas[0] : null;
+    const T=um ? (um.forme||um.carrinho)-1 : 0, conta=st=>T ? st.ts.filter(t=>t.t===T).length : 0;
+    ids.set(chave(ctx,ini),0); ed.push(-9,-9,-9,-9); dep.push(0); cntT.push(conta(ini));
     let camada=[{id:0,st:ini}], min=null, L=Infinity;
     for(let d=0; d<L && camada.length; d++){ const prox=[];
       for(const {id,st} of camada) for(let di=0;di<4;di++){ const res=passo(ctx,st,di);
@@ -154,7 +159,7 @@ function QuebraMedidor(env){
         if(res.fim==='venceu'){ ed[id*4+di]=-2; if(min==null){ min=d+1; L=min+folga; } continue; }
         if(res.fim){ ed[id*4+di]=-3; continue; }
         const k=chave(ctx,res.ns); let c=ids.get(k);
-        if(c==null){ c=dep.length; ids.set(k,c); ed.push(-9,-9,-9,-9); dep.push(d+1); prox.push({id:c,st:res.ns});
+        if(c==null){ c=dep.length; ids.set(k,c); ed.push(-9,-9,-9,-9); dep.push(d+1); cntT.push(conta(res.ns)); prox.push({id:c,st:res.ns});
           if(c>maxEst) return {estourou:true, estados:c, ate:d+1, min}; }
         ed[id*4+di]=c; }
       if(min==null && d+1>=maxMin) return {min:null, estados:dep.length};
@@ -202,9 +207,14 @@ function QuebraMedidor(env){
     // soluções mínimas: uma para guardar e as contraintuitivas
     const sol=[]; { let s=0; for(let r=min;r>=1;r--){ let d=0; while(!bom(s,d,r)) d++; sol.push(NOMES[d]); if(r>1) s=ed[s*4+d]; } }
     const contra=contraintuitivo(ctx,ini,ed,dist,min,opt.maxSols??300);
+    let juncao=null;
+    if(T){ const novo=new Set();
+      for(let s2=0;s2<N;s2++){ if(cntT[s2]>=2) continue; for(let di=0;di<4;di++){ const c=ed[s2*4+di]; if(c>=0 && cntT[c]>=2 && dep[c]<L) novo.add(c); } }
+      let longe=0; for(const c of novo) if(dist[c]!==1) longe++;
+      juncao = novo.size ? longe/novo.size : 0; }
     return {min, sols:vias[0], prim, arm1:arm[0], arm2:arm[1], arm3:arm[2], arm:(arm[0]+arm[1]+arm[2])/3, fora1:fora[0],
       contra:contra.contra, recusa:contra.recusa, separa:contra.separa, exige:contra.contra===1, guloso:gul/NG, acaso:aca/NA,
-      estados:N, folga, sol:sol.join('')};
+      estados:N, folga, sol:sol.join(''), juncao};
   }
 
   // pares prontos: duas peças que juntam uma com a outra em algum arrasto
@@ -242,6 +252,7 @@ function QuebraMedidor(env){
   //   giro       padrões fixos (girar nos dois sentidos, três direções em ciclo, ou alternar dois lados) que cumprem
   //              com até min+1 arrastos (★★★ no modo Quebra-cabeças)
   //   lugar      órbita de formar: quantos arrastos custa formar ali além de formar em qualquer casa
+
   //   inuteis    peças que dá para tirar sem mudar min, sem invalidar solução mínima e sem baixar a armadilha (uma peça
   //              que só arma a armadilha conta: tirá-la deixa a fase mais fácil)
   //   passinho   menor solução jogando no Passinho, com o mesmo limite (null: não cumpre; o jogo oferece a medalha)
@@ -301,6 +312,7 @@ function QuebraMedidor(env){
     for(const [k,v] of Object.entries(p.mec||{})) if(!v) a.push(k+' de enfeite');
     if(opt.levar!=null && p.levar!=null && p.levar<opt.levar) a.push('levar custa '+p.levar);
     if(opt.lugar!=null && p.lugar!=null && p.lugar<opt.lugar) a.push('órbita de enfeite: formar ali custa '+p.lugar);
+
     if(!opt.giroOk && p.giro?.length) a.push('girar resolve: '+p.giro[0]);
     if(!opt.inuteisOk && p.inuteis?.length) a.push('peça que não faz nada: '+JSON.stringify(p.inuteis[0]));
     return a;
