@@ -3,7 +3,8 @@
 import os
 T = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src') + os.sep
 rd = lambda f: open(T + f, encoding='utf-8').read()
-missoes = rd('quebracabecas.js') + rd('missoes.js') + rd('missoes_calib.js')
+# quebra_fases.js: a Jornada de quebra-cabeças (por enquanto só dado: QJ_MUNDOS e QJ_FASES; testes/quebra_fases.html confere)
+missoes = rd('quebracabecas.js') + rd('quebra_fases.js') + rd('missoes.js') + rd('missoes_calib.js')
 classico = rd('classico.js')
 # motor do espaço (o mesmo dos rascunhos) fechado num objeto, para os nomes dele não colidirem com os do jogo
 espaco = ('var ESP=(()=>{' + rd('espaco.js') + '\nreturn {buildTextures,preaquece,filaOciosa,texTarefa,makePiece,drawPeca,drawPecaVar,pecaImg,temPeca,pecaPrepara,soltaPeca,glPronto,glDesenha,discosGL,drawPecaGL,vrDe,buildFundo,drawFundo,SPR,LADDER,MUNDOS_ESP,byName,kDe,ST,objImg,DPR,PASSO_VAR};\n})();\n'

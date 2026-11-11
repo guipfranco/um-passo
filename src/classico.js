@@ -124,7 +124,9 @@ function contaMissao(r){
     if(S.seqAlvo && S.seqI<S.seqAlvo.length && o.t>=S.seqAlvo[S.seqI]) S.seqI++;
     const a=(S.alvos||[]).find(a=>!a.ok && !a.leve && a.x===o.x && a.y===o.y && o.t>=a.t); if(a) a.ok=true;
     S.terra?.delete(o.x+','+o.y);
-    if(o.solta){ S.soltas=(S.soltas||0)+1; delete o.solta; }
+    // a marca vale uma vez: sai também da cópia em S.tiles (o slide devolve cópias), senão a peça solta conta de novo
+    // a cada junção em cima dela
+    if(o.solta){ S.soltas=(S.soltas||0)+1; delete o.solta; const q=S.tiles.find(t=>t.id===o.id); if(q) delete q.solta; }
   }
   if((S.terra?.size||0)<neb) SFX.nebulosa();
   // casa de levar: vale só se exatamente a peça pedida CHEGAR andando. Junção em cima da casa não conta, nem quando a
