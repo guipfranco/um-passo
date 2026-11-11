@@ -1,0 +1,58 @@
+<!-- tempo: 120000 -->
+<meta charset="utf-8">
+<body style="margin:0"><iframe id="f" src="../index.html" width="390" height="760" style="border:0"></iframe><pre id="out" style="position:absolute;left:400px;top:0">x</pre>
+<script src="calibrar/quebra_medidor.js"></script>
+<script>
+// Jornada de quebra-cabeças (src/quebra_fases.js): cada fase tem solução com min arrastos e nenhuma mais curta
+// (busca em largura com o slide() do jogo, calibrar/quebra_medidor.js), e a solução cumpre a fase NO JOGO, no último
+// arrasto e não antes: a fase entra em MISSOES, missaoJoga a abre e move() faz os arrastos, com as metas conferidas
+// por checaMissao. A solução guardada em calibrar/quebra_medidas.json também é repetida no jogo.
+// #qc testa os quebra-cabeças de src/quebracabecas.js (só repete a solução achada).
+const DIR={D:[1,0],E:[-1,0],B:[0,1],C:[0,-1]};
+f.onload=async()=>{const w=f.contentWindow,errs=[],log=[];w.addEventListener('error',e=>errs.push(e.message+' @'+e.lineno));
+ try{ w.eval('sound=false; music=false');
+  const qc=location.hash==='#qc';
+  const fases=qc ? Object.entries(w.eval('QC')).map(([k,q])=>({...q, g:0, nome:k, min:null})) : w.eval('typeof QJ_FASES!=="undefined"?QJ_FASES:null');
+  if(!fases){ errs.push('QJ_FASES não está no index.html'); throw 0; }
+  if(!qc){ const mund=w.eval('QJ_MUNDOS'); if(mund.length!==10) errs.push('QJ_MUNDOS com '+mund.length+' mundos');
+    if(fases.length<100) errs.push('só '+fases.length+' fases'); }
+  // soluções guardadas
+  let guard=null; try{ const x=new XMLHttpRequest(); x.open('GET','calibrar/quebra_medidas.json',false); x.send(); guard=JSON.parse(x.responseText).fases; }catch(e){ log.push('sem quebra_medidas.json ('+e.message+')'); }
+  // 1) busca com o slide() do jogo (S, W e H do jogo trocados enquanto busca)
+  const env=w.eval(`({slide:(t,dx,dy)=>slide(t,dx,dy), ajusta:(w_,h_,walls,edges,ch)=>{ W=w_; H=h_; S={walls,edges,char:ch}; }})`);
+  const M=QM.QuebraMedidor(env), sols=[];
+  const t0=Date.now();
+  fases.forEach((q,i)=>{ const b=M.buscaMin(q, q.min??20, 2000000);
+    if(b.problemas) errs.push(`fase ${i+1} ${q.nome}: ${b.problemas.join('; ')}`);
+    else if(b.min==null) errs.push(`fase ${i+1} ${q.nome}: sem solução até ${q.min??20}`);
+    else if(q.min!=null && b.min!==q.min) errs.push(`fase ${i+1} ${q.nome}: menor solução ${b.min}, a fase diz ${q.min}`);
+    if(!qc){ if(q.arrastos!==q.min+4) errs.push(`fase ${i+1}: arrastos ${q.arrastos} ≠ min+4`);
+      if(!(q.g>=0 && q.g<=9)) errs.push(`fase ${i+1}: mundo ${q.g}`); if(!q.nome) errs.push(`fase ${i+1} sem nome`);
+      if(q.regras?.spawns!==0) errs.push(`fase ${i+1}: nasce peça`); }
+    sols.push(b.sol); });
+  log.push(`busca: ${fases.length} fases em ${Date.now()-t0} ms`);
+  // 2) no jogo de verdade
+  const joga=(q,sol,rot)=>{
+    w.eval(`MISSOES.push(${JSON.stringify({...q, nome:'teste '+q.nome})}); missaoJoga(MISSOES.length)`);
+    let fim=0;
+    try{ for(let i=0;i<sol.length;i++){ const [dx,dy]=DIR[sol[i]]; const antes=w.eval('S.moves');
+        w.eval(`move(${dx},${dy})`);
+        if(w.eval('S.moves')!==antes+1) return `${rot}: arrasto ${i+1} (${sol[i]}) não mexeu`;
+        if(w.eval('S.phase')==='fimM'){ fim=i+1; break; } }
+      if(fim!==sol.length) return `${rot}: ${fim?'acabou no arrasto '+fim:'não acabou'} (solução de ${sol.length})`;
+      if(!w.eval('cumpriu(MISSOES[S.missao-1])')) return `${rot}: acabou sem cumprir (${w.eval('JSON.stringify(violou(MISSOES[S.missao-1])||null)')})`;
+      return null;
+    } finally { w.eval('S.phase="fimM"; MISSOES.pop()'); }
+  };
+  let ok=0, okG=0;
+  fases.forEach((q,i)=>{ if(!sols[i]) return;
+    const e=joga(q,sols[i],`fase ${i+1} ${q.nome} (solução da busca)`); if(e) errs.push(e); else ok++;
+    const g=!qc && guard?.[i]; if(g){ if(g.nome!==q.nome) errs.push(`fase ${i+1}: medidas de outra fase (${g.nome})`);
+      const e2=joga(q,g.sol,`fase ${i+1} ${q.nome} (solução guardada)`); if(e2) errs.push(e2); else okG++; } });
+  log.push(`no jogo: ${ok} de ${fases.length} cumpridas no último arrasto da solução achada; ${okG} com a solução guardada`);
+  if(!qc && !guard) errs.push('sem as soluções guardadas (calibrar/quebra_medidas.json)');
+  if(!qc && guard && guard.length!==fases.length) errs.push(`quebra_medidas.json tem ${guard.length} fases, quebra_fases.js ${fases.length}`);
+ }catch(e){ if(e!==0) errs.push('EXC '+e.message+' | '+(e.stack||'').slice(0,300)); }
+ out.textContent=JSON.stringify({log,errs});
+};
+</script></body>

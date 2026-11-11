@@ -20,7 +20,8 @@ f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEven
   confere(ev('JA.id')==='quebra' && /Quebra-cabeças/.test(q('#bTitle').textContent) && d.querySelectorAll('.mGrupo').length>=1 && q('.mNo.atual')?.dataset.m==='1',
     `mapa: ${q('#bTitle').textContent} · ${q('#bSub').textContent} · mundos=${d.querySelectorAll('.mGrupo').length} fases=${d.querySelectorAll('.mNo').length} atual=${q('.mNo.atual')?.dataset.m}`);
   const ent=q('#panel .ent')?.innerText.replace(/\s+/g,' ')||'';
-  confere(q('.ent .num')?.textContent==='FASE 1' && /melhor possível: 4/.test(ent) && /NOVO ?Quebra-cabeça: nenhuma peça nova/.test(ent) && /em até 5/.test(ent) && !q('#mPass'), 'entrada: '+ent.slice(0,240));
+  const f1=JSON.parse(ev('JSON.stringify(QJ_FASES[0])'));   // os números vêm da própria fase (o banco de fases muda)
+  confere(q('.ent .num')?.textContent==='FASE 1' && ent.includes('melhor possível: '+f1.min) && /NOVO ?Quebra-cabeça: nenhuma peça nova/.test(ent) && ent.includes('em até '+(f1.arrastos-f1.estrelas[1])) && !q('#mPass'), 'entrada: '+ent.slice(0,240));
   q('#mJoga').click(); await wait(300);
   const m=JSON.parse(ev('JSON.stringify(faseM())'));
   confere(d.body.classList.contains('modoQj') && vis('#qjP') && !vis('#ptsP') && ev('S.path.spawns')===0 && q('#qjDesfaz').disabled && q('#qjRecomeca').disabled,
@@ -58,9 +59,10 @@ f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEven
   confere(/Perfeito!/.test(q('#panel h2')?.textContent||'') && d.querySelectorAll('#panel .estr.grande i.on').length===3 && g[1]?.e===3 && g[1]?.a===m.min && !ev('localStorage.ptui_qj_save'),
     `vitória: ${res.slice(0,120)} · gravado=${JSON.stringify(g)}`);
   confere(ev('localStorage.mina_missoes')==='{"1":{"e":2,"t":10}}' && !ev('localStorage.mina_cla_save'), 'Jornada intocada: '+ev('localStorage.mina_missoes'));
-  // estrelas pelos arrastos: min+1 ★★★, min+3 ★★, até o limite ★
+  // estrelas pelos arrastos, pela regra da própria fase (campo estrelas: quanto precisa sobrar para ★★ e ★★★)
   const est=JSON.parse(ev(`JSON.stringify([0,1,2,3,4,5].map(k=>{ const m=QJ_FASES[0], u=m.min+k; return estrelasPor(m, m.arrastos-u, u); }))`));
-  confere(est.join('')==='332211', `estrelas com min..min+5 arrastos: ${est.join(' ')}`);
+  const espera=[0,1,2,3,4,5].map(k=>{ const sobra=f1.arrastos-f1.min-k; return sobra>=f1.estrelas[1]?3:sobra>=f1.estrelas[0]?2:1; }).join('');
+  confere(est.join('')===espera, `estrelas com min..min+5 arrastos: ${est.join(' ')} (esperado ${espera.split('').join(' ')})`);
   // próxima fase liberada; sem saída a fase fica parada até desfazer
   q('#mProx').click(); await wait(100);
   confere(q('.ent .num')?.textContent==='FASE 2' && ev('liberada(2)') && !ev('liberada(3)'), 'próxima: '+q('.ent .num')?.textContent);

@@ -1,0 +1,40 @@
+<meta charset="utf-8">
+<title>Quebra-cabeças: medidor e gerador</title>
+<body style="margin:0;font:13px monospace"><iframe id="f" src="../../index.html" width="390" height="760" style="border:0"></iframe><pre id="out" style="position:absolute;left:400px;top:0;white-space:pre-wrap">x</pre>
+<script src="quebra_medidor.js"></script>
+<script>
+// Medidor e gerador dos quebra-cabeças no navegador, com o slide() do próprio jogo (o index.html no iframe).
+// O mesmo medidor do Node (quebra_medidor.js; para gerar muitos de uma vez, quebra_gera.mjs é bem mais rápido).
+//   quebra_gera.html#fases          mede as fases de src/quebra_fases.js (QJ_FASES)
+//   quebra_gera.html#fases:1-20     só essas
+//   quebra_gera.html#qc             mede os quebra-cabeças de src/quebracabecas.js (limite: menor + 4)
+//   quebra_gera.html#gera:{"prof":[5,7],"spec":{...},"filtro":{...},"quantos":3}   sorteia até achar (spec como em quebra_receitas.mjs)
+// Medidas: ver o topo de quebra_medidor.js.
+f.onload=async()=>{ const w=f.contentWindow, linhas=[];
+ const mostra=()=>{ out.textContent=linhas.join('\n'); };
+ try{ w.eval('sound=false; music=false');
+  const env=w.eval(`({slide:(t,dx,dy)=>slide(t,dx,dy), ajusta:(w_,h_,walls,edges,ch)=>{ W=w_; H=h_; S={walls,edges,char:ch}; }})`);
+  const M=QM.QuebraMedidor(env), pct=v=>String(Math.round(v*100)).padStart(3)+'%';
+  const res=m=>m.problemas?'PROBLEMA '+m.problemas.join('; '):m.estourou?'estourou':m.min==null?'sem solução':
+    `min ${String(m.min).padStart(2)} sols ${String(m.sols).padStart(4)} prim ${m.prim} arm ${pct(m.arm1)}${pct(m.arm2)}${pct(m.arm3)} fora1 ${pct(m.fora1)} contra ${pct(m.contra)} guloso ${pct(m.guloso)} acaso ${pct(m.acaso)} estados ${m.estados} sol ${m.sol}`;
+  const [modo,arg]=(location.hash.slice(1)||'fases').split(/:(.*)/s);
+  if(modo==='fases'||modo==='qc'){
+    let lista = modo==='qc' ? Object.entries(w.eval('QC')).map(([k,q])=>({...q,nome:k})) : w.eval('typeof QJ_FASES!=="undefined"?QJ_FASES:[]');
+    let de=1, ate=lista.length; if(arg){ [de,ate]=arg.split('-').map(Number); }
+    for(let i=de-1;i<ate && i<lista.length;i++){ const q=lista[i], m=M.analisa(q,{folga:q.min!=null?q.arrastos-q.min:4});
+      linhas.push(`${String(i+1).padStart(3)} ${(q.nome||'').padEnd(30)} ${res(m)}${q.min!=null&&m.min!==q.min?'  <<< a fase diz min '+q.min:''}`); mostra(); await new Promise(r=>setTimeout(r,0)); }
+  } else if(modo==='gera'){
+    const rec=JSON.parse(decodeURIComponent(arg)), [lo,hi]=rec.prof, F=rec.filtro||{}; let achou=0;
+    for(let tent=1; tent<=20000 && achou<(rec.quantos||3); tent++){
+      const q=QM.sorteia(rec.spec); if(!q) continue;
+      const b=M.buscaMin(q,hi,250000); if(b.min==null||b.min<lo||b.min>hi) continue;
+      const m=M.analisa(q,{folga:4});
+      if(m.estourou || (F.maxSols!=null&&m.sols>F.maxSols) || (F.maxGuloso!=null&&m.guloso>F.maxGuloso) || (F.minArm!=null&&m.arm<F.minArm)) continue;
+      achou++; linhas.push(res(m), JSON.stringify({...q, arrastos:m.min+4, estrelas:[2,4], min:m.min})); mostra();
+      if(tent%20===0) await new Promise(r=>setTimeout(r,0)); }
+    linhas.push(`fim: ${achou} achados`);
+  }
+ }catch(e){ linhas.push('ERRO '+e.message+' | '+e.stack); }
+ linhas.push('pronto'); mostra();
+};
+</script></body>
