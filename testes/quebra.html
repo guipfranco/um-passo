@@ -22,6 +22,7 @@ f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEven
   const ent=q('#panel .ent')?.innerText.replace(/\s+/g,' ')||'';
   const f1=JSON.parse(ev('JSON.stringify(QJ_FASES[0])'));   // os números vêm da própria fase (o banco de fases muda)
   confere(q('.ent .num')?.textContent==='FASE 1' && ent.includes('melhor possível: '+f1.min) && /NOVO ?Quebra-cabeça: nenhuma peça nova/.test(ent) && ent.includes('em até '+(f1.arrastos-f1.estrelas[1])) && !q('#mPass'), 'entrada: '+ent.slice(0,240));
+  confere(/com dica, a fase vale até ★★/.test(ent), 'entrada diz o custo da dica');
   q('#mJoga').click(); await wait(300);
   const m=JSON.parse(ev('JSON.stringify(faseM())'));
   confere(d.body.classList.contains('modoQj') && vis('#qjP') && !vis('#ptsP') && ev('S.path.spawns')===0 && q('#qjDesfaz').disabled && q('#qjRecomeca').disabled,
@@ -84,9 +85,66 @@ f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEven
   confere(ev('S.moves')===mv2 && ev('S.qj.pilha.length')===mv2, `continuou: arrastos=${ev('S.moves')} pilha=${ev('S.qj.pilha.length')}`);
   q('#qjDesfaz').click(); await wait(60);
   confere(ev('S.moves')===mv2-1, 'desfazer depois de continuar: '+ev('S.moves'));
+  // ---- dica ----
+  // no começo: aponta um arrasto de uma solução mínima (depois dele, a menor solução tem min-1); a primeira vem com a
+  // linha NOVO; seguindo as dicas a fase é cumprida e vale no máximo ★★
+  const DI=JSON.parse(ev('JSON.stringify(qjMed().DIRS)'));
+  const dica=async()=>{ q('#qjDica').click(); for(let i=0;i<100 && !(q('#board .qjSeta')||q('.qjAvisos .qjAviso:not(.novo)')); i++) await wait(50);
+    return {di:q('#board .qjSeta')?.dataset.di, aviso:q('.qjAvisos .qjAviso:not(.novo)')?.textContent||'', banner:q('#bSub').textContent, ms:ev('QJ_D.ultima?.ms')}; };
+  ev('localStorage.removeItem("ptui_qj_dica"); hideOverlay(); missaoJoga(1)'); await wait(150);
+  const g1=JSON.parse(ev('JSON.stringify(faseM())'));
+  let h=await dica(); const novo=!!q('.qjAvisos .qjAviso.novo');
+  ev(`move(${DI[h.di]})`); await wait(40);
+  const resto=ev(`__sol(${g1.obj.forme})?.length`);
+  confere(h.di!=null && resto===g1.min-1 && novo && ev('S.qj.dicas')===1, `dica no começo: ${h.banner} (${h.ms} ms) · depois dela a menor solução tem ${resto} (min ${g1.min}) · linha NOVO=${novo}`);
+  h=await dica(); confere(!q('.qjAvisos .qjAviso.novo'), 'a linha NOVO só na primeira dica');
+  for(let i=0;i<g1.arrastos && ev('S.phase')==='mine';i++){ if(i) h=await dica(); if(h.di==null) break; ev(`move(${DI[h.di]})`); await wait(40); }
+  for(let i=0;i<20 && !ev('overlayOpen()');i++) await wait(100);
+  const ne=d.querySelectorAll('#panel .estr.grande i.on').length;
+  confere(/com dica/.test(q('#panel h2')?.textContent||'') && ne<=2 && ev('S.res.e')<=2 && ev('S.moves')===g1.min && /até ★★/.test(q('#panel .perf')?.textContent||''),
+    `vitória com dica em ${ev('S.moves')} arrastos (a menor): "${q('#panel h2')?.textContent}" ${ne} estrelas · ${q('#panel .perf')?.textContent}`);
+  // sem saída: quantos desfazer. A referência é a busca do próprio teste (__sol): um estado tem saída se a menor
+  // solução dele cabe nos arrastos que sobram
+  const temSaida=()=>{ const n=ev(`__sol(faseM().obj.forme)?.length`); return n!=null && n<=ev('S.energy'); };
+  const mata=()=>JSON.parse(ev('JSON.stringify(DIRS)')).find(dd=>{ if(!ev(`slide(S.tiles,${dd}).moved`)) return false;
+    ev(`move(${dd})`); const ok=ev('S.phase')==='mine' && !temSaida(); ev('qjDesfaz()'); return ok; });
+  // um arrasto que ainda tem saída e um que não tem mais (procurados nas fases de formar do mundo 1): desfazer 1
+  let casoA=null; const DIRS0=JSON.parse(ev('JSON.stringify(DIRS)'));
+  for(const n of [2,3,4,5,8,9,10,11]){ ev(`hideOverlay(); missaoJoga(${n})`); await wait(60); if(!ev('faseM().obj?.forme')) continue;
+    for(const d1 of DIRS0){ if(!ev(`slide(S.tiles,${d1}).moved`)) continue; ev(`move(${d1})`);
+      if(ev('S.phase')==='mine' && temSaida()){ const d2=mata(); if(d2){ casoA={n,d1,d2}; break; } }
+      ev('qjDesfaz()'); }
+    if(casoA) break; }
+  if(!casoA) errs.push('não achei um arrasto bom seguido de um que deixa sem saída');
+  else { ev(`move(${casoA.d2})`); await wait(40); h=await dica();
+    confere(h.di==null && q('#qjDesfaz').dataset.n==='1' && q('#qjDesfaz').classList.contains('chama') && !q('#qjRecomeca').classList.contains('chama') && /Desfaça o último/.test(h.aviso),
+      `sem saída depois de um arrasto bom e um ruim (fase ${casoA.n}: ${casoA.d1} e ${casoA.d2}): "${h.aviso}" · ${h.banner} · botão=${q('#qjDesfaz').dataset.n} (${h.ms} ms)`);
+    q('#qjDesfaz').click(); await wait(40);
+    confere(temSaida() && !q('#qjDesfaz').dataset.n, 'desfeito: tem saída de novo · '+q('#bSub').textContent); }
+  // do começo: um arrasto que já deixa sem saída e mais dois; desfazer 3 é voltar ao começo (o recomeçar acende junto)
+  ev('missaoJoga(2)'); await wait(100);
+  const ruim0=mata();
+  if(ruim0){ ev(`move(${ruim0})`); await wait(30);
+    for(let k=0;k<2;k++){ const o=JSON.parse(ev(`JSON.stringify(DIRS.find(([dx,dy])=>slide(S.tiles,dx,dy).moved))`)); ev(`move(${o})`); await wait(30); }
+    const mv=ev('S.moves'); h=await dica();
+    confere(h.di==null && q('#qjDesfaz').dataset.n===String(mv) && q('#qjRecomeca').classList.contains('chama'), `sem saída desde o primeiro arrasto: "${h.aviso}" · ${mv} arrastos · botão=${q('#qjDesfaz').dataset.n} (${h.ms} ms)`);
+    for(let k=mv;k>1;k--){ q('#qjDesfaz').click(); await wait(30); }
+    confere(q('#qjDesfaz').dataset.n==='1', 'o número do desfazer desconta: '+q('#qjDesfaz').dataset.n);
+    q('#qjDesfaz').click(); await wait(30); h=await dica();
+    confere(h.di!=null && ev('S.moves')===0, 'no começo de novo, a dica volta a apontar: '+h.banner); }
+  else errs.push('não achei um primeiro arrasto que deixa sem saída na fase 2');
+  // em cada mundo (a primeira fase dele, uma meta diferente), seguir só as dicas desde o começo cumpre a fase no jogo de
+  // verdade, com a menor solução
+  const prims=JSON.parse(ev('JSON.stringify(QJ_MUNDOS.map((g,gi)=>QJ_FASES.findIndex(f=>f.g===gi)+1))')), segue=[];
+  for(const n of prims){ ev(`hideOverlay(); missaoJoga(${n})`); await wait(60); const mn=ev('faseM().min'), ms=[];
+    for(let k=0;k<mn+2 && ev('S.phase')==='mine';k++){ const hh=await dica(); ms.push(hh.ms); if(hh.di==null) break; ev(`move(${DI[hh.di]})`); await wait(20); }
+    const ok=ev('S.phase')==='fimM' && ev('S.moves')===mn && ev('cumpriu(faseM())');
+    segue.push(`${n}:${ev('S.moves')}/${mn}${ok?'':' ERRO'} (${Math.max(...ms)} ms)`); if(!ok) errs.push(`seguindo as dicas a fase ${n} não foi cumprida em ${mn}`); }
+  log.push('seguindo só as dicas (fase: arrastos/menor, dica mais demorada): '+segue.join(' · '));
+  ev('hideOverlay()');
   // a Jornada continua a dela: menu, mapa, entrada e progresso
   ev('showMenu()'); await wait(50);
-  confere(ev('JA.id')==='jornada' && /fase 2 · 3 estrelas/i.test(q('#mQj').textContent), 'menu de volta: JA='+ev('JA.id')+' · '+q('#mQj').textContent);
+  confere(ev('JA.id')==='jornada' && q('#mQj').textContent.includes('fase 2 · '+Object.values(JSON.parse(ev('localStorage.ptui_qj'))).reduce((a,x)=>a+x.e,0)+' estrelas'), 'menu de volta: JA='+ev('JA.id')+' · '+q('#mQj').textContent);
   ev('missoesLista(JORNADA)'); await wait(80);
   confere(/Jornada/.test(q('#bTitle').textContent) && q('#bSub').textContent==='2 de 240 estrelas' && q('.mNo.atual')?.dataset.m==='2', `Jornada: ${q('#bTitle').textContent} · ${q('#bSub').textContent} · atual=${q('.mNo.atual')?.dataset.m}`);
   q('[data-m="1"]').click(); await wait(50);

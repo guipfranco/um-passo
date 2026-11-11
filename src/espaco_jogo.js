@@ -988,7 +988,7 @@ function entradaEsp(n){
     ${metas}${receita}
     <div class="chips">${chips.map(c=>`<span>${c}</span>`).join('')}</div>
     <div class="estr3">${est.map((t,i)=>`<div class="${i<ganhou?'ok':''}"><b>${'★'.repeat(i+1)}</b><small>${t}</small></div>`).join('')}</div>
-    ${JA.quebra?qjPerfeito(m,b):''}
+    ${JA.quebra?qjPerfeito(m,b,sv):''}
     ${novas.map(t=>`<div class="novo"><i>NOVO</i>${t}</div>`).join('')}
     ${velhas.length?`<details class="lembra"><summary>como funciona</summary>${velhas.map(t=>`<p>${t}</p>`).join('')}</details>`:''}
     ${sv?`<button class="btn g" id="mCont">Continuar</button><button class="btn dim pequeno" id="mJoga">começar de novo</button>`:'<button class="btn g" id="mJoga">Jogar</button>'}
