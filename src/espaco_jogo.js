@@ -360,17 +360,22 @@ function geoTab(){ if(GEO && GEOq===quadroN) return GEO; GEOq=quadroN; return GE
 function geoMede(){ const r=board.getBoundingClientRect(), D=Math.min(2,ESP.DPR), cel=(typeof cellPx==='function'?cellPx():80), gap=(r.width-W*cel)/(W+1);
   return {r, D, P:(cel+gap)*D, g0:gap*D/2, O:cel*D, cel}; }
 const casaOk=(x,y)=>x>=0&&y>=0&&x<W&&y<H&&!(S.walls||[]).some(w=>w.v&&w.x===x&&w.y===y);
-function campoM(px,py,t,pocos,pa){ let dx=0,dy=0,h=0;
+// A parte parada do campo (os poços das peças) só muda quando as peças mudam de lugar: fica guardada em cada ponto e é
+// refeita só nessa hora. As ondas e os tremores se somam por cima a cada quadro. (No Frenesi a malha treme na batida com
+// as peças paradas: refazer os poços a cada quadro custava a maior parte da malha.)
+function pocosM(n,pocos,pa){ const px=n.rx, py=n.ry; let dx=0,dy=0,h=0;
   for(const q of pocos){ const ex=px-q.x, ey=py-q.y, d2=ex*ex+ey*ey, sg=pa*(.32+.13*q.m); if(d2>sg*sg*16) continue;
     const d=Math.sqrt(d2)||1, A=Math.min(pa*.12*q.m,sg*.55), f=A*(d/sg)*Math.exp(.5-d2/(2*sg*sg));
     dx-=ex/d*f; dy-=ey/d*f; h+=q.m*Math.exp(-d2/(2*(sg*1.15)**2)); }
-  let w=0;
-  for(const o of ondasM){ const ex=px-o.x, ey=py-o.y, d=Math.hypot(ex,ey)||1, u=(d-pa*3.4*(t-o.t0))/(pa*.45), amp=o.a*Math.exp(-(t-o.t0)*1.1)*Math.exp(-u*u)*Math.sin(u*2.4);
+  n.pdx=dx; n.pdy=dy; n.h=h; }
+function campoM(n,t,pa){ const px=n.rx, py=n.ry; let dx=n.pdx, dy=n.pdy, w=0;
+  // cada onda é um anel estreito: longe da frente dele (|u| > 3) a contribuição é menor que 1/8000, e as contas são puladas
+  for(const o of ondasM){ const ex=px-o.x, ey=py-o.y, d=Math.hypot(ex,ey)||1, u=(d-pa*3.4*(t-o.t0))/(pa*.45); if(u>3||u<-3) continue; const amp=o.a*Math.exp(-(t-o.t0)*1.1)*Math.exp(-u*u)*Math.sin(u*2.4);
     dx+=ex/d*amp; dy+=ey/d*amp; w+=Math.abs(amp)/pa; }
-  for(const o of tremM){ const ex=px-o.x, ey=py-o.y, d=Math.hypot(ex,ey)||1, u=(d-pa*2.2*(t-o.t0))/(pa*.3), amp=o.a*Math.exp(-(t-o.t0)*3)*Math.exp(-u*u)*Math.sin(u*2.4);
+  for(const o of tremM){ const ex=px-o.x, ey=py-o.y, d=Math.hypot(ex,ey)||1, u=(d-pa*2.2*(t-o.t0))/(pa*.3); if(u>3||u<-3) continue; const amp=o.a*Math.exp(-(t-o.t0)*3)*Math.exp(-u*u)*Math.sin(u*2.4);
     dx+=ex/d*amp; dy+=ey/d*amp; }
   const L=Math.hypot(dx,dy), cap=pa*.42; if(L>cap){ dx*=cap/L; dy*=cap/L; }
-  return [dx,dy,h,w]; }
+  n.cdx=dx; n.cdy=dy; n.w=w; }
 // quanto cada ponto da rede aparece: forte no meio do tabuleiro, mais fraco perto da borda, e sumindo aos poucos
 // fora dele (e nas casas vazias do formato), para a malha se misturar ao céu
 function presencaM(ci,cj,ok){
@@ -395,12 +400,13 @@ function malhaQuadro(t){
   const pa=g.P, pocos=[];
   for(const {el,fr} of pecasNoQuadro()) pocos.push({x:(fr.left+fr.width/2-g.r.left)*g.D+g.O, y:(fr.top+fr.height/2-g.r.top)*g.D+g.O, m:massaE(el._t.t)});
   // nada mudou desde o último desenho (peças paradas, sem onda nem tremor, rede assentada): o desenho anterior vale
-  const selo=pocos.map(q=>Math.round(q.x)+','+Math.round(q.y)+','+q.m.toFixed(2)).join(';')+(S.frenesi?'|'+freMalhaSelo(t):''), calmo=!ondasM.length && !tremM.length;
+  const seloP=pocos.map(q=>Math.round(q.x)+','+Math.round(q.y)+','+q.m.toFixed(2)).join(';'), selo=seloP+(S.frenesi?'|'+freMalhaSelo(t):''), calmo=!ondasM.length && !tremM.length;
   if(!refaz && calmo && malhaParada && selo===malhaSelo) return;
   if(selo!==malhaSelo) malhaParada=false;
   malhaSelo=selo;
   let mexe=0;
-  for(const n of MN.nos){ const [dx,dy,h,w]=campoM(n.rx,n.ry,t,pocos,pa); n.vx+=((n.rx+dx-n.x)*90-n.vx*11)*dt; n.vy+=((n.ry+dy-n.y)*90-n.vy*11)*dt; n.x+=n.vx*dt; n.y+=n.vy*dt; n.h=h; n.w=w;
+  if(refaz || seloP!==MN.seloP){ MN.seloP=seloP; for(const n of MN.nos) pocosM(n,pocos,pa); }
+  for(const n of MN.nos){ campoM(n,t,pa); n.vx+=((n.rx+n.cdx-n.x)*90-n.vx*11)*dt; n.vy+=((n.ry+n.cdy-n.y)*90-n.vy*11)*dt; n.x+=n.vx*dt; n.y+=n.vy*dt;
     mexe=Math.max(mexe,Math.abs(n.vx)+Math.abs(n.vy)); }
   malhaParada = calmo && mexe<2;
   const c=cv.getContext('2d'); c.clearRect(0,0,Wp,Hp);

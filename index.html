@@ -351,14 +351,16 @@ body.modoFre #freBorda{display:block}
 #freTempo.pouco i{background:#ff5a5a;animation:frePisca .3s steps(2) infinite}
 @keyframes frePisca{50%{opacity:.35}}
 #freBorda{position:fixed;inset:0;pointer-events:none;z-index:2}
-#freBorda i{position:absolute;inset:0;opacity:0;transition:opacity .5s;will-change:opacity;box-shadow:inset 0 0 80px 4px var(--fc),inset 0 0 16px 2px var(--fc)}
+/* bordas acesas: degradês nas quatro beiradas (pintar degradê é barato; a sombra borrada de antes, na tela inteira, era
+   repintada a cada troca de cor e pesava na placa de vídeo do celular) */
+#freBorda i{position:absolute;inset:0;opacity:0;transition:opacity .5s;will-change:opacity;background:linear-gradient(to bottom,color-mix(in srgb,var(--fc) 80%,transparent),color-mix(in srgb,var(--fc) 30%,transparent) 14px,transparent 56px) top/100% 56px no-repeat,linear-gradient(to top,color-mix(in srgb,var(--fc) 80%,transparent),color-mix(in srgb,var(--fc) 30%,transparent) 14px,transparent 56px) bottom/100% 56px no-repeat,linear-gradient(to right,color-mix(in srgb,var(--fc) 80%,transparent),color-mix(in srgb,var(--fc) 30%,transparent) 10px,transparent 40px) left/40px 100% no-repeat,linear-gradient(to left,color-mix(in srgb,var(--fc) 80%,transparent),color-mix(in srgb,var(--fc) 30%,transparent) 10px,transparent 40px) right/40px 100% no-repeat}
 #freBorda.fd6 i:nth-child(2){animation:freOnda 2s ease-in-out infinite}
 #freBorda.fd6 i:nth-child(3){animation:freOnda 2s ease-in-out -1s infinite}
 @keyframes freOnda{0%,100%{opacity:.1}50%{opacity:.85}}
-#freBorda i:nth-child(2){box-shadow:inset 0 0 80px 4px #ff4fc8,inset 0 0 16px 2px #ff4fc8}
-#freBorda i:nth-child(3){box-shadow:inset 0 0 80px 4px #4fe3ff,inset 0 0 16px 2px #4fe3ff}
-.freFlash{position:absolute;left:50%;top:56%;translate:-50% -50%;font:900 min(60px,14vw) Orbitron,'Exo 2',sans-serif;color:#fff;white-space:nowrap;pointer-events:none;z-index:60;text-shadow:0 0 10px var(--fc),0 0 28px var(--fc),0 0 60px var(--fc);animation:freFlash 1.1s ease-out forwards}
-.freFlash.topo{font-size:min(54px,12.5vw);color:#ffe9fb;animation:freFlash 1.3s ease-out forwards,freArco .8s linear infinite}
+#freBorda i:nth-child(2){background:linear-gradient(to bottom,#ff4fc8cc,#ff4fc84d 14px,transparent 56px) top/100% 56px no-repeat,linear-gradient(to top,#ff4fc8cc,#ff4fc84d 14px,transparent 56px) bottom/100% 56px no-repeat,linear-gradient(to right,#ff4fc8cc,#ff4fc84d 10px,transparent 40px) left/40px 100% no-repeat,linear-gradient(to left,#ff4fc8cc,#ff4fc84d 10px,transparent 40px) right/40px 100% no-repeat}
+#freBorda i:nth-child(3){background:linear-gradient(to bottom,#4fe3ffcc,#4fe3ff4d 14px,transparent 56px) top/100% 56px no-repeat,linear-gradient(to top,#4fe3ffcc,#4fe3ff4d 14px,transparent 56px) bottom/100% 56px no-repeat,linear-gradient(to right,#4fe3ffcc,#4fe3ff4d 10px,transparent 40px) left/40px 100% no-repeat,linear-gradient(to left,#4fe3ffcc,#4fe3ff4d 10px,transparent 40px) right/40px 100% no-repeat}
+.freFlash{position:absolute;left:50%;top:56%;translate:-50% -50%;font:900 min(60px,14vw) Orbitron,'Exo 2',sans-serif;color:#fff;white-space:nowrap;pointer-events:none;z-index:60;text-shadow:0 0 8px var(--fc),0 0 24px var(--fc);animation:freFlash 1.1s ease-out forwards}   /* duas sombras (a de 60 px borrava uma área enorme a cada letreiro) */
+.freFlash.topo{font-size:min(54px,12.5vw);color:#ffe9fb;animation:freFlash 1.3s ease-out forwards;text-shadow:0 0 8px #ff4fc8,-6px 0 20px #4fe3ff,6px 0 20px #ffd84a}   /* as cores do arco-íris na sombra, sem filtro animado */
 .freFlash.vel{top:30%;font-size:min(26px,7vw);letter-spacing:.12em;text-transform:uppercase}
 @keyframes freFlash{0%{opacity:0;scale:.4}14%{opacity:1;scale:1.18}30%{scale:1}70%{opacity:1}100%{opacity:0;scale:1.25}}
 .flut.fre{z-index:40;font:900 calc(var(--cell)*var(--fs,.27)) Orbitron,'Exo 2',sans-serif;color:#fff;-webkit-text-stroke:0;white-space:nowrap;text-shadow:0 0 5px var(--fc),0 0 12px var(--fc);animation:freFlut 1s ease-out forwards}
@@ -709,7 +711,7 @@ body.rola #stage{touch-action:none}
 <div id="coach" class="hidden"><div class="cav" id="coachAv"></div><div><p id="coachText"></p><button class="btn b" id="coachOk">Ok</button></div></div>
 
 <script>
-const VERSAO="5c03e646";
+const VERSAO="52d13a4f";
 // ===================== CONFIG =====================
 let W = 4, H = 4, N = 4;      // largura e altura do tabuleiro (N = maior lado)
 const CFG = {
@@ -4386,17 +4388,22 @@ function geoTab(){ if(GEO && GEOq===quadroN) return GEO; GEOq=quadroN; return GE
 function geoMede(){ const r=board.getBoundingClientRect(), D=Math.min(2,ESP.DPR), cel=(typeof cellPx==='function'?cellPx():80), gap=(r.width-W*cel)/(W+1);
   return {r, D, P:(cel+gap)*D, g0:gap*D/2, O:cel*D, cel}; }
 const casaOk=(x,y)=>x>=0&&y>=0&&x<W&&y<H&&!(S.walls||[]).some(w=>w.v&&w.x===x&&w.y===y);
-function campoM(px,py,t,pocos,pa){ let dx=0,dy=0,h=0;
+// A parte parada do campo (os poços das peças) só muda quando as peças mudam de lugar: fica guardada em cada ponto e é
+// refeita só nessa hora. As ondas e os tremores se somam por cima a cada quadro. (No Frenesi a malha treme na batida com
+// as peças paradas: refazer os poços a cada quadro custava a maior parte da malha.)
+function pocosM(n,pocos,pa){ const px=n.rx, py=n.ry; let dx=0,dy=0,h=0;
   for(const q of pocos){ const ex=px-q.x, ey=py-q.y, d2=ex*ex+ey*ey, sg=pa*(.32+.13*q.m); if(d2>sg*sg*16) continue;
     const d=Math.sqrt(d2)||1, A=Math.min(pa*.12*q.m,sg*.55), f=A*(d/sg)*Math.exp(.5-d2/(2*sg*sg));
     dx-=ex/d*f; dy-=ey/d*f; h+=q.m*Math.exp(-d2/(2*(sg*1.15)**2)); }
-  let w=0;
-  for(const o of ondasM){ const ex=px-o.x, ey=py-o.y, d=Math.hypot(ex,ey)||1, u=(d-pa*3.4*(t-o.t0))/(pa*.45), amp=o.a*Math.exp(-(t-o.t0)*1.1)*Math.exp(-u*u)*Math.sin(u*2.4);
+  n.pdx=dx; n.pdy=dy; n.h=h; }
+function campoM(n,t,pa){ const px=n.rx, py=n.ry; let dx=n.pdx, dy=n.pdy, w=0;
+  // cada onda é um anel estreito: longe da frente dele (|u| > 3) a contribuição é menor que 1/8000, e as contas são puladas
+  for(const o of ondasM){ const ex=px-o.x, ey=py-o.y, d=Math.hypot(ex,ey)||1, u=(d-pa*3.4*(t-o.t0))/(pa*.45); if(u>3||u<-3) continue; const amp=o.a*Math.exp(-(t-o.t0)*1.1)*Math.exp(-u*u)*Math.sin(u*2.4);
     dx+=ex/d*amp; dy+=ey/d*amp; w+=Math.abs(amp)/pa; }
-  for(const o of tremM){ const ex=px-o.x, ey=py-o.y, d=Math.hypot(ex,ey)||1, u=(d-pa*2.2*(t-o.t0))/(pa*.3), amp=o.a*Math.exp(-(t-o.t0)*3)*Math.exp(-u*u)*Math.sin(u*2.4);
+  for(const o of tremM){ const ex=px-o.x, ey=py-o.y, d=Math.hypot(ex,ey)||1, u=(d-pa*2.2*(t-o.t0))/(pa*.3); if(u>3||u<-3) continue; const amp=o.a*Math.exp(-(t-o.t0)*3)*Math.exp(-u*u)*Math.sin(u*2.4);
     dx+=ex/d*amp; dy+=ey/d*amp; }
   const L=Math.hypot(dx,dy), cap=pa*.42; if(L>cap){ dx*=cap/L; dy*=cap/L; }
-  return [dx,dy,h,w]; }
+  n.cdx=dx; n.cdy=dy; n.w=w; }
 // quanto cada ponto da rede aparece: forte no meio do tabuleiro, mais fraco perto da borda, e sumindo aos poucos
 // fora dele (e nas casas vazias do formato), para a malha se misturar ao céu
 function presencaM(ci,cj,ok){
@@ -4421,12 +4428,13 @@ function malhaQuadro(t){
   const pa=g.P, pocos=[];
   for(const {el,fr} of pecasNoQuadro()) pocos.push({x:(fr.left+fr.width/2-g.r.left)*g.D+g.O, y:(fr.top+fr.height/2-g.r.top)*g.D+g.O, m:massaE(el._t.t)});
   // nada mudou desde o último desenho (peças paradas, sem onda nem tremor, rede assentada): o desenho anterior vale
-  const selo=pocos.map(q=>Math.round(q.x)+','+Math.round(q.y)+','+q.m.toFixed(2)).join(';')+(S.frenesi?'|'+freMalhaSelo(t):''), calmo=!ondasM.length && !tremM.length;
+  const seloP=pocos.map(q=>Math.round(q.x)+','+Math.round(q.y)+','+q.m.toFixed(2)).join(';'), selo=seloP+(S.frenesi?'|'+freMalhaSelo(t):''), calmo=!ondasM.length && !tremM.length;
   if(!refaz && calmo && malhaParada && selo===malhaSelo) return;
   if(selo!==malhaSelo) malhaParada=false;
   malhaSelo=selo;
   let mexe=0;
-  for(const n of MN.nos){ const [dx,dy,h,w]=campoM(n.rx,n.ry,t,pocos,pa); n.vx+=((n.rx+dx-n.x)*90-n.vx*11)*dt; n.vy+=((n.ry+dy-n.y)*90-n.vy*11)*dt; n.x+=n.vx*dt; n.y+=n.vy*dt; n.h=h; n.w=w;
+  if(refaz || seloP!==MN.seloP){ MN.seloP=seloP; for(const n of MN.nos) pocosM(n,pocos,pa); }
+  for(const n of MN.nos){ campoM(n,t,pa); n.vx+=((n.rx+n.cdx-n.x)*90-n.vx*11)*dt; n.vy+=((n.ry+n.cdy-n.y)*90-n.vy*11)*dt; n.x+=n.vx*dt; n.y+=n.vy*dt;
     mexe=Math.max(mexe,Math.abs(n.vx)+Math.abs(n.vy)); }
   malhaParada = calmo && mexe<2;
   const c=cv.getContext('2d'); c.clearRect(0,0,Wp,Hp);
@@ -5283,7 +5291,7 @@ function freBatida(t){
   if(k<4) return;
   const g=geoTab(); if(!g.r.width) return;
   tremM.push({x:g.O+g.r.width*g.D/2, y:g.O+g.r.height*g.D/2, t0:t, a:g.P*(.012+.008*(k-3))});
-  if(k===TOPO) aneisE.push({x:g.r.left+g.r.width/2, y:g.r.top+g.r.height/2, t0:t, v:g.r.width*.9, rgb:txtRgb(arcoIris(t)), a:.3, w:5});
+  if(k===TOPO && (FV.nBat=(FV.nBat||0)+1)%2) aneisE.push({x:g.r.left+g.r.width/2, y:g.r.top+g.r.height/2, t0:t, v:g.r.width*.9, rgb:txtRgb(arcoIris(t)), a:.3, w:5});   // um anel a cada dois tempos (círculos enormes custam)
 }
 // as duas cores da nebulosa (ceuDesenha): as do mundo no ×1, as do degrau acima, girando no ×20, pulsando na batida;
 // logo depois da queda, cinza e escura por um instante

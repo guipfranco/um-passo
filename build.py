@@ -247,14 +247,16 @@ body.modoFre #freBorda{display:block}
 #freTempo.pouco i{background:#ff5a5a;animation:frePisca .3s steps(2) infinite}
 @keyframes frePisca{50%{opacity:.35}}
 #freBorda{position:fixed;inset:0;pointer-events:none;z-index:2}
-#freBorda i{position:absolute;inset:0;opacity:0;transition:opacity .5s;will-change:opacity;box-shadow:inset 0 0 80px 4px var(--fc),inset 0 0 16px 2px var(--fc)}
+/* bordas acesas: degradês nas quatro beiradas (pintar degradê é barato; a sombra borrada de antes, na tela inteira, era
+   repintada a cada troca de cor e pesava na placa de vídeo do celular) */
+#freBorda i{position:absolute;inset:0;opacity:0;transition:opacity .5s;will-change:opacity;background:linear-gradient(to bottom,color-mix(in srgb,var(--fc) 80%,transparent),color-mix(in srgb,var(--fc) 30%,transparent) 14px,transparent 56px) top/100% 56px no-repeat,linear-gradient(to top,color-mix(in srgb,var(--fc) 80%,transparent),color-mix(in srgb,var(--fc) 30%,transparent) 14px,transparent 56px) bottom/100% 56px no-repeat,linear-gradient(to right,color-mix(in srgb,var(--fc) 80%,transparent),color-mix(in srgb,var(--fc) 30%,transparent) 10px,transparent 40px) left/40px 100% no-repeat,linear-gradient(to left,color-mix(in srgb,var(--fc) 80%,transparent),color-mix(in srgb,var(--fc) 30%,transparent) 10px,transparent 40px) right/40px 100% no-repeat}
 #freBorda.fd6 i:nth-child(2){animation:freOnda 2s ease-in-out infinite}
 #freBorda.fd6 i:nth-child(3){animation:freOnda 2s ease-in-out -1s infinite}
 @keyframes freOnda{0%,100%{opacity:.1}50%{opacity:.85}}
-#freBorda i:nth-child(2){box-shadow:inset 0 0 80px 4px #ff4fc8,inset 0 0 16px 2px #ff4fc8}
-#freBorda i:nth-child(3){box-shadow:inset 0 0 80px 4px #4fe3ff,inset 0 0 16px 2px #4fe3ff}
-.freFlash{position:absolute;left:50%;top:56%;translate:-50% -50%;font:900 min(60px,14vw) Orbitron,'Exo 2',sans-serif;color:#fff;white-space:nowrap;pointer-events:none;z-index:60;text-shadow:0 0 10px var(--fc),0 0 28px var(--fc),0 0 60px var(--fc);animation:freFlash 1.1s ease-out forwards}
-.freFlash.topo{font-size:min(54px,12.5vw);color:#ffe9fb;animation:freFlash 1.3s ease-out forwards,freArco .8s linear infinite}
+#freBorda i:nth-child(2){background:linear-gradient(to bottom,#ff4fc8cc,#ff4fc84d 14px,transparent 56px) top/100% 56px no-repeat,linear-gradient(to top,#ff4fc8cc,#ff4fc84d 14px,transparent 56px) bottom/100% 56px no-repeat,linear-gradient(to right,#ff4fc8cc,#ff4fc84d 10px,transparent 40px) left/40px 100% no-repeat,linear-gradient(to left,#ff4fc8cc,#ff4fc84d 10px,transparent 40px) right/40px 100% no-repeat}
+#freBorda i:nth-child(3){background:linear-gradient(to bottom,#4fe3ffcc,#4fe3ff4d 14px,transparent 56px) top/100% 56px no-repeat,linear-gradient(to top,#4fe3ffcc,#4fe3ff4d 14px,transparent 56px) bottom/100% 56px no-repeat,linear-gradient(to right,#4fe3ffcc,#4fe3ff4d 10px,transparent 40px) left/40px 100% no-repeat,linear-gradient(to left,#4fe3ffcc,#4fe3ff4d 10px,transparent 40px) right/40px 100% no-repeat}
+.freFlash{position:absolute;left:50%;top:56%;translate:-50% -50%;font:900 min(60px,14vw) Orbitron,'Exo 2',sans-serif;color:#fff;white-space:nowrap;pointer-events:none;z-index:60;text-shadow:0 0 8px var(--fc),0 0 24px var(--fc);animation:freFlash 1.1s ease-out forwards}   /* duas sombras (a de 60 px borrava uma área enorme a cada letreiro) */
+.freFlash.topo{font-size:min(54px,12.5vw);color:#ffe9fb;animation:freFlash 1.3s ease-out forwards;text-shadow:0 0 8px #ff4fc8,-6px 0 20px #4fe3ff,6px 0 20px #ffd84a}   /* as cores do arco-íris na sombra, sem filtro animado */
 .freFlash.vel{top:30%;font-size:min(26px,7vw);letter-spacing:.12em;text-transform:uppercase}
 @keyframes freFlash{0%{opacity:0;scale:.4}14%{opacity:1;scale:1.18}30%{scale:1}70%{opacity:1}100%{opacity:0;scale:1.25}}
 .flut.fre{z-index:40;font:900 calc(var(--cell)*var(--fs,.27)) Orbitron,'Exo 2',sans-serif;color:#fff;-webkit-text-stroke:0;white-space:nowrap;text-shadow:0 0 5px var(--fc),0 0 12px var(--fc);animation:freFlut 1s ease-out forwards}

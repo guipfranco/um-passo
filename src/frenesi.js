@@ -275,7 +275,7 @@ function freBatida(t){
   if(k<4) return;
   const g=geoTab(); if(!g.r.width) return;
   tremM.push({x:g.O+g.r.width*g.D/2, y:g.O+g.r.height*g.D/2, t0:t, a:g.P*(.012+.008*(k-3))});
-  if(k===TOPO) aneisE.push({x:g.r.left+g.r.width/2, y:g.r.top+g.r.height/2, t0:t, v:g.r.width*.9, rgb:txtRgb(arcoIris(t)), a:.3, w:5});
+  if(k===TOPO && (FV.nBat=(FV.nBat||0)+1)%2) aneisE.push({x:g.r.left+g.r.width/2, y:g.r.top+g.r.height/2, t0:t, v:g.r.width*.9, rgb:txtRgb(arcoIris(t)), a:.3, w:5});   // um anel a cada dois tempos (círculos enormes custam)
 }
 // as duas cores da nebulosa (ceuDesenha): as do mundo no ×1, as do degrau acima, girando no ×20, pulsando na batida;
 // logo depois da queda, cinza e escura por um instante
