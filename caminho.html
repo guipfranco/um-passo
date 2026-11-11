@@ -54,8 +54,8 @@ ol.regra b{color:#ffd877}
 .prob h4{margin:6px 0 0;font-size:14.5px;color:#ffd877}
 .prob p{font-size:14px}
 .prob a,.fase a{color:#7fe0ff}
-/* mapa geral: 8 mundos x 12 fases, cada casa na cor do que a fase ensina */
-.mapa{display:grid;grid-template-columns:auto repeat(12,1fr);gap:3px;align-items:center}
+/* mapa geral: 10 mundos x 8 fases, cada casa na cor do que a fase ensina */
+.mapa{display:grid;grid-template-columns:auto repeat(8,1fr);gap:3px;align-items:center}
 .mapa .mn{font-size:11.5px;color:#b9b1e6;padding-right:5px;white-space:nowrap;font-weight:700}
 .mapa a{aspect-ratio:1;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:rgba(20,14,40,.75);text-decoration:none}
 .mapa a.final{outline:2px solid #ffcf7a;outline-offset:-2px}
@@ -85,14 +85,15 @@ details.mcard[open] summary::after{content:' ▴'}
   <h1>O CAMINHO DA JORNADA</h1>
   <p class="sub" id="gerado"></p>
   <p class="sub">Proposta de caminho novo: <a href="proposta.html" style="color:#7fe0ff">proposta.html</a></p>
-  <p>Como cada mecânica é apresentada, treinada e misturada ao longo das 96 fases. Serve para garantir que cada novidade seja explorada aos poucos, e o suficiente, antes da próxima.</p>
+  <p>Como cada mecânica é apresentada, treinada e misturada ao longo das 80 fases. Serve para garantir que cada novidade seja explorada aos poucos, e o suficiente, antes da próxima.</p>
 
   <h2>A REGRA</h2>
   <div class="card"><ol class="regra">
     <li><b>Uma novidade por fase.</b> Nunca duas estreias juntas.</li>
     <li><b>Estreia sozinha e fácil:</b> só a meta nova, pedindo 1 (uma órbita, uma presa...), sem outra meta e num tabuleiro conhecido.</li>
-    <li><b>Treino:</b> pelo menos 2 fases com a mecânica sozinha, subindo aos poucos (pedir 2, peça maior, outro tamanho ou formato).</li>
+    <li><b>Treino com uma regra:</b> na fase seguinte, a novidade com uma regra que muda a decisão (sem formar uma peça, duas de uma vez), nunca só "mais um"; depois, um quebra-cabeça só com ela. A regra não conta como mistura.</li>
     <li><b>Só então misturar</b>, e com algo que também já foi bem treinado.</li>
+    <li><b>Sem repetir:</b> nenhuma fase repete a meta da anterior só mudando a quantidade, e nenhuma pede pontos.</li>
     <li><b>Dificuldade sobe devagar:</b> o robô casual (uma pessoa comum) cumpre pelo menos 80%, e não cai mais de 20 pontos de uma fase para a outra. As fases finais de mundo podem ser o pico.</li>
   </ol></div>
 
@@ -112,7 +113,7 @@ details.mcard[open] summary::after{content:' ▴'}
   <div class="card">
     <div class="leg"><span><i class="c-est"></i>estreia</span><span><i class="c-solo"></i>sozinha</span><span><i class="c-mix"></i>misturada com outra</span></div>
     <div id="trilhas" class="trilha" style="gap:10px"></div>
-    <p class="sub">Cada risquinho é uma fase (12 por mundo). Toque num risquinho para ver a fase.</p>
+    <p class="sub">Cada risquinho é uma fase (8 por mundo). Toque num risquinho para ver a fase.</p>
   </div>
 
   <h2>PROBLEMAS ENCONTRADOS</h2>
@@ -149,19 +150,31 @@ const MEC = [
 const META_DA = {alvo:'alvo', leve:'leve', nebulosa:'terra', presa:'solte', nave:'carrinho', aura:'cor', buraco:'quebre', combo:'combo'};
 const nomeMec = Object.fromEntries(MEC.map(([k,n])=>[k,n]));
 for(const f of fases){ f.mec = MEC.filter(([k,,t])=>t(f)).map(([k])=>k); f.dif = DIF[f.n]; }
-// estreia, sozinha, misturada
+// estreia, sozinha, misturada. As regras (sem formar, em ordem, duas de uma vez) mudam a decisão, mas não são peça do
+// tabuleiro: a fase de restrição (a novidade com uma regra) conta como treino sozinha, não como mistura.
+const REGRAS = new Set(['proibido','seq','combo']);
+const outras = (f,k) => f.mec.filter(x=>x!==k && !REGRAS.has(x));   // com o que a fase mistura k
+const sozinha = (f,k) => !outras(f,k).length;
+// a meta sem as quantidades (n, e o número de lixos, de casas de nebulosa, de combos, de pontos), com as mecânicas
+const QTD = new Set(['n','pos','rache','terra','combo','pontos']);
+const assinatura = f => JSON.stringify([[...f.mec].sort(), f.objs.map(o=>Object.keys(o).filter(k=>!['n','pos'].includes(k)).sort().map(k=>QTD.has(k)?k:k+':'+JSON.stringify(o[k]))).map(String).sort()]);
 const estreia = {}, solo = {}, avisos = {};
+let antF=null;
 for(const f of fases){ avisos[f.n]=[];
   const novas = f.mec.filter(k=>!(k in estreia)); novas.forEach(k=>estreia[k]=f.n); f.novas=novas;
   if(novas.length>=2) avisos[f.n].push({tipo:'duas', txt:`Duas novidades juntas: ${novas.map(k=>nomeMec[k]).join(' e ')}.`});
   for(const k of novas){
-    if(f.mec.length>=2) avisos[f.n].push({tipo:'estmix', txt:`${nomeMec[k]} já estreia misturada com ${f.mec.filter(x=>x!==k).map(x=>nomeMec[x]).join(', ')}.`});
+    if(!sozinha(f,k)) avisos[f.n].push({tipo:'estmix', txt:`${nomeMec[k]} já estreia misturada com ${outras(f,k).map(x=>nomeMec[x]).join(', ')}.`});
     const mk=META_DA[k], o=mk && f.objs.find(o=>o[mk]!==undefined);
     if(o && (o.n||1)>=2) avisos[f.n].push({tipo:'estdif', txt:`${nomeMec[k]} já estreia pedindo ${o.n}.`});
   }
-  if(f.mec.length>=2) for(const k of f.mec){ if(novas.includes(k)) continue; const s=solo[k]||0;
+  for(const k of f.mec){ if(novas.includes(k) || REGRAS.has(k) || sozinha(f,k)) continue; const s=solo[k]||0;
     if(s<2) avisos[f.n].push({tipo:'cedo', txt:`Mistura ${nomeMec[k]}, que só foi treinada sozinha ${s===0?'nenhuma vez':s===1?'1 vez':s+' vezes'} antes.`}); }
-  if(f.mec.length===1) solo[f.mec[0]]=(solo[f.mec[0]]||0)+1;
+  for(const k of f.mec) if(!REGRAS.has(k) && sozinha(f,k)) solo[k]=(solo[k]||0)+1;
+  if(f.metas.includes('pontos')) avisos[f.n].push({tipo:'pontos', txt:'Meta de pontos: na prática é o mesmo que formar (os pontos vêm das junções).'});
+  // a mesma meta da fase anterior, no mesmo tipo de tabuleiro, só com outra quantidade (quebra-cabeça é outro jeito de jogar)
+  if(antF && !f.quebra && !antF.quebra && assinatura(f)===assinatura(antF)) avisos[f.n].push({tipo:'repete', txt:`Repete a meta da fase ${antF.n} só mudando a quantidade.`});
+  antF=f;
 }
 // dificuldade: abaixo de 80% ou queda grande em relação à fase anterior (fora quebra-cabeças)
 let ant=null;
@@ -173,7 +186,7 @@ for(const f of fases){ if(!f.dif){ continue; }
 
 // ---------- visão geral: o tema de cada fase, o mapa e os blocos ----------
 const TEMA = {
-  basico:['#8fa0d4','Formar e pontos'], combo:['#ff7eb6','Combo'], seq:['#c9a0ff','Em ordem'], proibido:['#ff6b6b','Sem formar'],
+  basico:['#8fa0d4','Formar'], combo:['#ff7eb6','Combo'], seq:['#c9a0ff','Em ordem'], proibido:['#ff6b6b','Sem formar'],
   estacao:['#a9bdd2','Estação'], mureta:['#d8925a','Fluxo de rochas'], leve:['#ffe066','Levar à órbita'], alvo:['#f5a623','Formar na órbita'],
   nebulosa:['#3fc9b0','Nebulosa'], lixo:['#b5b86f','Lixo espacial'], presa:['#5fdcff','Planeta preso'], nave:['#7be07b','Nave'],
   aura:['#b98aff','Auras'], buraco:['#ea6fd3','Buraco negro'], passinho:['#9cc4ff','Passinho'], quebra:['#f1eefc','Quebra-cabeça'], final:['#ffcf7a','Final do mundo'] };
@@ -181,7 +194,7 @@ for(const f of fases){ const m=f.mec.filter(k=>k!=='pontos');
   f.temas = f.quebra ? ['quebra'] : f.chefe ? ['final'] : m.length ? m : ['basico']; f.tema=f.temas.join('+'); }
 const fundo = f => f.temas.length===1 ? TEMA[f.temas[0]][0]
   : `linear-gradient(135deg, ${f.temas.map((k,i,a)=>`${TEMA[k][0]} ${Math.round(i/a.length*100)}% ${Math.round((i+1)/a.length*100)}%`).join(', ')})`;
-const curto = n => ({'Entrada':'Entrada','Estações':'Estações','Rochas e vazios':'Rochas','Nebulosas':'Nebulosa','Naves':'Naves','Auras':'Auras','Buracos negros':'Buracos','Passinho':'Passinho'}[n]||n);
+const curto = n => ({'Fluxos de rochas':'Fluxos','Lixo espacial':'Lixo','Órbitas, parte 2':'Órbitas 2','Planetas presos':'Presos','Buracos negros':'Buracos'}[n]||n);
 // mapa
 { let h=''; mundos.forEach(([nome],g)=>{ h+=`<div class="mn">${g+1} ${curto(nome)}</div>`;
     for(const f of fases.filter(f=>f.g===g)) h+=`<a href="#f${f.n}" class="${f.chefe?'final':''} ${f.novas.length?'ini':''}" style="background:${fundo(f)}" title="${f.n} ${f.nome}">${f.n}</a>`; });
@@ -222,13 +235,13 @@ const tr=document.getElementById('trilhas');
 const cab=`<div class="fita cab">${mundos.map((m,i)=>`<div class="mundo">${i+1}</div>`).join('')}</div>`;
 tr.insertAdjacentHTML('beforeend', cab);
 for(const k of ordem){
-  const usos=fases.filter(f=>f.mec.includes(k)), mix1=usos.find(f=>f.mec.length>=2 && f.n!==estreia[k]);
-  const antesMix = usos.filter(f=>f.mec.length===1 && (!mix1 || f.n<mix1.n)).length;
+  const usos=fases.filter(f=>f.mec.includes(k)), mix1=usos.find(f=>!sozinha(f,k) && f.n!==estreia[k]);
+  const antesMix = usos.filter(f=>sozinha(f,k) && (!mix1 || f.n<mix1.n)).length;
   const ruim = mix1 && antesMix<2;
   const info = `estreia na ${estreia[k]} · ${usos.length} fase${usos.length>1?'s':''}` + (mix1?` · sozinha ${antesMix}× antes de misturar`:'');
   let fita='<div class="fita">';
   for(let g=0; g<mundos.length; g++){ fita+='<div class="mundo">';
-    for(const f of fases.filter(f=>f.g===g)){ const tem=f.mec.includes(k), c=!tem?'c-nada':f.n===estreia[k]?'c-est':f.mec.length===1?'c-solo':'c-mix';
+    for(const f of fases.filter(f=>f.g===g)){ const tem=f.mec.includes(k), c=!tem?'c-nada':f.n===estreia[k]?'c-est':sozinha(f,k)?'c-solo':'c-mix';
       fita+=`<a class="${c}" href="#f${f.n}" title="${f.n}"></a>`; }
     fita+='</div>'; }
   fita+='</div>';
@@ -237,7 +250,7 @@ for(const k of ordem){
 
 // problemas, agrupados
 const TIPOS=[['estdif','Estreias que já começam pedindo 2 ou mais'],['estmix','Estreias já misturadas com outra mecânica'],['duas','Duas novidades na mesma fase'],
-  ['cedo','Misturas cedo demais (menos de 2 fases de treino sozinha)'],['dificil','Fases difíceis para uma pessoa comum (casual abaixo de 80%)'],['salto','Saltos de dificuldade'],['chefe','Fins de mundo pesados demais']];
+  ['cedo','Misturas cedo demais (menos de 2 fases de treino sozinha)'],['repete','Fases que repetem a meta da anterior só mudando a quantidade'],['pontos','Metas de pontos'],['dificil','Fases difíceis para uma pessoa comum (casual abaixo de 80%)'],['salto','Saltos de dificuldade'],['chefe','Fins de mundo pesados demais']];
 const pr=document.getElementById('probs');
 for(const [t,tit] of TIPOS){ const l=fases.filter(f=>avisos[f.n].some(a=>a.tipo===t)); if(!l.length) continue;
   pr.insertAdjacentHTML('beforeend', `<h4>${tit} (${l.length})</h4><p>${l.map(f=>`<a href="#f${f.n}">${f.n} ${f.nome}</a>`).join(' · ')}</p>`); }

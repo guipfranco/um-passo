@@ -15,8 +15,8 @@ function extrai(){
     const txt=os.map(o=>{ try{ return (o.proibido?'Sem formar: ':'')+objetivoTxt(o); }catch(e){ return JSON.stringify(o); } });
     return { n, g:m.g, nome:nomeFaseCla(n), chefe:!!m.chefe, livre:!!m.livre, arrastos:m.arrastos||null,
       metas:os.map(o=>Object.keys(o).filter(k=>!['n','t'].includes(k))[0]), objs:os, txt,
-      w:W, h:H, forma:!!(m.forma||m.mapa), estacoes:(S.walls||[]).length, muretas:(S.edges||[]).length,
-      nebulosa:(S.terra&&S.terra.size)||0, lixo:S.tiles.filter(t=>t.t===0).length + (P.clods||0) + (P.torrao?1:0),
+      w:W, h:H, forma:!!(m.forma||m.mapa), estacoes:(S.walls||[]).filter(w=>!w.lixo && !w.v).length, muretas:(S.edges||[]).length,
+      nebulosa:(S.terra&&S.terra.size)||0, lixo:(S.walls||[]).filter(w=>w.lixo).length + S.tiles.filter(t=>t.t===0).length + (P.clods||0) + (P.torrao?1:0),
       presas:S.tiles.filter(t=>t.presa).length, nave:!!S.carro, auras:!!P.cores, buracos:!!P.picareta,
       passinho:S.char==='passinho', quebra:P.spawns===0, orbitas:(S.alvos||[]).length };
   }))`));

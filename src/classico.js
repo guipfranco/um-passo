@@ -5,10 +5,40 @@
 // Peças do Clássico: casa marcada (S.alvos), casa de terra (S.terra), pedrinha presa (tile.presa), carrinho (S.carro).
 // Guardado em mina_missoes: {n: {e: estrelas, t: pontos, pm: medalha do Passinho}}; fase em andamento em mina_cla_save.
 // O Clássico sem fim guarda a partida em andamento à parte, em ptui_inf_save (ver infinitoJoga).
-if(localStorage.ptui_jornada!=='2'){
+// Jornada 1 -> 2 (2026-11-08): mundos todos novos; o progresso antigo só fica guardado à parte (_v1)
+if(localStorage.ptui_jornada!=='2' && localStorage.ptui_jornada!=='3'){
   for(const k of ['mina_missoes','mina_cla_save','ptui_partidas']) if(localStorage[k]!=null){ localStorage[k+'_v1']=localStorage[k]; localStorage.removeItem(k); }
   localStorage.ptui_jornada='2';
 }
+// Jornada 2 -> 3 (2026-11-10): 10 mundos de 8 fases em vez de 12. Roda uma vez (ptui_jornada vira '3'); o que havia
+// fica copiado em mina_missoes_v2 e ptui_partidas_v2.
+// J3_ANTIGA[n-1] = a fase da versão 2 que corresponde à fase n de hoje. Negativa quando a fase mudou de meta ou de
+// tabuleiro: as estrelas vão para a fase nova, mas a fase pela metade e as partidas anotadas não.
+const J3_ANTIGA = [
+     1, -10,   5,  -6,   9,  -7,  11, -12,     -13,  20,  17, -19,  22, -18,  23,  24,
+    25, -26,  29,  30,  31,  33,  35,  36,      37, -38,  41,  42,  44,  46,  47,  48,
+    49, -50,  53, -55,  56,  54,  59,  60,      61, -62,  65,  67,  66,  68,  71,  72,
+   -73, -74,  77,  80,  78,  79,  83,  84,      85, -86,  89,  90,  92,  91,  95,  96,
+    97, -99, 101, 102, 105, 106, 107, 108,    -109,-110, 113, 114, 115, 117, 119, 120];
+function migraJornada3(){
+  const velho=JSON.parse(localStorage.mina_missoes||'{}'), novo={}, nova=o=>J3_ANTIGA.findIndex(v=>Math.abs(v)===o)+1;
+  // onde a pessoa estava: a primeira fase antiga sem estrela. Ela continua na fase nova equivalente a essa (ou à
+  // próxima antiga que continuou); as fases novas antes desse ponto ficam vencidas, com as estrelas da fase antiga
+  // equivalente ou com 1 estrela. Estrelas de fases antigas vencidas vão para a fase nova equivalente, onde ela estiver.
+  let a=1; while(a<=120 && velho[a]?.e>0) a++;
+  let ate=J3_ANTIGA.length+1; for(let o=a; o<=120; o++){ const n=nova(o); if(n){ ate=n; break; } }
+  J3_ANTIGA.forEach((v,i)=>{ const n=i+1, b=velho[Math.abs(v)];
+    if(b?.e>0) novo[n]={...b}; else if(n<ate) novo[n]={e:1, t:0}; });
+  if(localStorage.mina_missoes!=null) localStorage.mina_missoes_v2=localStorage.mina_missoes;
+  localStorage.mina_missoes=JSON.stringify(novo);
+  // fase pela metade: segue só se a fase continuou igual (com o número novo)
+  const sv=JSON.parse(localStorage.mina_cla_save||'null');
+  if(sv){ const n=J3_ANTIGA.indexOf(sv.n)+1; if(n){ sv.n=n; localStorage.mina_cla_save=JSON.stringify(sv); } else localStorage.removeItem('mina_cla_save'); }
+  // partidas anotadas (Laboratório > Dados das partidas): renumeradas; as das fases que mudaram ou saíram ficam só na cópia
+  if(localStorage.ptui_partidas){ localStorage.ptui_partidas_v2=localStorage.ptui_partidas;
+    localStorage.ptui_partidas=JSON.stringify(JSON.parse(localStorage.ptui_partidas).map(p=>{ const n=J3_ANTIGA.indexOf(p[0])+1; return n ? [n,...p.slice(1)] : null; }).filter(Boolean)); }
+}
+if(localStorage.ptui_jornada==='2'){ try{ migraJornada3(); }catch(e){} localStorage.ptui_jornada='3'; }
 const MISS = () => JSON.parse(localStorage.mina_missoes||'{}');
 const liberada = n => n===1 || (MISS()[n-1]?.e||0) > 0;
 const mundoDe = m => MUNDOS[m.g];
