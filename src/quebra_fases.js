@@ -28,19 +28,19 @@ const QJ_FASES=[
   {id:'q1k8yqsm',g:0,nome:'Juntar duas vezes',mapa:['...','...','...'],pecas:[[1,0,2],[1,1,1],[1,2,1]],regras:{spawns:0},obj:{forme:3,n:1},arrastos:6,min:2},
   {id:'q0zy4q3e',g:0,nome:'Um asteroide',mapa:['...','...','...'],pecas:[[2,2,3],[2,0,2],[0,0,2]],regras:{spawns:0},obj:{forme:4,n:1},arrastos:6,min:2},
   {id:'q1b8hzbi',g:0,nome:'Duas num arrasto',mapa:['....','....','....','....'],pecas:[[0,3,1],[3,2,1],[2,0,1],[1,1,1]],regras:{spawns:0},obj:{combo:1},arrastos:6,min:2},
-  {id:'q144n7yg',g:0,nome:'Duas rochas',mapa:['....','....','....','....'],pecas:[[2,3,2],[2,0,1],[0,2,1],[2,1,2],[1,0,2]],regras:{spawns:0},obj:{forme:3,n:2},arrastos:8,min:4},
+  {id:'q1kjmij2',antes:['q144n7yg'],g:0,nome:'Asteroide de poeira',mapa:['....','....','....','....'],pecas:[[3,0,3],[3,1,1],[2,2,1],[0,0,1],[2,3,1]],regras:{spawns:0},obj:{forme:4,n:1},arrastos:8,min:4},
   {id:'q1irchsx',g:0,nome:'Asteroide apertado',mapa:['...','...','...'],pecas:[[0,1,2],[2,1,1],[2,0,1],[1,1,2],[2,2,2]],regras:{spawns:0},obj:{forme:4,n:1},arrastos:8,min:4},
   {id:'q1uumaqs',g:0,nome:'Um cometa',mapa:['....','....','....','....'],pecas:[[0,1,4],[2,2,2],[0,3,2],[3,1,2],[2,0,2]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:8,min:4},
-  {id:'q0k6l7o8',g:0,nome:'Dois asteroides',mapa:['....','....','....','....'],pecas:[[0,1,3],[3,0,2],[2,0,1],[3,2,1],[2,2,3],[3,1,3]],regras:{spawns:0},obj:{forme:4,n:2},arrastos:10,min:6},
+  {id:'q14a9eib',antes:['q0k6l7o8'],g:0,nome:'Cometa deitado',mapa:['....','....','....'],pecas:[[1,1,3],[0,1,3],[2,1,3],[0,2,2],[3,0,1],[1,2,1]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:10,min:6},
   {id:'q0mkbxsf',g:0,nome:'Cometa no aperto',mapa:['...','...','...'],pecas:[[1,2,3],[0,0,2],[2,0,2],[1,0,3],[1,1,3]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:10,min:6},
-  {id:'q0hyatkl',g:0,nome:'Três rochas',mapa:['...','...','...'],pecas:[[0,1,2],[1,1,2],[2,2,2],[1,2,2],[1,0,2],[0,2,1],[2,0,1]],regras:{spawns:0},obj:{forme:3,n:3},arrastos:10,min:6},
+  {id:'q0h3vgz0',antes:['q0hyatkl'],g:0,nome:'Asteroide lotado',mapa:['...','...','...'],pecas:[[1,1,2],[2,1,2],[1,0,1],[2,2,1],[1,2,1],[2,0,1],[0,1,1]],regras:{spawns:0},obj:{forme:4,n:1},arrastos:10,min:6},
   {id:'q0sbh204',g:0,nome:'Asteroide de sobra',mapa:['....','....','....','....'],pecas:[[1,1,3],[2,1,3],[3,2,3],[1,3,2],[3,1,2],[2,0,4]],regras:{spawns:0},objs:[{forme:4,n:2},{proibido:5}],arrastos:10,min:6},
   // 2 · Formatos
   {id:'q1aish3h',g:1,nome:'Buraco no meio',mapa:['....','....','.#..','....'],pecas:[[0,3,3],[1,3,2],[0,1,1],[0,0,1]],regras:{spawns:0},obj:{forme:4,n:1},arrastos:8,min:4},
   {id:'q0c9mrr5',g:1,nome:'Faixa comprida',mapa:['......','......'],pecas:[[4,1,3],[1,0,1],[2,1,1],[0,0,1],[4,0,1]],regras:{spawns:0},obj:{forme:4,n:1},arrastos:8,min:4},
   {id:'q06qyfe0',g:1,nome:'Tabuleiro em L',mapa:['..##','..##','....','....'],pecas:[[1,3,3],[0,2,3],[1,1,3],[2,3,2],[0,0,2]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:10,min:6},
-  {id:'q07nrxrb',g:1,nome:'Degraus',mapa:['..##','...#','....','....'],pecas:[[0,3,2],[1,0,2],[1,2,2],[1,3,1],[0,0,1]],regras:{spawns:0},obj:{forme:3,n:2},arrastos:10,min:6},
-  {id:'q1htfrkm',g:1,nome:'Dois buracos',mapa:['....','.#..','..#.','....'],pecas:[[0,0,3],[1,2,3],[1,3,3],[3,3,2],[3,2,1],[0,1,1]],regras:{spawns:0},obj:{forme:4,n:2},arrastos:11,min:7},
+  {id:'q0s4j8jf',antes:['q07nrxrb'],g:1,nome:'Degraus',mapa:['..##','...#','....','....'],pecas:[[0,3,2],[1,0,2],[1,2,2],[1,3,1],[0,0,1]],regras:{spawns:0},obj:{forme:4,n:1},arrastos:11,min:7},
+  {id:'q14tkcyo',antes:['q1htfrkm'],g:1,nome:'Dois buracos',mapa:['....','..#.','.#..','....'],pecas:[[1,0,4],[0,1,3],[1,1,2],[1,3,1],[2,3,1]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:11,min:7},
   {id:'q195prk2',g:1,nome:'Escada',mapa:['.....','.....','....#','...##','..###'],pecas:[[2,1,4],[4,0,3],[3,1,1],[0,3,1],[4,1,1],[0,0,1]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:11,min:7},
   {id:'q1116a7o',g:1,nome:'Tabuleiro em T',mapa:['#..#','#..#','....','....'],pecas:[[1,3,4],[0,2,2],[1,0,1],[2,3,1],[2,1,2],[3,2,2]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:11,min:7},
   {id:'q1pkresx',g:1,nome:'Serpentina',mapa:['.....','####.','.....','.####','.....'],pecas:[[4,4,4],[2,4,3],[1,4,1],[4,2,1],[4,0,1],[4,1,1]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:11,min:7},
@@ -48,13 +48,13 @@ const QJ_FASES=[
   {id:'q16jmvem',g:1,nome:'Casas faltando',mapa:['...#.','#....','..#..','.....','##...'],pecas:[[3,3,3],[4,1,2],[2,1,1],[3,4,1],[4,4,3],[3,2,3]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:12,min:8},
   // 3 · Estações
   {id:'q0zc74k1',g:2,nome:'Primeira estação',mapa:['..B.','....','....','....'],pecas:[[0,2,3],[3,3,2],[0,1,2]],regras:{spawns:0},obj:{forme:4,n:1},arrastos:8,min:4},
-  {id:'q19vuq8i',g:2,nome:'Estação na quina',mapa:['...','...','B..'],pecas:[[2,1,2],[0,0,2],[2,2,2],[0,1,1],[1,0,1]],regras:{spawns:0},obj:{forme:3,n:2},arrastos:8,min:4},
+  {id:'q09h0mye',antes:['q19vuq8i'],g:2,nome:'Estação na quina',mapa:['...','...','B..'],pecas:[[2,1,2],[0,0,2],[2,2,2],[0,1,1],[1,0,1]],regras:{spawns:0},obj:{forme:4,n:1},arrastos:9,min:5},
   {id:'q05s8rjg',g:2,nome:'Estação na faixa',mapa:['B.....','......'],pecas:[[5,0,2],[0,1,1],[4,1,1],[4,0,2],[3,1,2]],regras:{spawns:0},obj:{forme:4,n:1},arrastos:9,min:5},
   {id:'q1kjbez5',g:2,nome:'Duas estações',mapa:['....','.B..','B...','....'],pecas:[[0,3,3],[2,1,2],[2,0,1],[1,0,1],[2,2,3],[3,0,3]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:10,min:6},
   {id:'q0flxpv5',g:2,nome:'Estação no L',mapa:['##..','##B.','....','....'],pecas:[[3,0,3],[1,3,3],[3,3,2],[2,0,2],[2,3,2],[0,3,2]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:11,min:7},
   {id:'q1fhl9c5',g:2,nome:'Junção dupla no salão',mapa:['...B.','.....','.BB..','.....','.....'],pecas:[[2,1,2],[4,3,2],[1,3,2],[0,2,1],[2,3,1]],regras:{spawns:0},obj:{combo:1},arrastos:11,min:7},
   {id:'q1tfoxp8',g:2,nome:'Rosquinha com estações',mapa:['...B.','.....','..#..','.B...','.....'],pecas:[[4,4,4],[3,1,2],[2,0,1],[0,3,1],[2,1,2],[2,3,2]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:11,min:7},
-  {id:'q0rdufjh',g:2,nome:'Par de asteroides',mapa:['B...','B...','....','....'],pecas:[[3,2,3],[0,3,2],[3,0,1],[1,0,1],[3,1,3],[2,2,3]],regras:{spawns:0},obj:{forme:4,n:2},arrastos:12,min:8},
+  {id:'q0fzie5r',antes:['q0rdufjh'],g:2,nome:'Cometa entre estações',mapa:['..B.','....','....','.B..'],pecas:[[0,3,4],[0,2,2],[3,1,2],[2,2,2],[3,0,1],[3,2,1]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:12,min:8},
   {id:'q1gus1f5',g:2,nome:'Plutão na escada',mapa:['.....','.....','#..B.','##.B.','###..'],pecas:[[2,0,5],[4,1,3],[2,3,3],[4,4,3],[3,4,2],[0,1,2]],regras:{spawns:0},obj:{forme:6,n:1},arrastos:12,min:8},
   {id:'q0a3a6ph',g:2,nome:'Não encoste no asteroide',mapa:['....','...B','B...','....'],pecas:[[2,0,3],[1,2,3],[2,3,3],[3,3,2],[3,0,2],[1,1,4]],regras:{spawns:0},objs:[{forme:4,n:2},{proibido:5}],arrastos:13,min:9},
   // 4 · Fluxos de rochas
@@ -84,12 +84,12 @@ const QJ_FASES=[
   {id:'q112gehm',g:5,nome:'Nave na faixa',mapa:['.....','.....','.....'],pecas:[[4,0,3],[1,1,2],[0,0,2],[0,2,1]],regras:{spawns:0},obj:{carrinho:4,n:1},arrastos:10,carroPos:[3,2],min:6},
   {id:'q1wwpmt6',g:5,nome:'Nave na beirada',mapa:['....','....','....','...B'],pecas:[[1,1,3],[2,2,2],[0,3,1],[2,1,1]],regras:{spawns:0},obj:{carrinho:4,n:1},arrastos:11,carroPos:[0,2],min:7},
   {id:'q1up5xd9',g:5,nome:'Nave no U',mapa:['....','..##','..##','....'],pecas:[[0,1,3],[1,2,2],[2,3,2],[3,3,1]],regras:{spawns:0},obj:{carrinho:4,n:1},arrastos:11,carroPos:[1,0],min:7},
-  {id:'q14nb2ey',g:5,nome:'Duas rochas na nave',mapa:['....','....','....','....'],pecas:[[1,3,2],[3,2,1],[3,0,1],[0,1,2],[1,1,2],[2,3,1]],regras:{spawns:0},obj:{carrinho:3,n:2},arrastos:12,carroPos:[0,0],min:8},
+  {id:'q1cspyu6',antes:['q14nb2ey'],g:5,nome:'Asteroide na nave',mapa:['....','....','....','....'],pecas:[[1,3,2],[3,2,1],[3,0,1],[0,1,2],[1,1,2],[2,3,1]],regras:{spawns:0},obj:{carrinho:4,n:1},arrastos:12,carroPos:[0,0],min:8},
   {id:'q0fva4kc',g:5,nome:'Nave no corredor',mapa:['.#...','.#.#.','.#.#.','.#.#.','...#.'],pecas:[[4,4,3],[4,0,1],[4,1,1],[4,2,1],[2,3,1]],regras:{spawns:0},obj:{carrinho:4,n:1},arrastos:12,carroPos:[0,0],min:8},
   {id:'q1r0flka',g:5,nome:'Dois destinos',mapa:['....','....','....','....'],pecas:[[0,0,2],[2,3,2],[3,0,3],[1,2,3]],regras:{spawns:0},objs:[{leve:3,n:1},{carrinho:4,n:1}],arrastos:13,carroPos:[0,3],alvosPos:[[3,1]],min:9},
   {id:'q0lfn7tw',g:5,nome:'Cometa na nave',mapa:['..##','....','....','..##'],pecas:[[0,2,3],[1,3,2],[2,2,2],[0,1,3],[1,1,2],[2,1,2],[3,2,1]],regras:{spawns:0},obj:{carrinho:5,n:1},arrastos:13,carroPos:[3,1],min:9},
   {id:'q02pdcyf',g:5,nome:'Rota da nave',mapa:['....','....','....','....'],pecas:[[2,1,4],[3,1,3],[1,1,2],[1,0,2]],regras:{spawns:0},obj:{carrinho:5,n:1},arrastos:14,muretas:[['h',0,0],['v',2,0],['v',2,3]],carroPos:[2,3],min:10},
-  {id:'q0jfj3pq',g:5,nome:'Dois asteroides a bordo',mapa:['...##','....#','....#','.....','##...'],pecas:[[0,3,4],[1,0,3],[3,2,2],[0,2,1],[3,4,1],[0,0,1]],regras:{spawns:0},obj:{carrinho:4,n:2},arrastos:15,carroPos:[1,3],min:11},
+  {id:'q0jptyme',antes:['q0jfj3pq'],g:5,nome:'Cometa a bordo',mapa:['##...','.....','....#','....#','...##'],pecas:[[0,1,4],[4,0,2],[2,1,2],[1,1,2],[0,3,2],[0,4,1]],regras:{spawns:0},obj:{carrinho:5,n:1},arrastos:15,carroPos:[0,2],min:11},
   // 7 · Lixo espacial
   {id:'q0fr0mg2',g:6,nome:'Rachar o lixo',mapa:['...L','....','....','....'],pecas:[[2,0,1],[2,3,1],[2,2,2]],regras:{spawns:0},obj:{rache:1},arrastos:8,min:4},
   {id:'q1igg3y0',g:6,nome:'Dois lixos',mapa:['.L..','....','....','L...'],pecas:[[3,0,1],[2,3,1],[3,3,1],[1,1,1]],regras:{spawns:0},obj:{rache:2},arrastos:9,min:5},
@@ -149,3 +149,6 @@ const QJ_FASES=[
 // migração do progresso da versão 1 (110 fases em 10 mundos de 11, até 2026-11-11): QJ_ANTIGA[n-1] é a fase nova da
 // fase n antiga. Positivo: a mesma fase (as estrelas vão junto). Negativo: a fase nova no ponto equivalente.
 const QJ_ANTIGA=[-1,-1,-2,-3,-4,-5,-6,-7,-8,-9,-10,21,-21,-22,-23,-24,-25,-26,-27,-28,-29,-30,-31,33,-32,-33,-34,-35,-36,-37,40,-39,-40,-41,43,-42,-43,-44,-45,-46,-47,-48,-49,-50,-51,-51,-52,-53,-54,-55,-56,-57,-58,-59,-60,-61,-61,-62,-63,-64,-65,-66,-67,-68,-69,-70,-71,-71,-72,-73,-74,-75,-76,78,-78,-79,-80,-81,-81,-82,-83,-84,-85,-86,-87,-88,-89,90,-91,-91,93,-93,-94,-95,-96,-97,-98,-99,100,-101,-101,-102,-103,-104,-105,-106,-107,-108,-109,-110];
+// versão 3 (2026-11-12): fases trocadas no lugar (uma peça maior em vez de duas menores). As estrelas ficam (o progresso é
+// por número); a fase pela metade numa delas recomeça (qjMigra)
+const QJ_TROCADAS=[4,7,9,14,15,22,28,55,60];
