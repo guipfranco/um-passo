@@ -161,6 +161,11 @@ mundo(9,[
 // necessárias, nenhuma peça sobrando, girar o tabuleiro sem dar ★★★ (giroOk libera nas três primeiras de cada mundo) e levar custando
 // pelo menos 'levar' arrastos além de só formar.
 const P=(extra={})=>({pesa:true, ...extra});
+// 4x4 partido ao meio por buracos, com um lixo como única passagem (segunda rodada: o lixo tem de abrir caminho)
+const PORTAS=[];
+for(const c of [1,2]) for(let l=0;l<4;l++){
+  const col=[0,1,2,3].map(y=>[0,1,2,3].map(x=>x===c?(y===l?'L':'#'):'.').join(''));
+  PORTAS.push(col, [0,1,2,3].map(y=>[0,1,2,3].map(x=>col[x][y]).join(''))); }
 const REVISAO={
   m1v02:{w:4,h:3, ...forme(3,2), pecas:[4,6], prof:[4,5], filtro:P({giroOk:true})},
   m1v07:{...forme(4,2), proibido:5, pecas:[5,6], iscas:[1,1], nivelIsca:[4,4], prof:[8,10], filtro:P()},
@@ -179,7 +184,7 @@ const REVISAO={
   m5v07:{muretas:3, metas:[{carrinho:5,n:1}], material:[5], pecas:[4,6], prof:[8,10], filtro:P({levar:3})},
   m5v08:{blocos:2, naveForaDoCanto:true, metas:[{carrinho:4,n:1}], material:[4], pecas:[4,6], prof:[9,11], filtro:P({levar:3})},
   m5v09:{metas:[{carrinho:3,n:1},{forme:4,n:1}], material:[3,4], pecas:[4,6], prof:[10,12], filtro:P({levar:2})},
-  m6v02:{buracos:3, lixos:1, ...forme(3), pecas:[3,4], prof:[4,5], filtro:P({giroOk:true})},
+  m6v02:{formas:PORTAS, ...forme(3), pecas:[3,4], prof:[4,5], filtro:P({giroOk:true})},
   m6v05:{lixos:1, metas:[{rache:1},{leve:3,n:1}], material:[3], pecas:[3,5], iscas:[0,1], prof:[6,8], filtro:P({levar:2})},
   m6v07:{blocos:1, lixos:1, metas:[{rache:1},{carrinho:4,n:1}], material:[4], pecas:[4,5], prof:[8,10], filtro:P({levar:2})},
   m7v02:{muretas:2, metas:[{terra:2}], material:[3], pecas:[3,4], prof:[4,5], filtro:P({giroOk:true})},

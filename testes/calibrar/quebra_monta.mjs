@@ -2,6 +2,7 @@
 // dentro do mundo (min nunca menor que o da fase anterior), preferindo armadilha, solução contraintuitiva, poucas peças
 // e guloso que não cumpre. Os quebra-cabeças antigos (ANTIGOS) concorrem à vaga indicada.
 //   node testes/calibrar/quebra_monta.mjs <pasta dos candidatos> [--escreve] [--refaz] [--tudo]
+// (--refaz também aplica ORDEM, as trocas de lugar entre vagas pedidas em quebra_nomes.mjs)
 // As fases já gravadas em src/quebra_fases.js ficam como estão. Com --refaz (uma vez só: depois de gravar, as vagas
 // já foram refeitas), as vagas de REFAZER (quebra_nomes.mjs) são escolhidas de novo, sem repetir o tabuleiro que
 // estava lá. --tudo escolhe todas outra vez.
@@ -14,7 +15,7 @@ import {medidor} from './quebra_slide.mjs';
 const AQUI=path.dirname(fileURLToPath(import.meta.url)), RAIZ=path.resolve(AQUI,'..','..');
 const pasta=process.argv[2]||'E:/tmp/qpool', escreve=process.argv.includes('--escreve');
 const nomes=await import('./quebra_nomes.mjs'), {NOMES, ANTIGOS, TROCA, MUNDOS, AJUSTES={}}=nomes;
-const REFAZER=process.argv.includes('--refaz') ? nomes.REFAZER||[] : [];
+const refaz=process.argv.includes('--refaz'), REFAZER=refaz ? nomes.REFAZER||[] : [];
 const tudo=process.argv.includes('--tudo'), ARQ=path.join(RAIZ,'src','quebra_fases.js');
 let atuais=null;
 if(!tudo && fs.existsSync(ARQ)){ const c=vm.createContext({}); vm.runInContext(fs.readFileSync(ARQ,'utf8')+';globalThis.Q=QJ_FASES;',c); atuais=c.Q; }
@@ -69,6 +70,9 @@ for(let g=0; g<10; g++){
     for(const l of desenha(c.f)) console.log('      '+l);
   });
 }
+// troca de lugar entre vagas (ORDEM, só com --refaz): as fases trocam de vaga; os nomes seguem a vaga (NOMES)
+if(refaz) for(const [a,b] of nomes.ORDEM||[]){ const ia=escolhidas.findIndex(e=>e.rec.id===a), ib=escolhidas.findIndex(e=>e.rec.id===b);
+  const ca=escolhidas[ia].c; escolhidas[ia].c=escolhidas[ib].c; escolhidas[ib].c=ca; console.log(`trocadas de lugar: ${a} e ${b}`); }
 if(escreve){
   const js=o=>JSON.stringify(o).replace(/"([a-zA-Z]+)":/g,'$1:').replace(/"/g,"'");
   const linhas=escolhidas.map(({rec,c})=>{ const f=c.f, nome=NOMES[rec.id]||rec.id;

@@ -239,7 +239,8 @@ function QuebraMedidor(env){
   //   metas      com mais de uma meta: sem cada uma, a menor solução cai (senão ela sai de graça)
   //   mec        estações (B), buracos (#), muretas, lixo que não é meta, auras: sem elas, min ou soluções mudam
   //   levar      órbita de levar e nave: quantos arrastos custa levar além de só formar o planeta pedido
-  //   giro       padrões fixos (girar nos dois sentidos, ou alternar dois lados) que cumprem com min arrastos (★★★)
+  //   giro       padrões fixos (girar nos dois sentidos, três direções em ciclo, ou alternar dois lados) que cumprem
+  //              com min arrastos (★★★)
   //   inuteis    peças que dá para tirar sem mudar min, sem invalidar solução mínima e sem baixar a armadilha (uma peça
   //              que só arma a armadilha conta: tirá-la deixa a fase mais fácil)
   //   passinho   menor solução jogando no Passinho, com o mesmo limite (null: não cumpre; o jogo oferece a medalha)
@@ -259,7 +260,10 @@ function QuebraMedidor(env){
     if(f.mapa.some(r=>r.includes('B'))) out.mec.estacao=pesa(mede({...f, mapa:troca('B')}));
     if(f.mapa.some(r=>r.includes('#'))) out.mec.buraco=pesa(mede({...f, mapa:troca('#')}));
     if(f.muretas?.length) out.mec.mureta=pesa(mede({...f, muretas:[]}));
-    if(f.mapa.some(r=>/[L23]/.test(r)) && !metas.some(o=>o.rache)) out.mec.lixo=pesa(mede({...f, mapa:f.mapa.map(r=>r.replace(/[L23]/g,'.'))}));
+    // lixo que não é meta: pesa se, trocado por casa vazia e trocado por estação (que não racha), a fase muda
+    if(f.mapa.some(r=>/[L23]/.test(r)) && !metas.some(o=>o.rache)){
+      out.mec.lixo=pesa(mede({...f, mapa:f.mapa.map(r=>r.replace(/[L23]/g,'.'))}));
+      out.mec.rachar=pesa(mede({...f, mapa:f.mapa.map(r=>r.replace(/[L23]/g,'B'))})); }
     if(f.pecas.some(p=>p[3]!=null)){ const semCor=metas.map(o=>o.cor!=null?{forme:o.t,n:o.n}:o);
       out.mec.aura=pesa(mede({...comObjs(proib?[...semCor,proib]:semCor), pecas:f.pecas.map(p=>[p[0],p[1],p[2]])})); }
     // levar: a mesma fase pedindo só formar o planeta (órbita e nave viram 'forme')
@@ -268,7 +272,9 @@ function QuebraMedidor(env){
       const r=mede(comObjs(proib?[...forme,proib]:forme)); out.levar = r.min==null ? null : min-r.min; }
     // padrões fixos de arrastar (o arrasto que não mexe nada não conta, como no jogo)
     const {ctx,ini}=contexto(f), pad=[];
-    for(const ciclo of [[3,1,2,0],[3,0,2,1],[0,2],[0,3],[1,2],[1,3]]) for(let o=0;o<ciclo.length;o++) pad.push(ciclo.map((_,i)=>ciclo[(i+o)%ciclo.length]));
+    const ciclos=[[3,1,2,0],[3,0,2,1],[0,2],[0,3],[1,2],[1,3]];
+    for(const a of [0,1,2,3]) for(const b of [0,1,2,3]) for(const c of [0,1,2,3]) if(a!==b&&b!==c&&a!==c) ciclos.push([a,b,c]);
+    for(const ciclo of ciclos) for(let o=0;o<ciclo.length;o++) pad.push(ciclo.map((_,i)=>ciclo[(i+o)%ciclo.length]));
     out.giro=[];
     for(const pd of pad){ let st=ini, usados=0, parado=0, ok=false;
       for(let i=0;usados<min && parado<pd.length;i++){ const res=passo(ctx,st,pd[i%pd.length]); if(!res){ parado++; continue; } parado=0; usados++;
@@ -309,7 +315,7 @@ function QuebraMedidor(env){
 }
 
 // ---------- sorteio de tabuleiros (para o gerador) ----------
-// spec: {w,h, forma, buracos, blocos, muretas, lixos, lixoHp (número ou lista), cores, mista, passinho, proibido,
+// spec: {w,h, forma (ou formas: uma sorteada), buracos, blocos, muretas, lixos, lixoHp (número ou lista), cores, mista, passinho, proibido,
 //        metas:[...] (as casas de órbita, nave, preso e nebulosa saem delas), terraNaOrbita, alvoNaPresa,
 //        material:[níveis (ou {t,c}) partidos em pedaços de soma exata], pecas:[mín,máx], iscas:[mín,máx], nivelIsca:[mín,máx]}
 // Devolve uma fase no formato de src/quebra_fases.js (sem nome, arrastos e estrelas).
@@ -317,7 +323,8 @@ function sorteia(spec, rnd=Math.random){
   const w=spec.w, h=spec.h||spec.w, pega=a=>a[Math.floor(rnd()*a.length)], entre=([a,b])=>a+Math.floor(rnd()*(b-a+1));
   const emb=a=>{ for(let i=a.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
   const mapa=Array.from({length:h},()=>Array(w).fill('.'));
-  if(spec.forma) spec.forma.forEach((row,y)=>[...row].forEach((ch,x)=>{ mapa[y][x]=ch; }));
+  const forma=spec.formas ? pega(spec.formas) : spec.forma;
+  if(forma) forma.forEach((row,y)=>[...row].forEach((ch,x)=>{ mapa[y][x]=ch; }));
   const livres=()=>{ const o=[]; for(let y=0;y<h;y++) for(let x=0;x<w;x++) if(mapa[y][x]==='.' && !usadas.has(x+','+y)) o.push([x,y]); return emb(o); };
   const usadas=new Set(), usa=f=>{ const c=livres().find(([x,y])=>!f||f(x,y)); if(c) usadas.add(c[0]+','+c[1]); return c; };
   for(let i=0;i<(spec.buracos||0);i++){ const c=usa(); if(c){ mapa[c[1]][c[0]]='#'; usadas.delete(c[0]+','+c[1]); } }
