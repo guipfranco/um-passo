@@ -12,7 +12,8 @@
 //   8 final do mundo
 // Regras: uma novidade por fase; nenhuma meta de pontos; nenhuma fase repete a meta da anterior só mudando a quantidade.
 // O mundo 1 não tem mecânica própria: juntar, a primeira restrição, quebra-cabeça, duas de uma vez, o 5x5 e o final.
-// A primeira fase difícil é a 30 (Asteroide entre estações, no mundo 4); antes dela o robô casual cumpre quase sempre.
+// Até o mundo 3 o robô casual cumpre todas as fases em todas as partidas (só o final do mundo 3 fica em 80%). A dificuldade
+// começa no mundo 4, e a 30 (Asteroide entre estações, sem limite de arrastos) é o primeiro desafio de verdade.
 // Quem jogou a versão 2 (12 fases por mundo) teve o progresso levado uma vez para esta numeração (J3_ANTIGA, classico.js):
 // mudar a ordem ou o número das fases pede outra migração.
 // Mundos com breve:true ainda não têm fases (aparecem como "em construção" no mapa).
