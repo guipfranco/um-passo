@@ -15,7 +15,7 @@ if not os.path.isdir(os.path.join(PUB, '.git')):
 
 subprocess.run([sys.executable, os.path.join(AQUI, 'build.py')], check=True)
 
-arquivos = ['index.html', 'previa.jpg'] + ['musica/' + f for f in sorted(os.listdir(os.path.join(AQUI, 'musica'))) if f.endswith('.js')]
+arquivos = ['index.html', 'previa.jpg', 'manifest.webmanifest', 'sw.js'] + ['icones/' + f for f in sorted(os.listdir(os.path.join(AQUI, 'icones')))] + ['musica/' + f for f in sorted(os.listdir(os.path.join(AQUI, 'musica'))) if f.endswith('.js')]
 # rascunhos pedidos: o próprio arquivo e os scripts locais que ele carrega (ex.: src/espaco.js)
 for r in sys.argv[1:]:
     arquivos.append(r)

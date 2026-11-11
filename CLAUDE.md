@@ -26,6 +26,7 @@
 
 - O código fica em `src/` (`jogo.js` é a lógica; `config.js` os dados; `svg.js` a arte). O HTML e o CSS ficam em `build.py`.
 - `python build.py` monta o `index.html`. Não edite o `index.html` à mão.
+- App instalável (PWA, desde 2026-11-11): `manifest.webmanifest` e `icones/` na raiz; o `build.py` também gera o `sw.js` da raiz a partir de `src/sw.js` (não edite o gerado). O service worker guarda a página, as músicas e os ícones (a página vem da rede quando chega em até 3 s; sem rede, a guardada) e as fontes do Google na primeira vez; só registra em https ou localhost. Ícones: `node testes/icones.mjs` (Saturno do próprio motor). "Instalar o app" fica nas Opções (no iPhone, explica o Compartilhar do Safari). Teste no servidor local: `E:	mp\cdp\pwa.mjs`.
 - Publicar é commit e push em `main`; o GitHub Pages atualiza em 1 a 2 minutos.
 
 ## Testes

@@ -756,16 +756,34 @@ let TUT_MINA=null;
 const noMenu = () => $('#scrMenu').classList.contains('on');
 function janelaMenu(){ if(noMenu()) guardaVolta(); }
 function fechaJanelaMenu(){ hideOverlay(); if(noMenu() && history.state && history.state.ptui) history.back(); }
+// instalar como app (PWA). No Android o Chrome avisa que dá (beforeinstallprompt: guardado para o botão das Opções; o aviso
+// próprio do Chrome continua aparecendo). No iPhone é pelo Compartilhar do Safari: o botão explica como.
+let PEDE_INSTALAR=null;
+addEventListener('beforeinstallprompt',e=>{ PEDE_INSTALAR=e; });
+addEventListener('appinstalled',()=>{ PEDE_INSTALAR=null; });
+const appInstalado=()=>matchMedia('(display-mode: standalone)').matches || navigator.standalone===true;
+const ehIphone=()=>/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+const podeInstalar=()=>!appInstalado() && location.protocol!=='file:' && (!!PEDE_INSTALAR || ehIphone());
+function instalaApp(){
+  if(PEDE_INSTALAR){ const e=PEDE_INSTALAR; PEDE_INSTALAR=null; e.prompt(); (e.userChoice||Promise.resolve()).finally(espOpcoes); return; }
+  showOverlay(`<h2>Instalar no iPhone</h2>
+    <p>No Safari, toque em <b>Compartilhar</b> (o quadrado com a seta para cima) e depois em <b>Adicionar à Tela de Início</b>.</p>
+    <p class="ajuda">O jogo instalado abre em tela cheia e funciona sem internet. O progresso dele começa separado do que está no Safari.</p>
+    <button class="btn b" id="iVolta">Voltar</button>`);
+  $('#iVolta').onclick=espOpcoes; FORA=espOpcoes;
+}
 function espOpcoes(){
   janelaMenu();
   showOverlay(`<h2>Opções</h2>
     <button class="btn dim" id="oMus">Música: ${music?'ligada':'desligada'}</button>
     <button class="btn dim" id="oSnd">Sons: ${sound?'ligados':'desligados'}</button>
     <button class="btn dim" id="oCred">Créditos</button>
+    ${podeInstalar()?'<button class="btn dim" id="oInst">Instalar o app</button>':''}
     ${RELATO_URL?'<button class="btn dim" id="oRel">Relatar bug ou sugestão</button>':''}
     ${temProgresso()?'<button class="btn dim" id="oZera">Apagar o progresso</button>':''}
     <button class="btn b" id="oOk">Voltar</button>`);
   if($('#oRel')) $('#oRel').onclick=relatar;
+  if($('#oInst')) $('#oInst').onclick=instalaApp;
   if($('#oZera')) $('#oZera').onclick=()=>novoJogoEsp(espOpcoes);
   $('#oMus').onclick=()=>{ toggleMusic(); espOpcoes(); };
   $('#oSnd').onclick=()=>{ toggleSound(); espOpcoes(); };

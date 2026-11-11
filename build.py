@@ -841,13 +841,21 @@ html = '''<!doctype html>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#0b0a18">
 <title>2048 Astros</title>
-<meta name="description" content="O 2048 no espaço: 80 fases e um modo sem fim. De graça, sem instalar.">
+<!-- app instalável (PWA): manifest.webmanifest e sw.js (gerado aqui no fim, a partir de src/sw.js) -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icones/icone-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="2048 Astros">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="description" content="O 2048 no espaço: 80 fases, 110 quebra-cabeças e o Frenesi. De graça, no navegador ou instalado como app.">
 <!-- prévia do link (WhatsApp e afins); a imagem sai de previa.html, opção D -->
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pt_BR">
 <meta property="og:url" content="https://guipfranco.github.io/um-passo/">
 <meta property="og:title" content="2048 Astros">
-<meta property="og:description" content="O 2048 no espaço: 80 fases e um modo sem fim. De graça, sem instalar.">
+<meta property="og:description" content="O 2048 no espaço: 80 fases, 110 quebra-cabeças e o Frenesi. De graça, no navegador ou instalado como app.">
 <meta property="og:image" content="https://guipfranco.github.io/um-passo/previa.jpg">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
@@ -864,8 +872,19 @@ html = '''<!doctype html>
 <script>
 const VERSAO="''' + VERSAO + '''";
 ''' + cfg + missoes + gi + svg + logic + classico + espaco + frenesi + quebra + helpers + sfx + ui + '''</script>
+<script>
+// app instalável: o service worker guarda o jogo no aparelho (só no site de verdade; aberto do disco, nos testes, não)
+if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')) addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script>
 </body>
 </html>
 '''
 open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'index.html'), 'w', encoding='utf-8').write(html)
+# sw.js: a lista do que o jogo guarda no aparelho e uma versão que muda quando a página ou uma música muda
+import json
+RAIZ = os.path.dirname(os.path.abspath(__file__))
+musicas = ['musica/' + f for f in sorted(os.listdir(os.path.join(RAIZ, 'musica'))) if f.endswith('.js')]
+guardar = ['./', 'manifest.webmanifest', 'icones/icone-192.png', 'icones/icone-512.png', 'icones/icone-mascara-512.png', 'icones/apple-touch-icon.png'] + musicas
+vsw = hashlib.sha1((html + ''.join(open(os.path.join(RAIZ, m), encoding='utf-8').read() for m in musicas)).encode('utf-8')).hexdigest()[:10]
+open(os.path.join(RAIZ, 'sw.js'), 'w', encoding='utf-8', newline='\n').write(rd('sw.js').replace('__VERSAO__', vsw).replace('__ARQUIVOS__', json.dumps(guardar)))
 print('ok', len(html))

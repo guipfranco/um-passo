@@ -5,13 +5,21 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#0b0a18">
 <title>2048 Astros</title>
-<meta name="description" content="O 2048 no espaço: 80 fases e um modo sem fim. De graça, sem instalar.">
+<!-- app instalável (PWA): manifest.webmanifest e sw.js (gerado aqui no fim, a partir de src/sw.js) -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icones/icone-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="2048 Astros">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="description" content="O 2048 no espaço: 80 fases, 110 quebra-cabeças e o Frenesi. De graça, no navegador ou instalado como app.">
 <!-- prévia do link (WhatsApp e afins); a imagem sai de previa.html, opção D -->
 <meta property="og:type" content="website">
 <meta property="og:locale" content="pt_BR">
 <meta property="og:url" content="https://guipfranco.github.io/um-passo/">
 <meta property="og:title" content="2048 Astros">
-<meta property="og:description" content="O 2048 no espaço: 80 fases e um modo sem fim. De graça, sem instalar.">
+<meta property="og:description" content="O 2048 no espaço: 80 fases, 110 quebra-cabeças e o Frenesi. De graça, no navegador ou instalado como app.">
 <meta property="og:image" content="https://guipfranco.github.io/um-passo/previa.jpg">
 <meta property="og:image:type" content="image/jpeg">
 <meta property="og:image:width" content="1200">
@@ -802,7 +810,7 @@ body.rola #stage{touch-action:none}
 <div id="coach" class="hidden"><div class="cav" id="coachAv"></div><div><p id="coachText"></p><button class="btn b" id="coachOk">Ok</button></div></div>
 
 <script>
-const VERSAO="ef0baac2";
+const VERSAO="61fe4803";
 // ===================== CONFIG =====================
 let W = 4, H = 4, N = 4;      // largura e altura do tabuleiro (N = maior lado)
 const CFG = {
@@ -4900,16 +4908,34 @@ let TUT_MINA=null;
 const noMenu = () => $('#scrMenu').classList.contains('on');
 function janelaMenu(){ if(noMenu()) guardaVolta(); }
 function fechaJanelaMenu(){ hideOverlay(); if(noMenu() && history.state && history.state.ptui) history.back(); }
+// instalar como app (PWA). No Android o Chrome avisa que dá (beforeinstallprompt: guardado para o botão das Opções; o aviso
+// próprio do Chrome continua aparecendo). No iPhone é pelo Compartilhar do Safari: o botão explica como.
+let PEDE_INSTALAR=null;
+addEventListener('beforeinstallprompt',e=>{ PEDE_INSTALAR=e; });
+addEventListener('appinstalled',()=>{ PEDE_INSTALAR=null; });
+const appInstalado=()=>matchMedia('(display-mode: standalone)').matches || navigator.standalone===true;
+const ehIphone=()=>/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+const podeInstalar=()=>!appInstalado() && location.protocol!=='file:' && (!!PEDE_INSTALAR || ehIphone());
+function instalaApp(){
+  if(PEDE_INSTALAR){ const e=PEDE_INSTALAR; PEDE_INSTALAR=null; e.prompt(); (e.userChoice||Promise.resolve()).finally(espOpcoes); return; }
+  showOverlay(`<h2>Instalar no iPhone</h2>
+    <p>No Safari, toque em <b>Compartilhar</b> (o quadrado com a seta para cima) e depois em <b>Adicionar à Tela de Início</b>.</p>
+    <p class="ajuda">O jogo instalado abre em tela cheia e funciona sem internet. O progresso dele começa separado do que está no Safari.</p>
+    <button class="btn b" id="iVolta">Voltar</button>`);
+  $('#iVolta').onclick=espOpcoes; FORA=espOpcoes;
+}
 function espOpcoes(){
   janelaMenu();
   showOverlay(`<h2>Opções</h2>
     <button class="btn dim" id="oMus">Música: ${music?'ligada':'desligada'}</button>
     <button class="btn dim" id="oSnd">Sons: ${sound?'ligados':'desligados'}</button>
     <button class="btn dim" id="oCred">Créditos</button>
+    ${podeInstalar()?'<button class="btn dim" id="oInst">Instalar o app</button>':''}
     ${RELATO_URL?'<button class="btn dim" id="oRel">Relatar bug ou sugestão</button>':''}
     ${temProgresso()?'<button class="btn dim" id="oZera">Apagar o progresso</button>':''}
     <button class="btn b" id="oOk">Voltar</button>`);
   if($('#oRel')) $('#oRel').onclick=relatar;
+  if($('#oInst')) $('#oInst').onclick=instalaApp;
   if($('#oZera')) $('#oZera').onclick=()=>novoJogoEsp(espOpcoes);
   $('#oMus').onclick=()=>{ toggleMusic(); espOpcoes(); };
   $('#oSnd').onclick=()=>{ toggleSound(); espOpcoes(); };
@@ -6829,6 +6855,10 @@ $('#logo').innerHTML = [[1,58],[3,84],[5,120],[2,70]].map(([t,s])=>`<svg viewBox
 $('#coachAv').innerHTML = svgOf(pedraInner(3,{face:['happy','big']}));
 
 if(/[?&]lab\b/.test(location.search)) labPainel(); else showMenu();
+</script>
+<script>
+// app instalável: o service worker guarda o jogo no aparelho (só no site de verdade; aberto do disco, nos testes, não)
+if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')) addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 </script>
 </body>
 </html>
