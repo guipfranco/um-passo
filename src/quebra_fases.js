@@ -39,7 +39,7 @@ const QJ_FASES=[
   {id:'q1aish3h',g:1,nome:'Buraco no meio',mapa:['....','....','.#..','....'],pecas:[[0,3,3],[1,3,2],[0,1,1],[0,0,1]],regras:{spawns:0},obj:{forme:4,n:1},arrastos:8,min:4},
   {id:'q0c9mrr5',g:1,nome:'Faixa comprida',mapa:['......','......'],pecas:[[4,1,3],[1,0,1],[2,1,1],[0,0,1],[4,0,1]],regras:{spawns:0},obj:{forme:4,n:1},arrastos:8,min:4},
   {id:'q06qyfe0',g:1,nome:'Tabuleiro em L',mapa:['..##','..##','....','....'],pecas:[[1,3,3],[0,2,3],[1,1,3],[2,3,2],[0,0,2]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:10,min:6},
-  {id:'q0s4j8jf',antes:['q07nrxrb'],g:1,nome:'Degraus',mapa:['..##','...#','....','....'],pecas:[[0,3,2],[1,0,2],[1,2,2],[1,3,1],[0,0,1]],regras:{spawns:0},obj:{forme:4,n:1},arrastos:11,min:7},
+  {id:'q1a3p7qj',antes:['q07nrxrb'],g:1,nome:'Degraus',mapa:['....','....','...#','..##'],pecas:[[1,1,2],[0,0,2],[3,1,2],[0,1,1],[2,0,1]],regras:{spawns:0},obj:{forme:4,n:1},arrastos:11,min:7},
   {id:'q14tkcyo',antes:['q1htfrkm'],g:1,nome:'Dois buracos',mapa:['....','..#.','.#..','....'],pecas:[[1,0,4],[0,1,3],[1,1,2],[1,3,1],[2,3,1]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:11,min:7},
   {id:'q195prk2',g:1,nome:'Escada',mapa:['.....','.....','....#','...##','..###'],pecas:[[2,1,4],[4,0,3],[3,1,1],[0,3,1],[4,1,1],[0,0,1]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:11,min:7},
   {id:'q1116a7o',g:1,nome:'Tabuleiro em T',mapa:['#..#','#..#','....','....'],pecas:[[1,3,4],[0,2,2],[1,0,1],[2,3,1],[2,1,2],[3,2,2]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:11,min:7},
@@ -48,7 +48,7 @@ const QJ_FASES=[
   {id:'q16jmvem',g:1,nome:'Casas faltando',mapa:['...#.','#....','..#..','.....','##...'],pecas:[[3,3,3],[4,1,2],[2,1,1],[3,4,1],[4,4,3],[3,2,3]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:12,min:8},
   // 3 · Estações
   {id:'q0zc74k1',g:2,nome:'Primeira estação',mapa:['..B.','....','....','....'],pecas:[[0,2,3],[3,3,2],[0,1,2]],regras:{spawns:0},obj:{forme:4,n:1},arrastos:8,min:4},
-  {id:'q09h0mye',antes:['q19vuq8i'],g:2,nome:'Estação na quina',mapa:['...','...','B..'],pecas:[[2,1,2],[0,0,2],[2,2,2],[0,1,1],[1,0,1]],regras:{spawns:0},obj:{forme:4,n:1},arrastos:9,min:5},
+  {id:'q19ze290',antes:['q19vuq8i'],g:2,nome:'Estação no topo',mapa:['.B.','...','...'],pecas:[[1,2,3],[0,1,2],[0,0,1],[0,2,1]],regras:{spawns:0},obj:{forme:4,n:1},arrastos:9,min:5},
   {id:'q05s8rjg',g:2,nome:'Estação na faixa',mapa:['B.....','......'],pecas:[[5,0,2],[0,1,1],[4,1,1],[4,0,2],[3,1,2]],regras:{spawns:0},obj:{forme:4,n:1},arrastos:9,min:5},
   {id:'q1kjbez5',g:2,nome:'Duas estações',mapa:['....','.B..','B...','....'],pecas:[[0,3,3],[2,1,2],[2,0,1],[1,0,1],[2,2,3],[3,0,3]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:10,min:6},
   {id:'q0flxpv5',g:2,nome:'Estação no L',mapa:['##..','##B.','....','....'],pecas:[[3,0,3],[1,3,3],[3,3,2],[2,0,2],[2,3,2],[0,3,2]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:11,min:7},
@@ -89,7 +89,7 @@ const QJ_FASES=[
   {id:'q1r0flka',g:5,nome:'Dois destinos',mapa:['....','....','....','....'],pecas:[[0,0,2],[2,3,2],[3,0,3],[1,2,3]],regras:{spawns:0},objs:[{leve:3,n:1},{carrinho:4,n:1}],arrastos:13,carroPos:[0,3],alvosPos:[[3,1]],min:9},
   {id:'q0lfn7tw',g:5,nome:'Cometa na nave',mapa:['..##','....','....','..##'],pecas:[[0,2,3],[1,3,2],[2,2,2],[0,1,3],[1,1,2],[2,1,2],[3,2,1]],regras:{spawns:0},obj:{carrinho:5,n:1},arrastos:13,carroPos:[3,1],min:9},
   {id:'q02pdcyf',g:5,nome:'Rota da nave',mapa:['....','....','....','....'],pecas:[[2,1,4],[3,1,3],[1,1,2],[1,0,2]],regras:{spawns:0},obj:{carrinho:5,n:1},arrastos:14,muretas:[['h',0,0],['v',2,0],['v',2,3]],carroPos:[2,3],min:10},
-  {id:'q0jptyme',antes:['q0jfj3pq'],g:5,nome:'Cometa a bordo',mapa:['##...','.....','....#','....#','...##'],pecas:[[0,1,4],[4,0,2],[2,1,2],[1,1,2],[0,3,2],[0,4,1]],regras:{spawns:0},obj:{carrinho:5,n:1},arrastos:15,carroPos:[0,2],min:11},
+  {id:'q0jptyme',antes:['q0jfj3pq'],g:5,nome:'Nave torta',mapa:['##...','.....','....#','....#','...##'],pecas:[[0,1,4],[4,0,2],[2,1,2],[1,1,2],[0,3,2],[0,4,1]],regras:{spawns:0},obj:{carrinho:5,n:1},arrastos:15,carroPos:[0,2],min:11},
   // 7 · Lixo espacial
   {id:'q0fr0mg2',g:6,nome:'Rachar o lixo',mapa:['...L','....','....','....'],pecas:[[2,0,1],[2,3,1],[2,2,2]],regras:{spawns:0},obj:{rache:1},arrastos:8,min:4},
   {id:'q1igg3y0',g:6,nome:'Dois lixos',mapa:['.L..','....','....','L...'],pecas:[[3,0,1],[2,3,1],[3,3,1],[1,1,1]],regras:{spawns:0},obj:{rache:2},arrastos:9,min:5},

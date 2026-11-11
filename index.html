@@ -802,7 +802,7 @@ body.rola #stage{touch-action:none}
 <div id="coach" class="hidden"><div class="cav" id="coachAv"></div><div><p id="coachText"></p><button class="btn b" id="coachOk">Ok</button></div></div>
 
 <script>
-const VERSAO="c4b9b9c3";
+const VERSAO="baa6ceae";
 // ===================== CONFIG =====================
 let W = 4, H = 4, N = 4;      // largura e altura do tabuleiro (N = maior lado)
 const CFG = {
@@ -5708,7 +5708,7 @@ const QJ_FASES=[
   {id:'q1aish3h',g:1,nome:'Buraco no meio',mapa:['....','....','.#..','....'],pecas:[[0,3,3],[1,3,2],[0,1,1],[0,0,1]],regras:{spawns:0},obj:{forme:4,n:1},arrastos:8,min:4},
   {id:'q0c9mrr5',g:1,nome:'Faixa comprida',mapa:['......','......'],pecas:[[4,1,3],[1,0,1],[2,1,1],[0,0,1],[4,0,1]],regras:{spawns:0},obj:{forme:4,n:1},arrastos:8,min:4},
   {id:'q06qyfe0',g:1,nome:'Tabuleiro em L',mapa:['..##','..##','....','....'],pecas:[[1,3,3],[0,2,3],[1,1,3],[2,3,2],[0,0,2]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:10,min:6},
-  {id:'q0s4j8jf',antes:['q07nrxrb'],g:1,nome:'Degraus',mapa:['..##','...#','....','....'],pecas:[[0,3,2],[1,0,2],[1,2,2],[1,3,1],[0,0,1]],regras:{spawns:0},obj:{forme:4,n:1},arrastos:11,min:7},
+  {id:'q1a3p7qj',antes:['q07nrxrb'],g:1,nome:'Degraus',mapa:['....','....','...#','..##'],pecas:[[1,1,2],[0,0,2],[3,1,2],[0,1,1],[2,0,1]],regras:{spawns:0},obj:{forme:4,n:1},arrastos:11,min:7},
   {id:'q14tkcyo',antes:['q1htfrkm'],g:1,nome:'Dois buracos',mapa:['....','..#.','.#..','....'],pecas:[[1,0,4],[0,1,3],[1,1,2],[1,3,1],[2,3,1]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:11,min:7},
   {id:'q195prk2',g:1,nome:'Escada',mapa:['.....','.....','....#','...##','..###'],pecas:[[2,1,4],[4,0,3],[3,1,1],[0,3,1],[4,1,1],[0,0,1]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:11,min:7},
   {id:'q1116a7o',g:1,nome:'Tabuleiro em T',mapa:['#..#','#..#','....','....'],pecas:[[1,3,4],[0,2,2],[1,0,1],[2,3,1],[2,1,2],[3,2,2]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:11,min:7},
@@ -5717,7 +5717,7 @@ const QJ_FASES=[
   {id:'q16jmvem',g:1,nome:'Casas faltando',mapa:['...#.','#....','..#..','.....','##...'],pecas:[[3,3,3],[4,1,2],[2,1,1],[3,4,1],[4,4,3],[3,2,3]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:12,min:8},
   // 3 · Estações
   {id:'q0zc74k1',g:2,nome:'Primeira estação',mapa:['..B.','....','....','....'],pecas:[[0,2,3],[3,3,2],[0,1,2]],regras:{spawns:0},obj:{forme:4,n:1},arrastos:8,min:4},
-  {id:'q09h0mye',antes:['q19vuq8i'],g:2,nome:'Estação na quina',mapa:['...','...','B..'],pecas:[[2,1,2],[0,0,2],[2,2,2],[0,1,1],[1,0,1]],regras:{spawns:0},obj:{forme:4,n:1},arrastos:9,min:5},
+  {id:'q19ze290',antes:['q19vuq8i'],g:2,nome:'Estação no topo',mapa:['.B.','...','...'],pecas:[[1,2,3],[0,1,2],[0,0,1],[0,2,1]],regras:{spawns:0},obj:{forme:4,n:1},arrastos:9,min:5},
   {id:'q05s8rjg',g:2,nome:'Estação na faixa',mapa:['B.....','......'],pecas:[[5,0,2],[0,1,1],[4,1,1],[4,0,2],[3,1,2]],regras:{spawns:0},obj:{forme:4,n:1},arrastos:9,min:5},
   {id:'q1kjbez5',g:2,nome:'Duas estações',mapa:['....','.B..','B...','....'],pecas:[[0,3,3],[2,1,2],[2,0,1],[1,0,1],[2,2,3],[3,0,3]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:10,min:6},
   {id:'q0flxpv5',g:2,nome:'Estação no L',mapa:['##..','##B.','....','....'],pecas:[[3,0,3],[1,3,3],[3,3,2],[2,0,2],[2,3,2],[0,3,2]],regras:{spawns:0},obj:{forme:5,n:1},arrastos:11,min:7},
@@ -5758,7 +5758,7 @@ const QJ_FASES=[
   {id:'q1r0flka',g:5,nome:'Dois destinos',mapa:['....','....','....','....'],pecas:[[0,0,2],[2,3,2],[3,0,3],[1,2,3]],regras:{spawns:0},objs:[{leve:3,n:1},{carrinho:4,n:1}],arrastos:13,carroPos:[0,3],alvosPos:[[3,1]],min:9},
   {id:'q0lfn7tw',g:5,nome:'Cometa na nave',mapa:['..##','....','....','..##'],pecas:[[0,2,3],[1,3,2],[2,2,2],[0,1,3],[1,1,2],[2,1,2],[3,2,1]],regras:{spawns:0},obj:{carrinho:5,n:1},arrastos:13,carroPos:[3,1],min:9},
   {id:'q02pdcyf',g:5,nome:'Rota da nave',mapa:['....','....','....','....'],pecas:[[2,1,4],[3,1,3],[1,1,2],[1,0,2]],regras:{spawns:0},obj:{carrinho:5,n:1},arrastos:14,muretas:[['h',0,0],['v',2,0],['v',2,3]],carroPos:[2,3],min:10},
-  {id:'q0jptyme',antes:['q0jfj3pq'],g:5,nome:'Cometa a bordo',mapa:['##...','.....','....#','....#','...##'],pecas:[[0,1,4],[4,0,2],[2,1,2],[1,1,2],[0,3,2],[0,4,1]],regras:{spawns:0},obj:{carrinho:5,n:1},arrastos:15,carroPos:[0,2],min:11},
+  {id:'q0jptyme',antes:['q0jfj3pq'],g:5,nome:'Nave torta',mapa:['##...','.....','....#','....#','...##'],pecas:[[0,1,4],[4,0,2],[2,1,2],[1,1,2],[0,3,2],[0,4,1]],regras:{spawns:0},obj:{carrinho:5,n:1},arrastos:15,carroPos:[0,2],min:11},
   // 7 · Lixo espacial
   {id:'q0fr0mg2',g:6,nome:'Rachar o lixo',mapa:['...L','....','....','....'],pecas:[[2,0,1],[2,3,1],[2,2,2]],regras:{spawns:0},obj:{rache:1},arrastos:8,min:4},
   {id:'q1igg3y0',g:6,nome:'Dois lixos',mapa:['.L..','....','....','L...'],pecas:[[3,0,1],[2,3,1],[3,3,1],[1,1,1]],regras:{spawns:0},obj:{rache:2},arrastos:9,min:5},
@@ -5843,6 +5843,9 @@ const QJ_TROCADAS=[4,7,9,14,15,22,28,55,60];
 //           planeta formado; empate sorteado; não forma o planeta proibido se puder evitar.
 //   acaso   fração das partidas ao acaso que cumprem dentro do limite
 //   estados quantos estados a busca visitou
+//   juncao  meta de uma peça (formar ou levar à nave): dos estados em que o par do nível de baixo acabou de se formar,
+//           a fração em que a meta não sai no arrasto seguinte (falta ajeitar o par, ou ele se formou num lugar sem
+//           saída). 0: onde quer que o par se forme, ele junta logo (a junção final vem de graça)
 // E o que pesa na fase (pesos e falhas, mais abaixo): proibido alcançável, cada meta, cada mecânica e cada peça mudam
 // o quebra-cabeça; quanto custa levar; se girar o tabuleiro resolve; a menor solução no Passinho.
 (function(raiz){
@@ -5968,8 +5971,10 @@ function QuebraMedidor(env){
   function analisa(f, opt={}){
     const folga=opt.folga??4, maxMin=opt.maxMin??20, maxEst=opt.maxEst??1500000, semente=opt.semente??12345;
     const {ctx,ini}=contexto(f); if(ctx.problemas.length) return {problemas:ctx.problemas};
-    const ids=new Map(), ed=[], dep=[];
-    ids.set(chave(ctx,ini),0); ed.push(-9,-9,-9,-9); dep.push(0);
+    const ids=new Map(), ed=[], dep=[], cntT=[];
+    const um=ctx.metas.length===1 && (ctx.metas[0].forme||ctx.metas[0].carrinho) && (ctx.metas[0].n||1)===1 ? ctx.metas[0] : null;
+    const T=um ? (um.forme||um.carrinho)-1 : 0, conta=st=>T ? st.ts.filter(t=>t.t===T).length : 0;
+    ids.set(chave(ctx,ini),0); ed.push(-9,-9,-9,-9); dep.push(0); cntT.push(conta(ini));
     let camada=[{id:0,st:ini}], min=null, L=Infinity;
     for(let d=0; d<L && camada.length; d++){ const prox=[];
       for(const {id,st} of camada) for(let di=0;di<4;di++){ const res=passo(ctx,st,di);
@@ -5977,7 +5982,7 @@ function QuebraMedidor(env){
         if(res.fim==='venceu'){ ed[id*4+di]=-2; if(min==null){ min=d+1; L=min+folga; } continue; }
         if(res.fim){ ed[id*4+di]=-3; continue; }
         const k=chave(ctx,res.ns); let c=ids.get(k);
-        if(c==null){ c=dep.length; ids.set(k,c); ed.push(-9,-9,-9,-9); dep.push(d+1); prox.push({id:c,st:res.ns});
+        if(c==null){ c=dep.length; ids.set(k,c); ed.push(-9,-9,-9,-9); dep.push(d+1); cntT.push(conta(res.ns)); prox.push({id:c,st:res.ns});
           if(c>maxEst) return {estourou:true, estados:c, ate:d+1, min}; }
         ed[id*4+di]=c; }
       if(min==null && d+1>=maxMin) return {min:null, estados:dep.length};
@@ -6025,9 +6030,14 @@ function QuebraMedidor(env){
     // soluções mínimas: uma para guardar e as contraintuitivas
     const sol=[]; { let s=0; for(let r=min;r>=1;r--){ let d=0; while(!bom(s,d,r)) d++; sol.push(NOMES[d]); if(r>1) s=ed[s*4+d]; } }
     const contra=contraintuitivo(ctx,ini,ed,dist,min,opt.maxSols??300);
+    let juncao=null;
+    if(T){ const novo=new Set();
+      for(let s2=0;s2<N;s2++){ if(cntT[s2]>=2) continue; for(let di=0;di<4;di++){ const c=ed[s2*4+di]; if(c>=0 && cntT[c]>=2 && dep[c]<L) novo.add(c); } }
+      let longe=0; for(const c of novo) if(dist[c]!==1) longe++;
+      juncao = novo.size ? longe/novo.size : 0; }
     return {min, sols:vias[0], prim, arm1:arm[0], arm2:arm[1], arm3:arm[2], arm:(arm[0]+arm[1]+arm[2])/3, fora1:fora[0],
       contra:contra.contra, recusa:contra.recusa, separa:contra.separa, exige:contra.contra===1, guloso:gul/NG, acaso:aca/NA,
-      estados:N, folga, sol:sol.join('')};
+      estados:N, folga, sol:sol.join(''), juncao};
   }
 
   // pares prontos: duas peças que juntam uma com a outra em algum arrasto
@@ -6065,6 +6075,7 @@ function QuebraMedidor(env){
   //   giro       padrões fixos (girar nos dois sentidos, três direções em ciclo, ou alternar dois lados) que cumprem
   //              com até min+1 arrastos (★★★ no modo Quebra-cabeças)
   //   lugar      órbita de formar: quantos arrastos custa formar ali além de formar em qualquer casa
+
   //   inuteis    peças que dá para tirar sem mudar min, sem invalidar solução mínima e sem baixar a armadilha (uma peça
   //              que só arma a armadilha conta: tirá-la deixa a fase mais fácil)
   //   passinho   menor solução jogando no Passinho, com o mesmo limite (null: não cumpre; o jogo oferece a medalha)
@@ -6124,6 +6135,7 @@ function QuebraMedidor(env){
     for(const [k,v] of Object.entries(p.mec||{})) if(!v) a.push(k+' de enfeite');
     if(opt.levar!=null && p.levar!=null && p.levar<opt.levar) a.push('levar custa '+p.levar);
     if(opt.lugar!=null && p.lugar!=null && p.lugar<opt.lugar) a.push('órbita de enfeite: formar ali custa '+p.lugar);
+
     if(!opt.giroOk && p.giro?.length) a.push('girar resolve: '+p.giro[0]);
     if(!opt.inuteisOk && p.inuteis?.length) a.push('peça que não faz nada: '+JSON.stringify(p.inuteis[0]));
     return a;
@@ -6477,8 +6489,13 @@ function qjMigra(){
       if(A[sv.n-1]>0){ sv.n=A[sv.n-1]; localStorage.ptui_qj_save=JSON.stringify(sv); } else localStorage.removeItem('ptui_qj_save'); }
   }catch(e){}
   // versão 3 (2026-11-12): fases trocadas no lugar (QJ_TROCADAS: uma peça maior em vez de duas menores). As estrelas
-  // ficam, pelo número; a fase pela metade numa delas recomeça (o tabuleiro ou a meta mudou), com cópia em ptui_qj_save_v2
-  if(localStorage.ptui_qj_v!=='3') try{ const sv=JSON.parse(localStorage.ptui_qj_save||'null');
+  // ficam, pelo número; o "seu melhor" (a: menos arrastos) delas sai, porque era de outra fase (e podia ficar abaixo do
+  // min novo); a fase pela metade numa delas recomeça (o tabuleiro ou a meta mudou), com cópia em ptui_qj_save_v2
+  if(localStorage.ptui_qj_v!=='3') try{
+    const r=JSON.parse(localStorage.ptui_qj||'{}'); let mudou=false;
+    for(const n of QJ_TROCADAS) if(r[n]?.a!=null){ delete r[n].a; mudou=true; }
+    if(mudou) localStorage.ptui_qj=JSON.stringify(r);
+    const sv=JSON.parse(localStorage.ptui_qj_save||'null');
     if(sv && QJ_TROCADAS.includes(sv.n)){ localStorage.ptui_qj_save_v2=localStorage.ptui_qj_save; localStorage.removeItem('ptui_qj_save'); } }catch(e){}
   localStorage.ptui_qj_v='3';
 }

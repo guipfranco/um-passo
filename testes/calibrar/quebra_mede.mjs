@@ -30,6 +30,7 @@ if(modo==='qc'){
     // as regras da vaga (quebra_receitas.mjs): onde girar pode resolver, quanto levar tem de custar
     const rec=RECEITAS.find(r=>r.g===f.g && r.vaga===vaga), fal=M.falhas(p,{levar:rec?.filtro.levar??(vaga>=3?2:null), giroOk:rec?.filtro.giroOk??vaga<3, lugar:rec?.filtro.lugar??null});
     // repetida: mesmo material e mesma meta que outra fase do mundo, ou que a fase anterior
+    if(rec?.filtro.juncao!=null && (m.juncao??0)<rec.filtro.juncao) fal.push('junção de graça ('+Math.round((m.juncao??0)*100)+'%)');
     const igual=QJ_FASES.findIndex((q,j)=>j!==i && q.g===f.g && material(q)===material(f)); if(igual>=0) fal.push('repete a fase '+(igual+1));
     const prob=[]; if(m.min!==f.min) prob.push(`min ${m.min} ≠ ${f.min}`); if(f.arrastos!==f.min+4) prob.push('arrastos ≠ min+4');
     const c=M.confere(f,m.sol||''); if(c.cumpriu!==m.min) prob.push('solução não confere');
