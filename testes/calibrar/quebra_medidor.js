@@ -20,6 +20,8 @@
 //           planeta formado; empate sorteado; não forma o planeta proibido se puder evitar.
 //   acaso   fração das partidas ao acaso que cumprem dentro do limite
 //   estados quantos estados a busca visitou
+// E o que pesa na fase (pesos e falhas, mais abaixo): proibido alcançável, cada meta, cada mecânica e cada peça mudam
+// o quebra-cabeça; quanto custa levar; se girar o tabuleiro resolve; a menor solução no Passinho.
 (function(raiz){
 const DIRS=[[1,0],[-1,0],[0,1],[0,-1]], NOMES=['D','E','B','C'];   // direita, esquerda, baixo, cima
 
@@ -35,7 +37,7 @@ function QuebraMedidor(env){
     const ts=[]; let id=0, problemas=[];
     for(const [x,y,t,c,k] of f.pecas||[]){ if(ts.some(q=>q.x===x&&q.y===y)||ocup(x,y)){ problemas.push(`peça em ${x},${y} cai fora (casa ocupada)`); continue; }
       const q={id:'p'+(id++),x,y,t}; if(c!=null) q.c=c; if(k) q.k=k; ts.push(q); }
-    const al=[]; let ca=null, presasTot=0; const tr=[];
+    const al=[]; let ca=null, presasTot=0, nPresa=0; const tr=[];
     for(const o of objs){
       const fixo=(lista,i)=>lista?.[i] ? {x:lista[i][0], y:lista[i][1]} : null;
       if(o.carrinho){ const c=fixo(f.carroPos&&[f.carroPos],0); if(!c) problemas.push('nave sem carroPos'); else ca={x:c.x,y:c.y,t:o.carrinho,n:0}; }
@@ -43,7 +45,7 @@ function QuebraMedidor(env){
       if(o.leve) for(let i=0;i<(o.n||1);i++){ const c=fixo(o.pos||f.alvosPos,i); if(!c) problemas.push('órbita sem posição'); else al.push({x:c.x,y:c.y,t:o.leve,ok:false,leve:true}); }
       if(o.solte) for(let i=0;i<(o.n||1);i++){ const c=fixo(o.pos||f.presasPos,i); if(!c){ problemas.push('preso sem posição'); continue; }
         if(ts.some(q=>q.x===c.x&&q.y===c.y)) problemas.push(`peça na casa do preso ${c.x},${c.y} (o jogo a muda de lugar ao acaso)`);
-        ts.push({id:'r'+i,x:c.x,y:c.y,t:o.solte,presa:1}); presasTot++; }
+        ts.push({id:'r'+(nPresa++),x:c.x,y:c.y,t:o.solte,presa:1}); presasTot++; }
     }
     for(const o of objs) if(o.terra) for(let i=0;i<o.terra;i++){ const q=(o.pos||f.terraPos)?.[i]; if(!q){ problemas.push('nebulosa sem posição'); continue; } const k=q[0]+','+q[1]; if(!tr.includes(k)) tr.push(k); }
     for(const a of al) if(a.leve && ts.some(q=>q.x===a.x&&q.y===a.y)) problemas.push(`peça começando na órbita de levar ${a.x},${a.y}`);
@@ -119,15 +121,21 @@ function QuebraMedidor(env){
   }
 
   // ---------- menor solução, só (rápido: para no primeiro nível que cumpre) ----------
-  function buscaMin(f, maxP=20, maxEst=400000){
+  function buscaMin(f, maxP=20, maxEst=400000, lista=0){
     const {ctx,ini}=contexto(f); if(ctx.problemas.length) return {problemas:ctx.problemas};
-    let nivel=[{st:ini,pai:null,di:-1}], visto=new Set([chave(ctx,ini)]);
+    let nivel=[{st:ini,pai:null,di:-1,vias:1,pais:[]}], visto=new Set([chave(ctx,ini)]);
+    // as soluções mínimas, até 'lista' delas (cada estado lembra todos os pais da camada anterior)
+    const listar=(fins)=>{ const out=[]; const anda=(no,suf)=>{ if(out.length>=lista) return; if(!no.pai){ out.push(suf); return; }
+        for(const {no:p,di} of no.pais) anda(p, NOMES[di]+suf); };
+      for(const {no,di} of fins) anda(no, NOMES[di]); return out; };
     const caminho=(no,di)=>{ const a=[NOMES[di]]; for(let q=no;q.pai;q=q.pai) a.unshift(NOMES[q.di]); return a.join(''); };
-    for(let p=1;p<=maxP;p++){ const prox=[];
+    for(let p=1;p<=maxP;p++){ const prox=[], nesta=new Map(), fins=[]; let sol=null, sols=0;
       for(const no of nivel) for(let di=0;di<4;di++){ const res=passo(ctx,no.st,di); if(!res) continue;
-        if(res.fim==='venceu') return {min:p, estados:visto.size, sol:caminho(no,di)};
-        if(res.fim) continue;
-        const k=chave(ctx,res.ns); if(visto.has(k)) continue; visto.add(k); prox.push({st:res.ns,pai:no,di}); }
+        if(res.fim==='venceu'){ sols+=no.vias; if(!sol) sol=caminho(no,di); if(lista) fins.push({no,di}); continue; }
+        if(res.fim || sol) continue;
+        const k=chave(ctx,res.ns); const ja=nesta.get(k); if(ja){ ja.vias+=no.vias; if(lista) ja.pais.push({no,di}); continue; }
+        if(visto.has(k)) continue; visto.add(k); const nn={st:res.ns,pai:no,di,vias:no.vias,pais:lista?[{no,di}]:null}; nesta.set(k,nn); prox.push(nn); }
+      if(sol) return {min:p, sols, estados:visto.size, sol, ...(lista?{lista:listar(fins)}:{})};
       if(visto.size>maxEst) return {estourou:true, estados:visto.size, ate:p};
       nivel=prox; if(!nivel.length) break; }
     return {min:null, estados:visto.size};
@@ -224,6 +232,70 @@ function QuebraMedidor(env){
     return {contra:n?cA/n:0, recusa:n?cR/n:0, separa:n?cS/n:0, n};
   }
 
+  // ---------- o que pesa na fase (pedido dos revisores) ----------
+  // Cada coisa da fase tem de mudar o quebra-cabeça: tirando-a, a menor solução muda ou alguma solução mínima deixa de
+  // valer (se todas as soluções mínimas continuam valendo sem ela, ela é de enfeite).
+  //   proib      o planeta proibido: alcançável dentro do limite (alc) e, sem a proibição, a menor solução cai (pesa)
+  //   metas      com mais de uma meta: sem cada uma, a menor solução cai (senão ela sai de graça)
+  //   mec        estações (B), buracos (#), muretas, lixo que não é meta, auras: sem elas, min ou soluções mudam
+  //   levar      órbita de levar e nave: quantos arrastos custa levar além de só formar o planeta pedido
+  //   giro       padrões fixos (girar nos dois sentidos, ou alternar dois lados) que cumprem com min arrastos (★★★)
+  //   inuteis    peças que dá para tirar sem mudar min, sem invalidar solução mínima e sem baixar a armadilha (uma peça
+  //              que só arma a armadilha conta: tirá-la deixa a fase mais fácil)
+  //   passinho   menor solução jogando no Passinho, com o mesmo limite (null: não cumpre; o jogo oferece a medalha)
+  function pesos(f, opt={}){
+    const L=opt.L, base=buscaMin(f, L, 400000, 300); if(base.min==null) return {erro:'sem solução'};
+    const {min, sols}=base, out={min, sols};
+    const mede=g=>{ const b=buscaMin(g, L, 400000); return {g, min:b.min, estourou:!!b.estourou}; };
+    const pesa=r=>r.estourou || r.min!==min || base.lista.some(s=>confere(r.g,s).cumpriu!==min);
+    const objs=f.objs||[f.obj], metas=objs.filter(o=>!o.proibido), proib=objs.find(o=>o.proibido);
+    const comObjs=os=>{ const g={...f}; delete g.obj; delete g.objs; if(os.length===1) g.obj=os[0]; else g.objs=os; return g; };
+    if(proib){ const r=mede(comObjs(metas)); out.proib={min:r.min, pesa:r.min!=null && r.min<min};
+      // alcançável: alguma sequência dentro do limite forma o proibido (a mesma fase com a meta de formar o proibido)
+      const alc=buscaMin(comObjs([{forme:proib.proibido,n:1}]), L, 400000); out.proib.alc=alc.min!=null; }
+    if(metas.length>1) out.metas=metas.map(o=>{ const r=mede(comObjs(objs.filter(x=>x!==o))); return {meta:Object.keys(o)[0], min:r.min, pesa:r.min==null||r.min<min}; });
+    out.mec={};
+    const troca=ch=>f.mapa.map(r=>r.split('').map(c=>c===ch?'.':c).join(''));
+    if(f.mapa.some(r=>r.includes('B'))) out.mec.estacao=pesa(mede({...f, mapa:troca('B')}));
+    if(f.mapa.some(r=>r.includes('#'))) out.mec.buraco=pesa(mede({...f, mapa:troca('#')}));
+    if(f.muretas?.length) out.mec.mureta=pesa(mede({...f, muretas:[]}));
+    if(f.mapa.some(r=>/[L23]/.test(r)) && !metas.some(o=>o.rache)) out.mec.lixo=pesa(mede({...f, mapa:f.mapa.map(r=>r.replace(/[L23]/g,'.'))}));
+    if(f.pecas.some(p=>p[3]!=null)){ const semCor=metas.map(o=>o.cor!=null?{forme:o.t,n:o.n}:o);
+      out.mec.aura=pesa(mede({...comObjs(proib?[...semCor,proib]:semCor), pecas:f.pecas.map(p=>[p[0],p[1],p[2]])})); }
+    // levar: a mesma fase pedindo só formar o planeta (órbita e nave viram 'forme')
+    const lv=metas.find(o=>o.leve||o.carrinho);
+    if(lv){ const forme=metas.map(o=>o.leve?{forme:o.leve,n:o.n||1}:o.carrinho?{forme:o.carrinho,n:o.n}:o);
+      const r=mede(comObjs(proib?[...forme,proib]:forme)); out.levar = r.min==null ? null : min-r.min; }
+    // padrões fixos de arrastar (o arrasto que não mexe nada não conta, como no jogo)
+    const {ctx,ini}=contexto(f), pad=[];
+    for(const ciclo of [[3,1,2,0],[3,0,2,1],[0,2],[0,3],[1,2],[1,3]]) for(let o=0;o<ciclo.length;o++) pad.push(ciclo.map((_,i)=>ciclo[(i+o)%ciclo.length]));
+    out.giro=[];
+    for(const pd of pad){ let st=ini, usados=0, parado=0, ok=false;
+      for(let i=0;usados<min && parado<pd.length;i++){ const res=passo(ctx,st,pd[i%pd.length]); if(!res){ parado++; continue; } parado=0; usados++;
+        if(res.fim==='venceu'){ ok=true; break; } if(res.fim) break; st=res.ns; }
+      if(ok){ const nome=pd.map(d=>NOMES[d]).join(''); if(!out.giro.includes(nome)) out.giro.push(nome); } }
+    // peças que não fazem nada
+    out.inuteis=[]; let armBase=null;
+    f.pecas.forEach((p,i)=>{ const g={...f, pecas:f.pecas.filter((_,j)=>j!==i)}, r=mede(g); if(pesa(r)) return;
+      if(armBase==null) armBase=analisa(f,{folga:L-min, rodadasGuloso:8, rodadasAcaso:8, maxSols:20}).arm;
+      const a=analisa(g,{folga:L-min, rodadasGuloso:8, rodadasAcaso:8, maxSols:20}).arm;
+      if(a>=armBase-.05) out.inuteis.push(p.slice(0,3)); });
+    if((f.char||'rola')!=='passinho'){ const b=buscaMin({...f, char:'passinho'}, L, 400000); out.passinho=b.min??null; }
+    return out;
+  }
+  // o que falta para a fase passar no que os revisores pediram (lista vazia: passa)
+  function falhas(p, opt={}){
+    const a=[];
+    if(p.erro) return [p.erro];
+    if(p.proib && !(p.proib.alc && p.proib.pesa)) a.push('proibido de enfeite');
+    for(const m of p.metas||[]) if(!m.pesa) a.push('meta de graça: '+m.meta);
+    for(const [k,v] of Object.entries(p.mec||{})) if(!v) a.push(k+' de enfeite');
+    if(opt.levar!=null && p.levar!=null && p.levar<opt.levar) a.push('levar custa '+p.levar);
+    if(!opt.giroOk && p.giro?.length) a.push('girar resolve: '+p.giro[0]);
+    if(!opt.inuteisOk && p.inuteis?.length) a.push('peça que não faz nada: '+JSON.stringify(p.inuteis[0]));
+    return a;
+  }
+
   // repete uma solução ('DBEC...') e diz em que arrasto cumpriu (0 = não cumpriu)
   function confere(f, sol){
     const {ctx,ini}=contexto(f); if(ctx.problemas.length) return {problemas:ctx.problemas};
@@ -233,7 +305,7 @@ function QuebraMedidor(env){
     return {cumpriu:0};
   }
 
-  return {contexto, passo, chave, buscaMin, analisa, confere, cumpriu, prontos, DIRS, NOMES};
+  return {contexto, passo, chave, buscaMin, analisa, confere, cumpriu, prontos, pesos, falhas, DIRS, NOMES};
 }
 
 // ---------- sorteio de tabuleiros (para o gerador) ----------
@@ -263,7 +335,8 @@ function sorteia(spec, rnd=Math.random){
   // casas especiais
   const alvosPos=[], terraPos=[], presasPos=[]; let carroPos=null;
   for(const o of metas){
-    if(o.carrinho){ const c=usa(spec.naveNaBorda===false?null:borda); if(!c) return null; carroPos=c; }
+    if(o.carrinho){ const canto=(x,y)=>(x===0||x===w-1)&&(y===0||y===h-1);
+      const c=usa(spec.naveNaBorda===false?null:spec.naveForaDoCanto?(x,y)=>borda(x,y)&&!canto(x,y):borda); if(!c) return null; carroPos=c; }
     if(o.alvo||o.leve){ const n=o.n||1; const ps=[]; for(let i=0;i<n;i++){ const c=(o.alvo && spec.alvoNaPresa && presasPos[i]) || usa(); if(!c) return null; ps.push(c); } if(metas.filter(m=>m.alvo||m.leve).length>1) o.pos=ps; else alvosPos.push(...ps); }
     if(o.solte){ for(let i=0;i<(o.n||1);i++){ const c=usa(); if(!c) return null; presasPos.push(c); } }
   }
