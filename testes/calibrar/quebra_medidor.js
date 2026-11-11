@@ -320,10 +320,11 @@ function QuebraMedidor(env){
 //        material:[níveis (ou {t,c}) partidos em pedaços de soma exata], pecas:[mín,máx], iscas:[mín,máx], nivelIsca:[mín,máx]}
 // Devolve uma fase no formato de src/quebra_fases.js (sem nome, arrastos e estrelas).
 function sorteia(spec, rnd=Math.random){
-  const w=spec.w, h=spec.h||spec.w, pega=a=>a[Math.floor(rnd()*a.length)], entre=([a,b])=>a+Math.floor(rnd()*(b-a+1));
+  const pega=a=>a[Math.floor(rnd()*a.length)], entre=([a,b])=>a+Math.floor(rnd()*(b-a+1));
+  const forma=spec.formas ? pega(spec.formas) : spec.forma;   // o formato pronto manda no tamanho
+  const w=forma?forma[0].length:spec.w, h=forma?forma.length:(spec.h||spec.w);
   const emb=a=>{ for(let i=a.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
   const mapa=Array.from({length:h},()=>Array(w).fill('.'));
-  const forma=spec.formas ? pega(spec.formas) : spec.forma;
   if(forma) forma.forEach((row,y)=>[...row].forEach((ch,x)=>{ mapa[y][x]=ch; }));
   const livres=()=>{ const o=[]; for(let y=0;y<h;y++) for(let x=0;x<w;x++) if(mapa[y][x]==='.' && !usadas.has(x+','+y)) o.push([x,y]); return emb(o); };
   const usadas=new Set(), usa=f=>{ const c=livres().find(([x,y])=>!f||f(x,y)); if(c) usadas.add(c[0]+','+c[1]); return c; };

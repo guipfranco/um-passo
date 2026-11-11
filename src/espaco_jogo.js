@@ -382,10 +382,11 @@ function campoM(n,t,pa){ const px=n.rx, py=n.ry; let dx=n.pdx, dy=n.pdy, w=0;
   const L=Math.hypot(dx,dy), cap=pa*.42; if(L>cap){ dx*=cap/L; dy*=cap/L; }
   n.cdx=dx; n.cdy=dy; n.w=w; }
 // quanto cada ponto da rede aparece: forte no meio do tabuleiro, mais fraco perto da borda, e sumindo aos poucos
-// fora dele (e nas casas vazias do formato), para a malha se misturar ao céu
+// fora dele, para a malha se misturar ao céu. Nas casas que não existem (buracos do formato, '#') ela some logo, para o
+// formato do tabuleiro se ler de longe (ver também .slot.void no build.py)
 function presencaM(ci,cj,ok){
   let fora=9; for(const [x,y] of ok){ const ex=Math.max(x-ci,0,ci-(x+1)), ey=Math.max(y-cj,0,cj-(y+1)); fora=Math.min(fora,Math.hypot(ex,ey)); }
-  if(fora>0) return .5*Math.max(0,1-fora/.9)**1.6;
+  if(fora>0) return .5*Math.max(0,1-fora/(ci>0&&cj>0&&ci<W&&cj<H ? .3 : .9))**1.6;
   let dentro=Math.min(ci,W-ci,cj,H-cj);
   for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(!casaOk(x,y)){ const ex=Math.max(x-ci,0,ci-(x+1)), ey=Math.max(y-cj,0,cj-(y+1)); dentro=Math.min(dentro,Math.hypot(ex,ey)); }
   return .5+.5*Math.min(1,dentro/1.1);

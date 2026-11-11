@@ -28,6 +28,7 @@ function trabalha({rec, seg, semente, pasta}){
     if(F.maxSols!=null && m.sols>F.maxSols) continue;
     if(F.maxGuloso!=null && m.guloso>F.maxGuloso) continue;
     if(F.minArm!=null && m.arm<F.minArm) continue;
+    if(F.maxArm!=null && m.arm>F.maxArm) continue;
     if(F.minArm1!=null && m.arm1<F.minArm1) continue;
     if(F.exige && !m.exige) continue;
     if(F.maxAcaso!=null && m.acaso>F.maxAcaso) continue;

@@ -101,6 +101,9 @@ body.espaco .ent h2{margin:0;font:800 23px 'Exo 2',sans-serif;letter-spacing:0;c
 body.espaco #neb{display:block}
 body.espaco.modoCla #malhaCv{display:block}
 body.espaco.modoCla .slot::before{display:none}
+/* casa que não existe (formato do tabuleiro, '#'): um vão escuro, para o formato se ler (a malha também some ali) */
+body.espaco.modoCla .slot.void{z-index:1}
+body.espaco.modoCla .slot.void::before{display:block;inset:3%;border-radius:24%;border:0;background:radial-gradient(circle,rgba(2,1,8,.72) 40%,rgba(2,1,8,.4) 75%,rgba(2,1,8,0))}
 canvas.esp{position:absolute;left:50%;top:50%;width:calc(var(--cell)*var(--kx));height:calc(var(--cell)*var(--ky));transform:translate(-50%,-50%);pointer-events:none}
 body.espaco .edge{background:none;border:0;box-shadow:none}
 body.espaco .etq{background:rgba(12,9,26,.84) !important;border:1px solid rgba(255,255,255,.2);color:#ece3f7;font-family:'Exo 2',sans-serif}

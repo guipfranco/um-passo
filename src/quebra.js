@@ -120,3 +120,25 @@ function qjResultado(){
   $('#mDeNovo').onclick=()=>comecaFase(n, {}, qjResultado);
   $('#mLista').onclick=()=>missoesLista();
 }
+
+// ---------- migração do progresso (versão das fases em ptui_qj_v) ----------
+// Versão 2 das fases (2026-11-12: 11 mundos de 10, curva mais suave). Roda uma vez: quem venceu fases da versão 1
+// continua com acesso ao ponto equivalente da lista nova (QJ_ANTIGA, em quebra_fases.js: positivo = a mesma fase, que
+// leva as estrelas; negativo = a fase nova no ponto equivalente). As fases novas antes desse ponto ficam vencidas com
+// 1 estrela; a fase pela metade continua só se for a mesma fase. O que havia fica copiado em ptui_qj_v1 e ptui_qj_save_v1.
+function qjMigra(){
+  if(localStorage.ptui_qj_v==='2') return;
+  try{
+    const velho=JSON.parse(localStorage.ptui_qj||'{}'), novo={}, A=QJ_ANTIGA;
+    let a=1; while(a<=A.length && velho[a]?.e>0) a++;   // a primeira antiga sem estrela: por onde a pessoa seguiria
+    const ate = a>A.length ? QJ_FASES.length+1 : Math.abs(A[a-1]);
+    for(const [n,b] of Object.entries(velho)) if(A[n-1]>0 && b?.e>0) novo[A[n-1]]=b;
+    for(let k=1;k<ate;k++) if(!novo[k]) novo[k]={e:1,t:0};
+    if(localStorage.ptui_qj!=null){ localStorage.ptui_qj_v1=localStorage.ptui_qj; localStorage.ptui_qj=JSON.stringify(novo); }
+    const sv=JSON.parse(localStorage.ptui_qj_save||'null');
+    if(sv){ localStorage.ptui_qj_save_v1=localStorage.ptui_qj_save;
+      if(A[sv.n-1]>0){ sv.n=A[sv.n-1]; localStorage.ptui_qj_save=JSON.stringify(sv); } else localStorage.removeItem('ptui_qj_save'); }
+  }catch(e){}
+  localStorage.ptui_qj_v='2';
+}
+qjMigra();
