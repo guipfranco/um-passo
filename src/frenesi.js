@@ -31,7 +31,7 @@ const janelaDe = (k,vel) => DEGRAUS[k].jan*Math.max(.7, 1-.06*(vel-1));   // cad
 const REC_FRE = () => +(localStorage.ptui_rec_fre||0);
 const recFre = () => ({pts:REC_FRE(), corr:+(localStorage.ptui_fre_corr||0), mult:+(localStorage.ptui_fre_mult||1)});
 const freSalvo = () => JSON.parse(localStorage.ptui_fre_save||'null');
-const fmtN = n => (n||0).toLocaleString('pt-BR');
+const fmtN = n => String(Math.round(n||0)).replace(/\B(?=(\d{3})+(?!\d))/g,'.');   // 12.345 (toLocaleString custava a cada quadro dos pontos rolando)
 const POUCO_MOV = matchMedia('(prefers-reduced-motion: reduce)').matches;   // menos tremor, sem flash nem pulsação forte
 
 // ---------- cores ----------
@@ -43,7 +43,12 @@ const txtRgb = a => a.map(v=>Math.round(Math.max(0,v))).join(',');
 const arcoIris = (t,d=0) => hslRgb(t*.12+d,.9,.62);
 
 // estado só da tela (não vai para o salvo): degrau suavizado, cor atual, batida, rastros
-const FV={t:0, k:0, cor:COR_DEG[0], bat:0, pulso:0, caiT:-9, sobeT:-9, rastros:[], mostra:0, mus:null, pouco:false};
+const FV={t:0, k:0, cor:COR_DEG[0], bat:0, pulso:0, caiT:-9, sobeT:-9, rastros:[], mostra:0, mus:null, pouco:false, fila:[], grau:0};
+// O que mexe na página na hora de subir ou cair de degrau (letreiro, classes, tranco, animações) não roda dentro do
+// arrasto: vai para o fim do quadro seguinte (frePinta), quando o céu, a malha e as peças já leram as posições. Feito no
+// meio do arrasto, cada mudança obrigava o navegador a recalcular estilo e layout ali mesmo, e o arrasto que subia de
+// degrau custava mais que o dobro de um arrasto comum. O som sai na hora.
+const depois = f => FV.fila.push(f);
 
 // ---------- menu ----------
 // botão abaixo do Clássico (só com ?frenesi); com partida salva, diz de onde continua
@@ -83,10 +88,10 @@ function frenesiJoga(opt){
   applyAndar(); startDay({...PATHS.comum, forma:null, caverna:false, energy:999-CFG.energy, semEnergia:true, w:4, h:4});
   limpaMarcas(); if(sv) restauraFase(sv.st);
   document.body.classList.add('modoCla','modoInf','modoFre'); $('#btnPause').textContent='☰';
-  freMontaTela(); FV.mostra=S.pontos||0; FV.rastros=[]; FV.k=0; FV.caiT=-9;
+  freMontaTela(); FV.mostra=S.pontos||0; FV.rastros=[]; FV.k=0; FV.caiT=-9; FV.fila=[];
   montaFreHud(); render();
   setBanner('Frenesi', 'junte rápido'); pedeEncaixe();
-  freVisual(0); freTexto();
+  freVisual(0); freVisualPinta(0); freTexto(); freAquece();
   if(musName==='frenesi') MUS?.intensidade?.(0);
 }
 function freMontaTela(){
@@ -156,15 +161,16 @@ function frenesiFim(){
 // ---------- subir, cair, acelerar ----------
 function freSobe(k,t){
   FV.sobeT=t; freVisual(k);
-  freFlash(k===TOPO?'FRENESI!':'×'+DEGRAUS[k].x, k);
   if(k===TOPO) SFX.frenesi(); else SFX.degrau(k);
   if(musName==='frenesi') MUS?.acento?.(k===TOPO?1.5:1);
-  const g=geoTab(); if(!g.r.width) return;
+  depois(g=>{ freFlash(k===TOPO?'FRENESI!':'×'+DEGRAUS[k].x, k); if(!g.r.width) return;
   // anel saindo do tabuleiro (céu) e onda na malha
-  aneisE.push({x:g.r.left+g.r.width/2, y:g.r.top+g.r.height/2, t0:t, v:g.r.width*(1.1+.1*k), rgb:txtRgb(COR_DEG[k]), a:.5, w:10});
-  if(!POUCO_MOV){ ondasM.push({x:g.O+g.r.width*g.D/2, y:g.O+g.r.height*g.D/2, t0:t, a:g.P*(.1+.02*k)}); camE.vy-=90+25*k;
-    $('#stage').animate?.([{transform:'scale(1)'},{transform:`scale(${1.02+.004*k})`},{transform:'scale(1)'}],{duration:260,easing:'ease-out'});
-    $('#freMult')?.animate?.([{transform:'scale(1.8)'},{transform:'scale(1)'}],{duration:320,easing:'cubic-bezier(.2,1.6,.4,1)'}); }
+  aneisE.push({x:g.r.left+g.r.width/2, y:g.r.top+g.r.height/2, t0:tQuadro, v:g.r.width*(1.1+.1*k), rgb:txtRgb(COR_DEG[k]), a:.5, w:10});
+  if(!POUCO_MOV){ ondasM.push({x:g.O+g.r.width*g.D/2, y:g.O+g.r.height*g.D/2, t0:tQuadro, a:g.P*(.1+.02*k)}); camE.vy-=90+25*k;
+    // tranco do tabuleiro só para cima e para baixo: com zoom (como era), o tamanho medido das casas mudava a cada quadro
+    // do soco e todos os canvas (peças, planetas, malha) eram refeitos do zero, uns 100 por quadro, travando ~60 ms
+    $('#stage').animate?.([{transform:'translateY(0)'},{transform:`translateY(${-3-k}px)`},{transform:'translateY(0)'}],{duration:240,easing:'ease-out'});
+    $('#freMult')?.animate?.([{transform:'scale(1.8)'},{transform:'scale(1)'}],{duration:320,easing:'cubic-bezier(.2,1.6,.4,1)'}); } });
 }
 // a barra esvaziou: a corrente cai e tudo desliga (fim: o jogo acabou com a corrente acesa)
 function freCai(t,fim){
@@ -172,12 +178,12 @@ function freCai(t,fim){
   F.corr=0; F.deg=0; F.resta=0; F.jan=janelaDe(0,F.vel);
   freVisual(0);   // (a barra zera junto)
   if(k>=1){ FV.caiT=t; SFX.cai(k);
-    const ap=document.createElement('div'); ap.className='freApaga'; document.body.appendChild(ap); setTimeout(()=>ap.remove(),800);
-    const bar=$('#freBar'); if(bar){ const q=document.createElement('div'); q.className='freCaiu'; q.textContent='×'+mult; bar.appendChild(q); setTimeout(()=>q.remove(),800); }
-    const g=geoTab(); if(!POUCO_MOV && g.r.width) ondasM.push({x:g.O+g.r.width*g.D/2, y:g.O+g.r.height*g.D/2, t0:t, a:-g.P*.09}); }
+    depois(g=>{ const ap=document.createElement('div'); ap.className='freApaga'; document.body.appendChild(ap); setTimeout(()=>ap.remove(),800);
+      const bar=$('#freBar'); if(bar){ const q=document.createElement('div'); q.className='freCaiu'; q.textContent='×'+mult; bar.appendChild(q); setTimeout(()=>q.remove(),800); }
+      if(!POUCO_MOV && g.r.width) ondasM.push({x:g.O+g.r.width*g.D/2, y:g.O+g.r.height*g.D/2, t0:tQuadro, a:-g.P*.09}); }); }
   freTexto(fim||k<1 ? null : `a corrente caiu · ${c}`);   // no ×1 a corrente curta cai sem alarde
 }
-function freAcelera(){ SFX.acelera(); freFlash('velocidade '+S.fre.vel, S.fre.deg, 'vel'); }
+function freAcelera(){ SFX.acelera(); const v=S.fre.vel, k=S.fre.deg; depois(()=>freFlash('velocidade '+v, k, 'vel')); }
 // letreiro grande no meio do tabuleiro (degrau novo, FRENESI!, velocidade)
 function freFlash(txt,k,cls=''){
   const st=$('#stage'); if(!st) return;
@@ -187,16 +193,22 @@ function freFlash(txt,k,cls=''){
 // cor do degrau no corpo da página (barra, número, bordas, etiquetas): muda só quando o degrau muda. O que pulsa
 // (bordas, número, barra) anda por animações do próprio navegador, fora da linha principal do jogo: escrever estilo a
 // cada quadro (como na primeira tentativa) refazia o layout e custava boa parte da folga do quadro.
+// A classe vai no palco (barra e tabuleiro) e nas bordas; a cor (--fc), só na barra e nas bordas. Uma variável de cor
+// herdada faz o navegador recalcular o estilo de tudo o que fica embaixo de onde ela muda: no body era a página inteira,
+// no palco eram todas as peças (uns 9 ms no celular, bem no quadro do letreiro). As etiquetas acesas usam cores fixas.
 function freVisual(k){
-  const b=document.body; for(let i=0;i<=TOPO;i++) b.classList.toggle('fd'+i, i===k);
-  b.style.setProperty('--fc', DEGRAUS[k].cor);
+  FV.grau=k; if(musName==='frenesi') MUS?.intensidade?.(k/TOPO);
+  FV.pedeVisual=true; freBarra();
+}
+function freVisualPinta(k){
+  for(const el of [$('#stage'), $('#freBorda')]){ if(!el) continue; for(let i=0;i<=TOPO;i++) el.classList.toggle('fd'+i, i===k); }
+  for(const el of [$('#freBar'), $('#freBorda')]) el?.style.setProperty('--fc', DEGRAUS[k].cor);
   const m=$('#freMult'); if(m) m.textContent='×'+DEGRAUS[k].x;
   const bo=$('#freBorda'); if(bo){ FV.borda = k ? Math.min(.8,.15+.1*k) : 0; bo.firstChild.style.opacity = k===TOPO ? .35 : FV.borda; }
-  if(musName==='frenesi') MUS?.intensidade?.(k/TOPO);
-  freBarra();
 }
 // a barra do tempo esvazia sozinha (animação do navegador), da fração que falta até zero; pausa junto com o jogo
-function freBarra(){
+function freBarra(){ FV.pedeBarra=true; }
+function freBarraPinta(){
   const i=$('#freTempo')?.firstChild, F=S?.fre; if(!i || !F) return;
   FV.barra?.cancel(); FV.barra=null;
   if(F.corr>0 && F.resta>0){ FV.barra=i.animate([{transform:`scaleX(${Math.min(1,F.resta/F.jan)})`},{transform:'scaleX(0)'}],{duration:F.resta*1000, fill:'forwards'});
@@ -243,6 +255,11 @@ function freQuadro(t){
 function frePinta(t){
   if(!S || !S.frenesi || !S.fre) return;
   const F=S.fre;
+  // o que ficou pendente do arrasto (degrau novo, queda): primeiro a leitura do tabuleiro, depois as escritas
+  if(FV.fila.length || FV.pedeVisual || FV.pedeBarra){ const g=geoTab();
+    if(FV.pedeVisual){ FV.pedeVisual=false; freVisualPinta(FV.grau); }
+    if(FV.pedeBarra){ FV.pedeBarra=false; freBarraPinta(); }
+    for(const f of FV.fila.splice(0)) f(g); }
   // barra: pausa e volta com o jogo; vermelha piscando no fim
   const b=FV.barra; if(b){ if(FV.jogando && b.playState==='paused') b.play(); else if(!FV.jogando && b.playState==='running') b.pause(); }
   const tr=$('#freTempo'), pouco=F.corr>0 && F.resta<F.jan*.3; if(tr && tr._p!==pouco){ tr._p=pouco; tr.classList.toggle('pouco',pouco); }
@@ -252,9 +269,9 @@ function frePinta(t){
 // a cada tempo da música: a partir do ×8 a malha treme junto; no ×20 um anel sai do tabuleiro
 function freBatida(t){
   const k=S.fre.deg; if(k<2 || POUCO_MOV || S.phase!=='mine') return;
-  // o número e as bordas dão um pulo na batida (animação do navegador, uma por tempo)
-  $('#freMult')?.animate([{scale:1.04+.025*k},{scale:1}],{duration:300,easing:'ease-out'});
-  const bo=$('#freBorda'); if(bo && k<TOPO) bo.firstChild.animate([{opacity:Math.min(1,FV.borda+.12+.04*k)},{opacity:FV.borda}],{duration:380,easing:'ease-out'});
+  // o número e as bordas dão um pulo na batida (animação do navegador, uma por tempo; começa no fim do quadro)
+  depois(()=>{ $('#freMult')?.animate([{scale:1.04+.025*k},{scale:1}],{duration:300,easing:'ease-out'});
+    const bo=$('#freBorda'); if(bo && k<TOPO) bo.firstChild.animate([{opacity:Math.min(1,FV.borda+.12+.04*k)},{opacity:FV.borda}],{duration:380,easing:'ease-out'}); });
   if(k<4) return;
   const g=geoTab(); if(!g.r.width) return;
   tremM.push({x:g.O+g.r.width*g.D/2, y:g.O+g.r.height*g.D/2, t0:t, a:g.P*(.012+.008*(k-3))});
@@ -284,20 +301,34 @@ function haloDe(rgb){
   g.addColorStop(0,`rgba(${k},1)`); g.addColorStop(.45,`rgba(${k},.45)`); g.addColorStop(1,`rgba(${k},0)`); c.fillStyle=g; c.fillRect(0,0,64,64);
   if(HALO.size>60) HALO.clear(); HALO.set(k,s); return s;
 }
+// faixa do rastro: transparente atrás, acesa na frente, com as pontas arredondadas (uma por cor de nível)
+const RASTRO=new Map();
+function rastroDe(cor){ let s=RASTRO.get(cor); if(s) return s; s=document.createElement('canvas'); s.width=96; s.height=16; const c=s.getContext('2d');
+  const g=c.createLinearGradient(0,0,96,0); g.addColorStop(0,`rgba(${cor},0)`); g.addColorStop(.85,`rgba(${cor},1)`); g.addColorStop(1,`rgba(${cor},1)`);
+  c.fillStyle=g; c.beginPath(); c.moveTo(0,8); c.lineTo(88,0); c.arc(88,8,8,-Math.PI/2,Math.PI/2); c.lineTo(0,8); c.fill(); RASTRO.set(cor,s); return s; }
+// os brilhos de cada degrau e do arco-íris ficam prontos num momento livre, no começo da partida
+function freAquece(){ (window.requestIdleCallback||setTimeout)(()=>{ for(const c of COR_DEG) haloDe(c); for(let h=0;h<24;h++) haloDe(hslRgb(h/24,.9,.62)); for(let t=1;t<=12;t++) rastroDe(corNivelRgb(t)); }); }
 // no céu, atrás do tabuleiro: brilho na cor do degrau atrás de cada peça (pulsando) e os rastros
 function freCeu(c,t){
   const k=FV.k; if(k<.05 && !FV.rastros.length) return;
   c.save(); c.globalCompositeOperation='lighter';
   const g=geoTab();
-  if(k>=.05){ c.globalAlpha=Math.min(.55,.1+.065*k)*(1+(POUCO_MOV?0:.6*FV.pulso)); let i=0;
-    const arco=k>TOPO-.5, um=arco?null:haloDe(FV.cor), hb=Math.floor(t*.12*24);
+  // na troca de degrau, o brilho de um degrau some enquanto o do outro aparece (dois desenhos prontos), em vez de pintar um
+  // brilho novo a cada cor do caminho (era um canvas novo a cada poucos quadros, bem na hora do letreiro)
+  if(k>=.05){ const a=Math.min(.55,.1+.065*k)*(1+(POUCO_MOV?0:.6*FV.pulso)); let i=0;
+    const arco=k>TOPO-.5, k0=Math.floor(k), f=k-k0, hb=Math.floor(t*.12*24), s0=haloDe(COR_DEG[k0]), s1=haloDe(COR_DEG[Math.min(TOPO,k0+1)]);
     for(const {el,fr} of pecasNoQuadro()){ const x=fr.left+fr.width/2, y=fr.top+fr.height/2, R=g.cel*(.58+.05*k)*Math.max(1,kNivel(el._t.t)*.75);
-      c.drawImage(arco ? haloDe(hslRgb((hb+i*2)/24,.9,.62)) : um, x-R, y-R, 2*R, 2*R); i++; }
+      if(arco){ c.globalAlpha=a; c.drawImage(haloDe(hslRgb((hb+i*2)/24,.9,.62)), x-R, y-R, 2*R, 2*R); }
+      else{ if(f<.98){ c.globalAlpha=a*(1-f); c.drawImage(s0, x-R, y-R, 2*R, 2*R); } if(f>.02){ c.globalAlpha=a*f; c.drawImage(s1, x-R, y-R, 2*R, 2*R); } }
+      i++; }
     c.globalAlpha=1; }
+  // rastros: uma faixa pronta (cor do nível, apagando para trás) esticada e girada até o caminho da peça; criar um
+  // degradê novo para cada rastro a cada quadro pesava justo nos quadros depois do arrasto
   const cel=g.cel;
-  for(const r of FV.rastros){ const u=(t-r.t0)/.38; if(u<0||u>1) continue; const [x0,y0]=r.a, [x1,y1]=r.b, gr=c.createLinearGradient(x0,y0,x1,y1);
-    gr.addColorStop(0,`rgba(${r.cor},0)`); gr.addColorStop(1,`rgba(${r.cor},${(.75*(1-u)).toFixed(3)})`);
-    c.strokeStyle=gr; c.lineWidth=cel*(.18+.04*Math.min(k,6))*(1-u*.6); c.lineCap='round'; c.beginPath(); c.moveTo(x0,y0); c.lineTo(x1,y1); c.stroke(); }
+  for(const r of FV.rastros){ const u=(t-r.t0)/.38; if(u<0||u>1) continue; const [x0,y0]=r.a, [x1,y1]=r.b, L=Math.hypot(x1-x0,y1-y0); if(L<1) continue;
+    const w=cel*(.18+.04*Math.min(k,6))*(1-u*.6);
+    c.globalAlpha=.75*(1-u); c.setTransform((x1-x0)/L,(y1-y0)/L,-(y1-y0)/L,(x1-x0)/L,x0,y0); c.drawImage(rastroDe(r.cor),0,-w/2,L+w/2,w); }
+  c.setTransform(1,0,0,1,0,0); c.globalAlpha=1;
   FV.rastros=FV.rastros.filter(r=>t-r.t0<.38);
   c.restore();
 }

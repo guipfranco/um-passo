@@ -233,10 +233,10 @@ body.espaco #mFre{display:block;color:#ff7ad9 !important;border-color:#ff7ad9 !i
 #freBar,#freBorda{display:none}
 body.modoFre #freBar{display:flex;align-items:center;gap:10px;margin:0 2px 12px;position:relative}
 body.modoFre #freBorda{display:block}
-body{--fc:#a9b8ff}
+#freBar,#freBorda{--fc:#a9b8ff}
 #freMult{flex:none;min-width:94px;text-align:center;font:900 40px/1 Orbitron,'Exo 2',sans-serif;color:#fff;text-shadow:0 0 8px var(--fc),0 0 22px var(--fc),0 0 42px var(--fc);will-change:transform}
-body.fd0 #freMult{color:#b9b4e0;text-shadow:none;opacity:.6;font-size:32px}
-body.fd6 #freMult{color:#fff4fd}
+#stage.fd0 #freMult{color:#b9b4e0;text-shadow:none;opacity:.6;font-size:32px}
+#stage.fd6 #freMult{color:#fff4fd}
 @keyframes freArco{to{filter:hue-rotate(360deg)}}
 #freInfo{flex:1;min-width:0;display:flex;flex-direction:column;gap:7px}
 #freLinha{display:flex;justify-content:space-between;gap:8px;font:700 11.5px 'Exo 2',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#d8d0f0;white-space:nowrap}
@@ -248,8 +248,8 @@ body.fd6 #freMult{color:#fff4fd}
 @keyframes frePisca{50%{opacity:.35}}
 #freBorda{position:fixed;inset:0;pointer-events:none;z-index:2}
 #freBorda i{position:absolute;inset:0;opacity:0;transition:opacity .5s;will-change:opacity;box-shadow:inset 0 0 80px 4px var(--fc),inset 0 0 16px 2px var(--fc)}
-body.fd6 #freBorda i:nth-child(2){animation:freOnda 2s ease-in-out infinite}
-body.fd6 #freBorda i:nth-child(3){animation:freOnda 2s ease-in-out -1s infinite}
+#freBorda.fd6 i:nth-child(2){animation:freOnda 2s ease-in-out infinite}
+#freBorda.fd6 i:nth-child(3){animation:freOnda 2s ease-in-out -1s infinite}
 @keyframes freOnda{0%,100%{opacity:.1}50%{opacity:.85}}
 #freBorda i:nth-child(2){box-shadow:inset 0 0 80px 4px #ff4fc8,inset 0 0 16px 2px #ff4fc8}
 #freBorda i:nth-child(3){box-shadow:inset 0 0 80px 4px #4fe3ff,inset 0 0 16px 2px #4fe3ff}
@@ -268,7 +268,10 @@ body.modoFre .hudCla #ptsP{width:150px;min-width:0}
 body.modoFre .hudCla #ptsP>div{width:100%}
 body.modoFre .hudCla #ptsP b{font-size:28px;height:30px;line-height:30px;contain:strict}   /* os pontos rolam sem refazer o layout da tela */
 body.modoFre .hudCla #ptsP b.longo{font-size:20px}
-body.modoFre.fd3 .etq,body.modoFre.fd4 .etq,body.modoFre.fd5 .etq,body.modoFre.fd6 .etq{box-shadow:0 0 9px var(--fc);border-color:var(--fc)}
+body.modoFre .fd3 .etq{box-shadow:0 0 9px #ffd84a;border-color:#ffd84a}
+body.modoFre .fd4 .etq{box-shadow:0 0 9px #ff8f2e;border-color:#ff8f2e}
+body.modoFre .fd5 .etq{box-shadow:0 0 9px #ff4fc8;border-color:#ff4fc8}
+body.modoFre .fd6 .etq{box-shadow:0 0 9px #d9a8ff;border-color:#d9a8ff}
 .freRes{display:flex;gap:6px;width:100%}
 .freRes>div{flex:1;min-width:0;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:8px 3px;display:flex;flex-direction:column;align-items:center;gap:2px}
 .freRes b{font:900 20px Orbitron,'Exo 2',sans-serif;color:#fff}
@@ -278,8 +281,8 @@ body.modoFre.fd3 .etq,body.modoFre.fd4 .etq,body.modoFre.fd5 .etq,body.modoFre.f
 @keyframes freFlashCalmo{0%{opacity:0}15%{opacity:1}70%{opacity:1}100%{opacity:0}}
 @media (prefers-reduced-motion: reduce){
   .freFlash,.freFlash.topo{animation:freFlashCalmo 1.2s ease-out forwards}
-  #freTempo.pouco i,body.fd6 #freBorda i{animation:none !important}
-  body.fd6 #freBorda i:nth-child(n+2){opacity:.4}
+  #freTempo.pouco i,#freBorda.fd6 i{animation:none !important}
+  #freBorda.fd6 i:nth-child(n+2){opacity:.4}
   .freApaga{animation-duration:1.2s;opacity:.3}
 }
 #ovos button{width:30px;height:30px;padding:4px;border:0;background:none;color:rgba(207,198,255,.42);filter:drop-shadow(0 0 4px rgba(207,198,255,.35));cursor:pointer}

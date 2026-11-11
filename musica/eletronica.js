@@ -25,10 +25,14 @@
 
 const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
 
+// O eco (sala) é um só por contexto de áudio, feito na primeira trilha e reaproveitado pelas outras: gerar o ruído e
+// entregá-lo ao convolver levava uns 130 ms no celular, e travava o jogo a cada troca de trilha (menu, fase, Clássico).
+const SALAS = new WeakMap();
 function sala(ctx, seg = 3.4) {
+  let c = SALAS.get(ctx); if (c) return c;
   const n = Math.round(ctx.sampleRate * seg), b = ctx.createBuffer(2, n, ctx.sampleRate);
   for (let ch = 0; ch < 2; ch++) { const d = b.getChannelData(ch); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3.2); }
-  const c = ctx.createConvolver(); c.buffer = b; return c;
+  c = ctx.createConvolver(); c.buffer = b; SALAS.set(ctx, c); return c;
 }
 
 // sorteio com semente (mulberry32): números entre 0 e 1, sempre os mesmos para a mesma semente
@@ -145,12 +149,12 @@ export function cria(cfg) {
       const frente = (typeof document !== 'undefined' && document.hidden) ? 1.2 : 0.3;   // em segundo plano o relógio só acorda 1 vez por segundo
       while (prox < agora + frente) prox = passo(prox);
     }, 40);
-    E = { ctx, sai, id, mf, est };
+    E = { ctx, sai, rg, id, mf, est };
   }
   function pararMusica(fade = 1.5) {
     if (!E) return; const e = E; E = null; clearInterval(e.id);
     e.sai.gain.setTargetAtTime(0, e.ctx.currentTime, Math.max(0.05, fade / 3));
-    setTimeout(() => e.sai.disconnect(), fade * 1000 + 3500);
+    setTimeout(() => { e.sai.disconnect(); e.rg.disconnect(); }, fade * 1000 + 3500);   // o eco é de todas: só esta saída dele sai
   }
   // intensidade de 0 a 1 (só as trilhas com camadas usam); caiu de repente: o filtro geral fecha e reabre
   function intensidade(v) {

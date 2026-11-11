@@ -164,7 +164,7 @@ function dents(x,y,z,list,depth){let m=0;for(const c of list){const q=Math.acos(
 const DB=dentList(63,8,.12,.25);
 class MeshBody{
   constructor(V,F,Cs,E){this.V=Float32Array.from(V.flat());this.F=Uint16Array.from(F.flat());this.C=Cs;this.E=E;this.rmax=Math.max(...V.map(v=>Math.hypot(...v)));this.T=new Float32Array(this.V.length);}
-  render(c,S,M,L,o){const V=this.V,T=this.T,F=this.F,n=V.length/3,amb=o.amb||.28;
+  render(c,S,M,L,o){if(!o.wire&&this.F.length>=MeshBody.rasterMin)return this.rasteriza(c,S,M,L,o);const V=this.V,T=this.T,F=this.F,n=V.length/3,amb=o.amb||.28;
     for(let i=0;i<n;i++){const x=V[i*3],y=V[i*3+1],z=V[i*3+2];T[i*3]=M[0]*x+M[1]*y+M[2]*z;T[i*3+1]=M[3]*x+M[4]*y+M[5]*z;T[i*3+2]=M[6]*x+M[7]*y+M[8]*z;}
     const sc=S/2*.86/this.rmax*(o.scale||1),cx=S/2+(o.dx||0),cy=S/2+(o.dy||0),vis=[],nf=F.length/3;
     for(let f=0;f<nf;f++){const A=F[f*3]*3,B=F[f*3+1]*3,Q=F[f*3+2]*3;const ux=T[B]-T[A],uy=T[B+1]-T[A+1],uz=T[B+2]-T[A+2],wx=T[Q]-T[A],wy=T[Q+1]-T[A+1],wz=T[Q+2]-T[A+2];
@@ -175,7 +175,32 @@ class MeshBody{
       const s=this.E[f]?1:amb+(.78-amb)*smooth(-.05,.3,lam)+.27*smooth(.55,.95,lam);
       const st=`rgb(${col[0]*s|0},${col[1]*s|0},${col[2]*s|0})`;c.fillStyle=st;c.strokeStyle=o.wire?'rgba(255,236,190,.75)':st;c.lineWidth=o.wire?1:.9;
       c.beginPath();c.moveTo(cx+T[A]*sc,cy-T[A+1]*sc);c.lineTo(cx+T[B]*sc,cy-T[B+1]*sc);c.lineTo(cx+T[Q]*sc,cy-T[Q+1]*sc);c.closePath();c.fill();c.stroke();}}
+  // Malha com muitas faces (a Rocha tem 1280): os triângulos vão direto para os pixels, numa imagem 2x maior que depois é
+  // reduzida (a redução suaviza as bordas). Pintar 640 triângulos como caminhos do canvas, 20 vezes por segundo em cada
+  // Rocha, era o maior custo do tabuleiro no celular; assim sai igual e umas 3 vezes mais barato (mais no celular, onde
+  // canvas pequeno é pintado pelo processador).
+  rasteriza(c,S,M,L,o){const V=this.V,T=this.T,F=this.F,n=V.length/3,amb=o.amb||.28,K=2,N=Math.max(2,Math.round(S*K));
+    let R=RASTER[N];if(!R){const cv=mk(N,N),cx=cv.getContext('2d'),img=cx.createImageData(N,N);R=RASTER[N]={cv,cx,img,px:new Uint32Array(img.data.buffer)};}
+    const px=R.px;px.fill(0);
+    for(let i=0;i<n;i++){const x=V[i*3],y=V[i*3+1],z=V[i*3+2];T[i*3]=M[0]*x+M[1]*y+M[2]*z;T[i*3+1]=M[3]*x+M[4]*y+M[5]*z;T[i*3+2]=M[6]*x+M[7]*y+M[8]*z;}
+    const sc=N/2*.86/this.rmax*(o.scale||1),ox=N/2+(o.dx||0)*K,oy=N/2+(o.dy||0)*K,vis=[],nf=F.length/3;
+    for(let f=0;f<nf;f++){const A=F[f*3]*3,B=F[f*3+1]*3,Q=F[f*3+2]*3;const ux=T[B]-T[A],uy=T[B+1]-T[A+1],uz=T[B+2]-T[A+2],wx=T[Q]-T[A],wy=T[Q+1]-T[A+1],wz=T[Q+2]-T[A+2];
+      const nz=ux*wy-uy*wx;if(nz<=0)continue;const nx=uy*wz-uz*wy,ny=uz*wx-ux*wz,l=Math.hypot(nx,ny,nz);
+      vis.push([T[A+2]+T[B+2]+T[Q+2],f,(nx*L[0]+ny*L[1]+nz*L[2])/l]);}
+    vis.sort((p,q)=>p[0]-q[0]);
+    for(const [,f,lam] of vis){const A=F[f*3]*3,B=F[f*3+1]*3,Q=F[f*3+2]*3,col=this.C[f];
+      const s=this.E[f]?1:amb+(.78-amb)*smooth(-.05,.3,lam)+.27*smooth(.55,.95,lam);
+      const cor=(255<<24)|((col[2]*s|0)<<16)|((col[1]*s|0)<<8)|(col[0]*s|0);   // ABGR (pixels em ordem de memória little-endian)
+      let x0=ox+T[A]*sc,y0=oy-T[A+1]*sc,x1=ox+T[B]*sc,y1=oy-T[B+1]*sc,x2=ox+T[Q]*sc,y2=oy-T[Q+1]*sc,t;
+      if(y1<y0){t=x0;x0=x1;x1=t;t=y0;y0=y1;y1=t;}if(y2<y0){t=x0;x0=x2;x2=t;t=y0;y0=y2;y2=t;}if(y2<y1){t=x1;x1=x2;x2=t;t=y1;y1=y2;y2=t;}
+      const ya=Math.max(0,Math.ceil(y0-.5)),yb=Math.min(N-1,Math.floor(y2-.5));
+      for(let y=ya;y<=yb;y++){const py=y+.5;let xa=x0+(x2-x0)*(py-y0)/((y2-y0)||1e-9),xb=py<y1?x0+(x1-x0)*(py-y0)/((y1-y0)||1e-9):x1+(x2-x1)*(py-y1)/((y2-y1)||1e-9);
+        if(xa>xb){t=xa;xa=xb;xb=t;}const xs=Math.max(0,Math.ceil(xa-.85)),xe=Math.min(N-1,Math.floor(xb-.15)),base=y*N;   // um pouco mais largo: sem fresta entre faces
+        for(let x=xs;x<=xe;x++)px[base+x]=cor;}}
+    R.cx.putImageData(R.img,0,0);c.imageSmoothingEnabled=true;c.imageSmoothingQuality='high';c.drawImage(R.cv,0,0,N,N,0,0,S,S);}
 }
+const RASTER={};
+MeshBody.rasterMin=900;   // a partir de 300 faces (Rocha, Asteroide, núcleo do Cometa); as pequenas e as de traço seguem como caminho
 // bolota deformada (lava, asteroide, núcleo do cometa)
 function blobGeom(shape,color,sub,emis){const g=icosphere(sub);const V=g.V.map(v=>{const r=shape(v[0],v[1],v[2]);return [v[0]*r,v[1]*r,v[2]*r];});
   const F=[],Cs=[],E=[];for(let [a,b,c] of g.F){const m=triC(V,a,b,c);if(dot3(triN(V,a,b,c),m)<0){const s=b;b=c;c=s;}F.push([a,b,c]);

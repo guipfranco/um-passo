@@ -1,5 +1,9 @@
 function setBanner(title,sub){ if(title!==null) $('#bTitle').innerHTML=enrich(title); $('#bSub').innerHTML=enrich(sub||''); }
-function anim(id,name){ const el=els.get(id); if(!el) return; const f=el.firstChild; f.classList.remove(name); void f.offsetWidth; f.classList.add(name); }
+function anim(id,name){ const el=els.get(id); if(!el) return; const f=el.firstChild;
+  // o pulo da junção vai por uma animação do navegador: tirar e pôr a classe com um offsetWidth no meio obrigava a refazer
+  // o layout dentro de cada arrasto (alguns ms no celular, a cada junção)
+  if(name==='pop' && f.animate){ f.animate([{scale:1},{scale:1.22},{scale:1}],{duration:220,easing:'ease-out'}); return; }
+  f.classList.remove(name); void f.offsetWidth; f.classList.add(name); }
 function shake(level){ const c='shake'+Math.min(level,3); stage.classList.remove('shake1','shake2','shake3'); void stage.offsetWidth; stage.classList.add(c); }
 function popup(big,small,cor){ const p=document.createElement('div'); p.className='popup'; p.style.setProperty('--pc',cor); if(big.length>9) p.style.fontSize=big.length>14?'30px':'38px'; p.innerHTML=`${big}<small>${small}</small>`; stage.appendChild(p); setTimeout(()=>p.remove(),1000); }
 function sparks(t,cor){

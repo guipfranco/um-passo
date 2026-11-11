@@ -300,7 +300,9 @@ function ceuDesenha(t){
   c.setTransform(1,0,0,1,0,0); c.globalCompositeOperation='source-over'; c.globalAlpha=1;
   // a névoa mais forte do momento (junção ou recorde)
   let pul=null; for(const j of brilhosE){ const u=(t-j.t0)/1.1; if(u<1){ const k=(1-u)*(j.forte?.9:.45); if(!pul||k>pul.k) pul={k,x:j.x,y:j.y,rgb:j.rgb}; } }
-  if(NEB.ok && (t-nebT>=1/30 || pul)){ nebT=t; NEB.desenha(w,h,t,[cx*.12,cy*.12],jogo&&S.frenesi?freNeb(mu.neb,t):mu.neb,pul); }   // a nebulosa anda devagar: 30 quadros por segundo bastam; no Frenesi, nas cores do degrau
+  // no Frenesi a névoa das junções acende quase sem parar: a nebulosa fica a 30 quadros por segundo mesmo com ela (a 60, a
+  // placa de vídeo do celular pintava a tela inteira do dobro de vezes durante o jogo rápido)
+  if(NEB.ok && (t-nebT>=1/30 || (pul && !(jogo&&S.frenesi)))){ nebT=t; NEB.desenha(w,h,t,[cx*.12,cy*.12],jogo&&S.frenesi?freNeb(mu.neb,t):mu.neb,pul); }   // a nebulosa anda devagar: 30 quadros por segundo bastam; no Frenesi, nas cores do degrau
   c.clearRect(0,0,w,h);
   c.save();
   // fundo feito para outra altura (até 15%): centrado na tela; mais baixo que ela, cresce por igual (sem achatar o
@@ -351,7 +353,11 @@ let malhaCv=null, MN=null, ondasM=[], tremM=[];
 function malhaCamada(){ if(!malhaCv){ malhaCv=document.createElement('canvas'); malhaCv.id='malhaCv'; } if(malhaCv.parentElement!==board) board.prepend(malhaCv); return malhaCv; }
 // geometria em px do canvas da malha: D = densidade (no máximo 2: linha fina não precisa de mais), P = passo entre casas,
 // g0 = onde começa a primeira linha dentro do tabuleiro, O = margem do canvas (uma casa para cada lado do tabuleiro)
-function geoTab(){ const r=board.getBoundingClientRect(), D=Math.min(2,ESP.DPR), cel=(typeof cellPx==='function'?cellPx():80), gap=(r.width-W*cel)/(W+1);
+// lida uma vez por quadro: dentro do arrasto (entre um quadro e outro) vale a do último quadro, sem obrigar o navegador a
+// refazer o layout no meio do arrasto (o tabuleiro não muda de lugar nem de tamanho ali)
+let GEO=null, GEOq=-1;
+function geoTab(){ if(GEO && GEOq===quadroN) return GEO; GEOq=quadroN; return GEO=geoMede(); }
+function geoMede(){ const r=board.getBoundingClientRect(), D=Math.min(2,ESP.DPR), cel=(typeof cellPx==='function'?cellPx():80), gap=(r.width-W*cel)/(W+1);
   return {r, D, P:(cel+gap)*D, g0:gap*D/2, O:cel*D, cel}; }
 const casaOk=(x,y)=>x>=0&&y>=0&&x<W&&y<H&&!(S.walls||[]).some(w=>w.v&&w.x===x&&w.y===y);
 function campoM(px,py,t,pocos,pa){ let dx=0,dy=0,h=0;

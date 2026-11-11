@@ -25,12 +25,14 @@ f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEven
   // multiplicador: com a corrente em 18 (×5), juntar dois Gelos (4) vale 8 × 5
   w.eval(`S.fre.corr=17; S.fre.deg=degrauDe(17); S.pontos=0; S.tiles=[{id:'c1',x:0,y:0,t:2},{id:'c2',x:1,y:0,t:2}]; render(); move(-1,0)`);
   confere(w.eval('S.fre.deg')===3 && w.eval('S.pontos')===40, `×5: degrau=×${w.eval('DEGRAUS[S.fre.deg].x')} pontos=${w.eval('S.pontos')} número=${q('.flut.fre')?.textContent} janela=${w.eval('S.fre.jan')}`);
-  confere(d.body.classList.contains('fd3') && q('#freMult').textContent==='×5', 'cor e número do degrau: '+q('#freMult').textContent);
+  w.eval('frePinta(tQuadro)');   // a cor e o número do degrau mudam no fim do quadro seguinte (fora do arrasto): aqui, já
+  confere(q('#stage').classList.contains('fd3') && q('#freMult').textContent==='×5', 'cor e número do degrau: '+q('#freMult').textContent);
   // a barra esvazia: a corrente cai e tudo volta ao ×1
-  w.eval('S.fre.resta=.05'); const caiu=await espera(()=>w.eval('S.fre.corr')===0);
-  confere(caiu && w.eval('S.fre.deg')===0 && d.body.classList.contains('fd0'), `barra vazia: corrente=${w.eval('S.fre.corr')} texto="${q('#freTxt').textContent}" maior corrente=${w.eval('S.fre.maxCorr')} maior ×=${w.eval('S.fre.maxMult')}`);
+  // um quadro (0,1 s) passa: o navegador sem janela nem sempre produz quadros enquanto o teste espera, então o quadro é chamado aqui
+  w.eval('S.fre.resta=.05; freQuadro(FV.t+.1); frePinta(tQuadro)'); const caiu=w.eval('S.fre.corr')===0;
+  confere(caiu && w.eval('S.fre.deg')===0 && q('#stage').classList.contains('fd0'), `barra vazia: corrente=${w.eval('S.fre.corr')} texto="${q('#freTxt').textContent}" maior corrente=${w.eval('S.fre.maxCorr')} maior ×=${w.eval('S.fre.maxMult')}`);
   // pausa: o tempo para
-  w.eval(`S.tiles=[{id:'p1',x:0,y:0,t:1},{id:'p2',x:1,y:0,t:1}]; render(); move(-1,0); pauseMenu()`); const r0=w.eval('S.fre.resta'); await wait(400);
+  w.eval(`S.tiles=[{id:'p1',x:0,y:0,t:1},{id:'p2',x:1,y:0,t:1}]; render(); move(-1,0); pauseMenu()`); const r0=w.eval('S.fre.resta'); w.eval('freQuadro(FV.t+.1); freQuadro(FV.t+.1)'); await wait(100);
   confere(w.eval('S.fre.resta')===r0 && w.eval('S.fre.corr')>0, `pausa segura a barra: ${r0.toFixed(2)} → ${w.eval('S.fre.resta').toFixed(2)}`);
   w.eval('hideOverlay()');
   // velocidade: passar de 2.000 pontos encurta a janela

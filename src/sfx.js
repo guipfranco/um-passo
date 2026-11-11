@@ -3,7 +3,9 @@
 let AC=null, BUS=null, NB=null;
 function ctxAudio(){
   try{
-    if(!AC){ AC=new (window.AudioContext||window.webkitAudioContext)(); BUS=AC.createGain(); BUS.gain.value=.9; BUS.connect(AC.destination); }
+    if(!AC){ AC=new (window.AudioContext||window.webkitAudioContext)(); BUS=AC.createGain(); BUS.gain.value=.9; BUS.connect(AC.destination);
+      // o eco dos efeitos do espaço (uns 140 ms de preparo no celular) fica pronto num momento livre, não no primeiro toque
+      (window.requestIdleCallback||setTimeout)(()=>{ try{ if(AC) salas(AC); }catch(e){} }); }
     // parado ('suspended') ou, no iPhone, 'interrupted' (ligação, outro app tocando): volta. Escondido, fica parado (ver visibilitychange)
     if(AC.state!=='running' && AC.state!=='closed' && !document.hidden) AC.resume().catch(()=>{});
     return AC;
@@ -126,6 +128,9 @@ function sinoE(o){ const c=ac(); if(!c) return; salas(c); const T=c.currentTime+
   cr.frequency.value=f; m.frequency.value=f*ratio; mg.gain.setValueAtTime(f*idx,T); mg.gain.exponentialRampToValueAtTime(Math.max(1,f*.01),T+d);
   m.connect(mg); mg.connect(cr.frequency); env(g,T,.003,v,d); cr.connect(g); saidaE(c,g,o); cr.start(T); m.start(T); cr.stop(T+d+.1); m.stop(T+d+.1); }
 const PENTA=[0,2,4,7,9];
+// voz que toca mais tarde no mesmo efeito: a hora exata é marcada agora, mas os nós de áudio só são criados pouco antes
+// (criar as 20 vozes do FRENESI de uma vez, dentro do arrasto, segurava o quadro)
+function adiante(f,o){ const c=AC, t=o.t||0; if(!c || t<.09) return f(o); const T=c.currentTime+t; setTimeout(()=>f({...o,t:Math.max(0,T-c.currentTime)}),(t-.07)*1000); }
 const notaE=(oit,grau)=>{ const k=((grau%5)+5)%5, o=Math.floor(grau/5); return 293.66*Math.pow(2,oit+o+PENTA[k]/12); };   // pentatônica de Ré
 const ladoE=()=>(Math.random()-.5)*.6;
 const SONS_ESP={
@@ -173,10 +178,10 @@ const SONS_ESP={
   // Frenesi: um bipe que sobe de nota a cada junção da corrente; o degrau novo sobe um arpejo (mais alto a cada degrau);
   // no ×20, um acorde aberto com chuva de sinos; quando a corrente cai, tudo desce e apaga; velocidade nova: escadinha rápida
   corrente(n){ const g=Math.min(n,16), p=ladoE(); sinoE({f:notaE(0,g+2),d:.22,v:.04,ratio:2,idx:.6,pan:p,rev:.25}); tomE({f:notaE(1,g+2),d:.05,v:.02,type:'square',lp:3500,pan:p}); },
-  degrau(k){ for(let i=0;i<4+k;i++) sinoE({t:i*.045,f:notaE(0,k*2+i+2),d:.5,v:.04,ratio:2,idx:.7,rev:.45,pan:-.5+i*.12});
+  degrau(k){ for(let i=0;i<4+k;i++) adiante(sinoE,{t:i*.045,f:notaE(0,k*2+i+2),d:.5,v:.04,ratio:2,idx:.7,rev:.45,pan:-.5+i*.12});
     ruidoE({f:700,to:9000,a:.03,d:.35,v:.035,q:1,rev:.4}); tomE({f:notaE(-1,k),a:.01,d:.5,v:.08,type:'triangle',lp:1200}); },
   frenesi(){ [0,7,12,16,19,24].forEach((s,i)=>tomE({t:.02*i,f:110*Math.pow(2,s/12),a:.04,d:1.4,v:.04,type:'sawtooth',lp:3200,lpTo:900,rev:.5,pan:-.5+i*.2,det:i%2?8:-8}));
-    ruidoE({f:500,to:12000,a:.05,d:.6,v:.05,q:.8,rev:.5}); for(let i=0;i<12;i++) sinoE({t:.08+i*.04,f:notaE(1,i+2),d:.6,v:.03,ratio:2,idx:.6,rev:.5,pan:Math.sin(i)*.8}); },
+    ruidoE({f:500,to:12000,a:.05,d:.6,v:.05,q:.8,rev:.5}); for(let i=0;i<12;i++) adiante(sinoE,{t:.08+i*.04,f:notaE(1,i+2),d:.6,v:.03,ratio:2,idx:.6,rev:.5,pan:Math.sin(i)*.8}); },
   cai(k){ tomE({f:notaE(1,Math.max(2,k*2)),to:60,a:.01,d:.7,v:.06,type:'sawtooth',lp:2600,lpTo:160,rev:.3}); ruidoE({f:3200,to:140,d:.6,v:.05,type:'lowpass'}); tomE({t:.04,f:120,to:38,d:.45,v:.1}); },
   acelera(){ for(let i=0;i<6;i++) tomE({t:i*.05,f:notaE(1,i*2),d:.1,v:.03,type:'square',lp:4000,pan:-.4+i*.16}); },
 };
