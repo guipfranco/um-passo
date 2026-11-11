@@ -1,0 +1,70 @@
+<!-- tempo: 60000 -->
+<meta charset="utf-8">
+<body style="margin:0"><iframe id="f" src="../index.html?frenesi" width="390" height="760" style="border:0"></iframe><pre id="out" style="position:absolute;left:400px;top:0">x</pre>
+<script>
+// Frenesi (modo em teste, só com ?frenesi): botão no menu, explicação da primeira vez, corrente e multiplicador,
+// várias junções num arrasto, a barra esvaziando derruba a corrente, velocidade, salvar e continuar, fim de jogo com
+// resumo, recordes à parte do Clássico, ?frenesi=0 esconde, e a trilha com camadas no máximo sem erro.
+f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEventListener('error',e=>errs.push(e.message+' @'+e.lineno));w.addEventListener('unhandledrejection',e=>errs.push('rej '+e.reason));
+ const wait=ms=>new Promise(r=>setTimeout(r,ms)); const q=s=>d.querySelector(s); const vis=s=>!!q(s) && w.getComputedStyle(q(s)).display!=='none';
+ const espera=(f,m=40)=>new Promise(async r=>{ for(let i=0;i<m && !f();i++) await wait(50); r(f()); });
+ const confere=(ok,txt)=>{ log.push((ok?'ok  ':'ERRO ')+txt); if(!ok) errs.push(txt); };
+ try{ w.eval('sound=false; music=false; localStorage.ptui_rec_inf=777; localStorage.removeItem("ptui_fre_vi")');
+  // menu: o Frenesi abaixo do Clássico
+  const bts=[...d.querySelectorAll('.menuBtns > button')].filter(b=>w.getComputedStyle(b).display!=='none').map(b=>b.id);
+  confere(vis('#mFre') && bts.indexOf('mFre')===bts.indexOf('mInf')+1, 'menu: '+bts.join(' '));
+  q('#mFre').click(); await wait(80);
+  confere(/Frenesi/.test(q('#panel h2')?.textContent||''), 'explicação da primeira vez: '+q('#panel h2')?.textContent);
+  q('#frJoga').click(); await wait(200);
+  confere(w.eval('!!S.frenesi && !!S.infinito') && vis('#freBar') && d.body.classList.contains('modoFre'), `jogo: barra=${vis('#freBar')} multiplicador=${q('#freMult').textContent}`);
+  // uma junção: corrente 1, ×1; duas junções no mesmo arrasto somam 3
+  w.eval(`S.tiles=[{id:'a1',x:0,y:0,t:1},{id:'a2',x:1,y:0,t:1}]; S.fre.corr=0; S.pontos=0; render(); move(-1,0)`);
+  confere(w.eval('S.fre.corr')===1 && w.eval('S.pontos')===4, `uma junção: corrente=${w.eval('S.fre.corr')} pontos=${w.eval('S.pontos')}`);
+  w.eval(`S.tiles=[{id:'b1',x:0,y:0,t:1},{id:'b2',x:1,y:0,t:1},{id:'b3',x:0,y:2,t:2},{id:'b4',x:1,y:2,t:2}]; render(); move(-1,0)`);
+  confere(w.eval('S.fre.corr')===4 && w.eval('S.fre.deg')===1, `duas junções no arrasto: corrente=${w.eval('S.fre.corr')} degrau=×${w.eval('DEGRAUS[S.fre.deg].x')}`);
+  // multiplicador: com a corrente em 18 (×5), juntar dois Gelos (4) vale 8 × 5
+  w.eval(`S.fre.corr=17; S.fre.deg=degrauDe(17); S.pontos=0; S.tiles=[{id:'c1',x:0,y:0,t:2},{id:'c2',x:1,y:0,t:2}]; render(); move(-1,0)`);
+  confere(w.eval('S.fre.deg')===3 && w.eval('S.pontos')===40, `×5: degrau=×${w.eval('DEGRAUS[S.fre.deg].x')} pontos=${w.eval('S.pontos')} número=${q('.flut.fre')?.textContent} janela=${w.eval('S.fre.jan')}`);
+  confere(d.body.classList.contains('fd3') && q('#freMult').textContent==='×5', 'cor e número do degrau: '+q('#freMult').textContent);
+  // a barra esvazia: a corrente cai e tudo volta ao ×1
+  w.eval('S.fre.resta=.05'); const caiu=await espera(()=>w.eval('S.fre.corr')===0);
+  confere(caiu && w.eval('S.fre.deg')===0 && d.body.classList.contains('fd0'), `barra vazia: corrente=${w.eval('S.fre.corr')} texto="${q('#freTxt').textContent}" maior corrente=${w.eval('S.fre.maxCorr')} maior ×=${w.eval('S.fre.maxMult')}`);
+  // pausa: o tempo para
+  w.eval(`S.tiles=[{id:'p1',x:0,y:0,t:1},{id:'p2',x:1,y:0,t:1}]; render(); move(-1,0); pauseMenu()`); const r0=w.eval('S.fre.resta'); await wait(400);
+  confere(w.eval('S.fre.resta')===r0 && w.eval('S.fre.corr')>0, `pausa segura a barra: ${r0.toFixed(2)} → ${w.eval('S.fre.resta').toFixed(2)}`);
+  w.eval('hideOverlay()');
+  // velocidade: passar de 2.000 pontos encurta a janela
+  w.eval(`S.pontos=1999; S.tiles=[{id:'v1',x:0,y:0,t:1},{id:'v2',x:1,y:0,t:1}]; render(); move(-1,0)`);
+  confere(w.eval('S.fre.vel')===2 && w.eval('S.fre.jan')<w.eval('DEGRAUS[S.fre.deg].jan'), `velocidade ${w.eval('S.fre.vel')}: janela ${w.eval('S.fre.jan').toFixed(2)} s · letreiro "${q('#freVel').textContent}"`);
+  // partida de verdade: o robô joga um pouco; a partida fica salva à parte do Clássico
+  w.eval('frenesiJoga()'); await wait(80);
+  for(let i=0;i<30 && w.eval('S.phase')==='mine';i++){ const dir=w.eval(`(()=>{ let b=null,bs=-1; for(const [dx,dy] of DIRS){ const r=slide(S.tiles,dx,dy); if(!r.moved) continue; const s=r.merges.length*10+Math.random(); if(s>bs){bs=s;b=[dx,dy];} } return b; })()`); if(!dir) break; w.eval(`move(${dir[0]},${dir[1]})`); await wait(20); }
+  const pts=w.eval('S.pontos');
+  confere(!!w.eval('localStorage.ptui_fre_save') && !w.eval('localStorage.ptui_inf_save'), `salvo à parte: ${pts} pontos, corrente máxima ${w.eval('S.fre.maxCorr')}, ×${w.eval('S.fre.maxMult')}`);
+  w.eval('showMenu()'); await wait(80);
+  confere(/continuar/.test(q('#mFre small').textContent), 'menu: '+q('#mFre small').textContent);
+  q('#mFre').click(); await wait(150);
+  confere(w.eval('S.frenesi') && w.eval('S.pontos')===pts && w.eval('S.fre.corr')===0, `continuou: ${w.eval('S.pontos')} pontos, corrente zerada`);
+  // fim de jogo: tabuleiro cheio sem jogada (como no fim de um arrasto; a corrente acesa desliga), resumo com pontos, maior multiplicador e maior corrente
+  w.eval(`S.fre.corr=30; S.fre.deg=degrauDe(30); S.fre.resta=9; S.fre.maxCorr=Math.max(S.fre.maxCorr,30); S.fre.maxMult=8;
+    S.tiles=[]; let k=0; for(let y=0;y<4;y++) for(let x=0;x<4;x++) S.tiles.push({id:'f'+(k++),x,y,t:1+((x+y)%2)+(y>1?2:0)});
+    render(); checaFrenesi()`);
+  const fim=await espera(()=>!!q('.freRes'));
+  confere(fim && d.querySelectorAll('.freRes > div').length===3 && w.eval('S.fre.corr')===0, 'resumo: '+(q('.freRes')?.textContent.replace(/\s+/g,' ')||'não abriu')+' · '+(q('.freRecs')?.textContent||'tudo recorde'));
+  confere(w.eval('+localStorage.ptui_rec_inf')===777 && w.eval('+localStorage.ptui_fre_mult')>=8 && w.eval('+localStorage.ptui_fre_corr')>=30, `recordes à parte: Clássico=${w.eval('localStorage.ptui_rec_inf')} Frenesi=${w.eval('localStorage.ptui_rec_fre')} ×${w.eval('localStorage.ptui_fre_mult')} corrente ${w.eval('localStorage.ptui_fre_corr')}`);
+  q('#iMenu').click(); await wait(80);
+  confere(!d.body.classList.contains('modoFre') && !vis('#freBorda'), 'no menu as luzes do Frenesi somem');
+  // ?frenesi=0 esconde o botão
+  w.eval(`localStorage.ptui_frenesi='0'; showMenu()`); await wait(50);
+  confere(!vis('#mFre'), '?frenesi=0 esconde o botão');
+  w.eval(`localStorage.ptui_frenesi='1'`);
+  // a trilha com camadas: no máximo (×20) e caindo, sem erro (agenda os primeiros passos num contexto de áudio desligado)
+  // (com prazo: no navegador sem janela o módulo às vezes demora a carregar e o teste não pode ficar esperando)
+  try{ const r=await Promise.race([wait(4000).then(()=>'não respondeu a tempo (só o teste; o jogo não espera por ela)'), w.eval(`(async()=>{ const m=await import(new URL('musica/frenesi.js',location.href).href); const c=new OfflineAudioContext(2,44100,44100);
+      m.iniciarMusica(c,c.destination,{semente:7}); m.intensidade(1); m.acento(1); await new Promise(r=>setTimeout(r,150)); m.intensidade(0); await new Promise(r=>setTimeout(r,100));
+      const b=m.batida(); m.pararMusica(0.1); return Object.keys(m).join(',')+' · batida '+(b?b.bpm.toFixed(0)+' bpm':'-'); })()`)]);
+    log.push('trilha: '+r);
+  }catch(e){ log.push('trilha não carregou aqui (módulo em file://): '+e.message); }
+ }catch(e){errs.push('EXC '+e.message+' '+(e.stack||'').split('\n')[1])}
+ out.textContent=JSON.stringify({log,errs},null,1);};
+</script></body>

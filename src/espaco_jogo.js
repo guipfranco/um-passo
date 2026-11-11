@@ -38,6 +38,7 @@ function mostraMedidor(ms,a,b,c,d){
 function espLoop(ms){
   requestAnimationFrame(espLoop);
   const t=ms/1000, ceu=document.body.classList.contains('espaco'), p0=performance.now(); tQuadro=t; quadroN++;
+  if(S && S.frenesi) try{ freQuadro(t); }catch(e){ console.warn('frenesi',e); anotaErro('frenesi',e); }   // corrente e luzes do Frenesi (frenesi.js)
   // cada camada num try: um erro numa delas não pode travar as outras nem deixar o céu num modo de desenho errado
   if(ceu) try{ ceuDesenha(t); }catch(e){ console.warn('céu',e); anotaErro('céu',e); }
   const p1=performance.now();
@@ -62,8 +63,10 @@ function espLoop(ms){
   const p3=performance.now();
   if(ceu && GLON) glQuadro(t);
   const p4=performance.now();
-  custoMedio=custoMedio*.95+(p4-p0)*.05;
-  if(MEDE) mostraMedidor(ms,p1-p0,p2-p1,p3-p2,p4-p3);
+  if(S && S.frenesi) try{ frePinta(t); }catch(e){ console.warn('frenesi',e); anotaErro('frenesi',e); }   // barra, número e bordas do Frenesi
+  const p5=performance.now();
+  custoMedio=custoMedio*.95+(p5-p0)*.05;
+  if(MEDE) mostraMedidor(ms,p1-p0+(p5-p4),p2-p1,p3-p2,p4-p3);   // o Frenesi conta junto com o céu
 }
 // ---------- botão voltar do celular ----------
 // fora do menu há sempre uma entrada a mais no histórico (guardaVolta). Voltar: fecha a janela aberta; na lista de
@@ -297,7 +300,7 @@ function ceuDesenha(t){
   c.setTransform(1,0,0,1,0,0); c.globalCompositeOperation='source-over'; c.globalAlpha=1;
   // a névoa mais forte do momento (junção ou recorde)
   let pul=null; for(const j of brilhosE){ const u=(t-j.t0)/1.1; if(u<1){ const k=(1-u)*(j.forte?.9:.45); if(!pul||k>pul.k) pul={k,x:j.x,y:j.y,rgb:j.rgb}; } }
-  if(NEB.ok && (t-nebT>=1/30 || pul)){ nebT=t; NEB.desenha(w,h,t,[cx*.12,cy*.12],mu.neb,pul); }   // a nebulosa anda devagar: 30 quadros por segundo bastam
+  if(NEB.ok && (t-nebT>=1/30 || pul)){ nebT=t; NEB.desenha(w,h,t,[cx*.12,cy*.12],jogo&&S.frenesi?freNeb(mu.neb,t):mu.neb,pul); }   // a nebulosa anda devagar: 30 quadros por segundo bastam; no Frenesi, nas cores do degrau
   c.clearRect(0,0,w,h);
   c.save();
   // fundo feito para outra altura (até 15%): centrado na tela; mais baixo que ela, cresce por igual (sem achatar o
@@ -312,8 +315,9 @@ function ceuDesenha(t){
     c.fillStyle=g; c.fillRect(-R,-R,2*R,2*R); c.restore(); } }
   if(jogo){ if(t>proxPass) novaPassagem(t,w,h); passagens(c,t,cx*.35,cy*.35); }
   c.save(); c.globalCompositeOperation='lighter';
-  for(const j of aneisE){ const u=(t-j.t0)/1.6; if(u<0||u>1) continue; const R=Math.max(0,j.v*(t-j.t0)); c.lineWidth=6*(1-u)+1; c.strokeStyle=`rgba(${j.rgb},${(.22*(1-u)).toFixed(3)})`; c.beginPath(); c.arc(j.x,j.y,R,0,7); c.stroke(); }
+  for(const j of aneisE){ const u=(t-j.t0)/1.6; if(u<0||u>1) continue; const R=Math.max(0,j.v*(t-j.t0)); c.lineWidth=(j.w||6)*(1-u)+1; c.strokeStyle=`rgba(${j.rgb},${((j.a||.22)*(1-u)).toFixed(3)})`; c.beginPath(); c.arc(j.x,j.y,R,0,7); c.stroke(); }
   c.restore();
+  if(jogo && S.frenesi) freCeu(c,t);   // brilho e rastro das peças no Frenesi
   brilhosE=brilhosE.filter(j=>t-j.t0<1.2); aneisE=aneisE.filter(j=>t-j.t0<1.7);
 }
 // passagens ao longe: cometa, satélite piscando, chuva de meteoros e nave (uma por vez, a cada 6 a 10 s)
@@ -385,7 +389,7 @@ function malhaQuadro(t){
   const pa=g.P, pocos=[];
   for(const {el,fr} of pecasNoQuadro()) pocos.push({x:(fr.left+fr.width/2-g.r.left)*g.D+g.O, y:(fr.top+fr.height/2-g.r.top)*g.D+g.O, m:massaE(el._t.t)});
   // nada mudou desde o último desenho (peças paradas, sem onda nem tremor, rede assentada): o desenho anterior vale
-  const selo=pocos.map(q=>Math.round(q.x)+','+Math.round(q.y)+','+q.m.toFixed(2)).join(';'), calmo=!ondasM.length && !tremM.length;
+  const selo=pocos.map(q=>Math.round(q.x)+','+Math.round(q.y)+','+q.m.toFixed(2)).join(';')+(S.frenesi?'|'+freMalhaSelo(t):''), calmo=!ondasM.length && !tremM.length;
   if(!refaz && calmo && malhaParada && selo===malhaSelo) return;
   if(selo!==malhaSelo) malhaParada=false;
   malhaSelo=selo;
@@ -400,9 +404,11 @@ function malhaQuadro(t){
   for(const q of pocos){ const R=pa*(.38+.16*q.m), gr=c.createRadialGradient(q.x,q.y,0,q.x,q.y,R); gr.addColorStop(0,`rgba(0,0,0,${Math.min(.8,(.12+.12*q.m)*1.6).toFixed(3)})`); gr.addColorStop(1,'rgba(0,0,0,0)'); c.fillStyle=gr; c.fillRect(q.x-R,q.y-R,2*R,2*R); }
   // linhas na cor do mundo (clareada), bem transparentes; quanto mais fundo o poço, mais escura e fina a linha.
   // As linhas parecidas vão juntas num traço só (poucos traços por quadro em vez de centenas)
-  const tema=Math.max(1,(S.missao&&S.tema)||1), rgb=ESP.MUNDOS_ESP[(tema-1)%ESP.MUNDOS_ESP.length].neb[1].split(',').map(v=>Math.round(+v*.55+255*.45)).join(','), no=(i,j)=>MN.nos[j*NI+i];
+  const tema=Math.max(1,(S.missao&&S.tema)||1), no=(i,j)=>MN.nos[j*NI+i];
+  let rgb=ESP.MUNDOS_ESP[(tema-1)%ESP.MUNDOS_ESP.length].neb[1].split(',').map(v=>Math.round(+v*.55+255*.45)).join(',');
+  const ganho=S.frenesi?freMalhaGanho():1; if(S.frenesi) rgb=freMalhaCor(rgb);   // no Frenesi, na cor do degrau e mais acesa
   const potes=new Map();
-  const seg=(a,b,maior)=>{ const f=(a.f+b.f)/2; if(f<.02) return; const h=(a.h+b.h)/2, w=(a.w+b.w)/2, fundo=Math.min(.85,h*.32), al=Math.min(1,((maior?.17:.065)*(1-fundo)+w*.6)*f);
+  const seg=(a,b,maior)=>{ const f=(a.f+b.f)/2; if(f<.02) return; const h=(a.h+b.h)/2, w=(a.w+b.w)/2, fundo=Math.min(.85,h*.32), al=Math.min(1,((maior?.17:.065)*(1-fundo)+w*.6)*f*ganho);
     if(al<.008) return; const k=Math.round(al*60)+'|'+Math.max(1,Math.round((maior?1.2:.75)*(1-fundo*.5)*4)); let p=potes.get(k); if(!p) potes.set(k,p=[]); p.push(a.x,a.y,b.x,b.y); };
   for(let j=0;j<NJ;j++) for(let i=0;i<NI-1;i++) seg(no(i,j),no(i+1,j),j%MSUB===0);
   for(let i=0;i<NI;i++) for(let j=0;j<NJ-1;j++) seg(no(i,j),no(i,j+1),i%MSUB===0);
@@ -412,14 +418,16 @@ function malhaQuadro(t){
   ondasM=ondasM.filter(o=>t-o.t0<3); tremM=tremM.filter(o=>t-o.t0<1.2);
 }
 // chamado a cada arrasto que mexeu: tranco da câmera, névoa de cada junção, tremor da malha; recorde da partida: onda e anel
+// no Frenesi as reações crescem com o degrau (fk de 0 a 1; com menos movimento, o tranco não cresce)
 function espJogada(dx,dy,merges){
-  camE.vx+=dx*190; camE.vy+=dy*190; adiantaProximo();
+  const fk=freForca(), tr=190*(1+(POUCO_MOV?0:fk*1.4));
+  camE.vx+=dx*tr; camE.vy+=dy*tr; adiantaProximo();
   if(!merges||!merges.length) return;
   const g=geoTab(), t=tQuadro||performance.now()/1000;
   for(const o of merges){
     const bx=g.g0+(o.x+.5)*g.P, by=g.g0+(o.y+.5)*g.P, sx=g.r.left+bx/g.D, sy=g.r.top+by/g.D, rgb=corNivelRgb(o.t), rec=S.espMax!=null && o.t>S.espMax;
-    tremM.push({x:bx+g.O,y:by+g.O,t0:t,a:g.P*(.025+.004*o.t)});
-    brilhosE.push({x:sx,y:sy,t0:t,rgb,forte:rec});
+    tremM.push({x:bx+g.O,y:by+g.O,t0:t,a:g.P*(.025+.004*o.t)*(1+fk*(POUCO_MOV?.5:2.2))});
+    brilhosE.push({x:sx,y:sy,t0:t,rgb,forte:rec||fk>.45});
     if(rec){ S.espMax=o.t; ondasM.push({x:bx+g.O,y:by+g.O,t0:t,a:g.P*(.16+.012*o.t)}); aneisE.push({x:sx,y:sy,t0:t,v:g.P/g.D*3.4,rgb:'230,232,255'}); }
   }
 }
@@ -651,8 +659,8 @@ function espMenu(){
   // com partida do Clássico salva, o botão continua de onde parou e diz isso na linha de baixo
   { const inf=infSalvo(), sub=$('#mInf small'); if(sub.dataset.txt==null) sub.dataset.txt=sub.textContent;
     sub.textContent = inf ? `continuar · ${(inf.st.pontos||0).toLocaleString('pt-BR')} pontos` : sub.dataset.txt; $('#mInf').classList.toggle('comSub', !!inf); }
-  // o Clássico vem depois do Novo jogo e do Continuar
-  $('#mSegue').after($('#mInf'));
+  // o Clássico vem depois do Novo jogo e do Continuar; o Frenesi (em teste, só com ?frenesi) logo abaixo dele
+  $('#mSegue').after($('#mInf')); freMenu(on);
   // Como jogar: no espaço abre o do 2048 Astros; fora dele, o tutorial da mina
   const tut=$('#mTut'); if(tut.onclick!==comoJogarEsp) TUT_MINA=tut.onclick; tut.onclick = on ? comoJogarEsp : TUT_MINA;
   if(!$('#mOpc')){ const b=document.createElement('button'); b.className='btn dim big'; b.id='mOpc'; b.textContent='Opções'; b.onclick=espOpcoes; tut.after(b); }
@@ -852,7 +860,7 @@ async function fotoDaTela(){
 function ondeNoJogo(){
   if(!S) return 'início';
   if(S.missao) return `Jornada, fase ${S.missao} (${nomeFaseCla(S.missao)})${S.phase&&S.phase!=='mine'?' · '+S.phase:''}`;
-  if(S.infinito) return 'Clássico';
+  if(S.infinito) return S.frenesi ? 'Frenesi' : 'Clássico';
   if(S.phase==='lista') return 'mapa da Jornada';
   if($('#scrMenu')?.classList.contains('on')) return 'menu';
   return S.lab ? 'Laboratório' : 'Mineração';

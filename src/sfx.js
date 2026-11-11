@@ -16,14 +16,15 @@ document.addEventListener('visibilitychange',()=>{ if(AC && AC.state!=='closed')
 // ===================== MÚSICA =====================
 // Trilha por tela (todas sintetizadas, vindas do Gabinete). TRIM iguala o volume entre elas.
 const TRILHA = {menu:'lofi-prorroga', mapa:'armorial', mina:'lofi-espera', fiscal:'lofi-segredo', mercador:'bossa', fim:'sofrencia-lofi'};
-const TRIM = {'armorial':.55, 'bossa':.7, 'lofi-prorroga':.95, 'lofi-espera':.95, 'lofi-segredo':1, 'sofrencia-lofi':1.1, 'orbita':1.6, 'estacao':1.55, 'pulsar':1.45};   // as eletrônicas medidas contra o lo-fi
+const TRIM = {'armorial':.55, 'bossa':.7, 'lofi-prorroga':.95, 'lofi-espera':.95, 'lofi-segredo':1, 'sofrencia-lofi':1.1, 'orbita':1.6, 'estacao':1.55, 'pulsar':1.45, 'frenesi':1};   // as eletrônicas medidas contra o lo-fi (a Frenesi já sai mais alta: tem compressor e camadas)
 let music = localStorage.mina_music !== '0', MUS=null, musName=null, musKey=null, musBus=null, musFila=Promise.resolve();
 function trilha(k){ musKey=k; musFila=musFila.then(trocaMusica).catch(e=>console.warn(e)); }
 // no espaço (2048 Astros) as trilhas são eletrônicas: Estação no menu e na lista de fases, Órbita na Jornada, Pulsar no Clássico
+// e a Frenesi no Frenesi (em teste: a que tem camadas e lê a intensidade da corrente)
 function qualTrilha(k){
   if(typeof espacoLigado==='function' && espacoLigado()){
     if(k==='menu' && (S?.phase==='lista' || document.getElementById('scrMenu')?.classList.contains('on'))) return 'estacao';   // a troca roda depois que a tela já mudou
-    if(k==='mina' && S && (S.missao||S.infinito)) return S.infinito ? 'pulsar' : 'orbita';
+    if(k==='mina' && S && (S.missao||S.infinito)) return S.infinito ? (S.frenesi ? 'frenesi' : 'pulsar') : 'orbita';
   }
   return TRILHA[k];
 }
@@ -169,10 +170,19 @@ const SONS_ESP={
   derrota(){ tomE({f:392,to:98,a:.05,d:1.4,v:.08,type:'triangle',lp:1800,lpTo:200,rev:.4}); tomE({t:.15,f:294,to:73,a:.05,d:1.4,v:.06,type:'triangle',lp:1500,lpTo:150,rev:.4});
     ruidoE({f:700,to:90,d:1.2,v:.03,type:'lowpass'}); },
   botao(){ tomE({f:1100,to:1500,d:.045,v:.04}); },
+  // Frenesi: um bipe que sobe de nota a cada junção da corrente; o degrau novo sobe um arpejo (mais alto a cada degrau);
+  // no ×20, um acorde aberto com chuva de sinos; quando a corrente cai, tudo desce e apaga; velocidade nova: escadinha rápida
+  corrente(n){ const g=Math.min(n,16), p=ladoE(); sinoE({f:notaE(0,g+2),d:.22,v:.04,ratio:2,idx:.6,pan:p,rev:.25}); tomE({f:notaE(1,g+2),d:.05,v:.02,type:'square',lp:3500,pan:p}); },
+  degrau(k){ for(let i=0;i<4+k;i++) sinoE({t:i*.045,f:notaE(0,k*2+i+2),d:.5,v:.04,ratio:2,idx:.7,rev:.45,pan:-.5+i*.12});
+    ruidoE({f:700,to:9000,a:.03,d:.35,v:.035,q:1,rev:.4}); tomE({f:notaE(-1,k),a:.01,d:.5,v:.08,type:'triangle',lp:1200}); },
+  frenesi(){ [0,7,12,16,19,24].forEach((s,i)=>tomE({t:.02*i,f:110*Math.pow(2,s/12),a:.04,d:1.4,v:.04,type:'sawtooth',lp:3200,lpTo:900,rev:.5,pan:-.5+i*.2,det:i%2?8:-8}));
+    ruidoE({f:500,to:12000,a:.05,d:.6,v:.05,q:.8,rev:.5}); for(let i=0;i<12;i++) sinoE({t:.08+i*.04,f:notaE(1,i+2),d:.6,v:.03,ratio:2,idx:.6,rev:.5,pan:Math.sin(i)*.8}); },
+  cai(k){ tomE({f:notaE(1,Math.max(2,k*2)),to:60,a:.01,d:.7,v:.06,type:'sawtooth',lp:2600,lpTo:160,rev:.3}); ruidoE({f:3200,to:140,d:.6,v:.05,type:'lowpass'}); tomE({t:.04,f:120,to:38,d:.45,v:.1}); },
+  acelera(){ for(let i=0;i<6;i++) tomE({t:i*.05,f:notaE(1,i*2),d:.1,v:.03,type:'square',lp:4000,pan:-.4+i*.16}); },
 };
 // no espaço (fases da Jornada e Clássico) os sons de sempre viram os do espaço; a mina segue com os dela
 const somEsp = () => typeof espacoLigado==='function' && espacoLigado() && typeof S!=='undefined' && !!S && !!(S.missao||S.infinito);
 for(const [k,e] of [['arrastar','arrastar'],['fundir','fundir'],['pagou','vitoria'],['naoDeu','derrota']]){ const velho=SFX[k]; SFX[k]=(...a)=>somEsp()?SONS_ESP[e](...a):velho(...a); }
-for(const k of ['nasce','poucos','racha','nebulosa','estrelas']) SFX[k]=(...a)=>{ if(somEsp()) SONS_ESP[k](...a); };
+for(const k of ['nasce','poucos','racha','nebulosa','estrelas','corrente','degrau','frenesi','cai','acelera']) SFX[k]=(...a)=>{ if(somEsp()) SONS_ESP[k](...a); };
 SFX.botao=()=>{ if(typeof espTela==='function' && espTela()) SONS_ESP.botao(); };
 
