@@ -47,8 +47,16 @@ self.addEventListener('fetch', e => {
   // bastidores) vai direto para a rede
   const nome = u.pathname.slice(ESCOPO.length);
   if (!ARQUIVOS.includes(nome)) return;
-  e.respondWith(caches.match(r, {ignoreSearch: true}).then(m => {
+  e.respondWith((async () => {
+    // pedido de um rascunho (pulsar.html, som.html...): sempre da rede, senão ele recebe a música guardada, que pode ser velha
+    const quem = e.clientId && await self.clients.get(e.clientId);
+    if (quem && !ehJogo(new URL(quem.url))) { try { return await fetch(r, {cache: 'no-store'}); } catch (_) {} }
+    return guardado(r);
+  })());
+});
+function guardado(r) {
+  return caches.match(r, {ignoreSearch: true}).then(m => {
     const n = fetch(r).then(x => { if (x.ok) { const cp = x.clone(); caches.open(CACHE).then(c => c.put(r, cp)); } return x; }).catch(() => m);
     return m || n;
-  }));
-});
+  });
+}

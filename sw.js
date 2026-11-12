@@ -1,7 +1,7 @@
 // Service worker do 2048 Astros: guarda o jogo no aparelho para ele abrir sem internet e mais rápido, e deixa a página
 // ser instalada como app. Montado pelo build.py, que põe aqui a versão e a lista de arquivos (o sw.js da raiz é gerado: não
 // edite lá). Cada versão nova do jogo muda este arquivo, e o navegador instala o service worker novo, que guarda a versão nova.
-const VERSAO = '30e29f2d1c', CACHE = 'astros-' + VERSAO, FONTES_CACHE = 'astros-fontes';
+const VERSAO = '53a75249cd', CACHE = 'astros-' + VERSAO, FONTES_CACHE = 'astros-fontes';
 const ARQUIVOS = ["./", "manifest.webmanifest", "icones/icone-192.png", "icones/icone-512.png", "icones/icone-mascara-512.png", "icones/apple-touch-icon.png", "musica/armorial.js", "musica/bossa.js", "musica/eletronica.js", "musica/estacao.js", "musica/frenesi.js", "musica/lofi-espera.js", "musica/lofi-prorroga.js", "musica/lofi-segredo.js", "musica/orbita.js", "musica/pulsar.js", "musica/sofrencia-lofi.js"];
 const ESCOPO = new URL(self.registration.scope).pathname;
 const RAIZ = new URL('./', self.registration.scope).href;
@@ -47,8 +47,16 @@ self.addEventListener('fetch', e => {
   // bastidores) vai direto para a rede
   const nome = u.pathname.slice(ESCOPO.length);
   if (!ARQUIVOS.includes(nome)) return;
-  e.respondWith(caches.match(r, {ignoreSearch: true}).then(m => {
+  e.respondWith((async () => {
+    // pedido de um rascunho (pulsar.html, som.html...): sempre da rede, senão ele recebe a música guardada, que pode ser velha
+    const quem = e.clientId && await self.clients.get(e.clientId);
+    if (quem && !ehJogo(new URL(quem.url))) { try { return await fetch(r, {cache: 'no-store'}); } catch (_) {} }
+    return guardado(r);
+  })());
+});
+function guardado(r) {
+  return caches.match(r, {ignoreSearch: true}).then(m => {
     const n = fetch(r).then(x => { if (x.ok) { const cp = x.clone(); caches.open(CACHE).then(c => c.put(r, cp)); } return x; }).catch(() => m);
     return m || n;
-  }));
-});
+  });
+}

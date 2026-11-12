@@ -44,6 +44,7 @@
   <h1>A Pulsar desmontada</h1>
   <p class="fraco">A trilha do Clássico, tocada pelo mesmo código do jogo. Ligue e desligue cada camada para ouvir o que cada uma faz.</p>
 
+  <p id="aviso" hidden style="color:#ff5e6c;font-weight:700">O aparelho carregou uma cópia velha da música. Feche esta página e abra de novo; se continuar, abra o jogo uma vez e volte aqui.</p>
   <div class="linha" style="margin-top:12px">
     <button id="tocar">▶ Tocar</button>
     <button id="sorte">↻ Outro sorteio</button>
@@ -86,7 +87,7 @@
 </main>
 
 <script type="module">
-import { iniciarMusica, pararMusica } from './musica/pulsar.js?v=1';
+import { iniciarMusica, pararMusica } from './musica/pulsar.js?v=2';
 
 const NOTA = ['Dó','Dó#','Ré','Ré#','Mi','Fá','Fá#','Sol','Sol#','Lá','Lá#','Si'];
 const BASE = { Bm:[11,'m'], G:[7,''], D:[2,''], A:[9,''], Em:[4,'m'], 'F#':[6,''], 'F#m':[6,'m'], G7M:[7,'7M'] };
@@ -200,6 +201,8 @@ bt.onclick = () => {
   ctx.resume();
   if (tocando) { pararMusica(0.4); tocando = false; bt.textContent = '▶ Tocar'; return; }
   comeca(); tocando = true; bt.textContent = '■ Parar';
+  // o aparelho entregou a música guardada pelo jogo, de antes desta página: ela toca, mas não avisa os passos
+  setTimeout(() => { if (tocando && !atual) document.getElementById('aviso').hidden = false; }, 2500);
 };
 document.getElementById('sorte').onclick = () => {
   if (!tocando) return bt.click();
