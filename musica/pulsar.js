@@ -53,14 +53,16 @@ function cabem(ch, tr, baixo, alto) {
 const perto = (lista, alvo) => lista.reduce((a, b) => Math.abs(b - alvo) < Math.abs(a - alvo) ? b : a);
 
 // pergunta: sobe e depois desce um pouco; resposta: desce para pousar (passos na escala, sem nota repetida)
-function motivo(rnd) {
-  const p = escolhe(rnd, PERGUNTA), r = escolhe(rnd, RESPOSTA), sobe = () => escolhe(rnd, [1, 1, 2]), desce = () => -escolhe(rnd, [1, 1, 2]);
+// ip/ir escolhem o ritmo da pergunta e da resposta (a página pulsar.html); sem eles, sorteados
+export function motivo(rnd, ip = null, ir = null) {
+  const p = ip == null ? escolhe(rnd, PERGUNTA) : PERGUNTA[ip], r = ir == null ? escolhe(rnd, RESPOSTA) : RESPOSTA[ir], sobe = () => escolhe(rnd, [1, 1, 2]), desce = () => -escolhe(rnd, [1, 1, 2]);
   const passos = p.map((_, i) => i === 0 ? 0 : i <= p.length / 2 ? (rnd() < 0.8 ? sobe() : desce()) : (rnd() < 0.7 ? desce() : sobe()));
   r.forEach((_, i) => passos.push(i === 0 ? escolhe(rnd, [-1, 1, 2]) : rnd() < 0.75 ? desce() : sobe()));
   return { p, r, passos };
 }
-// escreve a melodia nos compassos (8): a mesma frase em cada par, adaptada aos acordes; a última termina na raiz
-function poeMelodia(cs, mot, tr) {
+// escreve a melodia nos compassos (8): a mesma frase em cada par, adaptada aos acordes; a última termina na raiz.
+// firme: nota longa (4 passos ou mais) também cai numa nota do acorde (sem isso, às vezes fica segurada fora dele)
+function poeMelodia(cs, mot, tr, firme = false) {
   const centro = 74 + tr, baixo = centro - 9, alto = centro + 10;
   for (let par = 0; par < cs.length / 2; par++) {
     let m = null, k = 0;
@@ -74,7 +76,7 @@ function poeMelodia(cs, mot, tr) {
           let j = i0 + mot.passos[k]; if (j < 0 || j >= notas.length) j = i0 - mot.passos[k];   // bate na borda e volta
           m = notas[Math.max(0, Math.min(notas.length - 1, j))];
         }
-        if (st === 0 || st === 8) {   // nos tempos fortes, nota do acorde (sem repetir a anterior)
+        if (st === 0 || st === 8 || (firme && dur >= 4)) {   // nos tempos fortes, nota do acorde (sem repetir a anterior)
           m = perto(doAcorde, m);
           if (m === ant) m = doAcorde.find(x => dir > 0 ? x > m : false) ?? [...doAcorde].reverse().find(x => x < m) ?? m;
         }
@@ -93,34 +95,54 @@ const viradaGrande = (rnd, c) => Object.assign(c, escolhe(rnd, [
   { bumbo: [0, 4, 8, 10, 12, 14], rolo: { 12: 0.5, 13: 0.6, 14: 0.8, 15: 1 } },      // galope
 ]));
 
+// Uma parte do ciclo com as escolhas dadas (o arranjo sorteia as escolhas; a página pulsar.html deixa a pessoa escolher):
+//   o = { seq: nomes dos acordes, arp: índice em ARP (-1 = sem), bx: índice em BAIXO, mot: motivo da melodia (ou null),
+//         firme (ver poeMelodia), n: compassos (o respiro tem 4 ou 8) }
+export function montaParte(qual, o, tr, rnd) {
+  const n = o.n || (qual === 'entrada' ? 4 : 8);
+  const ext = {};
+  if (o.arp != null) ext.arp = o.arp < 0 ? null : ARP[o.arp];
+  if (o.bx != null && qual !== 'respiro') Object.assign(ext, { baixoNotas: null, baixoDur: 0.18 }, BAIXO[o.bx]);
+  if (o.mot) ext.melV = 0.036;
+  let cs;
+  if (qual === 'entrada') {
+    cs = secao(o.seq || SEQ_A, 4, tr, { ...ext, bumbo: [], palma: [], chimbal: [], baixo: [] });
+    cs[0].arpLp = 700; cs[1].arpLp = 1000;
+    Object.assign(cs[2], { arpLp: 1300, chimbal: [2, 6, 10, 14], baixo: BAIXO[0].baixo });
+    Object.assign(cs[3], { chimbal: [2, 6, 10, 14], baixo: BAIXO[0].baixo, bumbo: [0, 4, 8, 12], sopro: 0.02, rolo: SOBE });
+  } else if (qual === 'respiro') {
+    const sr = o.seq || SEQ_R[0], seqR = sr.length === 2 ? [sr[0], sr[0], sr[1], sr[1]] : sr;
+    cs = secao(seqR, n, tr, { bumbo: [], palma: [], chimbal: [], baixo: [0], baixoNotas: null, baixoDur: 1.6, baixoV: 0.055, pad: 0.017, padLp: 1500,
+      arpCada: 2, arpDur: 0.32, arpOnda: 'triangle', arpV: 0.032, arpLp: 1200, ...ext });
+    cs[0].prato = 0.02;
+    Object.assign(cs[n - 2], { chimbal: [2, 6, 10, 14] });
+    Object.assign(cs[n - 1], { chimbal: [2, 6, 10, 14], chimbalFraco: FRACO, bumbo: [0, 4, 8, 12], sopro: 0.022, rolo: SOBE });
+  } else {
+    cs = secao(o.seq || SEQ_A, n, tr, ext);
+    if (qual !== "A'") cs[0].prato = qual === 'volta' ? 0.035 : 0.03;
+    if (qual === "A'") cs.forEach((c, i) => { if (i % 2) c.aberto = [14]; });
+    if (qual === 'volta') cs.forEach(c => { c.chimbalFraco = FRACO; });
+    viradaLeve(rnd, cs[3]); (qual === 'A' ? viradaLeve : viradaGrande)(rnd, cs[7]);
+  }
+  if (o.mot) poeMelodia(cs, o.mot, tr, o.firme);
+  cs.forEach((c, i) => { c.parte = qual; c.tamParte = n; c.j = i; });
+  return cs;
+}
+export const OPCOES = { SEQ_A, SEQ_B, SEQ_R, ARP, BAIXO, PERGUNTA, RESPOSTA };
+
 function arranjo(rnd, ciclo, estado) {
   if (ciclo === 0) estado.tr = 0;
   else if (ciclo % 2 === 0) estado.tr = escolhe(rnd, TONS.filter(t => t !== estado.tr));
-  const tr = estado.tr, mot = motivo(rnd), out = [];
-  const arpL = escolhe(rnd, ARP.slice(1)), arpV = escolhe(rnd, ARP), bx1 = escolhe(rnd, BAIXO.slice(1)), bx2 = escolhe(rnd, BAIXO);
-  if (ciclo === 0) {   // entrada
-    const e = secao(SEQ_A, 4, tr, { bumbo: [], palma: [], chimbal: [], baixo: [] });
-    e[0].arpLp = 700; e[1].arpLp = 1000;
-    Object.assign(e[2], { arpLp: 1300, chimbal: [2, 6, 10, 14], baixo: BAIXO[0].baixo });
-    Object.assign(e[3], { chimbal: [2, 6, 10, 14], baixo: BAIXO[0].baixo, bumbo: [0, 4, 8, 12], sopro: 0.02, rolo: SOBE });
-    e.forEach(c => { c.parte = 'entrada'; c.ciclo = 0; c.tamParte = e.length; });
-    out.push(...e);
-  }
-  const a = secao(SEQ_A, 8, tr); a[0].prato = 0.03; viradaLeve(rnd, a[3]); viradaLeve(rnd, a[7]);
-  const a2 = secao(SEQ_A, 8, tr, { arp: arpL, ...bx1 }); a2.forEach((c, i) => { if (i % 2) c.aberto = [14]; });
-  viradaLeve(rnd, a2[3]); viradaGrande(rnd, a2[7]);
-  const b = secao(escolhe(rnd, SEQ_B), 8, tr, { arp: escolhe(rnd, ARP), melV: 0.036 }); b[0].prato = 0.03; poeMelodia(b, mot, tr);
-  viradaLeve(rnd, b[3]); viradaGrande(rnd, b[7]);
-  const nr = rnd() < 0.5 ? 4 : 8, sr = escolhe(rnd, SEQ_R), seqR = [sr[0], sr[0], sr[1], sr[1]];
-  const r = secao(seqR, nr, tr, { bumbo: [], palma: [], chimbal: [], baixo: [0], baixoDur: 1.6, baixoV: 0.055, pad: 0.017, padLp: 1500,
-    arpCada: 2, arpDur: 0.32, arpOnda: 'triangle', arpV: 0.032, arpLp: 1200 });
-  r[0].prato = 0.02;
-  Object.assign(r[nr - 2], { chimbal: [2, 6, 10, 14] });
-  Object.assign(r[nr - 1], { chimbal: [2, 6, 10, 14], chimbalFraco: FRACO, bumbo: [0, 4, 8, 12], sopro: 0.022, rolo: SOBE });
-  const v = secao(SEQ_A, 8, tr, { arp: arpV, ...bx2, chimbalFraco: FRACO, melV: 0.036 }); v[0].prato = 0.035; poeMelodia(v, mot, tr);
-  viradaLeve(rnd, v[3]); viradaGrande(rnd, v[7]);
-  for (const [cs, nomeParte] of [[a, 'A'], [a2, "A'"], [b, 'B'], [r, 'respiro'], [v, 'volta']]) cs.forEach(c => { c.parte = nomeParte; c.ciclo = ciclo; c.tamParte = cs.length; });
-  out.push(...a, ...a2, ...b, ...r, ...v);
+  const tr = estado.tr, mot = motivo(rnd), out = [], i = lista => Math.floor(rnd() * lista.length);
+  const arpL = 1 + i(ARP.slice(1)), arpV = i(ARP), bx1 = 1 + i(BAIXO.slice(1)), bx2 = i(BAIXO);
+  if (ciclo === 0) out.push(...montaParte('entrada', {}, tr, rnd));
+  out.push(...montaParte('A', {}, tr, rnd));
+  out.push(...montaParte("A'", { arp: arpL, bx: bx1 }, tr, rnd));
+  out.push(...montaParte('B', { seq: escolhe(rnd, SEQ_B), arp: i(ARP), mot }, tr, rnd));
+  const nr = rnd() < 0.5 ? 4 : 8;
+  out.push(...montaParte('respiro', { seq: escolhe(rnd, SEQ_R), n: nr }, tr, rnd));
+  out.push(...montaParte('volta', { arp: arpV, bx: bx2, mot }, tr, rnd));
+  out.forEach(c => { c.ciclo = ciclo; });
   return out;
 }
 

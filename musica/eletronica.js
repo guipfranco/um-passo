@@ -98,6 +98,7 @@ export function cria(cfg) {
     const fixo = cfg.prog ? cfg.prog.map((ch, i) => ({ ...cfg, ch, raiz: cfg.raiz[i] })) : null;
     let ciclo = 0, ini = 0, lista = [];
     const compasso = n => {
+      if (opc.compasso) return { ...cfg, ...opc.compasso(n) };   // a página pulsar.html escolhe o compasso (pular de parte, repetir)
       if (!cfg.arranjo) return fixo[n % fixo.length];
       while (n >= ini + lista.length) { ini += lista.length; lista = cfg.arranjo(rnd, ciclo++, estado).map(c => ({ ...cfg, ...c })); }
       return lista[n - ini];
