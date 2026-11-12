@@ -6,38 +6,40 @@
 <title>Mesa da Pulsar · 2048 Astros</title>
 <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
 <style>
-  :root { --c:#5ef0ff; --m:#ff5ec8; --ok:#5effa0; --pas:#ffd25e; --fora:#ff5e6c; --arp:#b28cff; --bx:#ff9a5e; --fundo:#070a18; }
+  :root { --c:#5ef0ff; --m:#ff5ec8; --ok:#5effa0; --fundo:#070a18; }
   * { box-sizing:border-box; }
   body { margin:0; background:radial-gradient(ellipse at top,#16163a,var(--fundo) 70%); color:#dfe6ff; font:15px/1.45 'Exo 2',sans-serif; }
   main { max-width:760px; margin:0 auto; padding:14px 12px 60px; }
   h1 { font:900 20px 'Orbitron',sans-serif; color:var(--c); text-shadow:0 0 12px #5ef0ff88; margin:4px 0; }
   h2 { font:700 14px 'Orbitron',sans-serif; color:var(--m); margin:18px 0 6px; letter-spacing:.5px; }
-  h3 { font:700 13px 'Exo 2',sans-serif; margin:10px 0 4px; color:#fff; }
-  p { margin:4px 0; } .fraco { opacity:.7; font-size:13px; }
+  h3 { font:700 13px 'Exo 2',sans-serif; margin:12px 0 2px; color:#fff; }
+  h3 i { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; vertical-align:-1px; }
+  p { margin:4px 0; } .fraco { opacity:.7; font-size:13px; } .expl { opacity:.75; font-size:12.5px; margin:0 0 5px; }
   button { font:700 13px 'Exo 2',sans-serif; color:var(--c); background:transparent; border:1.5px solid var(--c); border-radius:10px; padding:8px 12px; cursor:pointer; }
   button.on { background:#5ef0ff2a; color:#fff; box-shadow:0 0 10px #5ef0ff66; }
   .grande { font-size:15px; padding:10px 16px; box-shadow:0 0 8px #5ef0ff44; }
   .chips { display:flex; gap:6px; flex-wrap:wrap; }
-  .chips button { border-color:#5ef0ff66; font-weight:600; padding:6px 10px; }
+  .chips button { border-color:#5ef0ff55; font-weight:600; padding:5px 9px; display:flex; flex-direction:column; align-items:center; gap:3px; }
+  .chips canvas { width:64px; height:22px; display:block; }
   .linha { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
   .painel { border:1px solid #ffffff22; border-radius:14px; padding:10px; background:#0c1030cc; margin-top:10px; }
   #partes { display:grid; grid-template-columns:repeat(6,1fr); gap:4px; margin-top:10px; }
   #partes button { padding:8px 0; font-size:12px; position:relative; overflow:hidden; }
   #partes button.tocando::after { content:''; position:absolute; left:0; right:0; bottom:0; height:3px; background:var(--m); }
-  canvas { width:100%; height:300px; display:block; margin-top:8px; border-radius:10px; background:#05071299; }
-  .leg { display:flex; gap:10px; flex-wrap:wrap; font-size:11.5px; margin-top:6px; }
-  .leg i { display:inline-block; width:11px; height:8px; border-radius:2px; margin-right:4px; vertical-align:middle; }
-  #conta { font-size:13px; margin-top:4px; }
+  #rolo { width:100%; height:460px; display:block; margin-top:8px; border-radius:10px; background:#05071299; }
+  #mudou { min-height:22px; font-size:13.5px; font-weight:700; color:#fff; margin-top:6px; }
+  #conta { font-size:13px; margin-top:2px; }
   details { margin-top:8px; } summary { cursor:pointer; color:var(--c); font-weight:700; }
-  .luz { display:inline-block; width:9px; height:9px; border-radius:50%; background:#ffffff22; margin-right:5px; vertical-align:middle; }
-  .luz.acesa { background:var(--c); box-shadow:0 0 8px var(--c); }
+  .luz { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; vertical-align:-1px; opacity:.45; }
+  .luz.acesa { opacity:1; box-shadow:0 0 10px currentColor; }
   #copiado { font-size:13px; color:var(--ok); word-break:break-all; }
+  .zoom button { padding:5px 10px; font-size:12px; }
 </style>
 </head>
 <body>
 <main>
   <h1>Mesa da Pulsar</h1>
-  <p class="fraco">A trilha do Clássico desmontada. Escolha uma parte, veja o desenho dela e troque as peças. Tocando, um toque numa parte pula direto para ela.</p>
+  <p class="fraco">A trilha do Clássico desmontada. Cada instrumento tem uma cor e uma faixa no desenho. Escolha uma parte, veja e troque as peças: o que mudou pisca e a versão de antes fica em contorno por alguns segundos.</p>
   <p id="aviso" hidden style="color:#ff5e6c;font-weight:700">O aparelho carregou uma cópia velha da música. Feche esta página e abra de novo; se continuar, abra o jogo uma vez e volte aqui.</p>
 
   <div class="linha" style="margin-top:10px">
@@ -47,16 +49,11 @@
   <div id="partes"></div>
 
   <div class="painel">
-    <div class="linha" style="justify-content:space-between"><b id="titulo" style="font:900 16px Orbitron">A</b><span class="fraco" id="oque"></span></div>
+    <div class="linha" style="justify-content:space-between"><b id="titulo" style="font:900 16px Orbitron">A</b>
+      <span class="linha zoom"><button id="zTudo" class="on">parte inteira</button><button id="zPerto">de perto</button><button id="zAnt" hidden>◀</button><button id="zProx" hidden>▶</button></span></div>
+    <p class="fraco" id="oque"></p>
     <canvas id="rolo"></canvas>
-    <div class="leg">
-      <span><i style="background:#5ef0ff33"></i>notas do acorde</span>
-      <span><i style="background:var(--ok)"></i>melodia no acorde</span>
-      <span><i style="background:var(--pas)"></i>passagem (curta, fora)</span>
-      <span><i style="background:var(--fora)"></i>fora do acorde e segurada</span>
-      <span><i style="background:var(--arp)"></i>arpejo</span>
-      <span><i style="background:var(--bx)"></i>baixo</span>
-    </div>
+    <div id="mudou"></div>
     <div id="conta" class="fraco"></div>
   </div>
 
@@ -64,19 +61,20 @@
   <div id="pecas"></div>
 
   <h2>A melodia</h2>
-  <p class="fraco">A mesma frase vale para todas as partes com melodia. Ela é feita de uma pergunta (2 compassos) e uma resposta (2 compassos), repetidas e adaptadas aos acordes.</p>
+  <p class="fraco">A mesma frase vale para todas as partes com melodia: uma pergunta (1 compasso) e uma resposta (1 compasso), repetidas e adaptadas aos acordes.</p>
   <div id="melodia"></div>
 
   <h2>Tom</h2>
+  <p class="expl">Muda tudo de altura junto: a música inteira fica mais aguda ou mais grave.</p>
   <div id="tons"></div>
 
   <h2>Camadas</h2>
-  <p class="fraco">Toque para calar ou ligar; "só" deixa aquela sozinha. A luz pisca quando a camada toca.</p>
+  <p class="fraco">Toque para calar ou ligar; "só" deixa aquela sozinha. A bolinha acende quando a camada toca.</p>
   <div class="chips" id="camadas"></div>
   <details><summary>O que cada camada faz</summary>
-    <p><b>Bateria</b>: bumbo em todo tempo, palma no 2 e no 4, chimbal no contratempo, a 112 batidas por minuto. A cada 4 compassos, uma virada.</p>
-    <p><b>Baixo</b>: a nota principal do acorde, bem grave. No desenho "de sempre" bate 3+3+2 (o ritmo do tresillo, da música latina e do funk), que dá o balanço. Ouça com "só" no baixo para entender.</p>
-    <p><b>Acordes de fundo</b>: um colchão baixinho com as quatro notas do acorde.</p>
+    <p><b>Bateria</b>: bumbo em todo tempo (rosa), palma no 2 e no 4 e a caixa das viradas (amarelo), chimbal entre os tempos (azul), prato no começo das partes (branco). 112 batidas por minuto.</p>
+    <p><b>Baixo</b>: a nota principal do acorde, bem grave. No desenho "de sempre" bate 3+3+2 (o ritmo do tresillo, da música latina e do funk), que dá o balanço.</p>
+    <p><b>Acordes de fundo</b>: um colchão baixinho com as quatro notas do acorde, que respira a cada compasso.</p>
     <p><b>Arpejo</b>: as notas do acorde uma a uma, rápido, com eco.</p>
     <p><b>Melodia</b>: a frase que canta por cima.</p>
   </details>
@@ -88,15 +86,20 @@
 </main>
 
 <script type="module">
-import { iniciarMusica, pararMusica, montaParte, motivo, OPCOES } from './musica/pulsar.js?v=3';
+import { iniciarMusica, pararMusica, montaParte, motivo, OPCOES, PADRAO } from './musica/pulsar.js?v=4';
 import { sorteio } from './musica/eletronica.js';
-const { SEQ_A, SEQ_B, SEQ_R, ARP } = OPCOES;
+const { SEQ_A, SEQ_B, SEQ_R, ARP, BAIXO, PERGUNTA, RESPOSTA } = OPCOES;
 
 const NOTA = ['Dó','Dó#','Ré','Ré#','Mi','Fá','Fá#','Sol','Sol#','Lá','Lá#','Si'];
 const RAIZ = { Bm:[11,'m'], G:[7,''], D:[2,''], A:[9,''], Em:[4,'m'], 'F#':[6,''], 'F#m':[6,'m'], G7M:[7,'7M'] };
 const pc = m => ((m % 12) + 12) % 12;
 const acorde = (n, tr) => NOTA[pc(RAIZ[n][0] + tr)] + RAIZ[n][1];
 const P = 60 / 112 / 4;   // uma semicolcheia em segundos
+
+// cores dos instrumentos (iguais no desenho, nos botões e nas camadas)
+const COR = { melodia: '#5effa0', arpejo: '#b28cff', acordes: '#5e9bff', baixo: '#ff9a5e', bateria: '#ff5ec8',
+  bumbo: '#ff5ec8', caixa: '#ffd25e', chimbal: '#5ef0ff', prato: '#ffffff', fora: '#ff5e6c', passagem: '#ffd25e' };
+const NOME = { melodia: 'Melodia', arpejo: 'Arpejo', acordes: 'Acordes de fundo', baixo: 'Baixo', bateria: 'Bateria' };
 
 const PARTES = ['entrada', 'A', "A'", 'B', 'respiro', 'volta'];
 const SOBRE = {
@@ -131,12 +134,42 @@ function monta() {
   PARTES.forEach((q, i) => {
     const e = esc[q], o = { arp: e.arp, bx: e.bx, n: e.n, firme: mel.firme, mot: e.mel ? mot : null };
     if (e.seq) o.seq = SEQS[e.seq] || SEQS_R[e.seq];
-    plano[q] = montaParte(q, o, tr, sorteio(1000 + i));
+    plano[q] = montaParte(q, o, tr, sorteio(1000 + i)).map(c => ({ ...PADRAO, ...c }));
   });
 }
 monta();
 
-// tocar: a página diz qual compasso vem (cur); assim pula de parte e repete
+// ---------- o que cada compasso toca, como eventos para desenhar ----------
+// cada evento: { f: faixa, m: altura (ou linha da bateria), st: passo, d: duração em passos, cor, a: força }
+function eventos(B) {
+  const ev = [], para = st => B.corte != null && st >= B.corte;
+  if (B.mel) for (const [st, [m, d]] of Object.entries(B.mel)) {
+    const dentro = B.ch.map(pc).includes(pc(m));
+    ev.push({ f: 'melodia', m, st: +st, d: Math.min(d, 16 - st), cor: dentro ? COR.melodia : d >= 4 ? COR.fora : COR.passagem, a: 1 });
+  }
+  if (B.arp) for (let st = 0; st < 16; st += B.arpCada) {
+    const idx = B.arp[(st / B.arpCada) % B.arp.length], m = B.ch[idx % 4] + 12 * Math.floor(idx / 4);
+    ev.push({ f: 'arpejo', m, st, d: Math.max(0.7, Math.min(B.arpCada, (B.arpDur || 0.13) / P)), cor: COR.arpejo, a: 1 });
+  }
+  if (B.pad) for (const m of B.ch) ev.push({ f: 'acordes', m: m - 12, st: 0, d: 16, cor: COR.acordes, a: Math.min(1, B.pad / 0.017) * 0.75 });
+  if (B.baixo) B.baixo.forEach((st, k) => { if (!para(st))
+    ev.push({ f: 'baixo', m: B.raiz + (B.baixoNotas ? B.baixoNotas[k] : 0), st, d: Math.min(16 - st, Math.max(0.8, (B.baixoDur || 0.26) / P)), cor: COR.baixo, a: 1 }); });
+  // bateria: linha 0 prato e ruído, 1 chimbal, 2 palma e caixa, 3 bumbo
+  if (B.prato) ev.push({ f: 'bateria', m: 0, st: 0, d: 6, cor: COR.prato, a: 0.8 });
+  if (B.sopro) for (let st = 0; st < 16; st++) ev.push({ f: 'bateria', m: 0, st, d: 1, cor: COR.prato, a: 0.1 + 0.6 * st / 15 });
+  for (let st = 0; st < 16; st++) {
+    if (para(st)) continue;
+    if (B.chimbal.includes(st)) ev.push({ f: 'bateria', m: 1, st, d: 0.6, cor: COR.chimbal, a: 1 });
+    else if (B.chimbalFraco && B.chimbalFraco.includes(st)) ev.push({ f: 'bateria', m: 1, st, d: 0.45, cor: COR.chimbal, a: 0.45 });
+    if (B.aberto && B.aberto.includes(st)) ev.push({ f: 'bateria', m: 1, st, d: 1.6, cor: COR.chimbal, a: 0.7 });
+    if (B.palma.includes(st)) ev.push({ f: 'bateria', m: 2, st, d: 0.9, cor: COR.caixa, a: 1 });
+    if (B.bumbo.includes(st)) ev.push({ f: 'bateria', m: 3, st, d: 0.9, cor: COR.bumbo, a: 1 });
+  }
+  if (B.rolo) for (const [st, r] of Object.entries(B.rolo)) ev.push({ f: 'bateria', m: 2, st: +st, d: 0.6, cor: COR.caixa, a: 0.3 + 0.6 * r });
+  return ev;
+}
+
+// ---------- tocar: a página diz qual compasso vem (cur); assim pula de parte e repete ----------
 let chegou = false, ctx = null, tocando = false, repete = false, cur = { q: 'A', j: 0 }, ver = 'A', fila = [], tocandoAgora = null, stAgora = 0;
 function proximo() {
   const cs = plano[cur.q]; if (cur.j >= cs.length) cur.j = 0;
@@ -160,59 +193,102 @@ const btR = document.getElementById('repete');
 btR.onclick = () => { repete = !repete; btR.classList.toggle('on', repete);
   if (repete && tocandoAgora && cur.q !== tocandoAgora.parte) cur = { q: tocandoAgora.parte, j: 0 }; };
 
-// as partes
 const caixaP = document.getElementById('partes');
 for (const q of PARTES) { const b = document.createElement('button'); b.textContent = q; b.dataset.q = q;
-  b.onclick = () => { ver = q; if (tocando) comeca(q); tudo(); }; caixaP.appendChild(b); }
+  b.onclick = () => { ver = q; perto0 = 0; antes = null; document.getElementById('mudou').textContent = ''; if (tocando) comeca(q); tudo(); }; caixaP.appendChild(b); }
 function pintaPartes() { for (const b of caixaP.children) { b.classList.toggle('on', b.dataset.q === ver); b.classList.toggle('tocando', !!tocandoAgora && tocandoAgora.parte === b.dataset.q); } }
 
-// botões de escolha
-function chips(el, itens, atual, aoEscolher) {
+// zoom
+let perto = false, perto0 = 0;
+const zT = document.getElementById('zTudo'), zP = document.getElementById('zPerto'), zA = document.getElementById('zAnt'), zN = document.getElementById('zProx');
+function pintaZoom() { zT.classList.toggle('on', !perto); zP.classList.toggle('on', perto); zA.hidden = zN.hidden = !perto; }
+zT.onclick = () => { perto = false; pintaZoom(); };
+zP.onclick = () => { perto = true; pintaZoom(); };
+zA.onclick = () => { perto0 = Math.max(0, perto0 - 2); };
+zN.onclick = () => { perto0 = Math.min(plano[ver].length - 2, perto0 + 2); };
+
+// ---------- desenhinhos nos botões ----------
+function mini(desenho) {
+  const c = document.createElement('canvas'), dpr = devicePixelRatio; c.width = 64 * dpr; c.height = 22 * dpr;
+  const g = c.getContext('2d'); g.scale(dpr, dpr); g.fillStyle = '#ffffff10'; g.fillRect(0, 0, 64, 22); desenho(g); return c;
+}
+const BM = [59, 62, 66, 71];
+const miniArp = i => mini(g => { const p = ARP[i]; if (!p) return; g.fillStyle = COR.arpejo;
+  for (let st = 0; st < 16; st++) { const idx = p[st % p.length], m = BM[idx % 4] + 12 * Math.floor(idx / 4); g.fillRect(st * 4, 20 - (m - 57) * 0.62, 3, 2.5); } });
+const miniBx = i => mini(g => { const b = BAIXO[i]; g.fillStyle = COR.baixo;
+  b.baixo.forEach((st, k) => { const iv = b.baixoNotas ? b.baixoNotas[k] : 0; g.fillRect(st * 4, 15 - iv * 0.95, Math.max(3, (b.baixoDur || 0.18) / P * 4), 3); }); });
+const miniRit = r => mini(g => { g.fillStyle = COR.melodia; r.forEach(([st, d], k) => g.fillRect(st * 4 + 0.5, 4 + (k % 3) * 5, d * 4 - 1, 4)); });
+const miniSeq = seq => mini(g => { g.fillStyle = COR.baixo; const w = 64 / seq.length;
+  seq.forEach((n, k) => { const r = pc(RAIZ[n][0] - 7); g.fillRect(k * w + 1, 18 - r * 1.3, w - 2, 3); }); });
+
+// ---------- escolhas ----------
+let antes = null;   // { cs: os compassos de antes, f: faixa que mudou (null = todas), t: hora }
+function chips(el, itens, atual, aoEscolher, info) {
   const d = document.createElement('div'); d.className = 'chips';
-  for (const [v, txt] of itens) { const b = document.createElement('button'); b.textContent = txt; if (v === atual) b.classList.add('on');
-    b.onclick = () => { aoEscolher(v); monta(); tudo(); }; d.appendChild(b); }
+  for (let [v, txt, des] of itens) {
+    const b = document.createElement('button'); if (des) b.appendChild(des); b.appendChild(document.createTextNode(txt));
+    if (v === atual) b.classList.add('on');
+    b.onclick = () => {
+      const velho = itens.find(([x]) => x === atual);
+      const txtVelho = info.rotulo ? info.rotulo() : velho ? velho[1] : '';
+      const cs = plano[ver]; aoEscolher(v); monta(); antes = { cs, f: info.f, t: performance.now() };
+      if (info.rotulo) txt = info.rotulo();
+      document.getElementById('mudou').innerHTML = info.f
+        ? `<span style="color:${COR[info.f]}">●</span> Mudou ${info.o}: ${txtVelho} → ${txt}. Veja a faixa ${NOME[info.f]}.`
+        : `Mudou ${info.o}: ${txtVelho} → ${txt}.`;
+      tudo();
+    };
+    d.appendChild(b);
+  }
   el.appendChild(d);
 }
-const h3 = (el, t) => { const h = document.createElement('h3'); h.textContent = t; el.appendChild(h); };
+const h3 = (el, t, f, expl) => { const h = document.createElement('h3'); h.innerHTML = (f ? `<i style="background:${COR[f]}"></i>` : '') + t; el.appendChild(h);
+  if (expl) { const p = document.createElement('p'); p.className = 'expl'; p.textContent = expl; el.appendChild(p); } };
 function pecas() {
   const el = document.getElementById('pecas'); el.innerHTML = '';
   const e = esc[ver];
   if (ver === 'entrada') { el.innerHTML = '<p class="fraco">A entrada é fixa: os acordes de sempre abrindo aos poucos.</p>'; return; }
-  h3(el, 'Acordes');
-  chips(el, Object.entries(ver === 'respiro' ? SEQS_R : SEQS).map(([k, s]) => [k, s.map(n => acorde(n, tr)).join(' · ')]), e.seq, v => e.seq = v);
-  if (ver === 'respiro') { h3(el, 'Tamanho'); chips(el, [[4, '4 compassos'], [8, '8 compassos']], e.n, v => e.n = v); }
-  h3(el, 'Arpejo');
-  chips(el, [...ARP_NOME.map((t, i) => [i, t]), [-1, 'sem arpejo']], e.arp, v => e.arp = v);
+  h3(el, 'Acordes', null, 'A sequência de acordes que a parte percorre. Muda as notas de quase todos: acordes de fundo, arpejo, baixo e a melodia. O desenhinho mostra a nota do baixo de cada acorde.');
+  chips(el, Object.entries(ver === 'respiro' ? SEQS_R : SEQS).map(([k, s]) => [k, s.map(n => acorde(n, tr)).join(' · '), miniSeq(s)]), e.seq, v => e.seq = v, { o: 'a sequência de acordes', f: null });
+  if (ver === 'respiro') { h3(el, 'Tamanho'); chips(el, [[4, '4 compassos'], [8, '8 compassos']], e.n, v => e.n = v, { o: 'o tamanho', f: null }); }
+  h3(el, 'Arpejo', 'arpejo', 'A ordem em que as notas do acorde são tocadas, rápido. O desenhinho mostra um compasso: cada risco é uma nota, mais alto = mais agudo.');
+  chips(el, [...ARP_NOME.map((t, i) => [i, t, miniArp(i)]), [-1, 'sem arpejo', mini(() => {})]], e.arp, v => e.arp = v, { o: 'o arpejo', f: 'arpejo' });
   if (ver !== 'respiro') {
-    h3(el, 'Baixo'); chips(el, BX_NOME.map((t, i) => [i, t]), e.bx, v => e.bx = v);
-    h3(el, 'Melodia'); chips(el, [[false, 'sem'], [true, 'com']], e.mel, v => e.mel = v);
+    h3(el, 'Baixo', 'baixo', 'O ritmo e os saltos da nota grave. Cada traço é uma batida do baixo; os mais altos pulam para a quinta ou para a oitava.');
+    chips(el, BX_NOME.map((t, i) => [i, t, miniBx(i)]), e.bx, v => e.bx = v, { o: 'o baixo', f: 'baixo' });
+    h3(el, 'Melodia', 'melodia', 'Se esta parte tem a frase cantando por cima.');
+    chips(el, [[false, 'sem'], [true, 'com']], e.mel, v => e.mel = v, { o: 'a melodia', f: 'melodia' });
   }
 }
 function melodia() {
   const el = document.getElementById('melodia'); el.innerHTML = '';
-  h3(el, 'Ritmo da pergunta'); chips(el, OPCOES.PERGUNTA.map((_, i) => [i, String(i + 1)]), mel.ip, v => mel.ip = v);
-  h3(el, 'Ritmo da resposta'); chips(el, OPCOES.RESPOSTA.map((_, i) => [i, String(i + 1)]), mel.ir, v => mel.ir = v);
-  h3(el, 'Desenho (para onde as notas sobem e descem)');
-  chips(el, [[-1, '◀'], [0, 'nº ' + mel.contorno], [1, '▶']], 0, v => mel.contorno = Math.max(1, mel.contorno + v));
-  h3(el, 'Notas longas'); chips(el, [[false, 'soltas (como hoje)'], [true, 'sempre no acorde']], mel.firme, v => mel.firme = v);
+  h3(el, 'Ritmo da pergunta', 'melodia', 'Quando cada nota do primeiro compasso começa e quanto dura (o desenhinho é o compasso inteiro).');
+  chips(el, PERGUNTA.map((r, i) => [i, String(i + 1), miniRit(r)]), mel.ip, v => mel.ip = v, { o: 'o ritmo da pergunta', f: 'melodia' });
+  h3(el, 'Ritmo da resposta', 'melodia', 'O mesmo para o compasso que responde; ela termina com uma nota longa, que pousa.');
+  chips(el, RESPOSTA.map((r, i) => [i, String(i + 1), miniRit(r)]), mel.ir, v => mel.ir = v, { o: 'o ritmo da resposta', f: 'melodia' });
+  h3(el, 'Desenho', 'melodia', 'Para onde as notas sobem e descem. Cada número é um sorteio diferente com o mesmo ritmo.');
+  chips(el, [[-1, '◀'], [0, 'nº ' + mel.contorno], [1, '▶']], 0, v => mel.contorno = Math.max(1, mel.contorno + v), { o: 'o desenho da melodia', f: 'melodia', rotulo: () => 'nº ' + mel.contorno });
+  h3(el, 'Notas longas', 'melodia', 'Hoje uma nota longa pode ficar fora do acorde (as vermelhas). "Sempre no acorde" puxa cada uma para a nota do acorde mais perto.');
+  chips(el, [[false, 'soltas (como hoje)'], [true, 'sempre no acorde']], mel.firme, v => mel.firme = v, { o: 'as notas longas', f: 'melodia' });
   if (!PARTES.some(q => esc[q].mel)) el.insertAdjacentHTML('beforeend', '<p class="fraco">Nenhuma parte está com melodia: ligue em "Peças desta parte".</p>');
-  else if (!esc[ver].mel) el.insertAdjacentHTML('beforeend', '<p class="fraco">Esta parte está sem melodia; ela toca no B e na volta (ou onde você ligar).</p>');
+  else if (!esc[ver].mel) el.insertAdjacentHTML('beforeend', '<p class="fraco">Esta parte está sem melodia; veja o B ou a volta (ou ligue nesta parte).</p>');
 }
-function tons() { const el = document.getElementById('tons'); el.innerHTML = ''; chips(el, TONS, tr, v => tr = v); }
+function tons() { const el = document.getElementById('tons'); el.innerHTML = ''; chips(el, TONS, tr, v => tr = v, { o: 'o tom', f: null }); }
 function tudo() {
   document.getElementById('titulo').textContent = ver; document.getElementById('oque').textContent = SOBRE[ver];
   pintaPartes(); pecas(); melodia(); tons();
   let n = 0, f = 0;
   for (const c of plano[ver]) if (c.mel) for (const [m, d] of Object.values(c.mel)) { n++; if (!c.ch.map(pc).includes(pc(m)) && d >= 4) f++; }
-  document.getElementById('conta').textContent = n ? `Melodia desta parte: ${n} notas, ${f} fora do acorde e seguradas.` : '';
+  document.getElementById('conta').textContent = n ? `Melodia desta parte: ${n} notas, ${f} fora do acorde e seguradas (vermelhas).` : '';
 }
 
-// camadas
+// ---------- camadas ----------
 const mudo = {}, luz = {}, botaoCamada = {};
 const caixaC = document.getElementById('camadas');
 function pintaCamadas() { for (const k in botaoCamada) botaoCamada[k].classList.toggle('on', !mudo[k]); }
-for (const [k, t] of [['bateria', 'Bateria'], ['baixo', 'Baixo'], ['acordes', 'Acordes de fundo'], ['arpejo', 'Arpejo'], ['melodia', 'Melodia']]) {
-  const b = document.createElement('button'); b.innerHTML = `<span class="luz"></span>${t}`; luz[k] = b.firstChild; botaoCamada[k] = b;
+for (const k of ['melodia', 'arpejo', 'acordes', 'baixo', 'bateria']) {
+  const b = document.createElement('button'); b.innerHTML = `<span class="luz" style="background:${COR[k]};color:${COR[k]}"></span>${NOME[k]}`;
+  b.style.flexDirection = 'row'; luz[k] = b.firstChild; botaoCamada[k] = b;
   b.onclick = () => { mudo[k] = !mudo[k]; pintaCamadas(); };
   const so = document.createElement('button'); so.textContent = 'só'; so.style.marginRight = '10px';
   so.onclick = () => { const sozinha = Object.keys(luz).every(j => j === k ? !mudo[j] : mudo[j]);
@@ -221,42 +297,67 @@ for (const [k, t] of [['bateria', 'Bateria'], ['baixo', 'Baixo'], ['acordes', 'A
 }
 pintaCamadas();
 
-// o desenho da parte inteira: em cima a melodia, no meio o arpejo, embaixo o baixo
+// ---------- o desenho: uma faixa por instrumento ----------
+const FAIXAS = [   // [faixa, peso da altura, nota mais grave, mais aguda (sem o tom)]
+  ['melodia', 0.27, 64, 88], ['arpejo', 0.19, 54, 86], ['acordes', 0.13, 42, 64], ['baixo', 0.15, 26, 52], ['bateria', 0.26, 0, 3],
+];
+const BAT = ['prato', 'chimbal', 'palma e caixa', 'bumbo'];
 const cv = document.getElementById('rolo'), g = cv.getContext('2d');
 function desenha() {
   const dpr = devicePixelRatio, W = cv.clientWidth * dpr, H = cv.clientHeight * dpr;
   if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
   g.clearRect(0, 0, W, H);
-  const cs = plano[ver], pw = W / (cs.length * 16), topo = 16 * dpr;
-  const faixas = [['melodia', 64, 88, topo, H * 0.5], ['arpejo', 54, 86, H * 0.5 + 4 * dpr, H * 0.78], ['baixo', 26, 52, H * 0.78 + 4 * dpr, H]];
-  g.font = `${10.5 * dpr}px 'Exo 2'`;
-  for (const [nome, lo0, hi0, y0, y1] of faixas) {
-    const lo = lo0 + tr, hi = hi0 + tr, lh = (y1 - y0) / (hi - lo + 1), y = m => y1 - (m - lo + 1) * lh;
-    cs.forEach((c, j) => {
-      const ox = j * 16 * pw, cps = c.ch.map(pc);
-      const B = { arp: ARP[0], arpCada: 1, baixo: [0, 3, 6, 8, 11, 14], baixoDur: 0.18, ...c };
-      if (nome === 'melodia') {
-        for (let m = lo; m <= hi; m++) if (cps.includes(pc(m))) { g.fillStyle = '#5ef0ff1c'; g.fillRect(ox, y(m), 16 * pw, lh); }
-        if (c.mel) for (const [st, [m, d]] of Object.entries(c.mel)) {
-          g.fillStyle = cps.includes(pc(m)) ? '#5effa0' : d >= 4 ? '#ff5e6c' : '#ffd25e';
-          g.fillRect(ox + st * pw + 0.5, y(m) + 0.5, Math.min(d, 16 - st) * pw - 1, Math.max(2, lh - 1));
-        }
-      }
-      if (nome === 'arpejo' && B.arp) for (let st = 0; st < 16; st += B.arpCada) {
-        const idx = B.arp[(st / B.arpCada) % B.arp.length], m = c.ch[idx % 4] + 12 * Math.floor(idx / 4);
-        g.fillStyle = '#b28cff'; g.fillRect(ox + st * pw + 0.5, y(m) + 0.5, Math.max(1.5, B.arpCada * pw * 0.8), Math.max(2, lh - 1));
-      }
-      if (nome === 'baixo' && B.baixo) B.baixo.forEach((st, k) => {
-        const m = c.raiz + (B.baixoNotas ? B.baixoNotas[k] : 0), d = Math.max(1, Math.round(B.baixoDur / P));
-        g.fillStyle = '#ff9a5e'; g.fillRect(ox + st * pw + 0.5, y(m) + 0.5, Math.min(d, 16 - st) * pw - 1, Math.max(2, lh - 1));
-      });
-    });
+  const cs = plano[ver], agora = performance.now();
+  let b0 = 0, nb = cs.length;
+  if (perto) { nb = 2; b0 = tocandoAgora && tocandoAgora.parte === ver ? Math.floor(tocandoAgora.j / 2) * 2 : Math.min(perto0, cs.length - 2); }
+  const topo = 16 * dpr, esq = 0, pw = (W - esq) / (nb * 16), X = (j, st) => esq + ((j - b0) * 16 + st) * pw;
+  // geometria das faixas
+  const geo = {}; let y = topo;
+  for (const [f, peso, lo0, hi0] of FAIXAS) { const h = (H - topo) * peso, lo = f === 'bateria' ? 0 : lo0 + tr, hi = f === 'bateria' ? 3 : hi0 + tr;
+    geo[f] = { y0: y, y1: y + h, lo, hi, lh: (h - 2 * dpr) / (hi - lo + 1) }; y += h; }
+  const Y = (f, m) => { const q = geo[f]; return f === 'bateria' ? q.y0 + 1 * dpr + m * q.lh : q.y1 - 1 * dpr - (m - q.lo + 1) * q.lh; };
+  // piscar da faixa que mudou
+  const k = antes ? Math.max(0, 1 - (agora - antes.t) / 3500) : 0;
+  for (const [f] of FAIXAS) {
+    const q = geo[f];
+    g.fillStyle = COR[f] + '0d'; g.fillRect(0, q.y0, W, q.y1 - q.y0);
+    if (k > 0 && (antes.f === f || antes.f === null)) { g.globalAlpha = 0.28 * k * (0.6 + 0.4 * Math.sin(agora / 120)); g.fillStyle = COR[f]; g.fillRect(0, q.y0, W, q.y1 - q.y0); g.globalAlpha = 1; }
+    g.strokeStyle = '#ffffff22'; g.lineWidth = 1; g.beginPath(); g.moveTo(0, q.y1); g.lineTo(W, q.y1); g.stroke();
   }
-  g.strokeStyle = '#ffffff30'; g.lineWidth = 1;
-  cs.forEach((c, j) => { const x = j * 16 * pw; g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke();
-    g.fillStyle = '#ffffffbb'; g.fillText(acorde(c.nome, tr), x + 3, 12 * dpr); });
-  g.strokeStyle = '#ffffff18'; for (const yy of [H * 0.5 + 2 * dpr, H * 0.78 + 2 * dpr]) { g.beginPath(); g.moveTo(0, yy); g.lineTo(W, yy); g.stroke(); }
-  if (tocandoAgora && tocandoAgora.parte === ver) { g.fillStyle = '#fff'; g.fillRect((tocandoAgora.j * 16 + stAgora) * pw, 0, 1.5 * dpr, H); }
+  // zona segura da melodia: as notas do acorde
+  for (let j = b0; j < b0 + nb; j++) { const cps = cs[j].ch.map(pc), q = geo.melodia;
+    for (let m = q.lo; m <= q.hi; m++) if (cps.includes(pc(m))) { g.fillStyle = '#5ef0ff16'; g.fillRect(X(j, 0), Y('melodia', m), 16 * pw, q.lh); } }
+  // as notas
+  for (let j = b0; j < b0 + nb; j++) for (const e of eventos(cs[j])) {
+    if (e.f !== 'bateria' && (e.m < geo[e.f].lo || e.m > geo[e.f].hi)) continue;
+    g.globalAlpha = e.a; g.fillStyle = e.cor;
+    const lh = geo[e.f].lh, alto = e.f === 'bateria' ? lh * 0.7 : Math.max(2 * dpr, lh - 1);
+    g.fillRect(X(j, e.st) + 0.5, Y(e.f, e.m) + (e.f === 'bateria' ? lh * 0.15 : 0.5), Math.max(1.5 * dpr, e.d * pw - 1), alto);
+  }
+  g.globalAlpha = 1;
+  // a versão de antes, em contorno
+  if (k > 0) {
+    g.lineWidth = 1.2 * dpr; g.globalAlpha = k;
+    for (let j = b0; j < b0 + nb && j < antes.cs.length; j++) for (const e of eventos(antes.cs[j])) {
+      if (antes.f && e.f !== antes.f) continue;
+      if (e.f !== 'bateria' && (e.m < geo[e.f].lo || e.m > geo[e.f].hi)) continue;
+      const lh = geo[e.f].lh; g.strokeStyle = '#ffffff';
+      g.strokeRect(X(j, e.st) + 0.5, Y(e.f, e.m) + 0.5, Math.max(1.5 * dpr, e.d * pw - 1), Math.max(2 * dpr, (e.f === 'bateria' ? lh * 0.7 : lh) - 1));
+    }
+    g.globalAlpha = 1;
+  }
+  // compassos e acordes
+  g.font = `${10.5 * dpr}px 'Exo 2'`; g.strokeStyle = '#ffffff30'; g.lineWidth = 1;
+  for (let j = b0; j < b0 + nb; j++) { const x = X(j, 0); g.beginPath(); g.moveTo(x, 0); g.lineTo(x, H); g.stroke();
+    g.fillStyle = '#ffffffcc'; g.fillText(acorde(cs[j].nome, tr), x + 3, 12 * dpr);
+    if (perto) { g.strokeStyle = '#ffffff12'; for (let t = 4; t < 16; t += 4) { g.beginPath(); g.moveTo(X(j, t), topo); g.lineTo(X(j, t), H); g.stroke(); } g.strokeStyle = '#ffffff30'; } }
+  // nomes das faixas
+  g.font = `700 ${10 * dpr}px 'Exo 2'`;
+  for (const [f] of FAIXAS) { const q = geo[f], t = NOME[f], w = g.measureText(t).width;
+    g.fillStyle = '#05071ecc'; g.fillRect(W - w - 10 * dpr, q.y0 + 2 * dpr, w + 8 * dpr, 13 * dpr); g.fillStyle = COR[f]; g.fillText(t, W - w - 6 * dpr, q.y0 + 12 * dpr); }
+  if (perto) { g.font = `${9 * dpr}px 'Exo 2'`; BAT.forEach((t, i) => { g.fillStyle = '#ffffff88'; g.fillText(t, 3 * dpr, Y('bateria', i) + geo.bateria.lh * 0.6); }); }
+  // onde a música está
+  if (tocandoAgora && tocandoAgora.parte === ver && tocandoAgora.j >= b0 && tocandoAgora.j < b0 + nb) { g.fillStyle = '#fff'; g.fillRect(X(tocandoAgora.j, stAgora), 0, 1.5 * dpr, H); }
 }
 function quadro() {
   requestAnimationFrame(quadro);
@@ -264,7 +365,7 @@ function quadro() {
     while (fila.length && fila[0].T <= agora) { const { s, B } = fila.shift(), st = s % 16;
       const trocou = !tocandoAgora || tocandoAgora.parte !== B.parte;
       tocandoAgora = B; stAgora = st;
-      if (trocou) { if (ver !== B.parte) { ver = B.parte; tudo(); } else pintaPartes(); }
+      if (trocou) { if (ver !== B.parte) { ver = B.parte; antes = null; document.getElementById('mudou').textContent = ''; tudo(); } else pintaPartes(); }
       const acende = (k, on) => { if (on && !mudo[k]) { luz[k].classList.add('acesa'); setTimeout(() => luz[k].classList.remove('acesa'), 90); } };
       acende('bateria', B.bumbo.includes(st) || B.palma.includes(st) || B.chimbal.includes(st));
       acende('baixo', B.baixo.includes(st)); acende('acordes', st === 0 && B.pad);

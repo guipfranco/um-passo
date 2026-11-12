@@ -146,10 +146,12 @@ function arranjo(rnd, ciclo, estado) {
   return out;
 }
 
-export const { iniciarMusica, pararMusica } = cria({
-  bpm: 112, arranjo,
+// o que vale em todo compasso que não diz o contrário (exportado para a página pulsar.html desenhar)
+export const PADRAO = {
+  bpm: 112,
   pad: 0.011,
   arp: ARP[0], arpCada: 1, arpV: 0.024,
   ...BAIXO[0], baixoDur: 0.18, baixoV: 0.07,
   bumbo: [0, 4, 8, 12], bumboV: 0.13, chimbal: [2, 6, 10, 14], chimbalV: 0.03, palma: [4, 12], palmaV: 0.045,
-});
+};
+export const { iniciarMusica, pararMusica } = cria({ ...PADRAO, arranjo });
