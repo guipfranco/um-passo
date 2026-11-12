@@ -86,7 +86,7 @@
 </main>
 
 <script type="module">
-import { iniciarMusica, pararMusica, montaParte, motivo, OPCOES, PADRAO } from './musica/pulsar.js?v=5';
+import { iniciarMusica, pararMusica, montaParte, motivo, OPCOES, PADRAO } from './musica/pulsar.js?v=7';
 import { sorteio } from './musica/eletronica.js';
 const { TEMAS, SEQ_A, SEQ_B, SEQ_R, ARP, BAIXO, PERGUNTA, RESPOSTA } = OPCOES;
 
@@ -126,6 +126,7 @@ const esc = {
   volta: { seq: 'A', arp: 3, bx: 2, mel: true },
 };
 const mel = { tema: -1, ip: 0, ir: 0, contorno: 1, firme: false };
+const mix = { mel: 1.8, abaixa: true };   // volume da melodia (vezes o do jogo) e o arpejo abaixando quando ela canta
 let tr = 0;
 
 const plano = {};
@@ -134,7 +135,11 @@ function monta() {
   PARTES.forEach((q, i) => {
     const e = esc[q], o = { arp: e.arp, bx: e.bx, n: e.n, firme: mel.firme, mot: e.mel ? mot : null, tema: e.mel && mel.tema >= 0 ? TEMAS[mel.tema] : null };
     if (e.seq) o.seq = SEQS[e.seq] || SEQS_R[e.seq];
-    plano[q] = montaParte(q, o, tr, sorteio(1000 + i)).map(c => ({ ...PADRAO, ...c }));
+    plano[q] = montaParte(q, o, tr, sorteio(1000 + i)).map(c => {
+      const b = { ...PADRAO, ...c };
+      if (b.mel) { b.melV = (b.melV || 0.036) * mix.mel; if (mix.abaixa) b.arpV = b.arpV * 0.5; }
+      return b;
+    });
   });
 }
 monta();
@@ -276,6 +281,10 @@ function melodia() {
   chips(el, TEMA_INFO.map(([t], i) => [i - 1, t, i ? miniTema(TEMAS[i - 1]) : mini(g => { g.fillStyle = COR.melodia + '66'; g.font = '13px sans-serif'; g.fillText('? ? ?', 16, 16); })]), mel.tema, v => mel.tema = v, { o: 'o tema', f: 'melodia' });
   const info = document.createElement('p'); info.className = 'expl'; info.style.marginTop = '6px'; info.textContent = TEMA_INFO[mel.tema + 1][1]; el.appendChild(info);
   const ouvir = document.createElement('button'); ouvir.textContent = '▶ Ouvir este tema (na volta, repetindo)'; ouvir.onclick = ouvirTema; el.appendChild(ouvir);
+  h3(el, 'Volume da melodia', 'melodia', 'Quanto a melodia aparece sobre o resto. "Como no jogo" é o volume de hoje.');
+  chips(el, [[1, 'como no jogo'], [1.8, 'mais alto'], [2.6, 'bem alto'], [3.6, 'na frente de tudo']], mix.mel, v => mix.mel = v, { o: 'o volume da melodia', f: 'melodia' });
+  h3(el, 'Arpejo quando a melodia canta', 'arpejo', 'O arpejo toca na mesma altura que a melodia e a encobre. Abaixando ele pela metade nos compassos com melodia, ela aparece.');
+  chips(el, [[false, 'igual (como no jogo)'], [true, 'abaixa']], mix.abaixa, v => mix.abaixa = v, { o: 'o arpejo com melodia', f: 'arpejo' });
   if (mel.tema >= 0) return;
   h3(el, 'Ritmo da pergunta', 'melodia', 'Quando cada nota do primeiro compasso começa e quanto dura (o desenhinho é o compasso inteiro).');
   chips(el, PERGUNTA.map((r, i) => [i, String(i + 1), miniRit(r)]), mel.ip, v => mel.ip = v, { o: 'o ritmo da pergunta', f: 'melodia' });
@@ -391,7 +400,7 @@ function quadro() {
 tudo(); requestAnimationFrame(quadro);
 
 document.getElementById('copiar').onclick = async () => {
-  const txt = 'Pulsar, minhas escolhas: ' + JSON.stringify({ tom: tr, melodia: mel, partes: esc });
+  const txt = 'Pulsar, minhas escolhas: ' + JSON.stringify({ tom: tr, melodia: mel, mistura: mix, partes: esc });
   const el = document.getElementById('copiado');
   try { await navigator.clipboard.writeText(txt); el.textContent = 'Copiado.'; }
   catch (_) { el.textContent = txt; }
