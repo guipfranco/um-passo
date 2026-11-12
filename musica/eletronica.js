@@ -105,6 +105,9 @@ export function cria(cfg) {
 
     let bpm = cfg.tempo ? cfg.tempo(0) : cfg.bpm, P = 60 / bpm / 4, dlyBpm = cfg.bpm;   // P: semicolcheia
     const est = { acento: 0, marcas: [] };   // marcas: [hora, passo, semicolcheia] dos últimos passos (para a batida())
+    // opc.mudo {camada: true} cala camadas ao vivo (bateria, baixo, acordes, arpejo, melodia) e opc.aoPasso(T, s, B) avisa
+    // cada passo tocado: os dois só para a página que desmonta a música (pulsar.html); o jogo não passa nada
+    const mudo = opc.mudo || {}, aoPasso = opc.aoPasso || null;
     let s = 0, prox = ctx.currentTime + 0.2, Bb = null, B = null, Iusado = -1;
     const passo = T => {
       const st = s % 16, n = Math.floor(s / 16);
@@ -115,27 +118,30 @@ export function cria(cfg) {
       est.marcas.push([T, s, P]); if (est.marcas.length > 40) est.marcas.shift();
       if (est.acento && st % 2 === 0) { chiado({ T, f: 5200, type: 'highpass', d: 1.3, v: 0.035 * est.acento, rev: 0.4 }); tom({ T, f: 140, to: 40, d: 0.3, v: 0.15 }); est.acento = 0; }
       const ch = B.ch;
+      if (aoPasso) aoPasso(T, s, B);
       if (st === 0) {
-        if (B.pad) pad(T, ch.map(m => m - 12), 16 * P * 1.1, B.pad, B.padLp || 1100);
-        if (B.prato) chiado({ T, f: 5200, type: 'highpass', d: 1.1, v: B.prato, rev: 0.35 });
-        if (B.sopro) sopro(T, 16 * P, B.sopro);
+        if (B.pad && !mudo.acordes) pad(T, ch.map(m => m - 12), 16 * P * 1.1, B.pad, B.padLp || 1100);
+        if (B.prato && !mudo.bateria) chiado({ T, f: 5200, type: 'highpass', d: 1.1, v: B.prato, rev: 0.35 });
+        if (B.sopro && !mudo.bateria) sopro(T, 16 * P, B.sopro);
       }
-      if (B.arp && st % B.arpCada === 0) { const k = (st / B.arpCada) % B.arp.length, idx = B.arp[k]; let m = ch[idx % 4] + 12 * Math.floor(idx / 4);
+      if (B.arp && !mudo.arpejo && st % B.arpCada === 0) { const k = (st / B.arpCada) % B.arp.length, idx = B.arp[k]; let m = ch[idx % 4] + 12 * Math.floor(idx / 4);
         if (B.arpOit) m += 12 * B.arpOit;
         tom({ T, f: mtof(m), type: B.arpOnda || 'square', a: 0.004, d: B.arpDur || 0.13, v: B.arpV, lp: (B.arpLp || 1500) + 800 * Math.sin(s / 40), q: 2, dly: 0.22, rev: 0.12, pan: Math.sin(s * 0.4) * 0.35 }); }
       const nm = B.mel && B.mel[st];
-      if (nm) tom({ T, f: mtof(nm[0]), type: B.melOnda || 'triangle', a: 0.012, d: nm[1] * P * 0.9, v: B.melV, lp: B.melLp || 3600, dly: 0.3, rev: 0.22, pan: -0.15 });
+      if (nm && !mudo.melodia) tom({ T, f: mtof(nm[0]), type: B.melOnda || 'triangle', a: 0.012, d: nm[1] * P * 0.9, v: B.melV, lp: B.melLp || 3600, dly: 0.3, rev: 0.22, pan: -0.15 });
       if (B.stab && B.stab.includes(st)) stab(T, ch, B.stabV || 0.02, B.stabLp || 2600);
       if (B.corte == null || st < B.corte) {
         const kb = B.baixo.indexOf(st);
-        if (kb >= 0) tom({ T, f: mtof(B.raiz + (B.baixoNotas ? B.baixoNotas[kb] : 0)), type: 'sawtooth', a: 0.005, d: B.baixoDur || 0.26, v: B.baixoV, lp: 420 });
-        if (B.bumbo.includes(st)) tom({ T, f: 130, to: 44, d: 0.22, v: B.bumboV });
-        if (B.chimbal.includes(st)) chiado({ T, f: 8500, type: 'highpass', d: 0.03, v: B.chimbalV });
-        else if (B.chimbalFraco && B.chimbalFraco.includes(st)) chiado({ T, f: 8500, type: 'highpass', d: 0.025, v: B.chimbalV * 0.45, pan: 0.2 });
-        if (B.aberto && B.aberto.includes(st)) chiado({ T, f: 7000, type: 'highpass', d: 0.16, v: B.chimbalV * 0.7, pan: -0.2 });
-        if (B.palma.includes(st)) chiado({ T, f: 1700, q: 0.8, d: 0.1, v: B.palmaV, rev: 0.25 });
+        if (kb >= 0 && !mudo.baixo) tom({ T, f: mtof(B.raiz + (B.baixoNotas ? B.baixoNotas[kb] : 0)), type: 'sawtooth', a: 0.005, d: B.baixoDur || 0.26, v: B.baixoV, lp: 420 });
+        if (!mudo.bateria) {
+          if (B.bumbo.includes(st)) tom({ T, f: 130, to: 44, d: 0.22, v: B.bumboV });
+          if (B.chimbal.includes(st)) chiado({ T, f: 8500, type: 'highpass', d: 0.03, v: B.chimbalV });
+          else if (B.chimbalFraco && B.chimbalFraco.includes(st)) chiado({ T, f: 8500, type: 'highpass', d: 0.025, v: B.chimbalV * 0.45, pan: 0.2 });
+          if (B.aberto && B.aberto.includes(st)) chiado({ T, f: 7000, type: 'highpass', d: 0.16, v: B.chimbalV * 0.7, pan: -0.2 });
+          if (B.palma.includes(st)) chiado({ T, f: 1700, q: 0.8, d: 0.1, v: B.palmaV, rev: 0.25 });
+        }
       }
-      const r = B.rolo && B.rolo[st];
+      const r = !mudo.bateria && B.rolo && B.rolo[st];
       if (r) chiado({ T, f: 1900, q: 0.8, d: 0.06, v: B.palmaV * r, rev: 0.2 });
       s++; return T + P;
     };

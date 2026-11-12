@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>A Pulsar desmontada · 2048 Astros</title>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root { --c:#5ef0ff; --m:#ff5ec8; --ok:#5effa0; --pas:#ffd25e; --fora:#ff5e6c; --fundo:#070a18; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:radial-gradient(ellipse at top,#16163a,var(--fundo) 70%); color:#dfe6ff; font:15px/1.5 'Exo 2',sans-serif; }
+  main { max-width:760px; margin:0 auto; padding:18px 14px 60px; }
+  h1 { font:900 22px 'Orbitron',sans-serif; color:var(--c); text-shadow:0 0 12px #5ef0ff88; margin:6px 0 4px; }
+  h2 { font:700 15px 'Orbitron',sans-serif; color:var(--m); margin:26px 0 8px; letter-spacing:.5px; }
+  p { margin:6px 0; } .fraco { opacity:.7; font-size:13px; }
+  button { font:700 14px 'Exo 2',sans-serif; color:var(--c); background:transparent; border:1.5px solid var(--c); border-radius:10px; padding:9px 14px; box-shadow:0 0 8px #5ef0ff44; cursor:pointer; }
+  button:active { background:#5ef0ff22; }
+  .linha { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .painel { border:1px solid #ffffff22; border-radius:14px; padding:12px; background:#0c1030cc; margin-top:12px; }
+  #agora { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; text-align:center; }
+  #agora b { display:block; font:900 20px 'Orbitron',sans-serif; color:#fff; }
+  #agora span { font-size:12px; opacity:.7; }
+  #mapa { display:flex; gap:3px; margin-top:10px; }
+  #mapa div { flex:1; text-align:center; font-size:11px; padding:5px 0; border-radius:6px; background:#ffffff10; position:relative; overflow:hidden; }
+  #mapa div.on { background:#ff5ec833; color:#fff; font-weight:700; }
+  #mapa i { position:absolute; left:0; bottom:0; height:3px; background:var(--m); }
+  #acordes { display:flex; gap:6px; margin-top:10px; min-height:34px; }
+  #acordes div { flex:1; text-align:center; padding:6px 2px; border-radius:8px; border:1px solid #ffffff22; font-size:13px; }
+  #acordes div.on { border-color:var(--c); color:#fff; box-shadow:0 0 10px #5ef0ff55; }
+  canvas { width:100%; height:220px; display:block; margin-top:10px; border-radius:10px; background:#05071299; }
+  .leg { display:flex; gap:12px; flex-wrap:wrap; font-size:12px; margin-top:6px; }
+  .leg i { display:inline-block; width:12px; height:8px; border-radius:2px; margin-right:4px; vertical-align:middle; }
+  .camada { display:flex; gap:10px; align-items:flex-start; border:1px solid #ffffff22; border-radius:12px; padding:10px; margin-top:8px; background:#0c1030aa; }
+  .camada.mudo { opacity:.4; }
+  .camada .t { flex:1; } .camada b { color:#fff; }
+  .camada button { padding:6px 10px; font-size:12px; white-space:nowrap; }
+  .luz { width:12px; height:12px; border-radius:50%; margin-top:5px; background:#ffffff22; flex:none; transition:background .05s; }
+  .luz.acesa { background:var(--c); box-shadow:0 0 10px var(--c); }
+  #contagem { font-size:13px; margin-top:6px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>A Pulsar desmontada</h1>
+  <p class="fraco">A trilha do Clássico, tocada pelo mesmo código do jogo. Ligue e desligue cada camada para ouvir o que cada uma faz.</p>
+
+  <div class="linha" style="margin-top:12px">
+    <button id="tocar">▶ Tocar</button>
+    <button id="sorte">↻ Outro sorteio</button>
+    <span class="fraco" id="sem"></span>
+  </div>
+
+  <div class="painel">
+    <div id="agora">
+      <div><b id="parte">·</b><span>parte</span></div>
+      <div><b id="acorde">·</b><span>acorde</span></div>
+      <div><b id="tom">·</b><span>tom</span></div>
+    </div>
+    <div id="mapa"></div>
+    <div id="acordes"></div>
+    <canvas id="rolo"></canvas>
+    <div class="leg">
+      <span><i style="background:#5ef0ff33"></i>notas do acorde (zona segura)</span>
+      <span><i style="background:var(--ok)"></i>melodia no acorde</span>
+      <span><i style="background:var(--pas)"></i>nota de passagem (curta, fora do acorde)</span>
+      <span><i style="background:var(--fora)"></i>fora do acorde e segurada</span>
+    </div>
+    <div id="contagem" class="fraco"></div>
+  </div>
+
+  <h2>As camadas</h2>
+  <div id="camadas"></div>
+
+  <h2>Como um ciclo anda</h2>
+  <p><b>Entrada</b> (só na primeira vez): o arpejo abafado vai abrindo, depois entram baixo e chimbal, depois o bumbo.</p>
+  <p><b>A</b>: a Pulsar de sempre. Acordes Si menor, Sol, Ré e Lá, duas vezes. É o "refrão" sem melodia.</p>
+  <p><b>A'</b>: os mesmos acordes, mas o arpejo e o baixo trocam de desenho (sorteados).</p>
+  <p><b>B</b>: outra sequência de acordes (uma de quatro, sorteada) e a melodia aparece.</p>
+  <p><b>Respiro</b>: a bateria some, o baixo fica longo, o arpejo desacelera. No fim, um ruído sobe e anuncia a volta.</p>
+  <p><b>Volta</b>: os acordes de A de novo, agora com a melodia por cima e o chimbal mais cheio.</p>
+  <p>Um ciclo leva uns 80 s. A cada dois ciclos o tom muda (Si, Dó#, Lá ou Ré menor) e sempre volta a Si.</p>
+
+  <h2>Por que não há uma melodia para lembrar</h2>
+  <p>A melodia é <b>sorteada a cada ciclo</b>: o código escolhe um ritmo de pergunta (2 compassos) e outro de resposta, e sorteia passos para cima e para baixo na escala. Só garante que a nota no começo e no meio do compasso seja do acorde. Por isso cada ciclo canta uma coisa diferente, e as notas vermelhas no desenho (fora do acorde, seguradas) são as que soam "sem pousar".</p>
+  <p class="fraco">Use "Outro sorteio" para ouvir melodias diferentes saindo do mesmo sistema.</p>
+</main>
+
+<script type="module">
+import { iniciarMusica, pararMusica } from './musica/pulsar.js?v=1';
+
+const NOTA = ['Dó','Dó#','Ré','Ré#','Mi','Fá','Fá#','Sol','Sol#','Lá','Lá#','Si'];
+const BASE = { Bm:[11,'m'], G:[7,''], D:[2,''], A:[9,''], Em:[4,'m'], 'F#':[6,''], 'F#m':[6,'m'], G7M:[7,'7M'] };
+const pc = m => ((m % 12) + 12) % 12;
+const nomeAcorde = (n, tr) => { const [r, q] = BASE[n]; return NOTA[pc(r + tr)] + q; };
+const PARTES = ['entrada', 'A', "A'", 'B', 'respiro', 'volta'];
+
+const CAMADAS = [
+  ['bateria', 'Bateria', 'Bumbo em todo tempo, palma no 2 e no 4, chimbal no contratempo: a batida reta da música eletrônica, a 112 batidas por minuto. Nas viradas (a cada 4 compassos) a caixa rola.'],
+  ['baixo', 'Baixo', 'Toca a nota principal do acorde num ritmo 3+3+2 (o do tresillo, da música latina e do funk). É ele que dá o balanço.'],
+  ['acordes', 'Acordes de fundo', 'Um colchão bem baixinho com as quatro notas do acorde, que respira a cada compasso. Quase não se nota, mas sem ele a música fica oca.'],
+  ['arpejo', 'Arpejo', 'As notas do acorde tocadas uma a uma, rápido, com eco. É o brilho neon e a coisa mais reconhecível da Pulsar hoje.'],
+  ['melodia', 'Melodia', 'Só na parte B e na volta. Sorteada a cada ciclo (veja abaixo).'],
+];
+const mudo = {}, luz = {};
+const caixa = document.getElementById('camadas');
+for (const [k, nome, txt] of CAMADAS) {
+  const d = document.createElement('div'); d.className = 'camada';
+  d.innerHTML = `<div class="luz"></div><div class="t"><b>${nome}</b><br><span class="fraco">${txt}</span></div>
+    <div style="display:flex;flex-direction:column;gap:6px"><button data-a="liga">Desligar</button><button data-a="so">Só esta</button></div>`;
+  luz[k] = d.querySelector('.luz');
+  d.querySelector('[data-a=liga]').onclick = () => { mudo[k] = !mudo[k]; pinta(); };
+  d.querySelector('[data-a=so]').onclick = () => { const sozinha = CAMADAS.every(([j]) => j === k ? !mudo[j] : mudo[j]);
+    for (const [j] of CAMADAS) mudo[j] = sozinha ? false : j !== k; pinta(); };
+  d.dataset.k = k; caixa.appendChild(d);
+}
+function pinta() { for (const d of caixa.children) { const m = !!mudo[d.dataset.k]; d.classList.toggle('mudo', m);
+  d.querySelector('[data-a=liga]').textContent = m ? 'Ligar' : 'Desligar'; } }
+
+const mapa = document.getElementById('mapa');
+for (const p of PARTES) { const d = document.createElement('div'); d.textContent = p; d.dataset.p = p; d.appendChild(document.createElement('i')); mapa.appendChild(d); }
+
+// os passos chegam adiantados (o motor agenda uns 0,3 s à frente): ficam na fila até a hora deles
+let ctx = null, tocando = false, fila = [], compassos = [], atual = null, stAtual = 0, fora = 0, notasMel = 0, cicloVisto = -1, parteVista = null, naParte = 0, tamParte = 8;
+const aoPasso = (T, s, B) => fila.push({ T, s, B });
+function quadro() {
+  requestAnimationFrame(quadro);
+  if (!ctx) return;
+  const agora = ctx.currentTime;
+  while (fila.length && fila[0].T <= agora) aplica(fila.shift());
+  desenha();
+}
+function aplica({ s, B }) {
+  const st = s % 16;
+  if (atual !== B) {
+    compassos.push(B); if (compassos.length > 2) compassos.shift();
+    atual = B;
+    if (B.ciclo !== cicloVisto) { cicloVisto = B.ciclo; fora = 0; notasMel = 0; }
+    if (B.parte !== parteVista) { parteVista = B.parte; naParte = 0; tamParte = B.tamParte || 8; }
+    naParte++;
+    document.getElementById('parte').textContent = B.parte;
+    document.getElementById('acorde').textContent = nomeAcorde(B.nome, B.tr);
+    document.getElementById('tom').textContent = NOTA[pc(11 + B.tr)] + ' menor';
+    for (const d of mapa.children) d.classList.toggle('on', d.dataset.p === B.parte);
+    if (B.mel) for (const [nota, dur] of Object.values(B.mel)) { notasMel++; if (!B.ch.map(pc).includes(pc(nota)) && dur >= 4) fora++; }
+    document.getElementById('contagem').textContent = notasMel ? `Neste ciclo, até agora: ${notasMel} notas de melodia, ${fora} fora do acorde e seguradas.` : '';
+    const ac = document.getElementById('acordes'), n = (naParte - 1) % 4;
+    if (n === 0) ac.innerHTML = '<div></div><div></div><div></div><div></div>';
+    ac.children[n].textContent = nomeAcorde(B.nome, B.tr);
+    [...ac.children].forEach((d, i) => d.classList.toggle('on', i === n));
+  }
+  stAtual = st;
+  for (const d of mapa.children) d.querySelector('i').style.width = d.dataset.p === B.parte ? Math.min(100, ((naParte - 1) * 16 + st + 1) / (tamParte * 16) * 100) + '%' : '0';
+  const acende = (k, on) => { if (on && !mudo[k]) { luz[k].classList.add('acesa'); setTimeout(() => luz[k].classList.remove('acesa'), 90); } };
+  acende('bateria', B.bumbo.includes(st) || B.palma.includes(st) || B.chimbal.includes(st));
+  acende('baixo', B.baixo.includes(st));
+  acende('acordes', st === 0 && B.pad);
+  acende('arpejo', B.arp && st % B.arpCada === 0);
+  acende('melodia', B.mel && B.mel[st]);
+}
+
+// desenho: o compasso anterior (apagado) e o de agora; faixas azuis são as notas do acorde
+const cv = document.getElementById('rolo'), g = cv.getContext('2d');
+function desenha() {
+  const dpr = devicePixelRatio, W = cv.clientWidth * dpr, H = cv.clientHeight * dpr;
+  if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
+  g.clearRect(0, 0, W, H);
+  if (!atual) return;
+  const lo = 64 + atual.tr, hi = 86 + atual.tr, lh = H / (hi - lo + 1), pw = W / 32;
+  g.font = `${11 * dpr}px 'Exo 2'`;
+  compassos.forEach((B, k) => {
+    const ox = (compassos.length === 2 ? k : 1) * 16 * pw;
+    g.globalAlpha = compassos.length === 2 && k === 0 ? 0.35 : 1;
+    const cs = B.ch.map(pc);
+    for (let m = lo; m <= hi; m++) if (cs.includes(pc(m))) { g.fillStyle = '#5ef0ff22'; g.fillRect(ox, H - (m - lo + 1) * lh, 16 * pw, lh); }
+    g.fillStyle = '#ffffffaa'; g.fillText(nomeAcorde(B.nome, B.tr), ox + 4, 13 * dpr);
+    if (B.mel) for (const [st, [m, dur]] of Object.entries(B.mel)) {
+      const dentro = cs.includes(pc(m)), y = H - (m - lo + 1) * lh;
+      g.fillStyle = dentro ? '#5effa0' : dur >= 4 ? '#ff5e6c' : '#ffd25e';
+      g.fillRect(ox + st * pw + 1, y + 1, Math.min(dur, 16 - st) * pw - 2, lh - 2);
+      if (dur * pw > 28 * dpr) { g.fillStyle = '#000c'; g.fillText(NOTA[pc(m)], ox + st * pw + 4, y + lh - 3 * dpr); }
+    }
+  });
+  g.globalAlpha = 1;
+  g.strokeStyle = '#ffffff22';
+  for (let i = 0; i <= 32; i += 4) { g.lineWidth = i % 16 ? 1 : 2; g.beginPath(); g.moveTo(i * pw, 0); g.lineTo(i * pw, H); g.stroke(); }
+  g.fillStyle = '#fff'; g.fillRect((16 + stAtual) * pw, 0, 2 * dpr, H);
+}
+requestAnimationFrame(quadro);
+
+function comeca() {
+  const semente = Math.floor(Math.random() * 1e9);
+  fila = []; compassos = []; atual = null; cicloVisto = -1; parteVista = null;
+  const sai = ctx.createGain(); sai.gain.value = 1.3; sai.connect(ctx.destination);
+  iniciarMusica(ctx, sai, { semente, mudo, aoPasso });
+  document.getElementById('sem').textContent = 'sorteio nº ' + semente;
+}
+const bt = document.getElementById('tocar');
+bt.onclick = () => {
+  if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+  ctx.resume();
+  if (tocando) { pararMusica(0.4); tocando = false; bt.textContent = '▶ Tocar'; return; }
+  comeca(); tocando = true; bt.textContent = '■ Parar';
+};
+document.getElementById('sorte').onclick = () => {
+  if (!tocando) return bt.click();
+  pararMusica(0.2); comeca();
+};
+</script>
+</body>
+</html>

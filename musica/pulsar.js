@@ -40,7 +40,7 @@ const RESPOSTA = [[[0, 4], [4, 4], [8, 8]], [[0, 2], [2, 2], [4, 10]], [[0, 3], 
 
 const pc = m => ((m % 12) + 12) % 12;
 const dobra = r => { while (r < 29) r += 12; while (r > 42) r -= 12; return r; };   // baixo sempre na mesma região
-const barra = (nome, tr, extra) => { const [ch, r] = AC[nome]; return { ch: ch.map(m => m + tr), raiz: dobra(r + tr), ...extra }; };
+const barra = (nome, tr, extra) => { const [ch, r] = AC[nome]; return { ch: ch.map(m => m + tr), raiz: dobra(r + tr), nome, tr, ...extra }; };   // nome e tr: só para a página pulsar.html
 const secao = (seq, n, tr, extra = {}) => Array.from({ length: n }, (_, i) => barra(seq[i % seq.length], tr, extra));
 
 // notas que cabem no acorde: as dele e as da pentatônica que não ficam a meio tom de nenhuma delas
@@ -103,6 +103,7 @@ function arranjo(rnd, ciclo, estado) {
     e[0].arpLp = 700; e[1].arpLp = 1000;
     Object.assign(e[2], { arpLp: 1300, chimbal: [2, 6, 10, 14], baixo: BAIXO[0].baixo });
     Object.assign(e[3], { chimbal: [2, 6, 10, 14], baixo: BAIXO[0].baixo, bumbo: [0, 4, 8, 12], sopro: 0.02, rolo: SOBE });
+    e.forEach(c => { c.parte = 'entrada'; c.ciclo = 0; c.tamParte = e.length; });
     out.push(...e);
   }
   const a = secao(SEQ_A, 8, tr); a[0].prato = 0.03; viradaLeve(rnd, a[3]); viradaLeve(rnd, a[7]);
@@ -118,6 +119,7 @@ function arranjo(rnd, ciclo, estado) {
   Object.assign(r[nr - 1], { chimbal: [2, 6, 10, 14], chimbalFraco: FRACO, bumbo: [0, 4, 8, 12], sopro: 0.022, rolo: SOBE });
   const v = secao(SEQ_A, 8, tr, { arp: arpV, ...bx2, chimbalFraco: FRACO, melV: 0.036 }); v[0].prato = 0.035; poeMelodia(v, mot, tr);
   viradaLeve(rnd, v[3]); viradaGrande(rnd, v[7]);
+  for (const [cs, nomeParte] of [[a, 'A'], [a2, "A'"], [b, 'B'], [r, 'respiro'], [v, 'volta']]) cs.forEach(c => { c.parte = nomeParte; c.ciclo = ciclo; c.tamParte = cs.length; });
   out.push(...a, ...a2, ...b, ...r, ...v);
   return out;
 }
