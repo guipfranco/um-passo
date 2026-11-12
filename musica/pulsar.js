@@ -88,6 +88,63 @@ function poeMelodia(cs, mot, tr, firme = false) {
   }
 }
 
+// Temas fixos (rascunho de 2026-11-12, para a pessoa ouvir na página pulsar.html e escolher): 8 compassos escritos sobre
+// Si menor, Sol, Ré, Lá (duas voltas: a primeira termina no ar, a segunda pousa). Notas: [passo, nota MIDI em Si menor, duração].
+// Sobre outros acordes, cada nota vai para a mais perto que cabe no acorde (o ritmo e o desenho ficam).
+export const TEMAS = [
+  { nome: 'Pulso', onda: 'square', lp: 2600, v: 0.026, notas: [   // riff no ritmo 3+3+2 do baixo, que repete e sobe
+    [[0, 78, 3], [3, 76, 3], [6, 74, 2], [8, 78, 4], [12, 74, 2], [14, 71, 2]],
+    [[0, 79, 3], [3, 78, 3], [6, 74, 2], [8, 79, 4], [12, 74, 2], [14, 71, 2]],
+    [[0, 81, 3], [3, 78, 3], [6, 74, 2], [8, 81, 4], [12, 78, 2], [14, 76, 2]],
+    [[0, 81, 3], [3, 76, 3], [6, 73, 2], [8, 76, 8]],
+    [[0, 78, 3], [3, 76, 3], [6, 74, 2], [8, 78, 4], [12, 74, 2], [14, 71, 2]],
+    [[0, 79, 3], [3, 78, 3], [6, 74, 2], [8, 79, 4], [12, 74, 2], [14, 71, 2]],
+    [[0, 81, 3], [3, 78, 3], [6, 74, 2], [8, 78, 4], [12, 76, 2], [14, 74, 2]],
+    [[0, 76, 2], [2, 73, 2], [4, 69, 12]],
+  ] },
+  { nome: 'Órbita lenta', onda: 'sine', lp: 3000, v: 0.05, notas: [   // poucas notas longas, com saltos largos
+    [[0, 71, 6], [6, 78, 10]],
+    [[0, 79, 6], [6, 78, 2], [8, 74, 8]],
+    [[0, 74, 4], [4, 76, 2], [6, 78, 10]],
+    [[0, 76, 8], [8, 73, 8]],
+    [[0, 71, 6], [6, 78, 10]],
+    [[0, 83, 6], [6, 81, 2], [8, 79, 8]],
+    [[0, 78, 6], [6, 76, 2], [8, 74, 8]],
+    [[0, 73, 8], [8, 69, 8]],
+  ] },
+  { nome: 'Constelação', onda: 'triangle', lp: 4200, v: 0.042, notas: [   // saltitante, sobe pelo acorde e cai no contratempo
+    [[0, 71, 2], [2, 74, 2], [4, 78, 2], [6, 83, 4], [10, 81, 2], [12, 78, 4]],
+    [[0, 79, 2], [2, 74, 2], [4, 71, 2], [6, 79, 4], [10, 78, 2], [12, 74, 4]],
+    [[0, 78, 2], [2, 81, 2], [4, 74, 2], [6, 81, 4], [10, 83, 2], [12, 81, 4]],
+    [[0, 81, 2], [2, 76, 2], [4, 73, 2], [6, 76, 10]],
+    [[0, 71, 2], [2, 74, 2], [4, 78, 2], [6, 83, 4], [10, 81, 2], [12, 78, 4]],
+    [[0, 79, 2], [2, 74, 2], [4, 71, 2], [6, 79, 4], [10, 78, 2], [12, 74, 4]],
+    [[0, 78, 2], [2, 81, 2], [4, 74, 2], [6, 78, 4], [10, 76, 2], [12, 74, 4]],
+    [[0, 76, 2], [2, 73, 2], [4, 69, 2], [6, 73, 4], [10, 69, 6]],
+  ] },
+  { nome: 'Sertão estelar', onda: 'sawtooth', lp: 1700, v: 0.03, notas: [   // síncope de forró: notas que chegam antes do tempo
+    [[0, 74, 2], [2, 74, 1], [3, 76, 3], [6, 78, 2], [8, 74, 2], [10, 71, 4], [14, 79, 4]],
+    [[2, 78, 1], [3, 79, 3], [6, 74, 2], [8, 71, 4], [12, 74, 2], [14, 78, 4]],
+    [[2, 76, 1], [3, 78, 3], [6, 81, 2], [8, 78, 4], [12, 74, 2], [14, 76, 4]],
+    [[2, 73, 2], [4, 69, 4], [8, 73, 8]],
+    [[0, 74, 2], [2, 74, 1], [3, 76, 3], [6, 78, 2], [8, 74, 2], [10, 71, 4], [14, 79, 4]],
+    [[2, 78, 1], [3, 79, 3], [6, 83, 2], [8, 79, 4], [12, 74, 2], [14, 78, 4]],
+    [[2, 76, 1], [3, 78, 3], [6, 74, 2], [8, 69, 4], [12, 74, 2], [14, 76, 4]],
+    [[2, 73, 2], [4, 76, 4], [8, 69, 8]],
+  ] },
+];
+function poeTema(cs, tema, tr) {
+  cs.forEach((c, i) => {
+    const escrito = SEQ_A[i % 4], proprio = c.nome === escrito, { notas, doAcorde } = cabem(c.ch, tr, 60 + tr, 90 + tr);
+    c.mel = {}; c.melOnda = tema.onda; c.melLp = tema.lp; c.melV = tema.v;
+    for (const [st, m0, d] of tema.notas[i % tema.notas.length]) {
+      let m = m0 + tr;
+      if (!proprio) { if (!notas.includes(m)) m = perto(notas, m); if (d >= 4 && !doAcorde.includes(m)) m = perto(doAcorde, m); }
+      c.mel[st] = [m, d];
+    }
+  });
+}
+
 const viradaLeve = (rnd, c) => Object.assign(c, escolhe(rnd, [{ rolo: { 14: 0.5, 15: 0.7 } }, { bumbo: [0, 4, 8, 12, 14], rolo: { 15: 0.6 } }, { aberto: [14], rolo: { 15: 0.6 } }]));
 const viradaGrande = (rnd, c) => Object.assign(c, escolhe(rnd, [
   { rolo: SOBE, palma: [4] },                                                       // caixa que cresce
@@ -124,11 +181,12 @@ export function montaParte(qual, o, tr, rnd) {
     if (qual === 'volta') cs.forEach(c => { c.chimbalFraco = FRACO; });
     viradaLeve(rnd, cs[3]); (qual === 'A' ? viradaLeve : viradaGrande)(rnd, cs[7]);
   }
-  if (o.mot) poeMelodia(cs, o.mot, tr, o.firme);
+  if (o.tema) poeTema(cs, o.tema, tr);
+  else if (o.mot) poeMelodia(cs, o.mot, tr, o.firme);
   cs.forEach((c, i) => { c.parte = qual; c.tamParte = n; c.j = i; });
   return cs;
 }
-export const OPCOES = { SEQ_A, SEQ_B, SEQ_R, ARP, BAIXO, PERGUNTA, RESPOSTA };
+export const OPCOES = { TEMAS, SEQ_A, SEQ_B, SEQ_R, ARP, BAIXO, PERGUNTA, RESPOSTA };
 
 function arranjo(rnd, ciclo, estado) {
   if (ciclo === 0) estado.tr = 0;

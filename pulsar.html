@@ -61,7 +61,7 @@
   <div id="pecas"></div>
 
   <h2>A melodia</h2>
-  <p class="fraco">A mesma frase vale para todas as partes com melodia: uma pergunta (1 compasso) e uma resposta (1 compasso), repetidas e adaptadas aos acordes.</p>
+  <p class="fraco">A melodia vale para todas as partes que estão com ela ligada (de início, o B e a volta). Os temas foram escritos sobre os acordes de sempre (Si menor, Sol, Ré, Lá); em outros acordes, cada nota escorrega para a mais perto que combina.</p>
   <div id="melodia"></div>
 
   <h2>Tom</h2>
@@ -86,9 +86,9 @@
 </main>
 
 <script type="module">
-import { iniciarMusica, pararMusica, montaParte, motivo, OPCOES, PADRAO } from './musica/pulsar.js?v=4';
+import { iniciarMusica, pararMusica, montaParte, motivo, OPCOES, PADRAO } from './musica/pulsar.js?v=5';
 import { sorteio } from './musica/eletronica.js';
-const { SEQ_A, SEQ_B, SEQ_R, ARP, BAIXO, PERGUNTA, RESPOSTA } = OPCOES;
+const { TEMAS, SEQ_A, SEQ_B, SEQ_R, ARP, BAIXO, PERGUNTA, RESPOSTA } = OPCOES;
 
 const NOTA = ['Dó','Dó#','Ré','Ré#','Mi','Fá','Fá#','Sol','Sol#','Lá','Lá#','Si'];
 const RAIZ = { Bm:[11,'m'], G:[7,''], D:[2,''], A:[9,''], Em:[4,'m'], 'F#':[6,''], 'F#m':[6,'m'], G7M:[7,'7M'] };
@@ -125,14 +125,14 @@ const esc = {
   respiro: { seq: 'R0', n: 8, arp: 0 },
   volta: { seq: 'A', arp: 3, bx: 2, mel: true },
 };
-const mel = { ip: 0, ir: 0, contorno: 1, firme: false };
+const mel = { tema: -1, ip: 0, ir: 0, contorno: 1, firme: false };
 let tr = 0;
 
 const plano = {};
 function monta() {
   const mot = motivo(sorteio(mel.contorno * 7919), mel.ip, mel.ir);
   PARTES.forEach((q, i) => {
-    const e = esc[q], o = { arp: e.arp, bx: e.bx, n: e.n, firme: mel.firme, mot: e.mel ? mot : null };
+    const e = esc[q], o = { arp: e.arp, bx: e.bx, n: e.n, firme: mel.firme, mot: e.mel ? mot : null, tema: e.mel && mel.tema >= 0 ? TEMAS[mel.tema] : null };
     if (e.seq) o.seq = SEQS[e.seq] || SEQS_R[e.seq];
     plano[q] = montaParte(q, o, tr, sorteio(1000 + i)).map(c => ({ ...PADRAO, ...c }));
   });
@@ -144,8 +144,8 @@ monta();
 function eventos(B) {
   const ev = [], para = st => B.corte != null && st >= B.corte;
   if (B.mel) for (const [st, [m, d]] of Object.entries(B.mel)) {
-    const dentro = B.ch.map(pc).includes(pc(m));
-    ev.push({ f: 'melodia', m, st: +st, d: Math.min(d, 16 - st), cor: dentro ? COR.melodia : d >= 4 ? COR.fora : COR.passagem, a: 1 });
+    const dentro = B.ch.map(pc).includes(pc(m)), dd = Math.min(d, 16 - st);   // nota que passa do compasso chega antes do acorde seguinte
+    ev.push({ f: 'melodia', m, st: +st, d: dd, cor: dentro ? COR.melodia : dd >= 4 ? COR.fora : COR.passagem, a: 1 });
   }
   if (B.arp) for (let st = 0; st < 16; st += B.arpCada) {
     const idx = B.arp[(st / B.arpCada) % B.arp.length], m = B.ch[idx % 4] + 12 * Math.floor(idx / 4);
@@ -260,8 +260,23 @@ function pecas() {
     chips(el, [[false, 'sem'], [true, 'com']], e.mel, v => e.mel = v, { o: 'a melodia', f: 'melodia' });
   }
 }
+const TEMA_INFO = [
+  ['Sorteada (como hoje)', 'Cada ciclo sorteia uma frase nova, montada de uma pergunta (um compasso que fica no ar) e uma resposta (um compasso que pousa). Varia sempre, por isso não gruda.'],
+  ['1 · Pulso', 'Um riff curto no mesmo ritmo 3+3+2 do baixo, repetido e subindo um pouco a cada acorde. Som quadrado, de videogame. Parentes: Tetris, Super Hexagon.'],
+  ['2 · Órbita lenta', 'Poucas notas, longas, com saltos largos: dá para cantar junto. Som puro e macio. Parentes: Outer Wilds, Oxygène de Jarre.'],
+  ['3 · Constelação', 'Saltitante: sobe pelas notas do acorde e cai fora do tempo. Som de flauta eletrônica. Parentes: Celeste, FEZ.'],
+  ['4 · Sertão estelar', 'Síncope de forró: notas que chegam antes do tempo e notas repetidas. Som mais encorpado, entre sanfona e pífano eletrônico. Parentes: o baião, Marcos Valle, Azymuth.'],
+];
+const miniTema = t => mini(g => { g.fillStyle = COR.melodia;
+  t.notas.slice(0, 4).forEach((bar, j) => bar.forEach(([st, m, d]) => g.fillRect(j * 16 + st, 19 - (m - 68) * 1.1, Math.max(1, Math.min(d, 16 - st) - 0.5), 2.5))); });
+function ouvirTema() { esc.volta.mel = true; monta(); ver = 'volta'; repete = true; btR.classList.add('on'); comeca('volta'); tudo(); }
 function melodia() {
   const el = document.getElementById('melodia'); el.innerHTML = '';
+  h3(el, 'Tema', 'melodia', 'Escolha uma melodia fixa ou deixe sorteada. O desenhinho mostra os 4 primeiros compassos.');
+  chips(el, TEMA_INFO.map(([t], i) => [i - 1, t, i ? miniTema(TEMAS[i - 1]) : mini(g => { g.fillStyle = COR.melodia + '66'; g.font = '13px sans-serif'; g.fillText('? ? ?', 16, 16); })]), mel.tema, v => mel.tema = v, { o: 'o tema', f: 'melodia' });
+  const info = document.createElement('p'); info.className = 'expl'; info.style.marginTop = '6px'; info.textContent = TEMA_INFO[mel.tema + 1][1]; el.appendChild(info);
+  const ouvir = document.createElement('button'); ouvir.textContent = '▶ Ouvir este tema (na volta, repetindo)'; ouvir.onclick = ouvirTema; el.appendChild(ouvir);
+  if (mel.tema >= 0) return;
   h3(el, 'Ritmo da pergunta', 'melodia', 'Quando cada nota do primeiro compasso começa e quanto dura (o desenhinho é o compasso inteiro).');
   chips(el, PERGUNTA.map((r, i) => [i, String(i + 1), miniRit(r)]), mel.ip, v => mel.ip = v, { o: 'o ritmo da pergunta', f: 'melodia' });
   h3(el, 'Ritmo da resposta', 'melodia', 'O mesmo para o compasso que responde; ela termina com uma nota longa, que pousa.');
@@ -278,7 +293,7 @@ function tudo() {
   document.getElementById('titulo').textContent = ver; document.getElementById('oque').textContent = SOBRE[ver];
   pintaPartes(); pecas(); melodia(); tons();
   let n = 0, f = 0;
-  for (const c of plano[ver]) if (c.mel) for (const [m, d] of Object.values(c.mel)) { n++; if (!c.ch.map(pc).includes(pc(m)) && d >= 4) f++; }
+  for (const c of plano[ver]) if (c.mel) for (const [st, [m, d]] of Object.entries(c.mel)) { n++; if (!c.ch.map(pc).includes(pc(m)) && Math.min(d, 16 - st) >= 4) f++; }
   document.getElementById('conta').textContent = n ? `Melodia desta parte: ${n} notas, ${f} fora do acorde e seguradas (vermelhas).` : '';
 }
 
