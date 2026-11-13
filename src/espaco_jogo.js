@@ -391,15 +391,36 @@ function presencaM(ci,cj,ok){
   for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(!casaOk(x,y)){ const ex=Math.max(x-ci,0,ci-(x+1)), ey=Math.max(y-cj,0,cj-(y+1)); dentro=Math.min(dentro,Math.hypot(ex,ey)); }
   return .5+.5*Math.min(1,dentro/1.1);
 }
+// Casa que não existe pela própria malha (em teste no rascunho telas_quebra.html): cor:true pinta a rede de vermelho ali;
+// forma 'rasgo' empurra a rede para fora do vão (abre um buraco com a borda franzida), 'amassa' enruga a rede dentro dele.
+// Com os dois desligados (o padrão), a rede some no vão como sempre.
+let MALHA_VAO={cor:false, forma:null};
+const malhaVaoLiga=()=>MALHA_VAO.cor||!!MALHA_VAO.forma;
+// peso do vão em cada ponto (1 dentro da casa que não existe, caindo a 0 a um terço de casa dela) e o empurrão parado
+function vaoM(n,ci,cj,vaos,pa){
+  let v=0, mx=0, my=0;
+  for(const [x,y] of vaos){ const ex=Math.max(x-ci,0,ci-(x+1)), ey=Math.max(y-cj,0,cj-(y+1)), d=Math.hypot(ex,ey), k=Math.max(0,1-d/.34);
+    if(k>v){ v=k; mx=x+.5; my=y+.5; } }
+  n.v=v; n.vdx=0; n.vdy=0; if(!v) return;
+  const ex=ci-mx, ey=cj-my, d=Math.hypot(ex,ey);
+  if(MALHA_VAO.forma==='rasgo'){   // para fora do meio do vão: os pontos de dentro vão para a beira, a rede abre ali
+    const r=Math.max(.001,d), alvo=.5+.12*v, f=Math.max(0,alvo-r)*v; n.vdx=ex/r*f*pa; n.vdy=ey/r*f*pa; }
+  else if(MALHA_VAO.forma==='amassa'){   // rugas paradas: cada ponto vai para um lado, mais forte no meio do vão
+    const s=Math.sin(ci*12.9898+cj*78.233)*43758.5453, a=(s-Math.floor(s))*6.283, f=pa*.11*v*v; n.vdx=Math.cos(a)*f; n.vdy=Math.sin(a)*f; }
+}
 let malhaT=0, malhaSelo='', malhaParada=false;
 function malhaQuadro(t){
   const cv=malhaCamada(), g=geoTab(); if(!g.r.width||!S||!S.tiles) return;
   const Wp=Math.round((g.r.width+2*g.cel)*g.D), Hp=Math.round((g.r.height+2*g.cel)*g.D); let refaz=false;
   if(cv.width!==Wp||cv.height!==Hp){ cv.width=Wp; cv.height=Hp; refaz=true; }
-  const NI=(W+2*MBORDA)*MSUB+1, NJ=(H+2*MBORDA)*MSUB+1, chave=W+'x'+H+':'+Wp+':'+Hp+':'+(S.walls||[]).filter(w=>w.v).map(w=>w.x+','+w.y).join(';');
-  if(!MN||MN.chave!==chave){ MN={chave,nos:[]}; const ok=[]; for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(casaOk(x,y)) ok.push([x,y]);
-    for(let j=0;j<NJ;j++) for(let i=0;i<NI;i++){ const rx=g.O+g.g0+(i-MBORDA*MSUB)*g.P/MSUB, ry=g.O+g.g0+(j-MBORDA*MSUB)*g.P/MSUB;
-      MN.nos.push({i,j,rx,ry,x:rx,y:ry,vx:0,vy:0,h:0,w:0,f:presencaM(i/MSUB-MBORDA,j/MSUB-MBORDA,ok)}); }
+  const NI=(W+2*MBORDA)*MSUB+1, NJ=(H+2*MBORDA)*MSUB+1, chave=W+'x'+H+':'+Wp+':'+Hp+':'+(S.walls||[]).filter(w=>w.v).map(w=>w.x+','+w.y).join(';')+':'+JSON.stringify(MALHA_VAO);
+  if(!MN||MN.chave!==chave){ MN={chave,nos:[]}; const ok=[], vaos=[]; for(let y=0;y<H;y++) for(let x=0;x<W;x++) (casaOk(x,y)?ok:vaos).push([x,y]);
+    // com o vão marcado pela malha, a rede passa por ele (presença como casa) e o vão vem da cor e da forma
+    const liga=malhaVaoLiga(), okP=liga?ok.concat(vaos):ok;
+    for(let j=0;j<NJ;j++) for(let i=0;i<NI;i++){ const rx=g.O+g.g0+(i-MBORDA*MSUB)*g.P/MSUB, ry=g.O+g.g0+(j-MBORDA*MSUB)*g.P/MSUB, ci=i/MSUB-MBORDA, cj=j/MSUB-MBORDA;
+      const n={i,j,rx,ry,x:rx,y:ry,vx:0,vy:0,h:0,w:0,v:0,vdx:0,vdy:0,f:liga?presencaM(ci,cj,okP):presencaM(ci,cj,ok)};
+      if(liga) vaoM(n,ci,cj,vaos,g.P);
+      MN.nos.push(n); }
     refaz=true; }
   if(S.espMax==null && S.tiles.length) S.espMax=Math.max(...S.tiles.map(k=>k.t));
   const dt=Math.min(.05,Math.max(0,t-malhaT)); malhaT=t;
@@ -412,7 +433,7 @@ function malhaQuadro(t){
   malhaSelo=selo;
   let mexe=0;
   if(refaz || seloP!==MN.seloP){ MN.seloP=seloP; for(const n of MN.nos) pocosM(n,pocos,pa); }
-  for(const n of MN.nos){ campoM(n,t,pa); n.vx+=((n.rx+n.cdx-n.x)*90-n.vx*11)*dt; n.vy+=((n.ry+n.cdy-n.y)*90-n.vy*11)*dt; n.x+=n.vx*dt; n.y+=n.vy*dt;
+  for(const n of MN.nos){ campoM(n,t,pa); n.vx+=((n.rx+n.vdx+n.cdx-n.x)*90-n.vx*11)*dt; n.vy+=((n.ry+n.vdy+n.cdy-n.y)*90-n.vy*11)*dt; n.x+=n.vx*dt; n.y+=n.vy*dt;
     mexe=Math.max(mexe,Math.abs(n.vx)+Math.abs(n.vy)); }
   malhaParada = calmo && mexe<2;
   const c=cv.getContext('2d'); c.clearRect(0,0,Wp,Hp);
@@ -425,13 +446,18 @@ function malhaQuadro(t){
   const tema=Math.max(1,(S.missao&&S.tema)||1), no=(i,j)=>MN.nos[j*NI+i];
   let rgb=ESP.MUNDOS_ESP[(tema-1)%ESP.MUNDOS_ESP.length].neb[1].split(',').map(v=>Math.round(+v*.55+255*.45)).join(',');
   const ganho=S.frenesi?freMalhaGanho():1; if(S.frenesi) rgb=freMalhaCor(rgb);   // no Frenesi, na cor do degrau e mais acesa
-  const potes=new Map();
-  const seg=(a,b,maior)=>{ const f=(a.f+b.f)/2; if(f<.02) return; const h=(a.h+b.h)/2, w=(a.w+b.w)/2, fundo=Math.min(.85,h*.32), al=Math.min(1,((maior?.17:.065)*(1-fundo)+w*.6)*f*ganho);
-    if(al<.008) return; const k=Math.round(al*60)+'|'+Math.max(1,Math.round((maior?1.2:.75)*(1-fundo*.5)*4)); let p=potes.get(k); if(!p) potes.set(k,p=[]); p.push(a.x,a.y,b.x,b.y); };
+  const potes=new Map(), VERM='255,84,84', vc=MALHA_VAO.cor;
+  // no vão marcado de vermelho: a linha passa para o vermelho e acende (as finas também), mais quanto mais dentro dele
+  const seg=(a,b,maior)=>{ const f=(a.f+b.f)/2; if(f<.02) return; const h=(a.h+b.h)/2, w=(a.w+b.w)/2, fundo=Math.min(.85,h*.32), v=vc?Math.min(a.v,b.v):0;
+    let al=Math.min(1,((maior?.17:.065)*(1-fundo)+w*.6)*f*ganho); if(v>.5) al=Math.min(1,al+(maior?.3:.22)*v);
+    if(al<.008) return; const k=(v>.5?'v':'')+Math.round(al*60)+'|'+Math.max(1,Math.round((maior?1.2:.75)*(1-fundo*.5)*(v>.5?1.4:1)*4)); let p=potes.get(k); if(!p) potes.set(k,p=[]); p.push(a.x,a.y,b.x,b.y); };
   for(let j=0;j<NJ;j++) for(let i=0;i<NI-1;i++) seg(no(i,j),no(i+1,j),j%MSUB===0);
   for(let i=0;i<NI;i++) for(let j=0;j<NJ-1;j++) seg(no(i,j),no(i,j+1),i%MSUB===0);
+  // e um brilho vermelho fraco no chão de cada vão
+  if(vc) for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(!casaOk(x,y)){ const cx=g.O+g.g0+(x+.5)*pa, cy=g.O+g.g0+(y+.5)*pa, R=pa*.62, gr=c.createRadialGradient(cx,cy,0,cx,cy,R);
+    gr.addColorStop(0,`rgba(${VERM},.16)`); gr.addColorStop(1,`rgba(${VERM},0)`); c.fillStyle=gr; c.fillRect(cx-R,cy-R,2*R,2*R); }
   c.lineCap='round';
-  for(const [k,p] of potes){ const [a,wl]=k.split('|'); c.strokeStyle=`rgba(${rgb},${(a/60).toFixed(3)})`; c.lineWidth=wl/4*g.D; c.beginPath();
+  for(const [k0,p] of potes){ const vm=k0[0]==='v', k=vm?k0.slice(1):k0, [a,wl]=k.split('|'); c.strokeStyle=`rgba(${vm?VERM:rgb},${(a/60).toFixed(3)})`; c.lineWidth=wl/4*g.D; c.beginPath();
     for(let i=0;i<p.length;i+=4){ c.moveTo(p[i],p[i+1]); c.lineTo(p[i+2],p[i+3]); } c.stroke(); }
   ondasM=ondasM.filter(o=>t-o.t0<3); tremM=tremM.filter(o=>t-o.t0<1.2);
 }
