@@ -461,10 +461,17 @@ function malhaQuadro(t){
   const potes=new Map(), vc=Math.max(0,Math.min(1,+MALHA_VAO.cor||0)), VERM=[232,92,96], base=rgb.split(',').map(Number);
   const tons=[0,1,2,3,4].map(k=>{ const m=k/4*vc; return base.map((c,i)=>Math.round(c+(VERM[i]-c)*m)).join(','); });
   const seg=(a,b,maior)=>{ const f=(a.f+b.f)/2; if(f<.02) return; const h=(a.h+b.h)/2, w=(a.w+b.w)/2, fundo=Math.min(.85,h*.32), v=vc?(a.v+b.v)/2:0;
-    let al=Math.min(1,((maior?.17:.065)*(1-fundo)+w*.6)*f*ganho); if(v) al=Math.min(1,al*(1+1.3*vc*v*(1-v)*4)+.05*vc*v);   // a beira acende de leve e o tom aparece
+    let al=Math.min(1,((maior?.17:.065)*(1-fundo)+w*.6)*f*ganho); if(v) al=Math.min(1,al*(1+1.3*vc*v*(1-v)*4)+.08*vc*v);   // a beira acende de leve e o tom aparece
     if(al<.008) return; const k=Math.round(v*4)+'|'+Math.round(al*60)+'|'+Math.max(1,Math.round((maior?1.2:.75)*(1-fundo*.5)*4)); let p=potes.get(k); if(!p) potes.set(k,p=[]); p.push(a.x,a.y,b.x,b.y); };
   for(let j=0;j<NJ;j++) for(let i=0;i<NI-1;i++) seg(no(i,j),no(i+1,j),j%MSUB===0);
   for(let i=0;i<NI;i++) for(let j=0;j<NJ-1;j++) seg(no(i,j),no(i,j+1),i%MSUB===0);
+  // no chão do vão, um brilho vermelho esfumado: uma mancha redonda por casa, larga, que se soma com as vizinhas
+  // (vãos juntos viram uma mancha só, sem os cantos de cada casa)
+  if(vc){ c.save(); c.globalCompositeOperation='lighter';
+    for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(!casaOk(x,y)){ const cx=g.O+g.g0+(x+.5)*pa, cy=g.O+g.g0+(y+.5)*pa, R=pa*.95, gr=c.createRadialGradient(cx,cy,0,cx,cy,R);
+      gr.addColorStop(0,`rgba(${VERM.join(',')},${(.075*vc).toFixed(3)})`); gr.addColorStop(.55,`rgba(${VERM.join(',')},${(.04*vc).toFixed(3)})`); gr.addColorStop(1,`rgba(${VERM.join(',')},0)`);
+      c.fillStyle=gr; c.fillRect(cx-R,cy-R,2*R,2*R); }
+    c.restore(); }
   c.lineCap='round';
   for(const [k,p] of potes){ const [tom,a,wl]=k.split('|'); c.strokeStyle=`rgba(${tons[tom]},${(a/60).toFixed(3)})`; c.lineWidth=wl/4*g.D; c.beginPath();
     for(let i=0;i<p.length;i+=4){ c.moveTo(p[i],p[i+1]); c.lineTo(p[i+2],p[i+3]); } c.stroke(); }
