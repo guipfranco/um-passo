@@ -816,12 +816,17 @@ function cjArrasto(c,W,H,u,t){
     ESP.drawPeca(c,P2,t,x(0),cy,uu,fade,false,p); }
   if(s>1.45) ESP.drawPeca(c,P1,t,x(3),cy,uu,fade,false,cjEase((s-1.45)/.3));
 }
+// só o começo da escada (os 4 primeiros) e um "?" no fim: o resto a pessoa descobre jogando
+const CJ_DEGRAUS=4;
 function cjEscada(c,W,H,u,t){
-  const col=6, pa=W/col, ph=pa*1.36; c.textAlign='center'; c.textBaseline='middle';
-  ESP.LADDER.forEach((d,i)=>{ const x=(i%col+.5)*pa, y=Math.floor(i/col)*ph+pa*.5;
+  const col=CJ_DEGRAUS+1, pa=W/col; c.textAlign='center'; c.textBaseline='middle';
+  ESP.LADDER.slice(0,CJ_DEGRAUS).forEach((d,i)=>{ const x=(i+.5)*pa, y=pa*.5;
     ESP.drawPeca(c,d.n,t,x,y,pa*.74,1,true);
     c.font=`800 ${pa*.15}px 'Exo 2',sans-serif`; c.fillStyle='#f2b33d'; c.fillText(String(2**(i+1)),x,y+pa*.5);
     c.font=`700 ${pa*(d.n.length>8?.13:.15)}px 'Exo 2',sans-serif`; c.fillStyle='#f1eefc'; c.fillText(d.n,x,y+pa*.69); });
+  const x=(CJ_DEGRAUS+.5)*pa, y=pa*.5;
+  cjCasa(c,x,y,pa); c.font=`800 ${pa*.36}px 'Exo 2',sans-serif`; c.fillStyle='rgba(241,238,252,.75)'; c.fillText('?',x,y+pa*.02);
+  c.font=`700 ${pa*.15}px 'Exo 2',sans-serif`; c.fillStyle='#f1eefc'; c.fillText('e mais…',x,y+pa*.69);
 }
 function comoJogarEsp(p){
   if(typeof p!=='number') p=0;
@@ -832,7 +837,7 @@ function comoJogarEsp(p){
      <p>Arraste o dedo para qualquer lado, em qualquer lugar da tela: todas as peças deslizam juntas.</p>
      <p>Duas iguais que se encontram viram a próxima da escada. A cada arrasto nasce uma peça nova.</p>`,
     `<h2>A escada</h2><canvas id="cjCv" class="cjCv"></canvas>
-     <p>Cada junção sobe um degrau. Quanto mais alto, mais pontos.</p>`,
+     <p>Cada junção sobe um degrau. Quanto mais alto, mais pontos. O resto da escada você descobre jogando.</p>`,
     `<h2>Dois modos</h2>
      <p><b>Clássico:</b> o 4x4 sem fim. Junte até não caber mais nada e bata o seu recorde.</p>
      <p><b>Jornada:</b> fases com uma missão cada. Quanto menos arrastos você usar, mais estrelas. Algumas fases não têm limite de arrastos: só acabam se o tabuleiro encher. Cada novidade é explicada na fase em que aparece.</p>`,
@@ -842,7 +847,7 @@ function comoJogarEsp(p){
     <button class="btn dim" id="cjAnt">${p?'‹ Voltar':'Fechar'}</button>
     <button class="btn b" id="cjProx">${p<ult?'Próximo ›':'Jogar'}</button></div>`);
   const cv=$('#cjCv');
-  if(cv) espCanvasFixo(cv, w, p===0 ? Math.round(w/4*1.3) : Math.round(w/6*(1.36*2+1.36)), p===0 ? cjArrasto : cjEscada);
+  if(cv) espCanvasFixo(cv, w, p===0 ? Math.round(w/4*1.3) : Math.round(w/(CJ_DEGRAUS+1)*1.36), p===0 ? cjArrasto : cjEscada);
   $('#cjAnt').onclick=()=>{ if(p) comoJogarEsp(p-1); else fechaJanelaMenu(); }; FORA=fechaJanelaMenu;
   // Jogar faz o mesmo que o botão principal do menu: continua a Jornada ou, sem progresso, abre o mapa dela
   $('#cjProx').onclick=()=>{ if(p<ult) comoJogarEsp(p+1); else if(temProgresso()) continuarEsp(); else missoesLista(JORNADA); };

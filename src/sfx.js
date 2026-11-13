@@ -12,6 +12,17 @@ function ctxAudio(){
   }catch(e){ return null; }
 }
 function ac(){ return sound ? ctxAudio() : null; }
+// iPhone: o Safari só deixa o som andar se ele for retomado dentro de um toque de verdade (tocar e soltar, clique, tecla).
+// O som nasce parado na abertura (a música do menu já pede), e os efeitos tocam no meio do arrasto, que não conta como
+// toque: então todo toque retoma o som aqui, na hora, e enquanto ele não anda toca um instante de silêncio, que é o que
+// destrava o iOS. Com o som andando, não faz nada.
+function liberaSom(){
+  if(!sound && !music) return;
+  if(AC && AC.state==='running') return;
+  const c=ctxAudio(); if(!c) return;
+  try{ const s=c.createBufferSource(); s.buffer=c.createBuffer(1,1,22050); s.connect(c.destination); s.start(0); }catch(e){}
+}
+for(const ev of ['touchend','pointerup','click','keydown']) addEventListener(ev, liberaSom, {capture:true, passive:true});
 // jogo em segundo plano (trocou de app, bloqueou a tela, outra aba): o som para e volta quando o jogo reaparece
 document.addEventListener('visibilitychange',()=>{ if(AC && AC.state!=='closed') (document.hidden ? AC.suspend() : AC.resume()).catch(()=>{}); });
 
