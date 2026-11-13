@@ -66,7 +66,7 @@ code{font-size:.92em;background:#ffffff14;padding:1px 5px;border-radius:5px}
   <p>O vão, as estrelas e os botões, com a fase de verdade. Toque num jeito para ver a tela mudar. A tela é só para ver: aqui não se joga, e nada mexe no seu progresso.</p>
 
   <h2>1 · O QUADRADO PRETO</h2>
-  <p>É a casa que não existe (<code>#</code> no mapa). Para as peças como a estação, mas a ideia é outra: o vão muda o <b>formato</b> do tabuleiro, a estação é um <b>objeto</b> em cima dele. Aqui o vão é marcado pela própria malha do fundo: vermelha, deformada ou as duas coisas.</p>
+  <p>É a casa que não existe (<code>#</code> no mapa). Para as peças como a estação, mas a ideia é outra: o vão muda o <b>formato</b> do tabuleiro, a estação é um <b>objeto</b> em cima dele. Aqui o vão é marcado pela própria malha do fundo, com um vermelho suave que entra aos poucos e uma deformação leve. Vãos vizinhos viram uma forma só: veja nas fases 18 e 19.</p>
   <div class="rot">Jeito</div>
   <div class="ops" id="opsV"></div>
   <div class="rot">Fase de exemplo</div>
@@ -108,16 +108,16 @@ const VAZIO='body.espaco.modoCla .slot.void::before';
 const SEM_QUADRADO=`${VAZIO}{display:none !important}`;
 const VAO=[
   {k:'hoje',i:'0',nome:'Hoje',sub:'quadrado escuro',txt:'Um quadrado escuro, sem borda; a malha some ali.',mais:[],menos:['Some na nebulosa e no celular','Parece casa vazia, não parede'],css:''},
-  {k:'verm',i:'A',nome:'Malha vermelha',sub:'só a cor',txt:'A malha passa pelo vão, mas ali ela fica vermelha e mais acesa, com um brilho vermelho fraco no chão.',mais:['Lê como "proibido" na hora','Usa o que já está na tela'],menos:['Vermelho pode lembrar erro ou perigo'],
-    css:SEM_QUADRADO,malha:{cor:true,forma:null}},
-  {k:'rasgo',i:'B',nome:'Malha rasgada',sub:'só a forma',txt:'A malha se abre no vão: os fios fogem do meio e se juntam na beira, como um rasgo no tecido do espaço.',mais:['Parece um buraco de verdade','Combina com a ideia de gravidade'],menos:['Sem cor, pode passar despercebido de longe'],
-    css:SEM_QUADRADO,malha:{cor:false,forma:'rasgo'}},
-  {k:'amassa',i:'C',nome:'Malha amassada',sub:'só a forma',txt:'A malha fica enrugada no vão, torta e embaralhada, como espaço quebrado.',mais:['Diferente de tudo no tabuleiro'],menos:['Pode parecer defeito de desenho'],
-    css:SEM_QUADRADO,malha:{cor:false,forma:'amassa'}},
-  {k:'vrasgo',i:'D',nome:'Vermelha e rasgada',sub:'as duas',rec:true,txt:'O rasgo da B com a cor da A: a beira do buraco fica vermelha e acesa.',mais:['O mais claro dos jeitos com a malha','Forma e cor dizem a mesma coisa'],menos:['O mais chamativo'],
-    css:SEM_QUADRADO,malha:{cor:true,forma:'rasgo'}},
-  {k:'vamassa',i:'E',nome:'Vermelha e amassada',sub:'as duas',txt:'As rugas da C em vermelho.',mais:['Bem visível'],menos:['Vermelho embaralhado pode cansar a vista'],
-    css:SEM_QUADRADO,malha:{cor:true,forma:'amassa'}},
+  {k:'cor',i:'A',nome:'Só o tom',sub:'sem deformar',txt:'A malha passa pelo vão, mas vai puxando para o vermelho aos poucos e fica mais apagada lá dentro. Nada se mexe.',mais:['O mais calmo','Vãos vizinhos viram uma mancha só'],menos:['De longe, pode ser discreto demais'],
+    css:SEM_QUADRADO,malha:{cor:.6,forma:null}},
+  {k:'afunda',i:'B',nome:'Afunda',sub:'cede para dentro',txt:'Na beira do vão a malha cede um pouco para dentro, como um tecido apoiado num buraco. Com o tom vermelho suave.',mais:['Conversa com os poços dos planetas','Leve, mas dá para ver a forma'],menos:['Pode lembrar o peso de um planeta'],
+    css:SEM_QUADRADO,malha:{cor:.5,forma:'afunda',forca:.5}},
+  {k:'retorce',i:'C',nome:'Retorce',sub:'torcida na beira',rec:true,txt:'Na beira, a malha de fora escorrega num sentido e a de dentro no outro: o espaço parece torcido ali. Com o tom vermelho suave.',mais:['Não lembra nada que já existe no tabuleiro','Grupos de vãos torcem juntos, como uma forma só'],menos:['Em vão sozinho, a torção é pequena'],
+    css:SEM_QUADRADO,malha:{cor:.5,forma:'retorce',forca:.5}},
+  {k:'desvia',i:'D',nome:'Desvia',sub:'malha se afasta',txt:'A malha se afasta do vão e contorna a forma dele, deixando o meio mais vazio. Com o tom vermelho suave.',mais:['A forma do vão fica bem clara'],menos:['O mais parecido com um buraco aberto'],
+    css:SEM_QUADRADO,malha:{cor:.5,forma:'desvia',forca:.5}},
+  {k:'retsem',i:'E',nome:'Retorce sem cor',sub:'só a torção',txt:'A mesma torção do C, sem o vermelho: só a forma da malha avisa.',mais:['O mais discreto com forma'],menos:['Depende de olhar a malha com atenção'],
+    css:SEM_QUADRADO,malha:{cor:0,forma:'retorce',forca:.7}},
 ];
 const BARRA=`#qjBar{display:flex;gap:10px;justify-content:center;width:min(100%,420px);margin:10px auto 0;padding:0 12px}
 #qjBar .qjB{flex:1;height:auto;min-height:60px;width:auto;flex-direction:column;gap:3px;border-radius:16px;font:700 13px 'Exo 2',sans-serif}
@@ -136,7 +136,7 @@ const BOT=[
     css:`body.modoQj .hudCla #qjP .qjB{flex-direction:column;width:54px;height:52px;gap:1px;font:700 10px 'Exo 2',sans-serif} body.modoQj .hudCla #qjP .qjB svg{width:20px;height:20px}`,
     rot:{qjDesfaz:'Voltar',qjRecomeca:'Do zero',qjDica:'Dica'}},
 ];
-const FASES=[[27,'Rosquinha com estações'],[18,'Serpentina'],[20,'Casas faltando'],[11,'Buraco no meio']];
+const FASES=[[27,'Rosquinha com estações'],[18,'Serpentina'],[19,'Tabuleiro torto'],[20,'Casas faltando']];
 
 // ---------- a tela do jogo ----------
 const pausa=ms=>new Promise(r=>setTimeout(r,ms));
@@ -184,7 +184,7 @@ function grupo(opsId,cardsId,lista,muda){
 }
 const TV=tela(document.getElementById('mV')), TB=tela(document.getElementById('mB'));
 let jV=VAO[0], jB=BOT[0];
-const aplicaV=o=>{ TV.st.textContent=o.css; TV.w.eval('MALHA_VAO='+JSON.stringify(o.malha||{cor:false,forma:null})); };
+const aplicaV=o=>{ TV.st.textContent=o.css; TV.w.eval('MALHA_VAO='+JSON.stringify(o.malha||{cor:0,forma:null,forca:.5})); };
 grupo('opsV','cardsV',VAO,o=>{ jV=o; if(TV.st) aplicaV(o); });
 grupo('opsB','cardsB',BOT,o=>{ jB=o; if(TB.st) botoes(TB,o); });
 const opsF=document.getElementById('opsF');
