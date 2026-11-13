@@ -406,7 +406,7 @@ function vaoM(n,ci,cj,vaos,pa){
   if(MALHA_VAO.forma==='rasgo'){   // para fora do meio do vão: os pontos de dentro vão para a beira, a rede abre ali
     const r=Math.max(.001,d), alvo=.5+.12*v, f=Math.max(0,alvo-r)*v; n.vdx=ex/r*f*pa; n.vdy=ey/r*f*pa; n.oco=v>.99&&r<.3; }   // oco: o meio, que fica sem fio
   else if(MALHA_VAO.forma==='amassa'){   // rugas paradas: cada ponto vai para um lado, mais forte no meio do vão
-    const s=Math.sin(ci*12.9898+cj*78.233)*43758.5453, a=(s-Math.floor(s))*6.283, f=pa*.11*v*v; n.vdx=Math.cos(a)*f; n.vdy=Math.sin(a)*f; }
+    const s=Math.sin(ci*12.9898+cj*78.233)*43758.5453, a=(s-Math.floor(s))*6.283, f=pa*.15*v*v; n.vdx=Math.cos(a)*f; n.vdy=Math.sin(a)*f; }
 }
 let malhaT=0, malhaSelo='', malhaParada=false;
 function malhaQuadro(t){
@@ -446,10 +446,11 @@ function malhaQuadro(t){
   const tema=Math.max(1,(S.missao&&S.tema)||1), no=(i,j)=>MN.nos[j*NI+i];
   let rgb=ESP.MUNDOS_ESP[(tema-1)%ESP.MUNDOS_ESP.length].neb[1].split(',').map(v=>Math.round(+v*.55+255*.45)).join(',');
   const ganho=S.frenesi?freMalhaGanho():1; if(S.frenesi) rgb=freMalhaCor(rgb);   // no Frenesi, na cor do degrau e mais acesa
-  const potes=new Map(), VERM='255,84,84', vc=MALHA_VAO.cor;
+  const potes=new Map(), VERM='255,84,84', vc=MALHA_VAO.cor, vf=!!MALHA_VAO.forma;
   // no vão marcado de vermelho: a linha passa para o vermelho e acende (as finas também), mais quanto mais dentro dele
   const seg=(a,b,maior)=>{ const f=(a.f+b.f)/2; if(f<.02 || a.oco || b.oco) return; const h=(a.h+b.h)/2, w=(a.w+b.w)/2, fundo=Math.min(.85,h*.32), v=vc?Math.min(a.v,b.v):0;
     let al=Math.min(1,((maior?.17:.065)*(1-fundo)+w*.6)*f*ganho); if(v>.5) al=Math.min(1,al+(maior?.3:.22)*v);
+    else if(vf){ const k=Math.min(a.v,b.v); if(k>.3) al=Math.min(1,al+(maior?.22:.16)*k); }   // deformada sem cor: os fios do vão acendem na cor do mundo
     if(al<.008) return; const k=(v>.5?'v':'')+Math.round(al*60)+'|'+Math.max(1,Math.round((maior?1.2:.75)*(1-fundo*.5)*(v>.5?1.4:1)*4)); let p=potes.get(k); if(!p) potes.set(k,p=[]); p.push(a.x,a.y,b.x,b.y); };
   for(let j=0;j<NJ;j++) for(let i=0;i<NI-1;i++) seg(no(i,j),no(i+1,j),j%MSUB===0);
   for(let i=0;i<NI;i++) for(let j=0;j<NJ-1;j++) seg(no(i,j),no(i,j+1),i%MSUB===0);
