@@ -145,15 +145,17 @@ function tela(mold){
   const f=document.createElement('iframe'); f.src='index.html'; f.width=390; f.height=800; f.tabIndex=-1; mold.append(f);
   const ajusta=()=>{ const k=mold.clientWidth/390; f.style.transform=`scale(${k})`; mold.style.height=Math.round(800*k)+'px'; };
   ajusta(); addEventListener('resize',ajusta);
-  const T={f, pronto:(async()=>{
-    await new Promise(r=>f.onload=r);
-    const w=f.contentWindow, d=f.contentDocument; T.w=w; T.d=d;
+  // o jogo pode se recarregar sozinho dentro do quadro (na primeira visita o service worker instala a versão nova e
+  // recarrega): por isso o documento e o estilo são sempre os de agora, e cada recarga refaz a fase e o jeito (T.refaz)
+  const prepara=async()=>{ const w=f.contentWindow;
     w.Element.prototype.scrollIntoView=function(){};   // o mapa de fases rola até a fase atual, e isso rolaria esta página
     try{ w.eval('sound=false; music=false;'); }catch(e){}
     await espera(()=>typeof w.missoesLista==='function' && w.QUEBRA, 10000);
-    T.st=d.createElement('style'); d.head.append(T.st);
-    try{ d.body.style.setProperty('--rocha',`url(${w.eval("urlObj('rochinha')")})`); }catch(e){}
-  })()};
+    try{ f.contentDocument.body.style.setProperty('--rocha',`url(${w.eval("urlObj('rochinha')")})`); }catch(e){} };
+  let cargas=0;
+  const T={f, get w(){ return f.contentWindow; }, get d(){ return f.contentDocument; },
+    get st(){ const d=f.contentDocument; let st=d.getElementById('rascSt'); if(!st){ st=d.createElement('style'); st.id='rascSt'; d.head.append(st); } return st; },
+    pronto:new Promise(ok=>f.addEventListener('load',async()=>{ cargas++; await prepara(); if(cargas===1) ok(); else if(T.refaz) T.refaz(); }))};
   T.joga=async(n,arrasta)=>{ T.w.eval(`missoesLista(QUEBRA); missaoJoga(${n}); try{ hideOverlay() }catch(e){}`);
     if(arrasta) for(let i=0;i<20 && !(T.w.eval('S.moves')>0);i++){ await pausa(300); try{ T.w.eval('move(0,1)'); }catch(e){} }
     devolve(); };
@@ -185,13 +187,15 @@ function grupo(opsId,cardsId,lista,muda){
 const TV=tela(document.getElementById('mV')), TB=tela(document.getElementById('mB'));
 let jV=VAO[0], jB=BOT[0];
 const aplicaV=o=>{ TV.st.textContent=o.css; TV.w.eval('MALHA_VAO='+JSON.stringify(o.malha||{cor:0,forma:null,forca:.5})); };
-grupo('opsV','cardsV',VAO,o=>{ jV=o; if(TV.st) aplicaV(o); });
-grupo('opsB','cardsB',BOT,o=>{ jB=o; if(TB.st) botoes(TB,o); });
+let faseV=27;
+grupo('opsV','cardsV',VAO,o=>{ jV=o; if(TV.ok) aplicaV(o); });
+grupo('opsB','cardsB',BOT,o=>{ jB=o; if(TB.ok) botoes(TB,o); });
 const opsF=document.getElementById('opsF');
 opsF.innerHTML=FASES.map(([n,nome],i)=>`<button class="op ${i?'':'on'}" data-n="${n}">Fase ${n}<small>${nome}</small></button>`).join('');
-opsF.onclick=async e=>{ const b=e.target.closest('.op'); if(!b||!TV.w) return; opsF.querySelectorAll('.op').forEach(x=>x.classList.toggle('on',x===b)); await TV.joga(+b.dataset.n); };
-(async()=>{ await TV.pronto; await TV.joga(27); aplicaV(jV); await pausa(500); document.getElementById('mV').classList.add('pronto');
-  await TB.pronto; await TB.joga(27,true); botoes(TB,jB); await pausa(300); document.getElementById('mB').classList.add('pronto'); })();
+opsF.onclick=async e=>{ const b=e.target.closest('.op'); if(!b||!TV.ok) return; opsF.querySelectorAll('.op').forEach(x=>x.classList.toggle('on',x===b)); faseV=+b.dataset.n; await TV.joga(faseV); };
+TV.refaz=async()=>{ await TV.joga(faseV); aplicaV(jV); }; TB.refaz=async()=>{ await TB.joga(27,true); botoes(TB,jB); };
+(async()=>{ await TV.pronto; await TV.refaz(); TV.ok=true; await pausa(500); document.getElementById('mV').classList.add('pronto');
+  await TB.pronto; await TB.refaz(); TB.ok=true; await pausa(300); document.getElementById('mB').classList.add('pronto'); })();
 
 // ---------- estrelas ----------
 const GUL=[.54,.15,.11,.09,.13,.12,.05,.07,.05,.10,.06];
