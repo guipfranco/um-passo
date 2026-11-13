@@ -123,6 +123,8 @@ const SONS=[
   {k:'macio',i:'A',nome:'Macio',sub:'o mesmo, mais baixo',rec:true,txt:'O mesmo desenho de hoje, com as miúdas uma oitava abaixo, sem os agudos de cima e mais baixo. A segunda junção do arrasto sai bem mais fraca.',mais:['Mantém a identidade de cada corpo','Some o chiado agudo'],menos:['Um pouco menos brilho nas miúdas']},
   {k:'bolha',i:'B',nome:'Gota',sub:'redonda e curta',txt:'Uma gota redonda que desce de nota conforme o corpo cresce; dos planetas para cima, um brilho por cima. Do Sol para cima, o Macio.',mais:['O mais suave','Combina com repetir muitas vezes'],menos:['Os corpos soam mais parecidos entre si']},
 ];
+const FASES=[[19,'Tabuleiro torto'],[18,'Serpentina'],[20,'Casas faltando'],[27,'Rosquinha com estações']];
+
 // ---------- a tela do jogo ----------
 const pausa=ms=>new Promise(r=>setTimeout(r,ms));
 async function espera(fn,ms){ const t=Date.now(); while(Date.now()-t<ms){ try{ if(fn()) return true; }catch(e){} await pausa(100); } return false; }
