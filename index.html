@@ -810,7 +810,7 @@ body.rola #stage{touch-action:none}
 <div id="coach" class="hidden"><div class="cav" id="coachAv"></div><div><p id="coachText"></p><button class="btn b" id="coachOk">Ok</button></div></div>
 
 <script>
-const VERSAO="ac26d894";
+const VERSAO="87632b84";
 // ===================== CONFIG =====================
 let W = 4, H = 4, N = 4;      // largura e altura do tabuleiro (N = maior lado)
 const CFG = {
@@ -4543,14 +4543,14 @@ function presencaM(ci,cj,ok){
   for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(!casaOk(x,y)){ const ex=Math.max(x-ci,0,ci-(x+1)), ey=Math.max(y-cj,0,cj-(y+1)); dentro=Math.min(dentro,Math.hypot(ex,ey)); }
   return .5+.5*Math.min(1,dentro/1.1);
 }
-// Casa que não existe pela própria malha (em teste no rascunho telas_quebra.html). O vão é um campo contínuo (a
-// distância com sinal até o conjunto dos vãos), então vãos vizinhos viram uma forma só, com a beira arredondada, em vez
-// de um quadrado por casa. cor (0 a 1): quanto a rede puxa para o vermelho, aos poucos, da beira para dentro, onde ela
-// também fica mais apagada. forma: 'afunda' (a rede cede um pouco para dentro do vão), 'desvia' (a rede se afasta dele),
-// 'retorce' (de um lado da beira a rede escorrega num sentido, do outro no sentido contrário: torcida). forca: 0 a 1.
-// Com cor 0 e sem forma (o padrão), a rede some no vão como sempre.
-let MALHA_VAO={cor:0, forma:null, forca:.5};
-const malhaVaoLiga=()=>MALHA_VAO.cor>0||!!MALHA_VAO.forma;
+// Casa que não existe pela própria malha (em teste no rascunho telas_quebra.html): a rede arrebenta no vão. Cada fio
+// acaba perto da beira, num ponto um pouco diferente do vizinho (pontas desencontradas, como fio rompido), recua um
+// pouco e vai ficando vermelho perto da ponta; o vão fica vazio, um pouco mais claro que o resto. O vão é um campo
+// contínuo (a distância com sinal até o conjunto dos vãos), então vãos vizinhos viram um buraco só, de beira redonda.
+// cor, recuo, fio (o quanto as pontas se desencontram e se desfiam) e claro vão de 0 a 1. Desligado (o padrão), a rede
+// some no vão como sempre.
+let MALHA_VAO={forma:null, cor:.7, recuo:.5, fio:.5, claro:.5};
+const malhaVaoLiga=()=>MALHA_VAO.forma==='arrebenta';
 const distRet=(x,y,ci,cj)=>Math.hypot(Math.max(x-ci,0,ci-(x+1)),Math.max(y-cj,0,cj-(y+1)));
 // distância com sinal até o vão, em casas: positiva fora, negativa dentro
 function sdVao(ci,cj,vaos,ok){
@@ -4560,16 +4560,16 @@ function sdVao(ci,cj,vaos,ok){
   return -dentro;
 }
 const suave=(a,b,x)=>{ const k=Math.min(1,Math.max(0,(x-a)/(b-a))); return k*k*(3-2*k); };
-// em cada ponto: v (0 longe, 1 bem dentro, a entrada gradual), quanto apagar e o empurrão parado da forma
+const sorteHash=str=>{ let h=2166136261; for(let i=0;i<str.length;i++) h=Math.imul(h^str.charCodeAt(i),16777619); return (h>>>0)/4294967295; };
+// em cada ponto: a distância ao vão (s), a direção para fora dele e o recuo parado perto da ponta
 function vaoM(n,ci,cj,vaos,ok,pa){
-  const s=sdVao(ci,cj,vaos,ok);
-  n.v=suave(.55,-.35,s); n.apaga=suave(0,-.45,s); n.vdx=0; n.vdy=0;
-  if(!MALHA_VAO.forma || s>1.2) return;
+  const s=sdVao(ci,cj,vaos,ok); n.s=s; n.ux=0; n.uy=0; n.vdx=0; n.vdy=0;
+  if(s>1.2) return;
   const e=.04, gx=(sdVao(ci+e,cj,vaos,ok)-sdVao(ci-e,cj,vaos,ok))/(2*e), gy=(sdVao(ci,cj+e,vaos,ok)-sdVao(ci,cj-e,vaos,ok))/(2*e), gl=Math.hypot(gx,gy)||1;
-  const ux=gx/gl, uy=gy/gl, beira=Math.exp(-((s/.42)**2)), A=pa*(MALHA_VAO.forca??.5);
-  if(MALHA_VAO.forma==='afunda'){ n.vdx=-ux*A*.16*beira; n.vdy=-uy*A*.16*beira; }
-  else if(MALHA_VAO.forma==='desvia'){ const k=A*.2*Math.max(beira,suave(0,-.5,s)*.8); n.vdx=ux*k; n.vdy=uy*k; }
-  else if(MALHA_VAO.forma==='retorce'){ const k=A*.22*beira*Math.max(-1,Math.min(1,s/.3)); n.vdx=-uy*k; n.vdy=ux*k; }
+  n.ux=gx/gl; n.uy=gy/gl;
+  const z=s>-.25?suave(.45,0,s):0, M=MALHA_VAO, j=(sorteHash(n.i+','+n.j)-.5)*2;
+  const k=pa*.09*(M.recuo??.5)*z, d=pa*.07*(M.fio??.5)*z*j;   // recua para fora e desfia um pouco de lado
+  n.vdx=n.ux*k-n.uy*d; n.vdy=n.uy*k+n.ux*d;
 }
 let malhaT=0, malhaSelo='', malhaParada=false;
 function malhaQuadro(t){
@@ -4578,11 +4578,11 @@ function malhaQuadro(t){
   if(cv.width!==Wp||cv.height!==Hp){ cv.width=Wp; cv.height=Hp; refaz=true; }
   const NI=(W+2*MBORDA)*MSUB+1, NJ=(H+2*MBORDA)*MSUB+1, chave=W+'x'+H+':'+Wp+':'+Hp+':'+(S.walls||[]).filter(w=>w.v).map(w=>w.x+','+w.y).join(';')+':'+JSON.stringify(MALHA_VAO);
   if(!MN||MN.chave!==chave){ MN={chave,nos:[]}; const ok=[], vaos=[]; for(let y=0;y<H;y++) for(let x=0;x<W;x++) (casaOk(x,y)?ok:vaos).push([x,y]);
-    // com o vão marcado pela malha, a rede passa por ele (presença como casa) e o vão vem da cor e da forma
+    // com a rede arrebentando no vão, ela chega inteira até a beira (presença como casa) e o corte é feito no desenho
     const liga=malhaVaoLiga(), okP=liga?ok.concat(vaos):ok;
     for(let j=0;j<NJ;j++) for(let i=0;i<NI;i++){ const rx=g.O+g.g0+(i-MBORDA*MSUB)*g.P/MSUB, ry=g.O+g.g0+(j-MBORDA*MSUB)*g.P/MSUB, ci=i/MSUB-MBORDA, cj=j/MSUB-MBORDA;
-      const n={i,j,rx,ry,x:rx,y:ry,vx:0,vy:0,h:0,w:0,v:0,vdx:0,vdy:0,f:liga?presencaM(ci,cj,okP):presencaM(ci,cj,ok)};
-      if(liga){ vaoM(n,ci,cj,vaos,ok,g.P); n.f*=1-.35*n.apaga; }   // dentro do vão a rede fica mais apagada
+      const n={i,j,rx,ry,x:rx,y:ry,vx:0,vy:0,h:0,w:0,s:9,vdx:0,vdy:0,f:liga?presencaM(ci,cj,okP):presencaM(ci,cj,ok)};
+      if(liga) vaoM(n,ci,cj,vaos,ok,g.P);
       MN.nos.push(n); }
     refaz=true; }
   if(S.espMax==null && S.tiles.length) S.espMax=Math.max(...S.tiles.map(k=>k.t));
@@ -4609,19 +4609,23 @@ function malhaQuadro(t){
   const tema=Math.max(1,(S.missao&&S.tema)||1), no=(i,j)=>MN.nos[j*NI+i];
   let rgb=ESP.MUNDOS_ESP[(tema-1)%ESP.MUNDOS_ESP.length].neb[1].split(',').map(v=>Math.round(+v*.55+255*.45)).join(',');
   const ganho=S.frenesi?freMalhaGanho():1; if(S.frenesi) rgb=freMalhaCor(rgb);   // no Frenesi, na cor do degrau e mais acesa
-  // o vão puxa a cor da linha para o vermelho aos poucos (5 tons, para as linhas parecidas continuarem num traço só)
-  const potes=new Map(), vc=Math.max(0,Math.min(1,+MALHA_VAO.cor||0)), VERM=[232,92,96], base=rgb.split(',').map(Number);
+  // rede arrebentada: cada fio acaba num ponto um pouco diferente perto da beira do vão e fica vermelho perto da ponta
+  // (5 tons, para as linhas parecidas continuarem num traço só); a ponta acende de leve
+  const potes=new Map(), M=MALHA_VAO, arr=malhaVaoLiga(), vc=arr?Math.max(0,Math.min(1,+M.cor||0)):0, VERM=[236,84,92], base=rgb.split(',').map(Number);
   const tons=[0,1,2,3,4].map(k=>{ const m=k/4*vc; return base.map((c,i)=>Math.round(c+(VERM[i]-c)*m)).join(','); });
-  const seg=(a,b,maior)=>{ const f=(a.f+b.f)/2; if(f<.02) return; const h=(a.h+b.h)/2, w=(a.w+b.w)/2, fundo=Math.min(.85,h*.32), v=vc?(a.v+b.v)/2:0;
-    let al=Math.min(1,((maior?.17:.065)*(1-fundo)+w*.6)*f*ganho); if(v) al=Math.min(1,al*(1+1.3*vc*v*(1-v)*4)+.08*vc*v);   // a beira acende de leve e o tom aparece
-    if(al<.008) return; const k=Math.round(v*4)+'|'+Math.round(al*60)+'|'+Math.max(1,Math.round((maior?1.2:.75)*(1-fundo*.5)*4)); let p=potes.get(k); if(!p) potes.set(k,p=[]); p.push(a.x,a.y,b.x,b.y); };
-  for(let j=0;j<NJ;j++) for(let i=0;i<NI-1;i++) seg(no(i,j),no(i+1,j),j%MSUB===0);
-  for(let i=0;i<NI;i++) for(let j=0;j<NJ-1;j++) seg(no(i,j),no(i,j+1),i%MSUB===0);
-  // no chão do vão, um brilho vermelho esfumado: uma mancha redonda por casa, larga, que se soma com as vizinhas
-  // (vãos juntos viram uma mancha só, sem os cantos de cada casa)
-  if(vc){ c.save(); c.globalCompositeOperation='lighter';
-    for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(!casaOk(x,y)){ const cx=g.O+g.g0+(x+.5)*pa, cy=g.O+g.g0+(y+.5)*pa, R=pa*.95, gr=c.createRadialGradient(cx,cy,0,cx,cy,R);
-      gr.addColorStop(0,`rgba(${VERM.join(',')},${(.075*vc).toFixed(3)})`); gr.addColorStop(.55,`rgba(${VERM.join(',')},${(.04*vc).toFixed(3)})`); gr.addColorStop(1,`rgba(${VERM.join(',')},0)`);
+  const cortes=new Map(), corte=(lin,lado)=>{ const k=lin+lado; let c=cortes.get(k); if(c==null) cortes.set(k,c=.05+(sorteHash(k)-.5)*.5*(M.fio??.5)); return c; };
+  const seg=(a,b,maior,lin)=>{ const f=(a.f+b.f)/2; if(f<.02) return; let t=0;
+    if(arr){ const sm=(a.s+b.s)/2; if(sm<1){ const ct=corte(lin,(lin[0]==='h'?a.ux+b.ux:a.uy+b.uy)>0?'+':'-'); if(sm<ct) return; t=suave(.5,ct,sm); } }
+    const h=(a.h+b.h)/2, w=(a.w+b.w)/2, fundo=Math.min(.85,h*.32);
+    let al=Math.min(1,((maior?.17:.065)*(1-fundo)+w*.6)*f*ganho); if(t) al=Math.min(1,al+(maior?.16:.1)*vc*t*t);
+    if(al<.008) return; const k=Math.round(t*4)+'|'+Math.round(al*60)+'|'+Math.max(1,Math.round((maior?1.2:.75)*(1-fundo*.5)*4)); let p=potes.get(k); if(!p) potes.set(k,p=[]); p.push(a.x,a.y,b.x,b.y); };
+  for(let j=0;j<NJ;j++) for(let i=0;i<NI-1;i++) seg(no(i,j),no(i+1,j),j%MSUB===0,'h'+j);
+  for(let i=0;i<NI;i++) for(let j=0;j<NJ-1;j++) seg(no(i,j),no(i,j+1),i%MSUB===0,'v'+i);
+  // o vazio: um pouco mais claro que o céu em volta, esfumado; manchas redondas por casa que se somam (vãos juntos
+  // viram um vazio só)
+  if(arr && M.claro>0){ c.save(); c.globalCompositeOperation='lighter';
+    for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(!casaOk(x,y)){ const cx=g.O+g.g0+(x+.5)*pa, cy=g.O+g.g0+(y+.5)*pa, R=pa*.85, gr=c.createRadialGradient(cx,cy,0,cx,cy,R);
+      gr.addColorStop(0,`rgba(${rgb},${(.07*M.claro).toFixed(3)})`); gr.addColorStop(.6,`rgba(${rgb},${(.045*M.claro).toFixed(3)})`); gr.addColorStop(1,`rgba(${rgb},0)`);
       c.fillStyle=gr; c.fillRect(cx-R,cy-R,2*R,2*R); }
     c.restore(); }
   c.lineCap='round';

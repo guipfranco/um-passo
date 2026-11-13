@@ -66,7 +66,7 @@ code{font-size:.92em;background:#ffffff14;padding:1px 5px;border-radius:5px}
   <p>O vão, as estrelas e os botões, com a fase de verdade. Toque num jeito para ver a tela mudar. A tela é só para ver: aqui não se joga, e nada mexe no seu progresso.</p>
 
   <h2>1 · O QUADRADO PRETO</h2>
-  <p>É a casa que não existe (<code>#</code> no mapa). Para as peças como a estação, mas a ideia é outra: o vão muda o <b>formato</b> do tabuleiro, a estação é um <b>objeto</b> em cima dele. Aqui o vão é marcado pela própria malha do fundo, com um vermelho suave que entra aos poucos e uma deformação leve. Vãos vizinhos viram uma forma só: veja nas fases 18 e 19.</p>
+  <p>É a casa que não existe (<code>#</code> no mapa). Para as peças como a estação, mas a ideia é outra: o vão muda o <b>formato</b> do tabuleiro, a estação é um <b>objeto</b> em cima dele. Aqui a malha do fundo arrebenta no vão: os fios acabam perto da beira, ficam vermelhos na ponta, e o vão fica vazio, um pouco mais claro. Vãos vizinhos viram um buraco só: veja nas fases 18 e 19.</p>
   <div class="rot">Jeito</div>
   <div class="ops" id="opsV"></div>
   <div class="rot">Fase de exemplo</div>
@@ -106,18 +106,19 @@ setInterval(devolve,1500); addEventListener('pagehide',devolve);
 const VAZIO='body.espaco.modoCla .slot.void::before';
 // o vão pela malha do fundo (MALHA_VAO em src/espaco_jogo.js); o quadrado escuro de hoje sai nessas
 const SEM_QUADRADO=`${VAZIO}{display:none !important}`;
+const ARR=(o)=>({forma:'arrebenta',cor:.7,recuo:.5,fio:.5,claro:.5,...o});
 const VAO=[
   {k:'hoje',i:'0',nome:'Hoje',sub:'quadrado escuro',txt:'Um quadrado escuro, sem borda; a malha some ali.',mais:[],menos:['Some na nebulosa e no celular','Parece casa vazia, não parede'],css:''},
-  {k:'cor',i:'A',nome:'Só o tom',sub:'sem deformar',txt:'A malha passa pelo vão, mas vai puxando para o vermelho aos poucos e fica mais apagada lá dentro. Nada se mexe.',mais:['O mais calmo','Vãos vizinhos viram uma mancha só'],menos:['De longe, pode ser discreto demais'],
-    css:SEM_QUADRADO,malha:{cor:.8,forma:null}},
-  {k:'afunda',i:'B',nome:'Afunda',sub:'cede para dentro',txt:'Na beira do vão a malha cede um pouco para dentro, como um tecido apoiado num buraco. Com o tom vermelho suave.',mais:['Conversa com os poços dos planetas','Leve, mas dá para ver a forma'],menos:['Pode lembrar o peso de um planeta'],
-    css:SEM_QUADRADO,malha:{cor:.7,forma:'afunda',forca:.5}},
-  {k:'retorce',i:'C',nome:'Retorce',sub:'torcida na beira',rec:true,txt:'Na beira, a malha de fora escorrega num sentido e a de dentro no outro: o espaço parece torcido ali. Com o tom vermelho suave.',mais:['Não lembra nada que já existe no tabuleiro','Grupos de vãos torcem juntos, como uma forma só'],menos:['Em vão sozinho, a torção é pequena'],
-    css:SEM_QUADRADO,malha:{cor:.7,forma:'retorce',forca:.5}},
-  {k:'desvia',i:'D',nome:'Desvia',sub:'malha se afasta',txt:'A malha se afasta do vão e contorna a forma dele, deixando o meio mais vazio. Com o tom vermelho suave.',mais:['A forma do vão fica bem clara'],menos:['O mais parecido com um buraco aberto'],
-    css:SEM_QUADRADO,malha:{cor:.7,forma:'desvia',forca:.5}},
-  {k:'retsem',i:'E',nome:'Retorce sem cor',sub:'só a torção',txt:'A mesma torção do C, sem o vermelho: só a forma da malha avisa.',mais:['O mais discreto com forma'],menos:['Depende de olhar a malha com atenção'],
-    css:SEM_QUADRADO,malha:{cor:0,forma:'retorce',forca:.7}},
+  {k:'arr',i:'A',nome:'Arrebentada',sub:'o meio-termo',rec:true,txt:'Cada fio acaba perto da beira, num ponto um pouco diferente do vizinho, recua um pouco e fica vermelho perto da ponta. O vão fica vazio, um pouco mais claro.',mais:['Lê como espaço rompido','Vãos juntos viram um buraco só'],menos:[],
+    css:SEM_QUADRADO,malha:ARR({})},
+  {k:'retas',i:'B',nome:'Pontas alinhadas',sub:'corte limpo',txt:'O mesmo, mas os fios acabam todos na mesma distância da beira, quase sem desfiar: um recorte mais limpo.',mais:['O buraco fica com a forma mais clara'],menos:['Menos cara de arrebentado'],
+    css:SEM_QUADRADO,malha:ARR({fio:0,recuo:.3})},
+  {k:'desfia',i:'C',nome:'Bem desfiada',sub:'pontas soltas',txt:'Os fios acabam bem desencontrados, recuam mais e as pontas se desviam para os lados.',mais:['A mais "rompida"'],menos:['A beira do buraco fica menos nítida'],
+    css:SEM_QUADRADO,malha:ARR({fio:1,recuo:.9,cor:.8})},
+  {k:'semcor',i:'D',nome:'Sem vermelho',sub:'só o rompido',txt:'Os fios arrebentam do mesmo jeito, sem ficar vermelhos.',mais:['O mais discreto'],menos:['Sem cor, avisa menos que é proibido'],
+    css:SEM_QUADRADO,malha:ARR({cor:0,claro:.7})},
+  {k:'claro',i:'E',nome:'Vazio bem claro',sub:'mais luz no vão',txt:'A arrebentada com o vazio mais aceso, quase uma névoa clara no lugar do buraco.',mais:['O vão aparece de longe'],menos:['Pode parecer uma casa iluminada'],
+    css:SEM_QUADRADO,malha:ARR({claro:1})},
 ];
 const BARRA=`#qjBar{display:flex;gap:10px;justify-content:center;width:min(100%,420px);margin:10px auto 0;padding:0 12px}
 #qjBar .qjB{flex:1;height:auto;min-height:60px;width:auto;flex-direction:column;gap:3px;border-radius:16px;font:700 13px 'Exo 2',sans-serif}
@@ -186,7 +187,7 @@ function grupo(opsId,cardsId,lista,muda){
 }
 const TV=tela(document.getElementById('mV')), TB=tela(document.getElementById('mB'));
 let jV=VAO[0], jB=BOT[0];
-const aplicaV=o=>{ TV.st.textContent=o.css; TV.w.eval('MALHA_VAO='+JSON.stringify(o.malha||{cor:0,forma:null,forca:.5})); };
+const aplicaV=o=>{ TV.st.textContent=o.css; TV.w.eval('MALHA_VAO='+JSON.stringify(o.malha||{forma:null})); };
 let faseV=27;
 grupo('opsV','cardsV',VAO,o=>{ jV=o; if(TV.ok) aplicaV(o); });
 grupo('opsB','cardsB',BOT,o=>{ jB=o; if(TB.ok) botoes(TB,o); });
