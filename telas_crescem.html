@@ -81,11 +81,11 @@ setInterval(devolve,1500); addEventListener('pagehide',devolve);
 // o lado que o corpo ocupa na casa (1 = a casa inteira), por nível (1 = Poeira ... 18 = Galáxia). teto: os gigantes param em 1
 const NOMES=['Poeira','Gelo','Rocha','Asteroide','Cometa','Plutão','Lua','Mercúrio','Marte','Vênus','Terra','Netuno','Urano','Saturno','Júpiter','Sol','Supernova','Galáxia'];
 const CRESCE=[
-  {k:'hoje',i:'0',nome:'Hoje',sub:'como está',txt:'Os corpos já crescem um pouco: de uns 40% da casa (Poeira) até passar dela (Júpiter, Sol, Galáxia). As miúdas têm quase o mesmo tamanho entre si.',mais:[],menos:['Pouca diferença entre Poeira, Gelo e Rocha'],lado:null},
+  {k:'hoje',i:'0',nome:'Antes',sub:'como era',txt:'Antes de 2026-11-13: os corpos já cresciam um pouco: de uns 40% da casa (Poeira) até passar dela (Júpiter, Sol, Galáxia). As miúdas têm quase o mesmo tamanho entre si.',mais:[],menos:['Pouca diferença entre Poeira, Gelo e Rocha'],lado:null},
   {k:'degraus',i:'A',nome:'Degraus',sub:'1/4, 1/2, 3/4, 1',txt:'O lado sobe em quartos: Poeira 1/4 (1/16 da área), Gelo e Rocha 1/2, Asteroide a Lua 3/4, Mercúrio a Terra a casa inteira. Soltos, os gigantes seguem em quartos até 2 casas.',
     mais:['Fácil de ler: cada degrau é um salto que se vê','Conversa com uma regra de quartos de casa'],menos:['Corpos vizinhos na escada ficam do mesmo tamanho'],
     lado:l=>l<=1?.25:l<=3?.5:l<=7?.75:l<=11?1:l<=13?1.25:l<=15?1.5:l<=16?1.75:2},
-  {k:'organico',i:'B',nome:'Orgânico',sub:'um pouco a cada junção',txt:'Cada junção cresce o lado na mesma proporção (uns 15%): Poeira 1/4, a casa cheia na Terra, e os gigantes seguindo a curva se soltos.',
+  {k:'organico',i:'B',nome:'Orgânico',sub:'no jogo',txt:'No jogo desde 2026-11-13 (com os gigantes parando na casa, e Júpiter, Sol, Supernova e Galáxia do tamanho de antes). Cada junção cresce o lado na mesma proporção (uns 15%): Poeira 1/4, a casa cheia na Terra, e os gigantes seguindo a curva se soltos.',
     mais:['Toda junção se vê crescer','Nenhum corpo igual ao outro'],menos:['Os tamanhos não batem com a grade (difícil virar regra)'],
     lado:l=>Math.min(2,.25*Math.pow(4,(l-1)/10))},
 ];
@@ -115,7 +115,7 @@ const TC=tela(document.getElementById('mC'));
 const ENCHE={dust:.8, shards:.8, mesh:.82, comet:.7, supernova:.8, galaxy:.8};
 function aplica(){ const w=TC.w; if(!TC.ok) return;
   const lados=jC.lado ? NOMES.map((n,i)=>ladoDe(jC,i+1)) : null;
-  w.eval(`(()=>{ const L=ESP.LADDER; if(!window.__k0) window.__k0=L.map(d=>d.k);
+  w.eval(`(()=>{ TAM_CASA=false; const L=ESP.LADDER; if(!window.__k0) window.__k0=L.map(d=>d.k);
     const lados=${JSON.stringify(lados)};
     L.forEach((d,i)=>{ const enche=d.kind==='sphere'?(d.sp?.rScale||.9):(${JSON.stringify(ENCHE)}[d.kind]||.8);
       d.k = lados ? lados[i]/enche : __k0[i]; });
@@ -140,7 +140,7 @@ function desenhaEscada(){
 const cartao=o=>`<div class="card" data-k="${o.k}"><h3><i>${o.i}</i>${o.nome}</h3><p>${o.txt}</p>
   <div class="pr">${o.mais.map(m=>`<div class="mais">+ ${m}</div>`).join('')}${o.menos.map(m=>`<div class="menos">− ${m}</div>`).join('')}</div></div>`;
 const opsC=document.getElementById('opsC'), cardsC=document.getElementById('cardsC');
-opsC.innerHTML=CRESCE.map(o=>`<button class="op ${o===jC?'on':''}" data-k="${o.k}">${o.i==='0'?'Hoje':o.i+' · '+o.nome}<small>${o.sub}</small></button>`).join('');
+opsC.innerHTML=CRESCE.map(o=>`<button class="op ${o===jC?'on':''}" data-k="${o.k}">${o.i==='0'?'Antes':o.i+' · '+o.nome}<small>${o.sub}</small></button>`).join('');
 cardsC.innerHTML=CRESCE.map(cartao).join('');
 const marca=k=>{ jC=CRESCE.find(o=>o.k===k); opsC.querySelectorAll('.op').forEach(b=>b.classList.toggle('on',b.dataset.k===k)); cardsC.querySelectorAll('.card').forEach(c=>c.classList.toggle('on',c.dataset.k===k)); aplica(); desenhaEscada(); };
 opsC.onclick=e=>{ const b=e.target.closest('.op'); if(b) marca(b.dataset.k); };

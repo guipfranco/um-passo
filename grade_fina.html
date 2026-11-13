@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>2048 Astros · grade fina (rascunho)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+/* Rascunho de um modo novo: a grade é bem mais fina (cada casa de hoje vira 2x2, 3x3 ou 4x4) e o corpo ocupa de
+   verdade mais casas conforme cresce. Os corpos são os do jogo (ESP do index.html, aberto escondido num iframe só para
+   emprestar o motor e os sons); a regra mora toda aqui. Não grava nada. */
+*{box-sizing:border-box}
+html,body{background:#0b0a18;overscroll-behavior:none}
+body{margin:0;color:#e8e4ff;font-family:'Exo 2',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+main{max-width:480px;margin:0 auto;padding:14px 12px 48px;display:flex;flex-direction:column;gap:10px}
+h1{margin:2px 0 0;font:900 20px Orbitron,sans-serif;letter-spacing:.04em;color:#f4fbff;text-shadow:0 0 14px rgba(110,230,255,.7)}
+h2{margin:22px 0 0;font:900 13px Orbitron,sans-serif;letter-spacing:.12em;color:#9fe9ff}
+p{margin:0;font-size:15px;line-height:1.42;color:#c9c2ee}
+b{color:#fff}
+.rot{font:700 11.5px 'Exo 2',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#a49bd6;margin:4px 0 -4px}
+.ops{display:flex;gap:6px;flex-wrap:wrap}
+.op{flex:1 1 0;min-width:0;border:1.5px solid rgba(140,200,255,.3);border-radius:12px;padding:7px 4px;background:rgba(20,16,44,.7);color:#d8d2ff;
+  font:700 13px 'Exo 2',sans-serif;cursor:pointer;line-height:1.1}
+.op small{display:block;font-weight:400;font-size:11px;color:#a49bd6;margin-top:2px}
+.op.on{border-color:#6ee6ff;background:rgba(40,90,140,.45);color:#fff;box-shadow:0 0 12px rgba(110,230,255,.45)}
+.op.on small{color:#cfe9ff}
+.hud{display:flex;gap:6px}
+.hud div{flex:1;background:rgba(22,17,40,.82);border:1.5px solid rgba(255,255,255,.12);border-radius:12px;padding:6px 8px;text-align:center}
+.hud b{display:block;font:900 18px Orbitron,sans-serif;color:#ffd36e}
+.hud small{font-size:11px;color:#a49bd6}
+#tab{width:100%;aspect-ratio:1;display:block;border-radius:18px;border:1.5px solid rgba(140,200,255,.22);touch-action:none;background:#0b0a18}
+.fimMsg{display:none;text-align:center;font:800 16px 'Exo 2',sans-serif;color:#ff9aa6}
+.fimMsg.on{display:block}
+.ctl{display:flex;gap:6px;flex-wrap:wrap}
+.ctl button{flex:1 1 0;min-width:44px;min-height:44px;border:1.5px solid rgba(140,200,255,.35);border-radius:12px;background:rgba(20,16,44,.8);color:#e8e4ff;font:800 18px 'Exo 2',sans-serif;cursor:pointer}
+.ctl button.lg{flex:1 1 40%;font-size:14px}
+.ctl button:active{transform:scale(.96)}
+.escada{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;font-size:12px;color:#c9c2ee}
+.escada div{background:rgba(22,17,40,.82);border:1px solid #2f2b5c;border-radius:8px;padding:4px 6px;display:flex;justify-content:space-between}
+.escada div b{color:#ffd36e;font-weight:800}
+.nota{font-size:13px;color:#a49bd6}
+</style>
+</head>
+<body>
+<main>
+  <h1>GRADE FINA</h1>
+  <p>Um modo em que o corpo <b>ocupa de verdade</b> mais casas conforme cresce. A grade é bem mais fina que a de hoje e cada junção aumenta o corpo. Arraste no tabuleiro (ou use as setas) e veja o espaço apertar.</p>
+
+  <div class="rot">Grade (cada casa de hoje vira…)</div>
+  <div class="ops" id="opsG"></div>
+  <div class="rot">Como cresce</div>
+  <div class="ops" id="opsC"></div>
+  <div class="rot">Nascem por arrasto</div>
+  <div class="ops" id="opsN"></div>
+
+  <div class="hud"><div><b id="hPts">0</b><small>pontos</small></div><div><b id="hArr">0</b><small>arrastos</small></div><div><b id="hMax">Poeira</b><small>maior corpo</small></div></div>
+  <canvas id="tab"></canvas>
+  <div class="fimMsg" id="fim">Sem jogada: o espaço acabou.</div>
+  <div class="ctl"><button data-d="-1,0">←</button><button data-d="0,-1">↑</button><button data-d="0,1">↓</button><button data-d="1,0">→</button><button class="lg" id="bNova">Partida nova</button></div>
+  <div class="ops"><button class="op on" id="bArea">Mostrar a área de cada corpo<small>o quadrado que ele ocupa na grade</small></button></div>
+
+  <div class="rot">O lado de cada corpo, em casas da grade fina</div>
+  <div class="escada" id="esc"></div>
+
+  <h2>A REGRA DESTE RASCUNHO</h2>
+  <p><b>Andar:</b> tudo desliza até bater na borda ou em outro corpo, como hoje, só que de casinha em casinha.</p>
+  <p><b>Juntar:</b> um corpo que bate em outro igual se junta com ele, e o novo, maior, nasce em cima de onde estava o que foi atingido. Ele procura o lugar livre mais perto dali; se não couber, não junta (fica só batido).</p>
+  <p><b>Nascer:</b> a cada arrasto que mexe, nasce Poeira (às vezes Gelo) num lugar livre. Acaba quando nenhum arrasto mexe mais nada.</p>
+  <p class="nota">Tudo aqui é para ver e sentir: grade, crescimento e quantos nascem estão soltos para testar. Não grava nada no seu progresso.</p>
+</main>
+
+<iframe id="motor" src="index.html" style="position:absolute;width:390px;height:700px;left:-9999px;top:0;border:0" tabindex="-1" aria-hidden="true"></iframe>
+<script>
+// ---------- o motor emprestado ----------
+const motor=document.getElementById('motor');
+let ESP=null, MW=null;
+// o motor divide o localStorage com o jogo: guarda tudo ao abrir e devolve igual
+const FOTO=(()=>{ const o={}; try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); o[k]=localStorage.getItem(k); } }catch(e){} return o; })();
+function devolve(){ try{ for(let i=localStorage.length-1;i>=0;i--){ const k=localStorage.key(i); if(!(k in FOTO)) localStorage.removeItem(k); }
+  for(const k in FOTO) if(localStorage.getItem(k)!==FOTO[k]) localStorage.setItem(k,FOTO[k]); }catch(e){} }
+setInterval(devolve,2000); addEventListener('pagehide',devolve);
+motor.addEventListener('load',()=>{ const w=motor.contentWindow; try{ w.eval('sound=false; music=false;'); }catch(e){}
+  const t0=Date.now(); const ve=setInterval(()=>{ if(w.ESP && w.ESP.LADDER && w.ESP.drawPeca){ clearInterval(ve); ESP=w.ESP; MW=w; } else if(Date.now()-t0>15000) clearInterval(ve); },100); });
+let somOk=false;
+function somLiga(){ if(somOk||!MW) return; try{ MW.eval('sound=true; ctxAudio()?.resume?.()'); somOk=true; }catch(e){} }
+function somJunta(l){ if(!MW) return; try{ MW.eval(`SONS_ESP.fundir(${l})`); }catch(e){} }
+
+const NOMES=['Poeira','Gelo','Rocha','Asteroide','Cometa','Plutão','Lua','Mercúrio','Marte','Vênus','Terra','Netuno','Urano','Saturno','Júpiter','Sol','Supernova','Galáxia'];
+const ENCHE={dust:.8, shards:.8, mesh:.82, comet:.7, supernova:.8, galaxy:.8};
+
+// ---------- opções ----------
+const GRADES=[{k:2,nome:'2x2',sub:'grade 8x8'},{k:3,nome:'3x3',sub:'grade 12x12'},{k:4,nome:'4x4',sub:'grade 16x16'}];
+const CRESCE=[
+  {k:'org',nome:'Orgânico',sub:'+15% de lado por junção',lado:(l,sub)=>sub*.25*Math.pow(4,(l-1)/10)},
+  {k:'area',nome:'Dobra a área',sub:'como a soma do 2048',lado:(l,sub)=>sub*.25*Math.pow(2,(l-1)/2)},
+];
+const NASCEM=[{k:1,nome:'1',sub:'por arrasto'},{k:2,nome:'2',sub:'por arrasto'},{k:3,nome:'3',sub:'por arrasto'}];
+let OP={sub:4, cresce:CRESCE[0], nascem:2, area:true};
+const ladoDe=l=>Math.max(1,Math.round(OP.cresce.lado(l,OP.sub)));
+
+// ---------- a regra ----------
+let G=null, nid=1;
+function nova(){ const N=4*OP.sub; G={N, pcs:[], pts:0, arr:0, max:1, fim:false}; for(let i=0;i<3;i++) nasce(); anima=null; atualiza(); }
+function ocupa(){ const o=new Array(G.N*G.N).fill(null); for(const p of G.pcs) for(let y=p.y;y<p.y+p.s;y++) for(let x=p.x;x<p.x+p.s;x++) o[y*G.N+x]=p; return o; }
+function livre(o,x,y,s,ign){ if(x<0||y<0||x+s>G.N||y+s>G.N) return false; for(let j=y;j<y+s;j++) for(let i=x;i<x+s;i++){ const q=o[j*G.N+i]; if(q && !ign?.includes(q)) return false; } return true; }
+function nasce(){ const l=Math.random()<.9?1:2, s=ladoDe(l), o=ocupa(), op=[];
+  for(let y=0;y+s<=G.N;y++) for(let x=0;x+s<=G.N;x++) if(livre(o,x,y,s)) op.push([x,y]);
+  if(!op.length) return false; const [x,y]=op[Math.random()*op.length|0]; G.pcs.push({id:nid++,l,x,y,s,novo:true}); return true; }
+function poe(o,p,v){ for(let y=p.y;y<p.y+p.s;y++) for(let x=p.x;x<p.x+p.s;x++) o[y*G.N+x]=v; }
+// um arrasto: devolve {mexeu, juntas:[{de,em,novo}]}; com so=true só confere se mexeria (sem mudar nada)
+function arrasta(dx,dy,so){
+  const pcs=G.pcs.map(p=>({...p, x0:p.x, y0:p.y, junto:false})), o=new Array(G.N*G.N).fill(null);
+  for(const p of pcs) poe(o,p,p);
+  const frente=p=>dx>0?-(p.x+p.s):dx<0?p.x:dy>0?-(p.y+p.s):p.y;
+  pcs.sort((a,b)=>frente(a)-frente(b));
+  const fora=new Set(), juntas=[], novos=[]; let mexeu=false;
+  for(const p of pcs){ if(fora.has(p)) continue; poe(o,p,null);
+    for(;;){ const nx=p.x+dx, ny=p.y+dy;
+      if(nx<0||ny<0||nx+p.s>G.N||ny+p.s>G.N) break;
+      // o que está na faixa da frente
+      const bat=new Set(); for(let j=ny;j<ny+p.s;j++) for(let i=nx;i<nx+p.s;i++){ const q=o[j*G.N+i]; if(q) bat.add(q); }
+      if(!bat.size){ p.x=nx; p.y=ny; mexeu=true; continue; }
+      if(bat.size===1){ const q=[...bat][0];
+        if(q.l===p.l && !q.junto && !p.junto && q.l<NOMES.length){ const l=p.l+1, s=ladoDe(l);
+          // o novo nasce por cima do atingido: a frente dele alinhada com a do atingido, centrado no outro eixo; senão o lugar livre mais perto
+          const cx=q.x+q.s/2, cy=q.y+q.s/2;
+          const x0=dx>0?q.x+q.s-s:dx<0?q.x:Math.round(cx-s/2), y0=dy>0?q.y+q.s-s:dy<0?q.y:Math.round(cy-s/2);
+          poe(o,q,null); let best=null, bd=1e9;
+          for(let y=Math.max(0,q.y-s+1);y<=Math.min(G.N-s,q.y+q.s-1);y++) for(let x=Math.max(0,q.x-s+1);x<=Math.min(G.N-s,q.x+q.s-1);x++){
+            const d=Math.abs(x-x0)+Math.abs(y-y0); if(d<bd && livre(o,x,y,s)){ bd=d; best=[x,y]; } }
+          if(best){ const n={id:nid++, l, x:best[0], y:best[1], s, junto:true, x0:q.x, y0:q.y};
+            fora.add(q); fora.add(p); poe(o,n,n); novos.push(n); juntas.push({de:p, em:q, novo:n}); mexeu=true; break; }
+          poe(o,q,q); }
+      }
+      break; }
+    if(!fora.has(p)) poe(o,p,p); }
+  if(so) return mexeu;
+  if(!mexeu) return {mexeu};
+  const fica=pcs.filter(p=>!fora.has(p));
+  G.pcs=fica.concat(novos).map(p=>({id:p.id,l:p.l,x:p.x,y:p.y,s:p.s}));
+  return {mexeu, pcs:fica, juntas, novos};
+}
+let anima=null;
+function joga(dx,dy){ if(!G||G.fim) return; somLiga(); const r=arrasta(dx,dy); if(!r.mexeu) return;
+  G.arr++; for(const j of r.juntas){ G.pts+=2**j.novo.l; G.max=Math.max(G.max,j.novo.l); }
+  const ls=[...new Set(r.juntas.map(j=>j.novo.l))].sort((a,b)=>b-a); ls.slice(0,2).forEach((l,i)=>setTimeout(()=>somJunta(l),i*45));
+  const ant=new Map(); for(const p of r.pcs) ant.set(p.id,{x:p.x0,y:p.y0});
+  anima={t0:performance.now(), ant, sai:r.juntas.flatMap(j=>[{...j.de,xf:j.em.x+(j.em.s-j.de.s)/2,yf:j.em.y+(j.em.s-j.de.s)/2},{...j.em,xf:j.em.x,yf:j.em.y,x:j.em.x,y:j.em.y}]), novos:new Set(r.novos.map(n=>n.id))};
+  setTimeout(()=>{ for(let i=0;i<OP.nascem;i++) nasce();
+    if(!['-1,0','1,0','0,-1','0,1'].some(d=>{ const [a,b]=d.split(',').map(Number); return arrasta(a,b,true); })) G.fim=true;
+    atualiza(); }, 130);
+  atualiza(); }
+function atualiza(){ hPts.textContent=G.pts; hArr.textContent=G.arr; hMax.textContent=NOMES[G.max-1]; fim.classList.toggle('on',G.fim); }
+
+// ---------- o desenho ----------
+const cv=document.getElementById('tab'), c=cv.getContext('2d');
+const DUR=130, ease=k=>1-(1-k)*(1-k);
+function quadro(now){
+  requestAnimationFrame(quadro);
+  const D=Math.min(2,devicePixelRatio||1), L=Math.round(cv.clientWidth*D); if(!L) return;
+  if(cv.width!==L){ cv.width=cv.height=L; }
+  const pad=L*.03, P=(L-2*pad)/G.N, X=v=>pad+v*P;
+  const bg=c.createRadialGradient(L*.4,L*.35,0,L*.5,L*.5,L*.8); bg.addColorStop(0,'#1a1440'); bg.addColorStop(1,'#07061a'); c.fillStyle=bg; c.fillRect(0,0,L,L);
+  // a grade: as casinhas bem fracas, as casas de hoje mais marcadas
+  c.lineWidth=1; for(let i=0;i<=G.N;i++){ const casa=i%OP.sub===0; c.strokeStyle=casa?'rgba(150,170,255,.22)':'rgba(150,170,255,.07)';
+    c.beginPath(); c.moveTo(X(i),X(0)); c.lineTo(X(i),X(G.N)); c.moveTo(X(0),X(i)); c.lineTo(X(G.N),X(i)); c.stroke(); }
+  const t=now/1000, k=anima?Math.min(1,(now-anima.t0)/DUR):1, e=ease(k);
+  const corpo=(p,x,y,a=1,esc=1)=>{ const s=p.s*P;
+    if(OP.area && a>.5){ c.fillStyle='rgba(140,200,255,.05)'; c.strokeStyle='rgba(140,200,255,.25)'; c.lineWidth=D; c.beginPath(); c.roundRect(x+1.5*D,y+1.5*D,s-3*D,s-3*D,Math.min(s*.18,10*D)); c.fill(); c.stroke(); }
+    if(!ESP) return; const d=ESP.byName(NOMES[p.l-1]), en=d.kind==='sphere'?(d.sp?.rScale||.9):(ENCHE[d.kind]||.8);
+    ESP.drawPeca(c,NOMES[p.l-1],t,x+s/2,y+s/2,s*.92/en,a,true,esc); };
+  // os que saem numa junção: o que bateu corre para dentro do atingido e os dois somem
+  if(anima && k<1) for(const p of anima.sai){ const fx=p.x0??p.x, fy=p.y0??p.y; corpo(p, X(fx+(p.xf-fx)*e), X(fy+(p.yf-fy)*e), 1-e*.6); }
+  // os maiores embaixo
+  for(const p of [...G.pcs].sort((a,b)=>b.s-a.s)){
+    if(anima && anima.novos.has(p.id)){ if(k<1) continue; const kk=Math.min(1,(now-anima.t0-DUR)/180); corpo(p,X(p.x),X(p.y),1,kk<1?1+.18*Math.sin(Math.PI*kk):1); continue; }
+    const a=anima?.ant.get(p.id); const x=a?a.x+(p.x-a.x)*e:p.x, y=a?a.y+(p.y-a.y)*e:p.y; corpo(p,X(x),X(y)); }
+  if(!ESP){ c.fillStyle='#a49bd6'; c.font=`${14*D}px 'Exo 2'`; c.textAlign='center'; c.fillText('abrindo o motor…',L/2,L/2); }
+}
+
+// ---------- montagem ----------
+function grupo(id,lista,cmp,muda){ const el=document.getElementById(id);
+  el.innerHTML=lista.map(o=>`<button class="op ${cmp(o)?'on':''}" data-k="${o.k}">${o.nome}<small>${o.sub}</small></button>`).join('');
+  el.onclick=e=>{ const b=e.target.closest('.op'); if(!b) return; el.querySelectorAll('.op').forEach(x=>x.classList.toggle('on',x===b)); muda(lista.find(o=>String(o.k)===b.dataset.k)); }; }
+grupo('opsG',GRADES,o=>o.k===OP.sub,o=>{ OP.sub=o.k; escada(); nova(); });
+grupo('opsC',CRESCE,o=>o===OP.cresce,o=>{ OP.cresce=o; escada(); nova(); });
+grupo('opsN',NASCEM,o=>o.k===OP.nascem,o=>{ OP.nascem=o.k; });
+bArea.onclick=()=>{ OP.area=!OP.area; bArea.classList.toggle('on',OP.area); };
+bNova.onclick=()=>nova();
+document.querySelector('.ctl').onclick=e=>{ const b=e.target.closest('[data-d]'); if(b){ const [dx,dy]=b.dataset.d.split(',').map(Number); joga(dx,dy); } };
+addEventListener('keydown',e=>{ const m={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1],a:[-1,0],d:[1,0],w:[0,-1],s:[0,1]}[e.key]; if(m){ e.preventDefault(); joga(...m); } });
+let toque=null;
+cv.addEventListener('pointerdown',e=>{ toque={x:e.clientX,y:e.clientY}; });
+cv.addEventListener('pointerup',e=>{ if(!toque) return; const dx=e.clientX-toque.x, dy=e.clientY-toque.y; toque=null; if(Math.max(Math.abs(dx),Math.abs(dy))<24) return;
+  if(Math.abs(dx)>Math.abs(dy)) joga(Math.sign(dx),0); else joga(0,Math.sign(dy)); });
+function escada(){ document.getElementById('esc').innerHTML=NOMES.map((n,i)=>{ const s=ladoDe(i+1); return `<div><span>${n}</span><b>${s>4*OP.sub?'não cabe':s+'x'+s}</b></div>`; }).join(''); }
+escada(); nova(); requestAnimationFrame(quadro);
+</script>
+</body>
+</html>

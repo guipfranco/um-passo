@@ -190,7 +190,7 @@ bQueda.onclick=()=>{ if(!TN.ok) return; somLiga(TN);
   TN.w.eval(`(()=>{ const v=${temVao}; let a=null;
     for(const t of S.tiles){ for(const [dx,dy] of DIRS) if(v(t.x+dx,t.y+dy)){ a={t,x:t.x+dx,y:t.y+dy}; break; } if(a) break; }
     if(!a) return; const el=els.get(a.t.id); if(!el) return;
-    const p0=pos(a.t.x,a.t.y), p1=pos(a.x,a.y), an=el.animate([{transform:p0},{transform:p1,offset:.28,easing:'cubic-bezier(.5,0,.8,.6)'},{transform:p1+' scale(.06)',opacity:0}],{duration:1050,fill:'forwards'});
+    const p0=pos(a.t.x,a.t.y), p1=pos(a.x,a.y), an=el.animate([{transform:p0},{transform:p1,offset:.28,easing:'cubic-bezier(.5,0,.8,.6)'},{transform:p1+' scale(.22)',opacity:1,offset:.8,easing:'cubic-bezier(.4,0,.9,.7)'},{transform:p1+' scale(.03)',opacity:0}],{duration:1200,fill:'forwards'});
     setTimeout(()=>{ SONS_ESP.engole(); const g=geoTab(), t=tQuadro||performance.now()/1000; tremM.push({x:g.O+g.g0+(a.x+.5)*g.P,y:g.O+g.g0+(a.y+.5)*g.P,t0:t+.55,a:g.P*.06}); malhaParada=false; }, 220);
     setTimeout(()=>an.cancel(), 2200); })()`); };
 // o som da junção

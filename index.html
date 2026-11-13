@@ -809,7 +809,7 @@ body.rola #stage{touch-action:none}
 <div id="coach" class="hidden"><div class="cav" id="coachAv"></div><div><p id="coachText"></p><button class="btn b" id="coachOk">Ok</button></div></div>
 
 <script>
-const VERSAO="3ef0a29a";
+const VERSAO="2f8cd1d2";
 // ===================== CONFIG =====================
 let W = 4, H = 4, N = 4;      // largura e altura do tabuleiro (N = maior lado)
 const CFG = {
@@ -4163,6 +4163,16 @@ function noEspaco(){ return espacoLigado() && !!(typeof S!=='undefined' && S && 
 function nomeEspaco(t){ if(!ESP || t<1 || !espFig()) return null; return nomeNivelEsp(t); }
 function nomeNivelEsp(t){ const L=ESP.LADDER; return L[Math.max(1,Math.min(t,L.length))-1].n; }
 const kNivel = t => t<1 ? 1 : ESP.kDe(nomeNivelEsp(t));
+// Tamanho no tabuleiro (desde 2026-11-13, o 'orgânico' escolhido em telas_crescem.html): o lado do corpo cresce uns 15%
+// a cada junção, de 1/4 da casa (Poeira) até a casa inteira (Terra); dali para cima, o maior entre a casa e o tamanho
+// de antes (Júpiter, Sol, Supernova e Galáxia já passavam da casa). escNivel: a escala sobre o desenho de antes, só
+// no tabuleiro (menus, metas e catálogo seguem com o k da escada). TAM_CASA=false volta ao de antes.
+let TAM_CASA=true;
+const ENCHE_ESP={dust:.8, shards:.8, mesh:.82, comet:.7, supernova:.8, galaxy:.8};   // quanto do quadro o desenho enche
+const ladoCasa = t => Math.min(1, .25*Math.pow(4,(t-1)/10));
+function escNivel(t){ if(!TAM_CASA || t<1) return 1; const d=ESP.byName(nomeNivelEsp(t)), v0=d.k*(d.kind==='sphere'?(d.sp?.rScale||.9):(ENCHE_ESP[d.kind]||.8));
+  return Math.max(ladoCasa(t), t>=11?v0:0)/v0; }
+const kTab = t => t<1 ? 1 : kNivel(t)*escNivel(t);
 // cor de cada nível (para o disco do buraco negro, que engole o planeta da mesma cor)
 const COR_NIVEL=['#d9c49a','#7fdcf0','#ff7a1e','#909cb2','#bfefff','#e9c3a0','#cfd3dc','#c0342a','#e0805a','#f2d08a','#43a0e6','#4f86ec','#9fdde4','#e8c98a','#d9a07a','#ffd84a','#c08aff','#9a77c9'];
 const corNivel = t => COR_NIVEL[Math.max(1,Math.min(t,COR_NIVEL.length))-1];
@@ -4270,12 +4280,12 @@ function glQuadro(t){
   const sx=W/gr.width, lista=[];
   for(const {el,fr} of pecasNoQuadro()){ if(!el._gl) continue; const id=el.dataset.id||'x';
     if(el._vrId!==id){ el._vr=ESP.vrDe(id); el._vrId=id; }   // o jeito da peça (eixo, giro) é sorteado pelo id uma vez só
-    lista.push({n:nomeNivelEsp(el._t.t), x:(fr.left+fr.width/2-gr.left)*sx, y:(fr.top+fr.height/2-gr.top)*sx, u:fr.width*sx, id, vr:el._vr}); }
+    lista.push({n:nomeNivelEsp(el._t.t), x:(fr.left+fr.width/2-gr.left)*sx, y:(fr.top+fr.height/2-gr.top)*sx, u:fr.width*sx, esc:escNivel(el._t.t), id, vr:el._vr}); }
   if(!lista.length && !glSujo) return;
   ESP.glDesenha(lista,t,ESP.ST.L); glSujo=lista.length>0;
 }
 // recorta o disco do planeta (desenhado embaixo, pela placa de vídeo) do que está no canvas da peça
-function furaPlaneta(c,x,y,u,T){ const R=u*kNivel(T.t)*ESP.byName(nomeNivelEsp(T.t)).sp.rScale/2; c.save(); c.globalCompositeOperation='destination-out'; c.beginPath(); c.arc(x,y,R,0,7); c.fill(); c.restore(); }
+function furaPlaneta(c,x,y,u,T){ const R=u*kTab(T.t)*ESP.byName(nomeNivelEsp(T.t)).sp.rScale/2; c.save(); c.globalCompositeOperation='destination-out'; c.beginPath(); c.arc(x,y,R,0,7); c.fill(); c.restore(); }
 
 // ícone do planeta no meio do texto (uma foto parada). A foto (ICO_URL) é feita antes, no tempo ocioso (preparaOcioso);
 // se ainda não estiver pronta, sai na hora, como antes
@@ -4343,7 +4353,7 @@ function espTile(el,t){
   el._t=t;
   const key=[t.t,t.c,t.k,t.presa?1:0].join(':'); if(el.dataset.ek===key) return; el.dataset.ek=key;
   const f=el.firstChild; f.querySelectorAll('svg').forEach(s=>s.remove());
-  const k = t.t===0||t.k==='p' ? 1 : kNivel(t.t), kk = Math.max(1.15, k + (t.c!=null ? .1 : 0));
+  const k = t.t===0||t.k==='p' ? 1 : kTab(t.t), kk = Math.max(1.15, k + (t.c!=null ? .1 : 0));
   el.style.zIndex = String(10 + Math.round((2 - Math.min(2,k))*10));   // os pequenos ficam por cima dos anéis dos grandes
   espCanvas(f, kk, kk, (c,W,H,u,tm)=>{ const T=el._t, x=W/2, y=H/2;
     // planeta redondo: vai pela placa de vídeo (camada embaixo); aqui só a aura e a gaiola, com o disco do planeta recortado
@@ -4357,7 +4367,7 @@ function espTile(el,t){
     if(T.presa) ESP.SPR.gaiola(c,x,y,u,tm,'back');
     if(T.t===0) ESP.SPR.lixo(c,x,y,u*.86,tm);
     else if(T.k==='p') ESP.SPR.buraco(c,x,y,u,tm,corNivel(T.t));
-    else ESP.drawPecaVar(c,nomeNivelEsp(T.t),tm,x,y,u,el.dataset.id||'x');
+    else ESP.drawPecaVar(c,nomeNivelEsp(T.t),tm,x,y,u*escNivel(T.t),el.dataset.id||'x');
     if(T.presa) ESP.SPR.gaiola(c,x,y,u,tm,'front'); });
 }
 // bloco (a peça que não sai): estação espacial
@@ -5786,7 +5796,7 @@ function freCeu(c,t){
   // brilho novo a cada cor do caminho (era um canvas novo a cada poucos quadros, bem na hora do letreiro)
   if(k>=.05){ const a=Math.min(.55,.1+.065*k)*(1+(POUCO_MOV?0:.6*FV.pulso)); let i=0;
     const arco=k>TOPO-.5, k0=Math.floor(k), f=k-k0, hb=Math.floor(t*.12*24), s0=haloDe(COR_DEG[k0]), s1=haloDe(COR_DEG[Math.min(TOPO,k0+1)]);
-    for(const {el,fr} of pecasNoQuadro()){ const x=fr.left+fr.width/2, y=fr.top+fr.height/2, R=g.cel*(.58+.05*k)*Math.max(1,kNivel(el._t.t)*.75);
+    for(const {el,fr} of pecasNoQuadro()){ const x=fr.left+fr.width/2, y=fr.top+fr.height/2, R=g.cel*(.58+.05*k)*Math.max(1,kTab(el._t.t)*.75);
       if(arco){ c.globalAlpha=a; c.drawImage(haloDe(hslRgb((hb+i*2)/24,.9,.62)), x-R, y-R, 2*R, 2*R); }
       else{ if(f<.98){ c.globalAlpha=a*(1-f); c.drawImage(s0, x-R, y-R, 2*R, 2*R); } if(f>.02){ c.globalAlpha=a*f; c.drawImage(s1, x-R, y-R, 2*R, 2*R); } }
       i++; }
