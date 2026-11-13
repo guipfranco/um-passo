@@ -214,7 +214,7 @@ body.espaco.modoCla #malhaCv{display:block}
 body.espaco.modoCla .slot::before{display:none}
 /* casa que não existe (formato do tabuleiro, '#'): um vão escuro, para o formato se ler (a malha também some ali) */
 body.espaco.modoCla .slot.void{z-index:1}
-body.espaco.modoCla .slot.void::before{display:block;inset:3%;border-radius:24%;border:0;background:radial-gradient(circle,rgba(2,1,8,.72) 40%,rgba(2,1,8,.4) 75%,rgba(2,1,8,0))}
+body.espaco.modoCla:not(.malhaVao) .slot.void::before{display:block;inset:3%;border-radius:24%;border:0;background:radial-gradient(circle,rgba(2,1,8,.72) 40%,rgba(2,1,8,.4) 75%,rgba(2,1,8,0))}
 canvas.esp{position:absolute;left:50%;top:50%;width:calc(var(--cell)*var(--kx));height:calc(var(--cell)*var(--ky));transform:translate(-50%,-50%);pointer-events:none}
 body.espaco .edge{background:none;border:0;box-shadow:none}
 body.espaco .etq{background:rgba(12,9,26,.84) !important;border:1px solid rgba(255,255,255,.2);color:#ece3f7;font-family:'Exo 2',sans-serif}
@@ -809,7 +809,7 @@ body.rola #stage{touch-action:none}
 <div id="coach" class="hidden"><div class="cav" id="coachAv"></div><div><p id="coachText"></p><button class="btn b" id="coachOk">Ok</button></div></div>
 
 <script>
-const VERSAO="b33a71fc";
+const VERSAO="3ef0a29a";
 // ===================== CONFIG =====================
 let W = 4, H = 4, N = 4;      // largura e altura do tabuleiro (N = maior lado)
 const CFG = {
@@ -4550,11 +4550,11 @@ function presencaM(ci,cj,ok){
 // contínuo (a distância com sinal até o conjunto dos vãos), então vãos vizinhos viram um buraco só, de beira redonda.
 // cor, recuo, fio (o quanto as pontas se desencontram e se desfiam) e claro vão de 0 a 1. Desligado (o padrão), a rede
 // some no vão como sempre.
-// Parede (o vão que segura as peças), em teste desde 2026-11-13, outras formas: 'borda' (a rede termina numa beira
+// Parede (o vão que segura as peças), desde 2026-11-13 a 'borda' com a batida (escolhida em telas_quebra.html); as outras formas: 'borda' (a rede termina numa beira
 // acesa, a mesma da borda de fora do tabuleiro), 'relevo' (a rede sobe num morro, com luz de um lado e sombra do outro),
 // 'membrana' (a rede passa por cima, mais densa, esticada e acesa). bate: quando uma peça para encostada no vão, a beira
 // acende e treme e a peça quica de leve (vale com qualquer forma).
-let MALHA_VAO={forma:null, cor:.7, recuo:.5, fio:.5, claro:.5};
+let MALHA_VAO={forma:'borda', bate:true, cor:.7, recuo:.5, fio:.5, claro:.5};
 const malhaVaoLiga=()=>MALHA_VAO.forma==='arrebenta', malhaForma=()=>MALHA_VAO.forma||null;
 let flashV=[];   // beiras acesas por uma batida: {x1,y1,x2,y2 (px da malha), t0}
 const distRet=(x,y,ci,cj)=>Math.hypot(Math.max(x-ci,0,ci-(x+1)),Math.max(y-cj,0,cj-(y+1)));
@@ -4596,6 +4596,7 @@ function malhaQuadro(t){
       if(liga) vaoM(n,ci,cj,vaos,ok,g.P);
       MN.nos.push(n); }
     // a beira (forma 'borda', e o contorno da batida): os lados de casa que dão para um vão ou para fora do tabuleiro
+    document.body.classList.toggle('malhaVao', !!liga);   // a malha desenha o vão: o quadrado escuro sai (CSS)
     MN.beira=[]; const X=x=>g.O+g.g0+x*g.P;
     for(const [x,y] of ok) for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){ const nx=x+dx, ny=y+dy, vao=nx>=0&&ny>=0&&nx<W&&ny<H&&!casaOk(nx,ny), fora=!(nx>=0&&ny>=0&&nx<W&&ny<H);
       if(!vao && !fora) continue; const ex=dx>0?x+1:dx<0?x:null, ey=dy>0?y+1:dy<0?y:null;
@@ -4666,7 +4667,7 @@ function malhaQuadro(t){
     for(let k=0;k<=W*8;k++){ const x=g.O+g.g0+k*pa/8; c.moveTo(x,g.O+g.g0); c.lineTo(x,g.O+g.g0+H*pa); }
     for(let k=0;k<=H*8;k++){ const y=g.O+g.g0+k*pa/8; c.moveTo(g.O+g.g0,y); c.lineTo(g.O+g.g0+W*pa,y); }
     c.stroke(); c.restore(); }
-  if(fm==='borda' && MN.beira.length){   // a beira: um brilho largo e fraco e um fio firme por cima, no vão e na borda de fora
+  if(fm==='borda' && MN.beira.some(b=>b[4])){   // a beira: um brilho largo e fraco e um fio firme por cima, no vão e na borda de fora (só em tabuleiro com vão)
     c.lineCap='round';
     for(const [lw,al] of [[7,.07],[3,.16],[1.4,.62]]){ c.strokeStyle=`rgba(${rgb},${al})`; c.lineWidth=lw*g.D; c.beginPath();
       for(const [x1,y1,x2,y2] of MN.beira){ c.moveTo(x1,y1); c.lineTo(x2,y2); } c.stroke(); } }
@@ -6864,7 +6865,7 @@ const SONS_ESP={
 // desenho, com as miúdas uma oitava abaixo, sem os agudos de cima (passa-baixa) e mais baixo; 'bolha': uma gota
 // redonda que desce de nota conforme o corpo cresce (do Sol para cima, o 'macio'). Nas duas novas, a segunda junção do
 // mesmo arrasto sai bem mais baixa (antes as duas somavam). Escolhido no rascunho telas_quebra.html.
-let SOM_JUNTA='hoje';
+let SOM_JUNTA='macio';   // escolhido em 2026-11-13
 function viaE(corte, ganho, f){ const c=ac(); if(!c) return; salas(c);
   const lp=c.createBiquadFilter(), g=c.createGain(); lp.type='lowpass'; lp.frequency.value=corte; lp.Q.value=.5; g.gain.value=ganho;
   lp.connect(g); g.connect(BUS); setTimeout(()=>{ try{ lp.disconnect(); g.disconnect(); }catch(e){} }, 6000);

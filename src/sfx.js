@@ -202,7 +202,7 @@ const SONS_ESP={
 // desenho, com as miúdas uma oitava abaixo, sem os agudos de cima (passa-baixa) e mais baixo; 'bolha': uma gota
 // redonda que desce de nota conforme o corpo cresce (do Sol para cima, o 'macio'). Nas duas novas, a segunda junção do
 // mesmo arrasto sai bem mais baixa (antes as duas somavam). Escolhido no rascunho telas_quebra.html.
-let SOM_JUNTA='hoje';
+let SOM_JUNTA='macio';   // escolhido em 2026-11-13
 function viaE(corte, ganho, f){ const c=ac(); if(!c) return; salas(c);
   const lp=c.createBiquadFilter(), g=c.createGain(); lp.type='lowpass'; lp.frequency.value=corte; lp.Q.value=.5; g.gain.value=ganho;
   lp.connect(g); g.connect(BUS); setTimeout(()=>{ try{ lp.disconnect(); g.disconnect(); }catch(e){} }, 6000);

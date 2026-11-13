@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2048 Astros · planetas que crescem (rascunho)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+/* Rascunho de um modo em que o corpo cresce na casa conforme sobe a escada: o jogo de verdade (index.html num iframe,
+   no Clássico) com o tamanho de cada corpo trocado por cima (ESP.LADDER[i].k, só aqui). O iframe divide o
+   localStorage com o jogo: a página guarda tudo ao abrir e devolve igual. */
+*{box-sizing:border-box}
+html,body{background:#0b0a18}
+body{margin:0;color:#e8e4ff;font-family:'Exo 2',system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+main{max-width:460px;margin:0 auto;padding:14px 12px 48px;display:flex;flex-direction:column;gap:10px}
+h1{margin:2px 0 0;font:900 20px Orbitron,sans-serif;letter-spacing:.04em;color:#f4fbff;text-shadow:0 0 14px rgba(110,230,255,.7)}
+h2{margin:26px 0 0;font:900 13px Orbitron,sans-serif;letter-spacing:.12em;color:#9fe9ff}
+p{margin:0;font-size:15px;line-height:1.42;color:#c9c2ee}
+b{color:#fff}
+.rot{font:700 11.5px 'Exo 2',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#a49bd6;margin:4px 0 -4px}
+.ops{display:flex;gap:6px;flex-wrap:wrap}
+.op{flex:1 1 0;min-width:0;border:1.5px solid rgba(140,200,255,.3);border-radius:12px;padding:7px 4px;background:rgba(20,16,44,.7);color:#d8d2ff;
+  font:700 13px 'Exo 2',sans-serif;cursor:pointer;line-height:1.1}
+.op small{display:block;font-weight:400;font-size:11px;color:#a49bd6;margin-top:2px}
+.op.on{border-color:#6ee6ff;background:rgba(40,90,140,.45);color:#fff;box-shadow:0 0 12px rgba(110,230,255,.45)}
+.op.on small{color:#cfe9ff}
+.moldura{position:relative;width:100%;border-radius:22px;overflow:hidden;border:1.5px solid rgba(140,200,255,.22);background:#0b0a18}
+.moldura iframe{border:0;display:block;transform-origin:0 0;pointer-events:none}
+.moldura .carr{position:absolute;inset:0;display:grid;place-items:center;font-size:14px;color:#a49bd6;background:#0b0a18}
+.moldura.pronto .carr{display:none}
+.card{background:rgba(22,17,40,.82);border:1.5px solid rgba(255,255,255,.12);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;cursor:pointer}
+.card.on{border-color:rgba(110,230,255,.6);box-shadow:0 0 14px rgba(110,230,255,.2)}
+.card h3{margin:0;font:800 15.5px 'Exo 2',sans-serif;color:#fff}
+.card h3 i{font-style:normal;font:900 12px Orbitron,sans-serif;color:#6fe0ff;margin-right:6px}
+.card p{font-size:14px}
+.pr{font-size:13.5px;line-height:1.35}
+.mais{color:#8fe3a0} .menos{color:#ff9aa6}
+.nota{font-size:13px;color:#a49bd6}
+.ctl{display:flex;gap:6px;flex-wrap:wrap}
+.ctl button{flex:1 1 0;min-width:44px;min-height:44px;border:1.5px solid rgba(140,200,255,.35);border-radius:12px;background:rgba(20,16,44,.8);color:#e8e4ff;font:800 18px 'Exo 2',sans-serif;cursor:pointer}
+.ctl button.lg{flex:1 1 40%;font-size:14px}
+.ctl button:active{transform:scale(.96)}
+/* a escada de tamanhos: um quadrado por corpo, com o corpo do tamanho que ele teria na casa */
+.escada{display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
+.escada div{aspect-ratio:1;border:1px solid #2f2b5c;border-radius:6px;position:relative;display:grid;place-items:center;overflow:visible}
+.escada i{display:block;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff8,#9fe9ff55 60%,#9fe9ff22);box-shadow:0 0 0 1px #9fe9ff66}
+.escada span{position:absolute;bottom:-1px;left:0;right:0;text-align:center;font-size:8.5px;color:#a49bd6;line-height:1}
+</style>
+</head>
+<body>
+<main>
+  <h1>PLANETAS QUE CRESCEM</h1>
+  <p>Um modo em que o corpo ocupa mais da casa conforme sobe: a Poeira começa pequenininha e os planetas enchem a casa. Aqui é o Clássico de verdade, só com o tamanho trocado. Jogue com as setas ou monte a escada inteira no tabuleiro.</p>
+
+  <div class="rot">Como cresce</div>
+  <div class="ops" id="opsC"></div>
+  <div class="ops"><button class="op" id="bTeto">Gigantes: param no tamanho da casa<small>toque para deixar passar da casa</small></button></div>
+  <div class="moldura" id="mC"><div class="carr">abrindo o jogo…</div></div>
+  <div class="ctl" id="ctlC"><button data-d="-1,0">←</button><button data-d="0,-1">↑</button><button data-d="0,1">↓</button><button data-d="1,0">→</button>
+    <button data-a="vitrine" class="lg">Escada no tabuleiro</button><button data-a="miudas" class="lg">Só as miúdas</button><button data-a="nova" class="lg">Partida nova</button></div>
+  <div class="rot">O lado de cada corpo, em casas</div>
+  <div class="escada" id="esc"></div>
+  <div id="cardsC" style="display:flex;flex-direction:column;gap:10px"></div>
+
+  <h2>E O ENCAIXE NO TABULEIRO?</h2>
+  <p>Nesta tela o tamanho é só visual: cada corpo ainda ocupa uma casa inteira na regra. Daqui saem duas perguntas para a regra:</p>
+  <p><b>Abaixo de uma casa:</b> se a Poeira tem 1/4 do lado, cabem 16 numa casa. Dá para as miúdas dividirem a casa (4 Poeiras viram um Gelo sem arrastar, por exemplo), ou elas continuam uma por casa e o tamanho só conta a história.</p>
+  <p><b>Acima de uma casa:</b> deixando os gigantes passarem da casa, eles cobrem os vizinhos. Na regra, isso vira o "tabuleiro que aperta": um gigante passa a ocupar 2x2 e o espaço some.</p>
+</main>
+
+<script>
+// ---------- progresso ----------
+const FOTO=(()=>{ const o={}; try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); o[k]=localStorage.getItem(k); } }catch(e){} return o; })();
+function devolve(){ try{ for(let i=localStorage.length-1;i>=0;i--){ const k=localStorage.key(i); if(!(k in FOTO)) localStorage.removeItem(k); }
+  for(const k in FOTO) if(localStorage.getItem(k)!==FOTO[k]) localStorage.setItem(k,FOTO[k]); }catch(e){} }
+setInterval(devolve,1500); addEventListener('pagehide',devolve);
+
+// ---------- os tamanhos ----------
+// o lado que o corpo ocupa na casa (1 = a casa inteira), por nível (1 = Poeira ... 18 = Galáxia). teto: os gigantes param em 1
+const NOMES=['Poeira','Gelo','Rocha','Asteroide','Cometa','Plutão','Lua','Mercúrio','Marte','Vênus','Terra','Netuno','Urano','Saturno','Júpiter','Sol','Supernova','Galáxia'];
+const CRESCE=[
+  {k:'hoje',i:'0',nome:'Hoje',sub:'como está',txt:'Os corpos já crescem um pouco: de uns 40% da casa (Poeira) até passar dela (Júpiter, Sol, Galáxia). As miúdas têm quase o mesmo tamanho entre si.',mais:[],menos:['Pouca diferença entre Poeira, Gelo e Rocha'],lado:null},
+  {k:'degraus',i:'A',nome:'Degraus',sub:'1/4, 1/2, 3/4, 1',txt:'O lado sobe em quartos: Poeira 1/4 (1/16 da área), Gelo e Rocha 1/2, Asteroide a Lua 3/4, Mercúrio a Terra a casa inteira. Soltos, os gigantes seguem em quartos até 2 casas.',
+    mais:['Fácil de ler: cada degrau é um salto que se vê','Conversa com uma regra de quartos de casa'],menos:['Corpos vizinhos na escada ficam do mesmo tamanho'],
+    lado:l=>l<=1?.25:l<=3?.5:l<=7?.75:l<=11?1:l<=13?1.25:l<=15?1.5:l<=16?1.75:2},
+  {k:'organico',i:'B',nome:'Orgânico',sub:'um pouco a cada junção',txt:'Cada junção cresce o lado na mesma proporção (uns 15%): Poeira 1/4, a casa cheia na Terra, e os gigantes seguindo a curva se soltos.',
+    mais:['Toda junção se vê crescer','Nenhum corpo igual ao outro'],menos:['Os tamanhos não batem com a grade (difícil virar regra)'],
+    lado:l=>Math.min(2,.25*Math.pow(4,(l-1)/10))},
+];
+let jC=CRESCE[1], teto=true;
+const ladoDe=(o,l)=>{ const v=o.lado(l); return teto?Math.min(1,v):v; };
+
+// ---------- a tela do jogo ----------
+const pausa=ms=>new Promise(r=>setTimeout(r,ms));
+async function espera(fn,ms){ const t=Date.now(); while(Date.now()-t<ms){ try{ if(fn()) return true; }catch(e){} await pausa(100); } return false; }
+function tela(mold){
+  const f=document.createElement('iframe'); f.src='index.html'; f.width=390; f.height=800; f.tabIndex=-1; mold.append(f);
+  const ajusta=()=>{ const k=mold.clientWidth/390; f.style.transform=`scale(${k})`; mold.style.height=Math.round(800*k)+'px'; };
+  ajusta(); addEventListener('resize',ajusta);
+  // o jogo pode se recarregar sozinho dentro do quadro (o service worker instala a versão nova): cada recarga refaz
+  const prepara=async()=>{ const w=f.contentWindow;
+    w.Element.prototype.scrollIntoView=function(){};
+    try{ w.eval('sound=false; music=false;'); }catch(e){}
+    await espera(()=>typeof w.infinitoJoga==='function' && w.ESP && w.ESP.LADDER, 10000); };
+  let cargas=0;
+  const T={f, get w(){ return f.contentWindow; },
+    pronto:new Promise(ok=>f.addEventListener('load',async()=>{ cargas++; await prepara(); if(cargas===1) ok(); else if(T.refaz) T.refaz(); }))};
+  return T;
+}
+const TC=tela(document.getElementById('mC'));
+// o tamanho na casa de hoje é k (o quadro do desenho) vezes o quanto o desenho enche o quadro; para o corpo ficar com o
+// lado pedido, k = lado / quanto enche
+const ENCHE={dust:.8, shards:.8, mesh:.82, comet:.7, supernova:.8, galaxy:.8};
+function aplica(){ const w=TC.w; if(!TC.ok) return;
+  const lados=jC.lado ? NOMES.map((n,i)=>ladoDe(jC,i+1)) : null;
+  w.eval(`(()=>{ const L=ESP.LADDER; if(!window.__k0) window.__k0=L.map(d=>d.k);
+    const lados=${JSON.stringify(lados)};
+    L.forEach((d,i)=>{ const enche=d.kind==='sphere'?(d.sp?.rScale||.9):(${JSON.stringify(ENCHE)}[d.kind]||.8);
+      d.k = lados ? lados[i]/enche : __k0[i]; });
+    for(const el of els.values()) if(el.dataset.ek) el.dataset.ek=''; render(); })()`);
+  devolve(); desenhaEscada(); }
+function poe(niveis){ const w=TC.w; if(!TC.ok) return;
+  w.eval(`(()=>{ const nv=${JSON.stringify(niveis)}; const livres=[]; for(let y=0;y<H;y++) for(let x=0;x<W;x++) livres.push({x,y});
+    S.tiles=nv.slice(0,livres.length).map((t,i)=>({id:'t'+(nextId++),x:livres[i].x,y:livres[i].y,t}));
+    for(const [id,el] of [...els]) if(/^t\\d/.test(id) && !S.tiles.some(t=>t.id===id)){ el.remove(); els.delete(id); }
+    render(); })()`); devolve(); }
+TC.refaz=async()=>{ TC.w.eval('infinitoJoga(); try{ hideOverlay() }catch(e){}'); await pausa(300); aplica(); };
+(async()=>{ await TC.pronto; TC.ok=true; await TC.refaz(); await pausa(500); document.getElementById('mC').classList.add('pronto'); })();
+
+// ---------- a escada desenhada ----------
+function desenhaEscada(){
+  document.getElementById('esc').innerHTML=NOMES.map((n,i)=>{ const v=jC.lado?ladoDe(jC,i+1):null;
+    const s=v==null?'':`width:${(v*100).toFixed(0)}%;height:${(v*100).toFixed(0)}%`;
+    return `<div title="${n}">${v==null?'<span style="position:static;font-size:10px">hoje</span>':`<i style="${s}"></i>`}<span>${n}${v==null?'':' '+(+v.toFixed(2))}</span></div>`; }).join('');
+}
+
+// ---------- montagem ----------
+const cartao=o=>`<div class="card" data-k="${o.k}"><h3><i>${o.i}</i>${o.nome}</h3><p>${o.txt}</p>
+  <div class="pr">${o.mais.map(m=>`<div class="mais">+ ${m}</div>`).join('')}${o.menos.map(m=>`<div class="menos">− ${m}</div>`).join('')}</div></div>`;
+const opsC=document.getElementById('opsC'), cardsC=document.getElementById('cardsC');
+opsC.innerHTML=CRESCE.map(o=>`<button class="op ${o===jC?'on':''}" data-k="${o.k}">${o.i==='0'?'Hoje':o.i+' · '+o.nome}<small>${o.sub}</small></button>`).join('');
+cardsC.innerHTML=CRESCE.map(cartao).join('');
+const marca=k=>{ jC=CRESCE.find(o=>o.k===k); opsC.querySelectorAll('.op').forEach(b=>b.classList.toggle('on',b.dataset.k===k)); cardsC.querySelectorAll('.card').forEach(c=>c.classList.toggle('on',c.dataset.k===k)); aplica(); desenhaEscada(); };
+opsC.onclick=e=>{ const b=e.target.closest('.op'); if(b) marca(b.dataset.k); };
+cardsC.onclick=e=>{ const c=e.target.closest('.card'); if(c){ marca(c.dataset.k); opsC.scrollIntoView({block:'start',behavior:'smooth'}); } };
+marca(jC.k);
+bTeto.onclick=()=>{ teto=!teto; bTeto.classList.toggle('on',!teto);
+  bTeto.firstChild.textContent='Gigantes: '+(teto?'param no tamanho da casa':'passam da casa');
+  bTeto.lastChild.textContent=teto?'toque para deixar passar da casa':'toque para parar no tamanho da casa'; aplica(); };
+ctlC.onclick=e=>{ const b=e.target.closest('button'); if(!b||!TC.ok) return;
+  if(b.dataset.d) TC.w.eval(`move(${b.dataset.d})`);
+  else if(b.dataset.a==='vitrine') poe([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]);
+  else if(b.dataset.a==='miudas') poe([1,1,2,1, 2,3,1,4, 3,5,2,1, 6,1,7,3]);
+  else if(b.dataset.a==='nova') TC.refaz();
+  devolve(); };
+</script>
+</body>
+</html>

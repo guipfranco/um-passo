@@ -397,11 +397,11 @@ function presencaM(ci,cj,ok){
 // contínuo (a distância com sinal até o conjunto dos vãos), então vãos vizinhos viram um buraco só, de beira redonda.
 // cor, recuo, fio (o quanto as pontas se desencontram e se desfiam) e claro vão de 0 a 1. Desligado (o padrão), a rede
 // some no vão como sempre.
-// Parede (o vão que segura as peças), em teste desde 2026-11-13, outras formas: 'borda' (a rede termina numa beira
+// Parede (o vão que segura as peças), desde 2026-11-13 a 'borda' com a batida (escolhida em telas_quebra.html); as outras formas: 'borda' (a rede termina numa beira
 // acesa, a mesma da borda de fora do tabuleiro), 'relevo' (a rede sobe num morro, com luz de um lado e sombra do outro),
 // 'membrana' (a rede passa por cima, mais densa, esticada e acesa). bate: quando uma peça para encostada no vão, a beira
 // acende e treme e a peça quica de leve (vale com qualquer forma).
-let MALHA_VAO={forma:null, cor:.7, recuo:.5, fio:.5, claro:.5};
+let MALHA_VAO={forma:'borda', bate:true, cor:.7, recuo:.5, fio:.5, claro:.5};
 const malhaVaoLiga=()=>MALHA_VAO.forma==='arrebenta', malhaForma=()=>MALHA_VAO.forma||null;
 let flashV=[];   // beiras acesas por uma batida: {x1,y1,x2,y2 (px da malha), t0}
 const distRet=(x,y,ci,cj)=>Math.hypot(Math.max(x-ci,0,ci-(x+1)),Math.max(y-cj,0,cj-(y+1)));
@@ -443,6 +443,7 @@ function malhaQuadro(t){
       if(liga) vaoM(n,ci,cj,vaos,ok,g.P);
       MN.nos.push(n); }
     // a beira (forma 'borda', e o contorno da batida): os lados de casa que dão para um vão ou para fora do tabuleiro
+    document.body.classList.toggle('malhaVao', !!liga);   // a malha desenha o vão: o quadrado escuro sai (CSS)
     MN.beira=[]; const X=x=>g.O+g.g0+x*g.P;
     for(const [x,y] of ok) for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){ const nx=x+dx, ny=y+dy, vao=nx>=0&&ny>=0&&nx<W&&ny<H&&!casaOk(nx,ny), fora=!(nx>=0&&ny>=0&&nx<W&&ny<H);
       if(!vao && !fora) continue; const ex=dx>0?x+1:dx<0?x:null, ey=dy>0?y+1:dy<0?y:null;
@@ -513,7 +514,7 @@ function malhaQuadro(t){
     for(let k=0;k<=W*8;k++){ const x=g.O+g.g0+k*pa/8; c.moveTo(x,g.O+g.g0); c.lineTo(x,g.O+g.g0+H*pa); }
     for(let k=0;k<=H*8;k++){ const y=g.O+g.g0+k*pa/8; c.moveTo(g.O+g.g0,y); c.lineTo(g.O+g.g0+W*pa,y); }
     c.stroke(); c.restore(); }
-  if(fm==='borda' && MN.beira.length){   // a beira: um brilho largo e fraco e um fio firme por cima, no vão e na borda de fora
+  if(fm==='borda' && MN.beira.some(b=>b[4])){   // a beira: um brilho largo e fraco e um fio firme por cima, no vão e na borda de fora (só em tabuleiro com vão)
     c.lineCap='round';
     for(const [lw,al] of [[7,.07],[3,.16],[1.4,.62]]){ c.strokeStyle=`rgba(${rgb},${al})`; c.lineWidth=lw*g.D; c.beginPath();
       for(const [x1,y1,x2,y2] of MN.beira){ c.moveTo(x1,y1); c.lineTo(x2,y2); } c.stroke(); } }
