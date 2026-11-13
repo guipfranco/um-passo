@@ -809,7 +809,7 @@ body.rola #stage{touch-action:none}
 <div id="coach" class="hidden"><div class="cav" id="coachAv"></div><div><p id="coachText"></p><button class="btn b" id="coachOk">Ok</button></div></div>
 
 <script>
-const VERSAO="35a37ab8";
+const VERSAO="b33a71fc";
 // ===================== CONFIG =====================
 let W = 4, H = 4, N = 4;      // largura e altura do tabuleiro (N = maior lado)
 const CFG = {
@@ -1970,6 +1970,7 @@ function move(dx,dy){
   if(S.qj) qjGuarda();   // quebra-cabeça: a dica em andamento desiste
   for(const g of r.gone){ const el=els.get(g.id); els.delete(g.id); if(el){ el.style.zIndex=0; el.style.transform=pos(g.x,g.y); setTimeout(()=>el.remove(),120); } }
   for(const b of r.breaks) quebrar(b);
+  const antes=new Map(S.tiles.map(t=>[t.id,t.x*64+t.y]));
   S.tiles=r.tiles;
   if(S.missao||S.infinito){ contaMissao(r); if(S.frenesi) freJogada(r); const rc=recolheCarro(); if(rc){ const el=els.get(rc.id); els.delete(rc.id); if(el){ el.style.transform=pos(rc.x,rc.y); el.classList.add('recolhe'); setTimeout(()=>el.remove(),350); } } }
   const wasTired = S.energy<=0;
@@ -1979,11 +1980,11 @@ function move(dx,dy){
   for(let i=0;i<(S.path.spawns??1);i++) addTile(undefined,[dx,dy]);
   if((S.path.spawns??1)>0) SFX.nasce();
   render();
-  if(espFig()) espJogada(dx,dy,r.merges);   // fundo e malha reagem ao arrasto
+  if(espFig()) espJogada(dx,dy,r.merges,r.tiles.filter(t=>antes.get(t.id)!==t.x*64+t.y));   // fundo e malha reagem ao arrasto
   if(S.missao||S.infinito) flutuaPontos(r);
   SFX.arrastar();
   const tops=r.merges.map(o=>o.t).sort((a,b)=>b-a);
-  if(tops.length){ SFX.fundir(tops[0]); if(tops.length>1) setTimeout(()=>SFX.fundir(tops[1]),45); S.stats.maxT=Math.max(S.stats.maxT,tops[0]); }
+  if(tops.length){ SFX.fundir(tops[0]); if(tops.length>1) setTimeout(()=>SFX.fundir(tops[1],true),45); S.stats.maxT=Math.max(S.stats.maxT,tops[0]); }
   if(S.missao||S.infinito){ if(S.missao && !S.semEnergia && [5,3,1].includes(S.energy)) SFX.poucos(); }   // sonar quando sobram poucos arrastos
   else if(S.energy<=0) SFX.torraoCai(); else if(S.energy<=5) SFX.cansado();
   for(const o of r.merges) anim(o.id,'pop');
@@ -4549,8 +4550,13 @@ function presencaM(ci,cj,ok){
 // contínuo (a distância com sinal até o conjunto dos vãos), então vãos vizinhos viram um buraco só, de beira redonda.
 // cor, recuo, fio (o quanto as pontas se desencontram e se desfiam) e claro vão de 0 a 1. Desligado (o padrão), a rede
 // some no vão como sempre.
+// Parede (o vão que segura as peças), em teste desde 2026-11-13, outras formas: 'borda' (a rede termina numa beira
+// acesa, a mesma da borda de fora do tabuleiro), 'relevo' (a rede sobe num morro, com luz de um lado e sombra do outro),
+// 'membrana' (a rede passa por cima, mais densa, esticada e acesa). bate: quando uma peça para encostada no vão, a beira
+// acende e treme e a peça quica de leve (vale com qualquer forma).
 let MALHA_VAO={forma:null, cor:.7, recuo:.5, fio:.5, claro:.5};
-const malhaVaoLiga=()=>MALHA_VAO.forma==='arrebenta';
+const malhaVaoLiga=()=>MALHA_VAO.forma==='arrebenta', malhaForma=()=>MALHA_VAO.forma||null;
+let flashV=[];   // beiras acesas por uma batida: {x1,y1,x2,y2 (px da malha), t0}
 const distRet=(x,y,ci,cj)=>Math.hypot(Math.max(x-ci,0,ci-(x+1)),Math.max(y-cj,0,cj-(y+1)));
 // distância com sinal até o vão, em casas: positiva fora, negativa dentro
 function sdVao(ci,cj,vaos,ok){
@@ -4567,7 +4573,12 @@ function vaoM(n,ci,cj,vaos,ok,pa){
   if(s>1.2) return;
   const e=.04, gx=(sdVao(ci+e,cj,vaos,ok)-sdVao(ci-e,cj,vaos,ok))/(2*e), gy=(sdVao(ci,cj+e,vaos,ok)-sdVao(ci,cj-e,vaos,ok))/(2*e), gl=Math.hypot(gx,gy)||1;
   n.ux=gx/gl; n.uy=gy/gl;
-  const z=s>-.25?suave(.45,0,s):0, M=MALHA_VAO, j=(sorteHash(n.i+','+n.j)-.5)*2;
+  const M=MALHA_VAO;
+  if(M.forma==='relevo'){   // o morro: os fios se afastam do alto e se apertam no pé (empurrados para fora)
+    n.alt=suave(.55,-.45,s); const k=pa*.16*Math.exp(-(((s+.05)/.42)**2)); n.vdx=n.ux*k; n.vdy=n.uy*k; return; }
+  if(M.forma==='membrana'){ n.alt=suave(.12,-.12,s); return; }   // esticada: os poços não afundam ali (alt: o quanto)
+  if(M.forma!=='arrebenta') return;
+  const z=s>-.25?suave(.45,0,s):0, j=(sorteHash(n.i+','+n.j)-.5)*2;
   const k=pa*.09*(M.recuo??.5)*z, d=pa*.07*(M.fio??.5)*z*j;   // recua para fora e desfia um pouco de lado
   n.vdx=n.ux*k-n.uy*d; n.vdy=n.uy*k+n.ux*d;
 }
@@ -4579,24 +4590,29 @@ function malhaQuadro(t){
   const NI=(W+2*MBORDA)*MSUB+1, NJ=(H+2*MBORDA)*MSUB+1, chave=W+'x'+H+':'+Wp+':'+Hp+':'+(S.walls||[]).filter(w=>w.v).map(w=>w.x+','+w.y).join(';')+':'+JSON.stringify(MALHA_VAO);
   if(!MN||MN.chave!==chave){ MN={chave,nos:[]}; const ok=[], vaos=[]; for(let y=0;y<H;y++) for(let x=0;x<W;x++) (casaOk(x,y)?ok:vaos).push([x,y]);
     // com a rede arrebentando no vão, ela chega inteira até a beira (presença como casa) e o corte é feito no desenho
-    const liga=malhaVaoLiga(), okP=liga?ok.concat(vaos):ok;
+    const liga=!!malhaForma() && vaos.length, okP=liga?ok.concat(vaos):ok;
     for(let j=0;j<NJ;j++) for(let i=0;i<NI;i++){ const rx=g.O+g.g0+(i-MBORDA*MSUB)*g.P/MSUB, ry=g.O+g.g0+(j-MBORDA*MSUB)*g.P/MSUB, ci=i/MSUB-MBORDA, cj=j/MSUB-MBORDA;
-      const n={i,j,rx,ry,x:rx,y:ry,vx:0,vy:0,h:0,w:0,s:9,vdx:0,vdy:0,f:liga?presencaM(ci,cj,okP):presencaM(ci,cj,ok)};
+      const n={i,j,rx,ry,x:rx,y:ry,vx:0,vy:0,h:0,w:0,s:9,vdx:0,vdy:0,alt:0,f:liga?presencaM(ci,cj,okP):presencaM(ci,cj,ok)};
       if(liga) vaoM(n,ci,cj,vaos,ok,g.P);
       MN.nos.push(n); }
+    // a beira (forma 'borda', e o contorno da batida): os lados de casa que dão para um vão ou para fora do tabuleiro
+    MN.beira=[]; const X=x=>g.O+g.g0+x*g.P;
+    for(const [x,y] of ok) for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){ const nx=x+dx, ny=y+dy, vao=nx>=0&&ny>=0&&nx<W&&ny<H&&!casaOk(nx,ny), fora=!(nx>=0&&ny>=0&&nx<W&&ny<H);
+      if(!vao && !fora) continue; const ex=dx>0?x+1:dx<0?x:null, ey=dy>0?y+1:dy<0?y:null;
+      MN.beira.push(ex!=null ? [X(ex),X(y),X(ex),X(y+1),vao] : [X(x),X(ey),X(x+1),X(ey),vao]); }
     refaz=true; }
   if(S.espMax==null && S.tiles.length) S.espMax=Math.max(...S.tiles.map(k=>k.t));
   const dt=Math.min(.05,Math.max(0,t-malhaT)); malhaT=t;
   const pa=g.P, pocos=[];
   for(const {el,fr} of pecasNoQuadro()) pocos.push({x:(fr.left+fr.width/2-g.r.left)*g.D+g.O, y:(fr.top+fr.height/2-g.r.top)*g.D+g.O, m:massaE(el._t.t)});
   // nada mudou desde o último desenho (peças paradas, sem onda nem tremor, rede assentada): o desenho anterior vale
-  const seloP=pocos.map(q=>Math.round(q.x)+','+Math.round(q.y)+','+q.m.toFixed(2)).join(';'), selo=seloP+(S.frenesi?'|'+freMalhaSelo(t):''), calmo=!ondasM.length && !tremM.length;
+  const seloP=pocos.map(q=>Math.round(q.x)+','+Math.round(q.y)+','+q.m.toFixed(2)).join(';'), selo=seloP+(S.frenesi?'|'+freMalhaSelo(t):''), calmo=!ondasM.length && !tremM.length && !flashV.length;
   if(!refaz && calmo && malhaParada && selo===malhaSelo) return;
   if(selo!==malhaSelo) malhaParada=false;
   malhaSelo=selo;
   let mexe=0;
   if(refaz || seloP!==MN.seloP){ MN.seloP=seloP; for(const n of MN.nos) pocosM(n,pocos,pa); }
-  for(const n of MN.nos){ campoM(n,t,pa); n.vx+=((n.rx+n.vdx+n.cdx-n.x)*90-n.vx*11)*dt; n.vy+=((n.ry+n.vdy+n.cdy-n.y)*90-n.vy*11)*dt; n.x+=n.vx*dt; n.y+=n.vy*dt;
+  for(const n of MN.nos){ campoM(n,t,pa); if(n.alt && malhaForma()==='membrana'){ const k=1-.85*n.alt; n.cdx*=k; n.cdy*=k; } n.vx+=((n.rx+n.vdx+n.cdx-n.x)*90-n.vx*11)*dt; n.vy+=((n.ry+n.vdy+n.cdy-n.y)*90-n.vy*11)*dt; n.x+=n.vx*dt; n.y+=n.vy*dt;
     mexe=Math.max(mexe,Math.abs(n.vx)+Math.abs(n.vy)); }
   malhaParada = calmo && mexe<2;
   const c=cv.getContext('2d'); c.clearRect(0,0,Wp,Hp);
@@ -4614,10 +4630,23 @@ function malhaQuadro(t){
   const potes=new Map(), M=MALHA_VAO, arr=malhaVaoLiga(), vc=arr?Math.max(0,Math.min(1,+M.cor||0)):0, VERM=[236,84,92], base=rgb.split(',').map(Number);
   const tons=[0,1,2,3,4].map(k=>{ const m=k/4*Math.min(1,vc*1.3); return base.map((c,i)=>Math.round(c+(VERM[i]-c)*m)).join(','); });
   const cortes=new Map(), corte=(lin,lado)=>{ const k=lin+lado; let c=cortes.get(k); if(c==null) cortes.set(k,c=.05+(sorteHash(k)-.5)*.5*(M.fio??.5)); return c; };
+  const fm=malhaForma();
+  if(fm==='relevo'){   // o morro: sombra embaixo à direita, e o alto um pouco mais claro
+    for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(!casaOk(x,y)){ const cx=g.O+g.g0+(x+.5)*pa, cy=g.O+g.g0+(y+.5)*pa, R=pa*.95;
+      const gs=c.createRadialGradient(cx+pa*.2,cy+pa*.24,0,cx+pa*.2,cy+pa*.24,R); gs.addColorStop(0,'rgba(0,0,0,.42)'); gs.addColorStop(.55,'rgba(0,0,0,.22)'); gs.addColorStop(1,'rgba(0,0,0,0)');
+      c.fillStyle=gs; c.fillRect(cx-R,cy-R,2.5*R,2.5*R); }
+    c.save(); c.globalCompositeOperation='lighter';
+    for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(!casaOk(x,y)){ const cx=g.O+g.g0+(x+.5)*pa-pa*.12, cy=g.O+g.g0+(y+.5)*pa-pa*.14, R=pa*.6, gl=c.createRadialGradient(cx,cy,0,cx,cy,R);
+      gl.addColorStop(0,`rgba(${rgb},.10)`); gl.addColorStop(1,`rgba(${rgb},0)`); c.fillStyle=gl; c.fillRect(cx-R,cy-R,2*R,2*R); }
+    c.restore(); }
   const seg=(a,b,maior,lin)=>{ const f=(a.f+b.f)/2; if(f<.02) return; let t=0;
+    if(fm==='borda' && (a.s+b.s)/2<0) return;   // a rede termina na beira
     if(arr){ const sm=(a.s+b.s)/2; if(sm<1){ const ct=corte(lin,(lin[0]==='h'?a.ux+b.ux:a.uy+b.uy)>0?'+':'-'); if(sm<ct) return; t=suave(.85,ct,sm); } }
     const h=(a.h+b.h)/2, w=(a.w+b.w)/2, fundo=Math.min(.85,h*.32);
     let al=Math.min(1,((maior?.17:.065)*(1-fundo)+w*.6)*f*ganho); if(t) al=Math.min(1,al+(maior?.55:.4)*vc*t*t);
+    const alt=(a.alt+b.alt)/2;
+    if(alt && fm==='relevo'){ const luz=Math.max(0,Math.min(1,-(a.ux+b.ux+a.uy+b.uy)*.35+.35)); al=Math.min(1,al+alt*(maior?.12+.3*luz:.05+.14*luz)); }
+    if(alt && fm==='membrana') al=Math.min(1,al+alt*(maior?.3:.17));
     if(al<.008) return; const k=Math.round(t*4)+'|'+Math.round(al*60)+'|'+Math.max(1,Math.round((maior?1.2:.75)*(1-fundo*.5)*(1+.5*t*vc)*4)); let p=potes.get(k); if(!p) potes.set(k,p=[]); p.push(a.x,a.y,b.x,b.y); };
   for(let j=0;j<NJ;j++) for(let i=0;i<NI-1;i++) seg(no(i,j),no(i+1,j),j%MSUB===0,'h'+j);
   for(let i=0;i<NI;i++) for(let j=0;j<NJ-1;j++) seg(no(i,j),no(i,j+1),i%MSUB===0,'v'+i);
@@ -4631,13 +4660,27 @@ function malhaQuadro(t){
   c.lineCap='round';
   for(const [k,p] of potes){ const [tom,a,wl]=k.split('|'); c.strokeStyle=`rgba(${tons[tom]},${(a/60).toFixed(3)})`; c.lineWidth=wl/4*g.D; c.beginPath();
     for(let i=0;i<p.length;i+=4){ c.moveTo(p[i],p[i+1]); c.lineTo(p[i+2],p[i+3]); } c.stroke(); }
-  ondasM=ondasM.filter(o=>t-o.t0<3); tremM=tremM.filter(o=>t-o.t0<1.2);
+  if(fm==='membrana'){   // a trama fina por cima do vão (meio passo), presa na beira
+    c.save(); c.beginPath(); for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(!casaOk(x,y)) c.rect(g.O+g.g0+x*pa,g.O+g.g0+y*pa,pa,pa); c.clip();
+    c.strokeStyle=`rgba(${rgb},.16)`; c.lineWidth=.6*g.D; c.beginPath();
+    for(let k=0;k<=W*8;k++){ const x=g.O+g.g0+k*pa/8; c.moveTo(x,g.O+g.g0); c.lineTo(x,g.O+g.g0+H*pa); }
+    for(let k=0;k<=H*8;k++){ const y=g.O+g.g0+k*pa/8; c.moveTo(g.O+g.g0,y); c.lineTo(g.O+g.g0+W*pa,y); }
+    c.stroke(); c.restore(); }
+  if(fm==='borda' && MN.beira.length){   // a beira: um brilho largo e fraco e um fio firme por cima, no vão e na borda de fora
+    c.lineCap='round';
+    for(const [lw,al] of [[7,.07],[3,.16],[1.4,.62]]){ c.strokeStyle=`rgba(${rgb},${al})`; c.lineWidth=lw*g.D; c.beginPath();
+      for(const [x1,y1,x2,y2] of MN.beira){ c.moveTo(x1,y1); c.lineTo(x2,y2); } c.stroke(); } }
+  if(flashV.length){ c.lineCap='round';   // batidas: o lado encostado acende e apaga
+    for(const o of flashV){ const k=Math.max(0,1-(t-o.t0)/.45); if(t<o.t0||!k) continue;
+      for(const [lw,al] of [[9,.2],[2.4,.9]]){ c.strokeStyle=`rgba(255,240,200,${(al*k*k).toFixed(3)})`; c.lineWidth=lw*g.D; c.beginPath(); c.moveTo(o.x1,o.y1); c.lineTo(o.x2,o.y2); c.stroke(); } } }
+  ondasM=ondasM.filter(o=>t-o.t0<3); tremM=tremM.filter(o=>t-o.t0<1.2); flashV=flashV.filter(o=>t-o.t0<.5);
 }
 // chamado a cada arrasto que mexeu: tranco da câmera, névoa de cada junção, tremor da malha; recorde da partida: onda e anel
 // no Frenesi as reações crescem com o degrau (fk de 0 a 1; com menos movimento, o tranco não cresce)
-function espJogada(dx,dy,merges){
+function espJogada(dx,dy,merges,mexeram){
   const fk=freForca(), tr=190*(1+(POUCO_MOV?0:fk*1.4));
   camE.vx+=dx*tr; camE.vy+=dy*tr; adiantaProximo();
+  if(MALHA_VAO.bate && mexeram?.length) espBate(dx,dy,mexeram);
   if(!merges||!merges.length) return;
   const g=geoTab(), t=tQuadro||performance.now()/1000;
   for(const o of merges){
@@ -4646,6 +4689,18 @@ function espJogada(dx,dy,merges){
     brilhosE.push({x:sx,y:sy,t0:t,rgb,forte:rec||fk>.45});
     if(rec){ S.espMax=o.t; ondasM.push({x:bx+g.O,y:by+g.O,t0:t,a:g.P*(.16+.012*o.t)}); aneisE.push({x:sx,y:sy,t0:t,v:g.P/g.D*3.4,rgb:'230,232,255'}); }
   }
+}
+// uma peça que andou e parou encostada num vão: depois de chegar, o lado encostado acende, a malha treme ali, a peça
+// quica de leve para trás e soa um baque abafado (um por arrasto)
+function espBate(dx,dy,mexeram){
+  const bat=mexeram.filter(t=>{ const nx=t.x+dx, ny=t.y+dy; return nx>=0&&ny>=0&&nx<W&&ny<H&&!casaOk(nx,ny); }); if(!bat.length) return;
+  setTimeout(()=>{ const g=geoTab(), t=tQuadro||performance.now()/1000, X=v=>g.O+g.g0+v*g.P;
+    for(const p of bat){ const ex=p.x+(dx>0?1:0), ey=p.y+(dy>0?1:0);
+      flashV.push(dx ? {x1:X(ex),y1:X(p.y)+g.P*.08,x2:X(ex),y2:X(p.y+1)-g.P*.08,t0:t} : {x1:X(p.x)+g.P*.08,y1:X(ey),x2:X(p.x+1)-g.P*.08,y2:X(ey),t0:t});
+      tremM.push({x:X(p.x+.5+dx*.5),y:X(p.y+.5+dy*.5),t0:t,a:g.P*.05});
+      const el=els.get(p.id); if(el && !POUCO_MOV && typeof pos==='function'){ const a=pos(p.x,p.y), b=pos(p.x-dx*.07,p.y-dy*.07);
+        el.animate([{transform:a},{transform:b,offset:.4},{transform:a}],{duration:220,easing:'ease-out'}); } }
+    malhaParada=false; SFX.bate?.(); }, 110);
 }
 const corNivelRgb=t=>{ const h=corNivel(t); return [1,3,5].map(i=>parseInt(h.slice(i,i+2),16)).join(','); };
 // chamado no lugar do cenário da mina
@@ -6731,8 +6786,9 @@ function salas(c){
   ECO=c.createDelay(1); ECO.delayTime.value=.45; const fb=c.createGain(), lp=c.createBiquadFilter(); fb.gain.value=.36; lp.type='lowpass'; lp.frequency.value=2400;
   ECO.connect(lp); lp.connect(fb); fb.connect(ECO); const dg=c.createGain(); dg.gain.value=.45; lp.connect(dg); dg.connect(BUS);
 }
+let SAIDA_E=null;   // quando dado, as vozes saem por ele (filtro e ganho de uma variação) em vez do BUS
 function saidaE(c,g,o){ let n=g; if(o.pan && c.createStereoPanner){ const p=c.createStereoPanner(); p.pan.value=Math.max(-1,Math.min(1,o.pan)); g.connect(p); n=p; }
-  n.connect(BUS); if(o.rev){ const s=c.createGain(); s.gain.value=o.rev; n.connect(s); s.connect(SALA); } if(o.dly){ const s=c.createGain(); s.gain.value=o.dly; n.connect(s); s.connect(ECO); } }
+  n.connect(SAIDA_E||BUS); if(o.rev){ const s=c.createGain(); s.gain.value=o.rev; n.connect(s); s.connect(SALA); } if(o.dly){ const s=c.createGain(); s.gain.value=o.dly; n.connect(s); s.connect(ECO); } }
 function tomE(o){ const c=ac(); if(!c) return; salas(c); const T=c.currentTime+(o.t||0), {f=440,to=null,type='sine',a=.005,d=.2,v=.1,lp=null,q=.7}=o, os=c.createOscillator(), g=c.createGain();
   os.type=type; os.frequency.setValueAtTime(f,T); if(to) os.frequency.exponentialRampToValueAtTime(to,T+a+d); if(o.det) os.detune.value=o.det;
   env(g,T,a,v,d); let n=os; if(lp){ const fl=c.createBiquadFilter(); fl.frequency.setValueAtTime(lp,T); if(o.lpTo) fl.frequency.exponentialRampToValueAtTime(o.lpTo,T+a+d); fl.Q.value=q; os.connect(fl); n=fl; }
@@ -6749,12 +6805,13 @@ const PENTA=[0,2,4,7,9];
 // voz que toca mais tarde no mesmo efeito: a hora exata é marcada agora, mas os nós de áudio só são criados pouco antes
 // (criar as 20 vozes do FRENESI de uma vez, dentro do arrasto, segurava o quadro)
 function adiante(f,o){ const c=AC, t=o.t||0; if(!c || t<.09) return f(o); const T=c.currentTime+t; setTimeout(()=>f({...o,t:Math.max(0,T-c.currentTime)}),(t-.07)*1000); }
-const notaE=(oit,grau)=>{ const k=((grau%5)+5)%5, o=Math.floor(grau/5); return 293.66*Math.pow(2,oit+o+PENTA[k]/12); };   // pentatônica de Ré
+let OIT_E=0;   // desvio de oitava (as miúdas uma oitava abaixo na junção macia)
+const notaE=(oit,grau)=>{ const k=((grau%5)+5)%5, o=Math.floor(grau/5); return 293.66*Math.pow(2,oit+OIT_E+o+PENTA[k]/12); };   // pentatônica de Ré
 const ladoE=()=>(Math.random()-.5)*.6;
 const SONS_ESP={
   arrastar(){ const p=ladoE(); ruidoE({f:450,to:1700,a:.03,d:.16,v:.035,q:1.1,pan:p,rev:.12}); tomE({f:105,to:62,a:.008,d:.13,v:.025,pan:p}); },
   nasce(){ sinoE({t:.06,f:notaE(2,(Math.random()*5)|0),d:.35,v:.02,ratio:2,idx:.5,pan:(Math.random()-.5)*.9,rev:.45}); },
-  fundir(l){ const p=ladoE();
+  fundir(l,seg){ if(SOM_JUNTA!=='hoje') return junta[SOM_JUNTA]?.(l,seg); const p=ladoE();
     if(l<=5){   // miúdas: tilintam agudo, cada uma no seu material
       const f=notaE(1,l+2);
       if(l===1) for(let i=0;i<3;i++) sinoE({t:i*.035,f:f*(1+i*.5),d:.2,v:.06,ratio:3,idx:.6,pan:p,rev:.2});            // Poeira: brilho
@@ -6803,10 +6860,38 @@ const SONS_ESP={
   cai(k){ tomE({f:notaE(1,Math.max(2,k*2)),to:60,a:.01,d:.7,v:.06,type:'sawtooth',lp:2600,lpTo:160,rev:.3}); ruidoE({f:3200,to:140,d:.6,v:.05,type:'lowpass'}); tomE({t:.04,f:120,to:38,d:.45,v:.1}); },
   acelera(){ for(let i=0;i<6;i++) tomE({t:i*.05,f:notaE(1,i*2),d:.1,v:.03,type:'square',lp:4000,pan:-.4+i*.16}); },
 };
+// Som da junção em teste (2026-11-13: às vezes alto ou estridente demais). 'hoje': o de sempre. 'macio': o mesmo
+// desenho, com as miúdas uma oitava abaixo, sem os agudos de cima (passa-baixa) e mais baixo; 'bolha': uma gota
+// redonda que desce de nota conforme o corpo cresce (do Sol para cima, o 'macio'). Nas duas novas, a segunda junção do
+// mesmo arrasto sai bem mais baixa (antes as duas somavam). Escolhido no rascunho telas_quebra.html.
+let SOM_JUNTA='hoje';
+function viaE(corte, ganho, f){ const c=ac(); if(!c) return; salas(c);
+  const lp=c.createBiquadFilter(), g=c.createGain(); lp.type='lowpass'; lp.frequency.value=corte; lp.Q.value=.5; g.gain.value=ganho;
+  lp.connect(g); g.connect(BUS); setTimeout(()=>{ try{ lp.disconnect(); g.disconnect(); }catch(e){} }, 6000);
+  const a=SAIDA_E; SAIDA_E=lp; try{ f(); } finally { SAIDA_E=a; } }
+function fundirHoje(l){ const v=SOM_JUNTA; SOM_JUNTA='hoje'; try{ SONS_ESP.fundir(l); } finally { SOM_JUNTA=v; } }
+const junta={
+  macio(l,seg){ viaE(l<=5?2400:l<=11?3200:4200, (seg?.35:1)*.6, ()=>{ OIT_E=l<=5?-1:0; try{ fundirHoje(l); } finally { OIT_E=0; } }); },
+  bolha(l,seg){ if(l>=16) return junta.macio(l,seg);
+    const v=(seg?.4:1), p=ladoE(), f=notaE(1,9-Math.min(l,15)*.6|0)*.75;   // maior o corpo, mais grave a gota
+    viaE(2600, 1, ()=>{
+      tomE({f, to:f*1.6, a:.004, d:.09+l*.012, v:.13*v, pan:p, rev:.25});                 // a gota: sobe rápido e some
+      tomE({t:.012, f:f*.5, to:f*.42, a:.006, d:.12+l*.03, v:.08*v, type:'triangle', pan:p}); // corpo por baixo
+      if(l>=6) sinoE({t:.03, f:f*2, d:.5+l*.05, v:.035*v, ratio:2, idx:.4, pan:p, rev:.45, dly:.1});   // planetas: um brilho redondo
+      if(l>=12) tomE({f:f/4, a:.03, d:1.4, v:.09*v, type:'triangle', lp:500, rev:.4});     // gigantes: o grave longo
+    }); },
+};
+// parede (em teste): a peça bate e para, um baque abafado. Buraco (em teste, a casa que engole): a peça cai girando,
+// um assobio que desce e, longe, um baque surdo
+SONS_ESP.bate=()=>{ const p=ladoE(); tomE({f:150,to:70,a:.003,d:.12,v:.11,type:'triangle',lp:600,pan:p}); ruidoE({f:500,d:.05,v:.04,type:'lowpass',pan:p}); };
+SONS_ESP.engole=()=>{ const p=ladoE(), f=notaE(1,6);
+  tomE({f,to:f/6,a:.01,d:.7,v:.06,type:'triangle',lp:2400,lpTo:260,pan:p,rev:.45,dly:.2});
+  ruidoE({f:2200,to:160,a:.04,d:.6,v:.03,q:1.4,pan:p,rev:.4});
+  tomE({t:.62,f:85,to:36,d:.4,v:.07,lp:300,rev:.7}); };
 // no espaço (fases da Jornada e Clássico) os sons de sempre viram os do espaço; a mina segue com os dela
 const somEsp = () => typeof espacoLigado==='function' && espacoLigado() && typeof S!=='undefined' && !!S && !!(S.missao||S.infinito);
 for(const [k,e] of [['arrastar','arrastar'],['fundir','fundir'],['pagou','vitoria'],['naoDeu','derrota']]){ const velho=SFX[k]; SFX[k]=(...a)=>somEsp()?SONS_ESP[e](...a):velho(...a); }
-for(const k of ['nasce','poucos','racha','nebulosa','estrelas','corrente','degrau','frenesi','cai','acelera']) SFX[k]=(...a)=>{ if(somEsp()) SONS_ESP[k](...a); };
+for(const k of ['nasce','poucos','racha','nebulosa','estrelas','corrente','degrau','frenesi','cai','acelera','bate','engole']) SFX[k]=(...a)=>{ if(somEsp()) SONS_ESP[k](...a); };
 SFX.botao=()=>{ if(typeof espTela==='function' && espTela()) SONS_ESP.botao(); };
 
 // ===================== UI =====================

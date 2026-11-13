@@ -58,6 +58,10 @@ code{font-size:.92em;background:#ffffff14;padding:1px 5px;border-radius:5px}
 .z3{background:#ffd36e} .z2{background:#e7c98f} .z1{background:#a39cc8} .zf{background:#ff7a8a}
 .eixo{display:flex;font-size:10px;color:#a49bd6}
 .eixo span{flex:1;text-align:center}
+.ctl{display:flex;gap:6px;flex-wrap:wrap}
+.ctl button{flex:1 1 0;min-width:44px;min-height:44px;border:1.5px solid rgba(140,200,255,.35);border-radius:12px;background:rgba(20,16,44,.8);color:#e8e4ff;font:800 18px 'Exo 2',sans-serif;cursor:pointer}
+.ctl button.lg{flex:1 1 40%;font-size:14px}
+.ctl button:active{transform:scale(.96)}
 </style>
 </head>
 <body>
@@ -65,32 +69,31 @@ code{font-size:.92em;background:#ffffff14;padding:1px 5px;border-radius:5px}
   <h1>TELAS DO QUEBRA-CABEÇAS</h1>
   <p>O vão, as estrelas e os botões, com a fase de verdade. Toque num jeito para ver a tela mudar. A tela é só para ver: aqui não se joga, e nada mexe no seu progresso.</p>
 
-  <h2>1 · O QUADRADO PRETO</h2>
-  <p>É a casa que não existe (<code>#</code> no mapa). Para as peças como a estação, mas a ideia é outra: o vão muda o <b>formato</b> do tabuleiro, a estação é um <b>objeto</b> em cima dele. Aqui a malha do fundo arrebenta no vão: os fios acabam perto da beira, ficam vermelhos na ponta, e o vão fica vazio, um pouco mais claro. Vãos vizinhos viram um buraco só: veja nas fases 18 e 19.</p>
+  <p class="nota">Já no jogo: as estrelas novas (★ resolver, sem limite) e a barra com Recomeçar e Dica (3 por hora).</p>
+
+  <h2>1 · A PAREDE</h2>
+  <p>A casa que não existe (<code>#</code> no mapa): o que bate ali <b>não passa</b>. A malha do fundo diz isso de jeitos diferentes. Use as setas embaixo da tela para jogar e ver as peças baterem.</p>
   <div class="rot">Jeito</div>
   <div class="ops" id="opsV"></div>
+  <div class="ops"><button class="op on" id="bBate">Reação na batida: ligada<small>a beira acende, treme e a peça quica</small></button></div>
   <div class="rot">Fase de exemplo</div>
   <div class="ops fases" id="opsF"></div>
   <div class="moldura" id="mV"><div class="carr">abrindo a fase…</div></div>
+  <div class="ctl" id="ctlV"><button data-d="-1,0">←</button><button data-d="0,-1">↑</button><button data-d="0,1">↓</button><button data-d="1,0">→</button><button data-a="bate" class="lg">Ver uma batida</button><button data-a="zero" class="lg">Recomeçar</button></div>
+  <p class="nota">O som toca quando você usa estes botões (o primeiro toque libera o áudio).</p>
   <div id="cardsV" style="display:flex;flex-direction:column;gap:10px"></div>
 
-  <h2>2 · AS ESTRELAS</h2>
-  <p>Hoje o limite é sempre <b>menor solução + 4</b>: ★ até min+4, ★★ até min+3, ★★★ até min+1. Então ★ e ★★ ficam a um arrasto de distância, e a folga não cresce com a fase: numa de 15 arrastos, um erro e meio e acabou.</p>
-  <div class="rot">Quantos cumprem dentro do limite hoje</div>
-  <div class="dados" id="gGul"></div><div class="dadosE" id="gGulE"></div>
-  <p class="nota">Jogador guloso do medidor (sempre a junção mais imediata), média por mundo. Não é uma pessoa, mas mostra a parede: do mundo 2 em diante, quem não enxerga a solução quase sempre estoura.</p>
-  <div class="rot">Compare as regras</div>
-  <div class="ctrl"><label for="rMin">Menor solução</label><input type="range" id="rMin" min="2" max="15" value="10"><output id="oMin">10</output></div>
-  <div id="gEst" style="display:flex;flex-direction:column;gap:12px"></div>
-  <div class="card on" style="cursor:default"><h3><i>B</i>O que eu faria</h3><p>Sem falha por limite (o desfazer já não tem limite; travar só obriga a desfazer). Terminar sempre dá ★, e a folga de ★★ e ★★★ cresce com o tamanho da fase. O contador vira "arrastos feitos" com a marca da próxima estrela. As estrelas já ganhas continuam (o progresso guarda os arrastos, dá para recalcular).</p></div>
+  <h2>2 · O BURACO</h2>
+  <p>A casa que <b>engole</b> o que cai nela, para uma mecânica futura: a malha arrebentada (a C que guardamos). A peça escorrega para o buraco, gira, encolhe e some, com um assobio que desce e um baque lá no fundo. Ainda não é regra do jogo: aqui é só a animação e o som.</p>
+  <div class="moldura" id="mN"><div class="carr">abrindo a fase…</div></div>
+  <div class="ctl"><button class="lg" id="bQueda">Ver uma peça cair</button></div>
 
-  <h2>3 · DESFAZER E RECOMEÇAR</h2>
-  <p>Hoje são três botões só com ícone no canto de cima, com desfazer e recomeçar quase iguais (duas setas curvas), longe do polegar. Na tela, um arrasto já foi feito, para os botões aparecerem acesos.</p>
-  <div class="rot">Jeito</div>
-  <div class="ops" id="opsB"></div>
-  <div class="moldura" id="mB"><div class="carr">abrindo a fase…</div></div>
-  <div id="cardsB" style="display:flex;flex-direction:column;gap:10px"></div>
-  <p class="nota">Sobre tirar o desfazer: dá, mas cada erro passa a custar a fase inteira, e as fases de 10 a 15 arrastos ficam cansativas; a dica também usa o desfazer ("volte 2"). Se a ideia é simplificar, o C mantém os dois e deixa claro qual é o principal.</p>
+  <h2>3 · O SOM DA JUNÇÃO</h2>
+  <p>Hoje as miúdas (Poeira a Cometa) tilintam agudo, e quando duas junções saem no mesmo arrasto os dois sons se somam: é aí que fica alto e estridente. Toque para ouvir e compare.</p>
+  <div class="ops" id="opsS"></div>
+  <div class="ctl"><button class="lg" id="sEscada">Escada (Poeira a Gigante)</button><button class="lg" id="sDupla">Duas no mesmo arrasto</button><button class="lg" id="sMiuda">Só as miúdas, rápido</button></div>
+  <div id="cardsS" style="display:flex;flex-direction:column;gap:10px"></div>
+  <p class="nota">A escolhida aqui vale também para os arrastos da tela da parede, lá em cima.</p>
 </main>
 
 <script>
@@ -106,39 +109,20 @@ setInterval(devolve,1500); addEventListener('pagehide',devolve);
 const VAZIO='body.espaco.modoCla .slot.void::before';
 // o vão pela malha do fundo (MALHA_VAO em src/espaco_jogo.js); o quadrado escuro de hoje sai nessas
 const SEM_QUADRADO=`${VAZIO}{display:none !important}`;
-const ARR=(o)=>({forma:'arrebenta',cor:.7,recuo:.5,fio:.5,claro:.5,...o});
 const VAO=[
-  {k:'hoje',i:'0',nome:'Hoje',sub:'quadrado escuro',txt:'Um quadrado escuro, sem borda; a malha some ali.',mais:[],menos:['Some na nebulosa e no celular','Parece casa vazia, não parede'],css:''},
-  {k:'arr',i:'A',nome:'Arrebentada',sub:'o meio-termo',rec:true,txt:'Cada fio acaba perto da beira, num ponto um pouco diferente do vizinho, recua um pouco e fica vermelho perto da ponta. O vão fica vazio, um pouco mais claro.',mais:['Lê como espaço rompido','Vãos juntos viram um buraco só'],menos:[],
-    css:SEM_QUADRADO,malha:ARR({})},
-  {k:'retas',i:'B',nome:'Pontas alinhadas',sub:'corte limpo',txt:'O mesmo, mas os fios acabam todos na mesma distância da beira, quase sem desfiar: um recorte mais limpo.',mais:['O buraco fica com a forma mais clara'],menos:['Menos cara de arrebentado'],
-    css:SEM_QUADRADO,malha:ARR({fio:0,recuo:.3})},
-  {k:'desfia',i:'C',nome:'Bem desfiada',sub:'pontas soltas',txt:'Os fios acabam bem desencontrados, recuam mais e as pontas se desviam para os lados.',mais:['A mais "rompida"'],menos:['A beira do buraco fica menos nítida'],
-    css:SEM_QUADRADO,malha:ARR({fio:1,recuo:.9,cor:.8})},
-  {k:'semcor',i:'D',nome:'Sem vermelho',sub:'só o rompido',txt:'Os fios arrebentam do mesmo jeito, sem ficar vermelhos.',mais:['O mais discreto'],menos:['Sem cor, avisa menos que é proibido'],
-    css:SEM_QUADRADO,malha:ARR({cor:0,claro:.7})},
-  {k:'claro',i:'E',nome:'Vazio bem claro',sub:'mais luz no vão',txt:'A arrebentada com o vazio mais aceso, quase uma névoa clara no lugar do buraco.',mais:['O vão aparece de longe'],menos:['Pode parecer uma casa iluminada'],
-    css:SEM_QUADRADO,malha:ARR({claro:1})},
+  {k:'hoje',i:'0',nome:'Hoje',sub:'quadrado escuro',txt:'Um quadrado escuro, sem borda; a malha some ali.',mais:[],menos:['Some na nebulosa e no celular','Parece casa vazia, não parede'],css:'',malha:{forma:null}},
+  {k:'borda',i:'A',nome:'Beira',sub:'a borda do tabuleiro',rec:true,txt:'A malha termina numa beira acesa, a mesma linha que agora contorna o tabuleiro por fora. O vão vira "mais borda": onde tem essa linha, as peças param.',mais:['Uma regra só: a beira segura','Vãos vizinhos viram um recorte só','Firme, sem cara de rompido'],menos:['Mais uma linha acesa na tela'],
+    css:SEM_QUADRADO,malha:{forma:'borda'}},
+  {k:'relevo',i:'B',nome:'Relevo',sub:'um morro na malha',txt:'O contrário do poço dos planetas: a malha sobe num morro, os fios se apertam no pé, o alto clareia de um lado e faz sombra do outro.',mais:['Conversa com a gravidade que já existe','O mais "espacial"'],menos:['Lê melhor com a tela parada'],
+    css:SEM_QUADRADO,malha:{forma:'relevo'}},
+  {k:'membrana',i:'C',nome:'Membrana',sub:'campo de força',txt:'A malha passa inteira por cima do vão, mais densa, esticada e acesa: os planetas em volta não afundam ali.',mais:['Diz "tem algo aqui", não "não tem nada"'],menos:['Pode parecer uma casa especial para onde ir'],
+    css:SEM_QUADRADO,malha:{forma:'membrana'}},
 ];
-const BARRA=`#qjBar{display:flex;gap:10px;justify-content:center;width:min(100%,420px);margin:10px auto 0;padding:0 12px}
-#qjBar .qjB{flex:1;height:auto;min-height:60px;width:auto;flex-direction:column;gap:3px;border-radius:16px;font:700 13px 'Exo 2',sans-serif}
-#qjBar .qjB svg{width:24px;height:24px} #qjBar .qjB span{line-height:1}
-#qjBar #qjDica{flex:0 0 64px} body.modoQj .hudCla #qjP{display:none !important}`;
-const BOT=[
-  {k:'hoje',i:'0',nome:'Hoje',sub:'no canto',txt:'Desfazer, recomeçar e dica no alto, só com ícone.',mais:[],menos:['Longe do polegar','Duas setas curvas parecidas'],css:''},
-  {k:'barra',i:'A',nome:'Barra',sub:'embaixo',rec:true,txt:'Os três descem para baixo do tabuleiro, grandes e com o nome escrito. O topo fica só com o que se lê.',mais:['Perto do polegar','O nome tira a dúvida entre as setas','Topo mais limpo'],menos:['Tabuleiro um pouco menor nas fases 5x5'],
-    css:BARRA,bar:['qjDesfaz','qjRecomeca','qjDica'],rot:{qjDesfaz:'Desfazer',qjRecomeca:'Recomeçar',qjDica:'Dica'}},
-  {k:'so',i:'B',nome:'Só recomeçar',sub:'sem desfazer',txt:'Tira o desfazer: um botão grande de recomeçar e a dica ao lado.',mais:['O mais simples','Um alvo grande, sem dúvida'],menos:['Um erro no 12º arrasto apaga os 11 certos','A dica perde o "volte 2"'],
-    css:BARRA+`#qjBar .qjB{flex-direction:row;gap:8px;font-size:15px} #qjDesfaz{display:none !important}`,bar:['qjRecomeca','qjDica'],rot:{qjRecomeca:'Recomeçar a fase'}},
-  {k:'hier',i:'C',nome:'Recomeçar grande',sub:'voltar pequeno',txt:'Os dois embaixo, com hierarquia: recomeçar é o principal, voltar 1 fica menor ao lado.',mais:['Mantém o desfazer','Deixa claro qual é o principal'],menos:['Em quebra-cabeça, desfazer costuma ser o mais usado'],
-    css:BARRA+`#qjBar #qjDesfaz{flex:0 0 70px;font-size:11.5px} #qjBar #qjRecomeca{flex-direction:row;gap:8px;font-size:15px;border-color:rgba(242,179,61,.75);color:#ffe9a8;background:rgba(242,179,61,.1)}`,
-    bar:['qjDesfaz','qjRecomeca','qjDica'],rot:{qjDesfaz:'Voltar 1',qjRecomeca:'Recomeçar'}},
-  {k:'topo',i:'D',nome:'No topo',sub:'com nome',txt:'Ficam onde estão, mas cada um ganha o nome embaixo do ícone.',mais:['Mexe pouco no que existe'],menos:['Continua longe do polegar','O topo aperta'],
-    css:`body.modoQj .hudCla #qjP .qjB{flex-direction:column;width:54px;height:52px;gap:1px;font:700 10px 'Exo 2',sans-serif} body.modoQj .hudCla #qjP .qjB svg{width:20px;height:20px}`,
-    rot:{qjDesfaz:'Voltar',qjRecomeca:'Do zero',qjDica:'Dica'}},
+const SONS=[
+  {k:'hoje',i:'0',nome:'Hoje',sub:'o de sempre',txt:'Cada corpo com o seu material; as miúdas agudas; duas junções somam.',mais:[],menos:['Alto e estridente nas miúdas','Duas juntas dobram o volume'],},
+  {k:'macio',i:'A',nome:'Macio',sub:'o mesmo, mais baixo',rec:true,txt:'O mesmo desenho de hoje, com as miúdas uma oitava abaixo, sem os agudos de cima e mais baixo. A segunda junção do arrasto sai bem mais fraca.',mais:['Mantém a identidade de cada corpo','Some o chiado agudo'],menos:['Um pouco menos brilho nas miúdas']},
+  {k:'bolha',i:'B',nome:'Gota',sub:'redonda e curta',txt:'Uma gota redonda que desce de nota conforme o corpo cresce; dos planetas para cima, um brilho por cima. Do Sol para cima, o Macio.',mais:['O mais suave','Combina com repetir muitas vezes'],menos:['Os corpos soam mais parecidos entre si']},
 ];
-const FASES=[[27,'Rosquinha com estações'],[18,'Serpentina'],[19,'Tabuleiro torto'],[20,'Casas faltando']];
-
 // ---------- a tela do jogo ----------
 const pausa=ms=>new Promise(r=>setTimeout(r,ms));
 async function espera(fn,ms){ const t=Date.now(); while(Date.now()-t<ms){ try{ if(fn()) return true; }catch(e){} await pausa(100); } return false; }
@@ -162,18 +146,6 @@ function tela(mold){
     devolve(); };
   return T;
 }
-// botões: volta ao painel de cima como no jogo e então aplica o jeito (leva os botões de verdade para a barra e põe nome)
-function botoes(T,o){
-  const d=T.d, p=d.getElementById('qjP'), ids=['qjDesfaz','qjRecomeca','qjDica'];
-  if(!p) return;   // desde 2026-11-13 o jogo já vem com a B (barra com recomeçar e dica): as variações antigas não se aplicam
-  for(const id of ids){ const b=d.getElementById(id); b.querySelectorAll('span').forEach(s=>s.remove()); p.append(b); }
-  d.getElementById('qjBar')?.remove();   // só depois de os botões voltarem para o painel
-  T.st.textContent=o.css;
-  for(const id in (o.rot||{})){ const s=d.createElement('span'); s.textContent=o.rot[id]; d.getElementById(id).append(s); }
-  if(o.bar){ const bar=d.createElement('div'); bar.id='qjBar'; for(const id of o.bar) bar.append(d.getElementById(id)); d.getElementById('stage').after(bar); }
-  try{ T.w.eval('encaixa()'); }catch(e){}
-}
-
 // ---------- montagem ----------
 const cartao=o=>`<div class="card" data-k="${o.k}"><h3><i>${o.i}</i>${o.nome}${o.rec?'<em>a que eu faria</em>':''}</h3><p>${o.txt}</p>
   <div class="pr">${o.mais.map(m=>`<div class="mais">+ ${m}</div>`).join('')}${o.menos.map(m=>`<div class="menos">− ${m}</div>`).join('')}</div></div>`;
@@ -186,39 +158,47 @@ function grupo(opsId,cardsId,lista,muda){
   cards.onclick=e=>{ const c=e.target.closest('.card'); if(c){ marca(c.dataset.k); ops.scrollIntoView({block:'start',behavior:'smooth'}); } };
   cards.querySelector('.card').classList.add('on');
 }
-const TV=tela(document.getElementById('mV')), TB=tela(document.getElementById('mB'));
-let jV=VAO[0], jB=BOT[0];
-const aplicaV=o=>{ TV.st.textContent=o.css; TV.w.eval('MALHA_VAO='+JSON.stringify(o.malha||{forma:null})); };
-let faseV=27;
+const TV=tela(document.getElementById('mV')), TN=tela(document.getElementById('mN'));
+let jV=VAO[1], bate=true, faseV=19;
+const aplicaV=o=>{ TV.st.textContent=o.css; TV.w.eval('MALHA_VAO='+JSON.stringify({...(o.malha||{forma:null}),bate})); };
 grupo('opsV','cardsV',VAO,o=>{ jV=o; if(TV.ok) aplicaV(o); });
-grupo('opsB','cardsB',BOT,o=>{ jB=o; if(TB.ok) botoes(TB,o); });
+document.querySelector('#opsV .op[data-k="borda"]').click();
+bBate.onclick=()=>{ bate=!bate; bBate.classList.toggle('on',bate); bBate.firstChild.textContent='Reação na batida: '+(bate?'ligada':'desligada'); if(TV.ok) aplicaV(jV); };
 const opsF=document.getElementById('opsF');
-opsF.innerHTML=FASES.map(([n,nome],i)=>`<button class="op ${i?'':'on'}" data-n="${n}">Fase ${n}<small>${nome}</small></button>`).join('');
+opsF.innerHTML=FASES.map(([n,nome])=>`<button class="op ${n===faseV?'on':''}" data-n="${n}">Fase ${n}<small>${nome}</small></button>`).join('');
 opsF.onclick=async e=>{ const b=e.target.closest('.op'); if(!b||!TV.ok) return; opsF.querySelectorAll('.op').forEach(x=>x.classList.toggle('on',x===b)); faseV=+b.dataset.n; await TV.joga(faseV); };
-TV.refaz=async()=>{ await TV.joga(faseV); aplicaV(jV); }; TB.refaz=async()=>{ await TB.joga(27,true); botoes(TB,jB); };
+TV.refaz=async()=>{ await TV.joga(faseV); aplicaV(jV); };
+TN.refaz=async()=>{ await TN.joga(20); TN.st.textContent=SEM_QUADRADO; TN.w.eval(`MALHA_VAO={forma:'arrebenta',cor:.8,recuo:.9,fio:1,claro:.5}`); };
 (async()=>{ await TV.pronto; await TV.refaz(); TV.ok=true; await pausa(500); document.getElementById('mV').classList.add('pronto');
-  await TB.pronto; await TB.refaz(); TB.ok=true; await pausa(300); document.getElementById('mB').classList.add('pronto'); })();
-
-// ---------- estrelas ----------
-const GUL=[.54,.15,.11,.09,.13,.12,.05,.07,.05,.10,.06];
-const MUN=['Juntar','Formatos','Estações','Rochas','Órbitas','Naves','Lixo','Nebulosas','Órbitas 2','Presos','Auras'];
-gGul.innerHTML=GUL.map(v=>`<div style="height:${v*100/0.6}%"><span>${Math.round(v*100)}%</span></div>`).join('');
-gGulE.innerHTML=GUL.map((v,i)=>`<span title="${MUN[i]}">m${i+1}</span>`).join('');
-const REGRAS=[
-  {nm:'Hoje',sub:'limite min+4',f:m=>({t3:m+1,t2:m+3,t1:m+4})},
-  {nm:'A · sem falha',sub:'mesmas estrelas',f:m=>({t3:m+1,t2:m+3,t1:Infinity})},
-  {nm:'B · proporcional',sub:'a que eu faria',f:m=>({t3:m+Math.max(1,Math.ceil(m*.15)),t2:m+Math.max(3,Math.ceil(m*.5)),t1:Infinity})},
-  {nm:'C · limite largo',sub:'falha em 2×min+4',f:m=>({t3:m+Math.max(1,Math.ceil(m*.15)),t2:m+Math.max(3,Math.ceil(m*.5)),t1:2*m+4})},
-];
-function desenhaEst(){
-  const m=+rMin.value; oMin.value=m; const fim=m+Math.max(10,Math.ceil(m*1.1)+3);
-  const faixa=r=>{ const z=[]; const add=(a,b,c,t)=>{ if(b>=a) z.push(`<div class="${c}" style="flex:${b-a+1}">${t}</div>`); };
-    add(m,Math.min(r.t3,fim),'z3','★★★'); add(r.t3+1,Math.min(r.t2,fim),'z2','★★'); add(r.t2+1,Math.min(r.t1,fim),'z1','★'); if(r.t1<fim) add(r.t1+1,fim,'zf','falha'); return z.join(''); };
-  const passo=fim-m>14?4:2, eixo=[]; for(let i=m;i<=fim;i++) eixo.push(`<span>${(i-m)%passo===0?i:''}</span>`);
-  gEst.innerHTML=REGRAS.map(R=>`<div class="regra"><div class="nm">${R.nm}<small>${R.sub}</small></div><div class="faixa">${faixa(R.f(m))}</div></div>`).join('')
-    +`<div class="eixo">${eixo.join('')}</div><p class="nota" style="margin-top:-6px">arrastos feitos</p>`;
-}
-rMin.oninput=desenhaEst; desenhaEst();
+  await TN.pronto; await TN.refaz(); TN.ok=true; await pausa(300); document.getElementById('mN').classList.add('pronto'); })();
+// o som do quadro: liga na hora do toque (o toque aqui vale para o quadro, que é do mesmo endereço)
+const somLiga=T=>{ try{ T.w.eval('sound=true; ctxAudio()?.resume?.()'); }catch(e){} };
+const temVao=`((x,y)=>x>=0&&y>=0&&x<W&&y<H&&!casaOk(x,y))`;
+ctlV.onclick=async e=>{ const b=e.target.closest('button'); if(!b||!TV.ok) return; somLiga(TV);
+  if(b.dataset.d) TV.w.eval(`move(${b.dataset.d})`);
+  else if(b.dataset.a==='zero') TV.w.eval('qjRecomeca()');
+  else if(b.dataset.a==='bate'){   // um arrasto em que alguma peça anda e para encostada num vão; se não houver, recomeça e procura
+    const acha=()=>TV.w.eval(`(()=>{ const v=${temVao}; const d=DIRS.find(([dx,dy])=>{ const r=slide(S.tiles,dx,dy); if(!r.moved) return false;
+      const an=new Map(S.tiles.map(t=>[t.id,t.x+','+t.y])); return r.tiles.some(t=>an.get(t.id)!==t.x+','+t.y && v(t.x+dx,t.y+dy)); }); return d?d.join(','):''; })()`);
+    let d=acha(); if(!d){ TV.w.eval('qjRecomeca()'); await pausa(250); d=acha(); }
+    if(d) TV.w.eval(`move(${d})`); }
+  devolve(); };
+// o buraco: uma peça encostada num vão escorrega para dentro, gira, encolhe e some; depois volta, para ver de novo
+bQueda.onclick=()=>{ if(!TN.ok) return; somLiga(TN);
+  TN.w.eval(`(()=>{ const v=${temVao}; let a=null;
+    for(const t of S.tiles){ for(const [dx,dy] of DIRS) if(v(t.x+dx,t.y+dy)){ a={t,x:t.x+dx,y:t.y+dy}; break; } if(a) break; }
+    if(!a) return; const el=els.get(a.t.id); if(!el) return;
+    const p0=pos(a.t.x,a.t.y), p1=pos(a.x,a.y), an=el.animate([{transform:p0},{transform:p1,offset:.28,easing:'cubic-bezier(.5,0,.8,.6)'},{transform:p1+' rotate(320deg) scale(.06)',opacity:0}],{duration:1050,fill:'forwards'});
+    setTimeout(()=>{ SONS_ESP.engole(); const g=geoTab(), t=tQuadro||performance.now()/1000; tremM.push({x:g.O+g.g0+(a.x+.5)*g.P,y:g.O+g.g0+(a.y+.5)*g.P,t0:t+.55,a:g.P*.06}); malhaParada=false; }, 220);
+    setTimeout(()=>an.cancel(), 2200); })()`); };
+// o som da junção
+let jS=SONS[0];
+grupo('opsS','cardsS',SONS,o=>{ jS=o; for(const T of [TV,TN]) try{ T.w.eval(`SOM_JUNTA='${o.k}'`); }catch(e){} });
+const toca=(lista)=>{ const w=TV.w; if(!TV.ok) return; somLiga(TV); w.eval(`SOM_JUNTA='${jS.k}'`);
+  lista.forEach(([l,ms,seg])=>setTimeout(()=>w.eval(`SONS_ESP.fundir(${l},${!!seg})`),ms)); };
+sEscada.onclick=()=>toca([1,2,3,4,5,6,7,8,9,10,11,12,13,14].map((l,i)=>[l,i*520]));
+sDupla.onclick=()=>toca([[3,0],[3,45,1],[5,900],[4,945,1],[8,1900],[7,1945,1]]);
+sMiuda.onclick=()=>toca([1,2,1,3,2,4,3,5,2,1,3,4].map((l,i)=>[l,i*170]));
 </script>
 </body>
 </html>

@@ -544,6 +544,7 @@ function move(dx,dy){
   if(S.qj) qjGuarda();   // quebra-cabeça: a dica em andamento desiste
   for(const g of r.gone){ const el=els.get(g.id); els.delete(g.id); if(el){ el.style.zIndex=0; el.style.transform=pos(g.x,g.y); setTimeout(()=>el.remove(),120); } }
   for(const b of r.breaks) quebrar(b);
+  const antes=new Map(S.tiles.map(t=>[t.id,t.x*64+t.y]));
   S.tiles=r.tiles;
   if(S.missao||S.infinito){ contaMissao(r); if(S.frenesi) freJogada(r); const rc=recolheCarro(); if(rc){ const el=els.get(rc.id); els.delete(rc.id); if(el){ el.style.transform=pos(rc.x,rc.y); el.classList.add('recolhe'); setTimeout(()=>el.remove(),350); } } }
   const wasTired = S.energy<=0;
@@ -553,11 +554,11 @@ function move(dx,dy){
   for(let i=0;i<(S.path.spawns??1);i++) addTile(undefined,[dx,dy]);
   if((S.path.spawns??1)>0) SFX.nasce();
   render();
-  if(espFig()) espJogada(dx,dy,r.merges);   // fundo e malha reagem ao arrasto
+  if(espFig()) espJogada(dx,dy,r.merges,r.tiles.filter(t=>antes.get(t.id)!==t.x*64+t.y));   // fundo e malha reagem ao arrasto
   if(S.missao||S.infinito) flutuaPontos(r);
   SFX.arrastar();
   const tops=r.merges.map(o=>o.t).sort((a,b)=>b-a);
-  if(tops.length){ SFX.fundir(tops[0]); if(tops.length>1) setTimeout(()=>SFX.fundir(tops[1]),45); S.stats.maxT=Math.max(S.stats.maxT,tops[0]); }
+  if(tops.length){ SFX.fundir(tops[0]); if(tops.length>1) setTimeout(()=>SFX.fundir(tops[1],true),45); S.stats.maxT=Math.max(S.stats.maxT,tops[0]); }
   if(S.missao||S.infinito){ if(S.missao && !S.semEnergia && [5,3,1].includes(S.energy)) SFX.poucos(); }   // sonar quando sobram poucos arrastos
   else if(S.energy<=0) SFX.torraoCai(); else if(S.energy<=5) SFX.cansado();
   for(const o of r.merges) anim(o.id,'pop');

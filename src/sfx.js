@@ -124,8 +124,9 @@ function salas(c){
   ECO=c.createDelay(1); ECO.delayTime.value=.45; const fb=c.createGain(), lp=c.createBiquadFilter(); fb.gain.value=.36; lp.type='lowpass'; lp.frequency.value=2400;
   ECO.connect(lp); lp.connect(fb); fb.connect(ECO); const dg=c.createGain(); dg.gain.value=.45; lp.connect(dg); dg.connect(BUS);
 }
+let SAIDA_E=null;   // quando dado, as vozes saem por ele (filtro e ganho de uma variação) em vez do BUS
 function saidaE(c,g,o){ let n=g; if(o.pan && c.createStereoPanner){ const p=c.createStereoPanner(); p.pan.value=Math.max(-1,Math.min(1,o.pan)); g.connect(p); n=p; }
-  n.connect(BUS); if(o.rev){ const s=c.createGain(); s.gain.value=o.rev; n.connect(s); s.connect(SALA); } if(o.dly){ const s=c.createGain(); s.gain.value=o.dly; n.connect(s); s.connect(ECO); } }
+  n.connect(SAIDA_E||BUS); if(o.rev){ const s=c.createGain(); s.gain.value=o.rev; n.connect(s); s.connect(SALA); } if(o.dly){ const s=c.createGain(); s.gain.value=o.dly; n.connect(s); s.connect(ECO); } }
 function tomE(o){ const c=ac(); if(!c) return; salas(c); const T=c.currentTime+(o.t||0), {f=440,to=null,type='sine',a=.005,d=.2,v=.1,lp=null,q=.7}=o, os=c.createOscillator(), g=c.createGain();
   os.type=type; os.frequency.setValueAtTime(f,T); if(to) os.frequency.exponentialRampToValueAtTime(to,T+a+d); if(o.det) os.detune.value=o.det;
   env(g,T,a,v,d); let n=os; if(lp){ const fl=c.createBiquadFilter(); fl.frequency.setValueAtTime(lp,T); if(o.lpTo) fl.frequency.exponentialRampToValueAtTime(o.lpTo,T+a+d); fl.Q.value=q; os.connect(fl); n=fl; }
@@ -142,12 +143,13 @@ const PENTA=[0,2,4,7,9];
 // voz que toca mais tarde no mesmo efeito: a hora exata é marcada agora, mas os nós de áudio só são criados pouco antes
 // (criar as 20 vozes do FRENESI de uma vez, dentro do arrasto, segurava o quadro)
 function adiante(f,o){ const c=AC, t=o.t||0; if(!c || t<.09) return f(o); const T=c.currentTime+t; setTimeout(()=>f({...o,t:Math.max(0,T-c.currentTime)}),(t-.07)*1000); }
-const notaE=(oit,grau)=>{ const k=((grau%5)+5)%5, o=Math.floor(grau/5); return 293.66*Math.pow(2,oit+o+PENTA[k]/12); };   // pentatônica de Ré
+let OIT_E=0;   // desvio de oitava (as miúdas uma oitava abaixo na junção macia)
+const notaE=(oit,grau)=>{ const k=((grau%5)+5)%5, o=Math.floor(grau/5); return 293.66*Math.pow(2,oit+OIT_E+o+PENTA[k]/12); };   // pentatônica de Ré
 const ladoE=()=>(Math.random()-.5)*.6;
 const SONS_ESP={
   arrastar(){ const p=ladoE(); ruidoE({f:450,to:1700,a:.03,d:.16,v:.035,q:1.1,pan:p,rev:.12}); tomE({f:105,to:62,a:.008,d:.13,v:.025,pan:p}); },
   nasce(){ sinoE({t:.06,f:notaE(2,(Math.random()*5)|0),d:.35,v:.02,ratio:2,idx:.5,pan:(Math.random()-.5)*.9,rev:.45}); },
-  fundir(l){ const p=ladoE();
+  fundir(l,seg){ if(SOM_JUNTA!=='hoje') return junta[SOM_JUNTA]?.(l,seg); const p=ladoE();
     if(l<=5){   // miúdas: tilintam agudo, cada uma no seu material
       const f=notaE(1,l+2);
       if(l===1) for(let i=0;i<3;i++) sinoE({t:i*.035,f:f*(1+i*.5),d:.2,v:.06,ratio:3,idx:.6,pan:p,rev:.2});            // Poeira: brilho
@@ -196,9 +198,37 @@ const SONS_ESP={
   cai(k){ tomE({f:notaE(1,Math.max(2,k*2)),to:60,a:.01,d:.7,v:.06,type:'sawtooth',lp:2600,lpTo:160,rev:.3}); ruidoE({f:3200,to:140,d:.6,v:.05,type:'lowpass'}); tomE({t:.04,f:120,to:38,d:.45,v:.1}); },
   acelera(){ for(let i=0;i<6;i++) tomE({t:i*.05,f:notaE(1,i*2),d:.1,v:.03,type:'square',lp:4000,pan:-.4+i*.16}); },
 };
+// Som da junção em teste (2026-11-13: às vezes alto ou estridente demais). 'hoje': o de sempre. 'macio': o mesmo
+// desenho, com as miúdas uma oitava abaixo, sem os agudos de cima (passa-baixa) e mais baixo; 'bolha': uma gota
+// redonda que desce de nota conforme o corpo cresce (do Sol para cima, o 'macio'). Nas duas novas, a segunda junção do
+// mesmo arrasto sai bem mais baixa (antes as duas somavam). Escolhido no rascunho telas_quebra.html.
+let SOM_JUNTA='hoje';
+function viaE(corte, ganho, f){ const c=ac(); if(!c) return; salas(c);
+  const lp=c.createBiquadFilter(), g=c.createGain(); lp.type='lowpass'; lp.frequency.value=corte; lp.Q.value=.5; g.gain.value=ganho;
+  lp.connect(g); g.connect(BUS); setTimeout(()=>{ try{ lp.disconnect(); g.disconnect(); }catch(e){} }, 6000);
+  const a=SAIDA_E; SAIDA_E=lp; try{ f(); } finally { SAIDA_E=a; } }
+function fundirHoje(l){ const v=SOM_JUNTA; SOM_JUNTA='hoje'; try{ SONS_ESP.fundir(l); } finally { SOM_JUNTA=v; } }
+const junta={
+  macio(l,seg){ viaE(l<=5?2400:l<=11?3200:4200, (seg?.35:1)*.6, ()=>{ OIT_E=l<=5?-1:0; try{ fundirHoje(l); } finally { OIT_E=0; } }); },
+  bolha(l,seg){ if(l>=16) return junta.macio(l,seg);
+    const v=(seg?.4:1), p=ladoE(), f=notaE(1,9-Math.min(l,15)*.6|0)*.75;   // maior o corpo, mais grave a gota
+    viaE(2600, 1, ()=>{
+      tomE({f, to:f*1.6, a:.004, d:.09+l*.012, v:.13*v, pan:p, rev:.25});                 // a gota: sobe rápido e some
+      tomE({t:.012, f:f*.5, to:f*.42, a:.006, d:.12+l*.03, v:.08*v, type:'triangle', pan:p}); // corpo por baixo
+      if(l>=6) sinoE({t:.03, f:f*2, d:.5+l*.05, v:.035*v, ratio:2, idx:.4, pan:p, rev:.45, dly:.1});   // planetas: um brilho redondo
+      if(l>=12) tomE({f:f/4, a:.03, d:1.4, v:.09*v, type:'triangle', lp:500, rev:.4});     // gigantes: o grave longo
+    }); },
+};
+// parede (em teste): a peça bate e para, um baque abafado. Buraco (em teste, a casa que engole): a peça cai girando,
+// um assobio que desce e, longe, um baque surdo
+SONS_ESP.bate=()=>{ const p=ladoE(); tomE({f:150,to:70,a:.003,d:.12,v:.11,type:'triangle',lp:600,pan:p}); ruidoE({f:500,d:.05,v:.04,type:'lowpass',pan:p}); };
+SONS_ESP.engole=()=>{ const p=ladoE(), f=notaE(1,6);
+  tomE({f,to:f/6,a:.01,d:.7,v:.06,type:'triangle',lp:2400,lpTo:260,pan:p,rev:.45,dly:.2});
+  ruidoE({f:2200,to:160,a:.04,d:.6,v:.03,q:1.4,pan:p,rev:.4});
+  tomE({t:.62,f:85,to:36,d:.4,v:.07,lp:300,rev:.7}); };
 // no espaço (fases da Jornada e Clássico) os sons de sempre viram os do espaço; a mina segue com os dela
 const somEsp = () => typeof espacoLigado==='function' && espacoLigado() && typeof S!=='undefined' && !!S && !!(S.missao||S.infinito);
 for(const [k,e] of [['arrastar','arrastar'],['fundir','fundir'],['pagou','vitoria'],['naoDeu','derrota']]){ const velho=SFX[k]; SFX[k]=(...a)=>somEsp()?SONS_ESP[e](...a):velho(...a); }
-for(const k of ['nasce','poucos','racha','nebulosa','estrelas','corrente','degrau','frenesi','cai','acelera']) SFX[k]=(...a)=>{ if(somEsp()) SONS_ESP[k](...a); };
+for(const k of ['nasce','poucos','racha','nebulosa','estrelas','corrente','degrau','frenesi','cai','acelera','bate','engole']) SFX[k]=(...a)=>{ if(somEsp()) SONS_ESP[k](...a); };
 SFX.botao=()=>{ if(typeof espTela==='function' && espTela()) SONS_ESP.botao(); };
 

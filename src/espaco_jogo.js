@@ -397,8 +397,13 @@ function presencaM(ci,cj,ok){
 // contínuo (a distância com sinal até o conjunto dos vãos), então vãos vizinhos viram um buraco só, de beira redonda.
 // cor, recuo, fio (o quanto as pontas se desencontram e se desfiam) e claro vão de 0 a 1. Desligado (o padrão), a rede
 // some no vão como sempre.
+// Parede (o vão que segura as peças), em teste desde 2026-11-13, outras formas: 'borda' (a rede termina numa beira
+// acesa, a mesma da borda de fora do tabuleiro), 'relevo' (a rede sobe num morro, com luz de um lado e sombra do outro),
+// 'membrana' (a rede passa por cima, mais densa, esticada e acesa). bate: quando uma peça para encostada no vão, a beira
+// acende e treme e a peça quica de leve (vale com qualquer forma).
 let MALHA_VAO={forma:null, cor:.7, recuo:.5, fio:.5, claro:.5};
-const malhaVaoLiga=()=>MALHA_VAO.forma==='arrebenta';
+const malhaVaoLiga=()=>MALHA_VAO.forma==='arrebenta', malhaForma=()=>MALHA_VAO.forma||null;
+let flashV=[];   // beiras acesas por uma batida: {x1,y1,x2,y2 (px da malha), t0}
 const distRet=(x,y,ci,cj)=>Math.hypot(Math.max(x-ci,0,ci-(x+1)),Math.max(y-cj,0,cj-(y+1)));
 // distância com sinal até o vão, em casas: positiva fora, negativa dentro
 function sdVao(ci,cj,vaos,ok){
@@ -415,7 +420,12 @@ function vaoM(n,ci,cj,vaos,ok,pa){
   if(s>1.2) return;
   const e=.04, gx=(sdVao(ci+e,cj,vaos,ok)-sdVao(ci-e,cj,vaos,ok))/(2*e), gy=(sdVao(ci,cj+e,vaos,ok)-sdVao(ci,cj-e,vaos,ok))/(2*e), gl=Math.hypot(gx,gy)||1;
   n.ux=gx/gl; n.uy=gy/gl;
-  const z=s>-.25?suave(.45,0,s):0, M=MALHA_VAO, j=(sorteHash(n.i+','+n.j)-.5)*2;
+  const M=MALHA_VAO;
+  if(M.forma==='relevo'){   // o morro: os fios se afastam do alto e se apertam no pé (empurrados para fora)
+    n.alt=suave(.55,-.45,s); const k=pa*.16*Math.exp(-(((s+.05)/.42)**2)); n.vdx=n.ux*k; n.vdy=n.uy*k; return; }
+  if(M.forma==='membrana'){ n.alt=suave(.12,-.12,s); return; }   // esticada: os poços não afundam ali (alt: o quanto)
+  if(M.forma!=='arrebenta') return;
+  const z=s>-.25?suave(.45,0,s):0, j=(sorteHash(n.i+','+n.j)-.5)*2;
   const k=pa*.09*(M.recuo??.5)*z, d=pa*.07*(M.fio??.5)*z*j;   // recua para fora e desfia um pouco de lado
   n.vdx=n.ux*k-n.uy*d; n.vdy=n.uy*k+n.ux*d;
 }
@@ -427,24 +437,29 @@ function malhaQuadro(t){
   const NI=(W+2*MBORDA)*MSUB+1, NJ=(H+2*MBORDA)*MSUB+1, chave=W+'x'+H+':'+Wp+':'+Hp+':'+(S.walls||[]).filter(w=>w.v).map(w=>w.x+','+w.y).join(';')+':'+JSON.stringify(MALHA_VAO);
   if(!MN||MN.chave!==chave){ MN={chave,nos:[]}; const ok=[], vaos=[]; for(let y=0;y<H;y++) for(let x=0;x<W;x++) (casaOk(x,y)?ok:vaos).push([x,y]);
     // com a rede arrebentando no vão, ela chega inteira até a beira (presença como casa) e o corte é feito no desenho
-    const liga=malhaVaoLiga(), okP=liga?ok.concat(vaos):ok;
+    const liga=!!malhaForma() && vaos.length, okP=liga?ok.concat(vaos):ok;
     for(let j=0;j<NJ;j++) for(let i=0;i<NI;i++){ const rx=g.O+g.g0+(i-MBORDA*MSUB)*g.P/MSUB, ry=g.O+g.g0+(j-MBORDA*MSUB)*g.P/MSUB, ci=i/MSUB-MBORDA, cj=j/MSUB-MBORDA;
-      const n={i,j,rx,ry,x:rx,y:ry,vx:0,vy:0,h:0,w:0,s:9,vdx:0,vdy:0,f:liga?presencaM(ci,cj,okP):presencaM(ci,cj,ok)};
+      const n={i,j,rx,ry,x:rx,y:ry,vx:0,vy:0,h:0,w:0,s:9,vdx:0,vdy:0,alt:0,f:liga?presencaM(ci,cj,okP):presencaM(ci,cj,ok)};
       if(liga) vaoM(n,ci,cj,vaos,ok,g.P);
       MN.nos.push(n); }
+    // a beira (forma 'borda', e o contorno da batida): os lados de casa que dão para um vão ou para fora do tabuleiro
+    MN.beira=[]; const X=x=>g.O+g.g0+x*g.P;
+    for(const [x,y] of ok) for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){ const nx=x+dx, ny=y+dy, vao=nx>=0&&ny>=0&&nx<W&&ny<H&&!casaOk(nx,ny), fora=!(nx>=0&&ny>=0&&nx<W&&ny<H);
+      if(!vao && !fora) continue; const ex=dx>0?x+1:dx<0?x:null, ey=dy>0?y+1:dy<0?y:null;
+      MN.beira.push(ex!=null ? [X(ex),X(y),X(ex),X(y+1),vao] : [X(x),X(ey),X(x+1),X(ey),vao]); }
     refaz=true; }
   if(S.espMax==null && S.tiles.length) S.espMax=Math.max(...S.tiles.map(k=>k.t));
   const dt=Math.min(.05,Math.max(0,t-malhaT)); malhaT=t;
   const pa=g.P, pocos=[];
   for(const {el,fr} of pecasNoQuadro()) pocos.push({x:(fr.left+fr.width/2-g.r.left)*g.D+g.O, y:(fr.top+fr.height/2-g.r.top)*g.D+g.O, m:massaE(el._t.t)});
   // nada mudou desde o último desenho (peças paradas, sem onda nem tremor, rede assentada): o desenho anterior vale
-  const seloP=pocos.map(q=>Math.round(q.x)+','+Math.round(q.y)+','+q.m.toFixed(2)).join(';'), selo=seloP+(S.frenesi?'|'+freMalhaSelo(t):''), calmo=!ondasM.length && !tremM.length;
+  const seloP=pocos.map(q=>Math.round(q.x)+','+Math.round(q.y)+','+q.m.toFixed(2)).join(';'), selo=seloP+(S.frenesi?'|'+freMalhaSelo(t):''), calmo=!ondasM.length && !tremM.length && !flashV.length;
   if(!refaz && calmo && malhaParada && selo===malhaSelo) return;
   if(selo!==malhaSelo) malhaParada=false;
   malhaSelo=selo;
   let mexe=0;
   if(refaz || seloP!==MN.seloP){ MN.seloP=seloP; for(const n of MN.nos) pocosM(n,pocos,pa); }
-  for(const n of MN.nos){ campoM(n,t,pa); n.vx+=((n.rx+n.vdx+n.cdx-n.x)*90-n.vx*11)*dt; n.vy+=((n.ry+n.vdy+n.cdy-n.y)*90-n.vy*11)*dt; n.x+=n.vx*dt; n.y+=n.vy*dt;
+  for(const n of MN.nos){ campoM(n,t,pa); if(n.alt && malhaForma()==='membrana'){ const k=1-.85*n.alt; n.cdx*=k; n.cdy*=k; } n.vx+=((n.rx+n.vdx+n.cdx-n.x)*90-n.vx*11)*dt; n.vy+=((n.ry+n.vdy+n.cdy-n.y)*90-n.vy*11)*dt; n.x+=n.vx*dt; n.y+=n.vy*dt;
     mexe=Math.max(mexe,Math.abs(n.vx)+Math.abs(n.vy)); }
   malhaParada = calmo && mexe<2;
   const c=cv.getContext('2d'); c.clearRect(0,0,Wp,Hp);
@@ -462,10 +477,23 @@ function malhaQuadro(t){
   const potes=new Map(), M=MALHA_VAO, arr=malhaVaoLiga(), vc=arr?Math.max(0,Math.min(1,+M.cor||0)):0, VERM=[236,84,92], base=rgb.split(',').map(Number);
   const tons=[0,1,2,3,4].map(k=>{ const m=k/4*Math.min(1,vc*1.3); return base.map((c,i)=>Math.round(c+(VERM[i]-c)*m)).join(','); });
   const cortes=new Map(), corte=(lin,lado)=>{ const k=lin+lado; let c=cortes.get(k); if(c==null) cortes.set(k,c=.05+(sorteHash(k)-.5)*.5*(M.fio??.5)); return c; };
+  const fm=malhaForma();
+  if(fm==='relevo'){   // o morro: sombra embaixo à direita, e o alto um pouco mais claro
+    for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(!casaOk(x,y)){ const cx=g.O+g.g0+(x+.5)*pa, cy=g.O+g.g0+(y+.5)*pa, R=pa*.95;
+      const gs=c.createRadialGradient(cx+pa*.2,cy+pa*.24,0,cx+pa*.2,cy+pa*.24,R); gs.addColorStop(0,'rgba(0,0,0,.42)'); gs.addColorStop(.55,'rgba(0,0,0,.22)'); gs.addColorStop(1,'rgba(0,0,0,0)');
+      c.fillStyle=gs; c.fillRect(cx-R,cy-R,2.5*R,2.5*R); }
+    c.save(); c.globalCompositeOperation='lighter';
+    for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(!casaOk(x,y)){ const cx=g.O+g.g0+(x+.5)*pa-pa*.12, cy=g.O+g.g0+(y+.5)*pa-pa*.14, R=pa*.6, gl=c.createRadialGradient(cx,cy,0,cx,cy,R);
+      gl.addColorStop(0,`rgba(${rgb},.10)`); gl.addColorStop(1,`rgba(${rgb},0)`); c.fillStyle=gl; c.fillRect(cx-R,cy-R,2*R,2*R); }
+    c.restore(); }
   const seg=(a,b,maior,lin)=>{ const f=(a.f+b.f)/2; if(f<.02) return; let t=0;
+    if(fm==='borda' && (a.s+b.s)/2<0) return;   // a rede termina na beira
     if(arr){ const sm=(a.s+b.s)/2; if(sm<1){ const ct=corte(lin,(lin[0]==='h'?a.ux+b.ux:a.uy+b.uy)>0?'+':'-'); if(sm<ct) return; t=suave(.85,ct,sm); } }
     const h=(a.h+b.h)/2, w=(a.w+b.w)/2, fundo=Math.min(.85,h*.32);
     let al=Math.min(1,((maior?.17:.065)*(1-fundo)+w*.6)*f*ganho); if(t) al=Math.min(1,al+(maior?.55:.4)*vc*t*t);
+    const alt=(a.alt+b.alt)/2;
+    if(alt && fm==='relevo'){ const luz=Math.max(0,Math.min(1,-(a.ux+b.ux+a.uy+b.uy)*.35+.35)); al=Math.min(1,al+alt*(maior?.12+.3*luz:.05+.14*luz)); }
+    if(alt && fm==='membrana') al=Math.min(1,al+alt*(maior?.3:.17));
     if(al<.008) return; const k=Math.round(t*4)+'|'+Math.round(al*60)+'|'+Math.max(1,Math.round((maior?1.2:.75)*(1-fundo*.5)*(1+.5*t*vc)*4)); let p=potes.get(k); if(!p) potes.set(k,p=[]); p.push(a.x,a.y,b.x,b.y); };
   for(let j=0;j<NJ;j++) for(let i=0;i<NI-1;i++) seg(no(i,j),no(i+1,j),j%MSUB===0,'h'+j);
   for(let i=0;i<NI;i++) for(let j=0;j<NJ-1;j++) seg(no(i,j),no(i,j+1),i%MSUB===0,'v'+i);
@@ -479,13 +507,27 @@ function malhaQuadro(t){
   c.lineCap='round';
   for(const [k,p] of potes){ const [tom,a,wl]=k.split('|'); c.strokeStyle=`rgba(${tons[tom]},${(a/60).toFixed(3)})`; c.lineWidth=wl/4*g.D; c.beginPath();
     for(let i=0;i<p.length;i+=4){ c.moveTo(p[i],p[i+1]); c.lineTo(p[i+2],p[i+3]); } c.stroke(); }
-  ondasM=ondasM.filter(o=>t-o.t0<3); tremM=tremM.filter(o=>t-o.t0<1.2);
+  if(fm==='membrana'){   // a trama fina por cima do vão (meio passo), presa na beira
+    c.save(); c.beginPath(); for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(!casaOk(x,y)) c.rect(g.O+g.g0+x*pa,g.O+g.g0+y*pa,pa,pa); c.clip();
+    c.strokeStyle=`rgba(${rgb},.16)`; c.lineWidth=.6*g.D; c.beginPath();
+    for(let k=0;k<=W*8;k++){ const x=g.O+g.g0+k*pa/8; c.moveTo(x,g.O+g.g0); c.lineTo(x,g.O+g.g0+H*pa); }
+    for(let k=0;k<=H*8;k++){ const y=g.O+g.g0+k*pa/8; c.moveTo(g.O+g.g0,y); c.lineTo(g.O+g.g0+W*pa,y); }
+    c.stroke(); c.restore(); }
+  if(fm==='borda' && MN.beira.length){   // a beira: um brilho largo e fraco e um fio firme por cima, no vão e na borda de fora
+    c.lineCap='round';
+    for(const [lw,al] of [[7,.07],[3,.16],[1.4,.62]]){ c.strokeStyle=`rgba(${rgb},${al})`; c.lineWidth=lw*g.D; c.beginPath();
+      for(const [x1,y1,x2,y2] of MN.beira){ c.moveTo(x1,y1); c.lineTo(x2,y2); } c.stroke(); } }
+  if(flashV.length){ c.lineCap='round';   // batidas: o lado encostado acende e apaga
+    for(const o of flashV){ const k=Math.max(0,1-(t-o.t0)/.45); if(t<o.t0||!k) continue;
+      for(const [lw,al] of [[9,.2],[2.4,.9]]){ c.strokeStyle=`rgba(255,240,200,${(al*k*k).toFixed(3)})`; c.lineWidth=lw*g.D; c.beginPath(); c.moveTo(o.x1,o.y1); c.lineTo(o.x2,o.y2); c.stroke(); } } }
+  ondasM=ondasM.filter(o=>t-o.t0<3); tremM=tremM.filter(o=>t-o.t0<1.2); flashV=flashV.filter(o=>t-o.t0<.5);
 }
 // chamado a cada arrasto que mexeu: tranco da câmera, névoa de cada junção, tremor da malha; recorde da partida: onda e anel
 // no Frenesi as reações crescem com o degrau (fk de 0 a 1; com menos movimento, o tranco não cresce)
-function espJogada(dx,dy,merges){
+function espJogada(dx,dy,merges,mexeram){
   const fk=freForca(), tr=190*(1+(POUCO_MOV?0:fk*1.4));
   camE.vx+=dx*tr; camE.vy+=dy*tr; adiantaProximo();
+  if(MALHA_VAO.bate && mexeram?.length) espBate(dx,dy,mexeram);
   if(!merges||!merges.length) return;
   const g=geoTab(), t=tQuadro||performance.now()/1000;
   for(const o of merges){
@@ -494,6 +536,18 @@ function espJogada(dx,dy,merges){
     brilhosE.push({x:sx,y:sy,t0:t,rgb,forte:rec||fk>.45});
     if(rec){ S.espMax=o.t; ondasM.push({x:bx+g.O,y:by+g.O,t0:t,a:g.P*(.16+.012*o.t)}); aneisE.push({x:sx,y:sy,t0:t,v:g.P/g.D*3.4,rgb:'230,232,255'}); }
   }
+}
+// uma peça que andou e parou encostada num vão: depois de chegar, o lado encostado acende, a malha treme ali, a peça
+// quica de leve para trás e soa um baque abafado (um por arrasto)
+function espBate(dx,dy,mexeram){
+  const bat=mexeram.filter(t=>{ const nx=t.x+dx, ny=t.y+dy; return nx>=0&&ny>=0&&nx<W&&ny<H&&!casaOk(nx,ny); }); if(!bat.length) return;
+  setTimeout(()=>{ const g=geoTab(), t=tQuadro||performance.now()/1000, X=v=>g.O+g.g0+v*g.P;
+    for(const p of bat){ const ex=p.x+(dx>0?1:0), ey=p.y+(dy>0?1:0);
+      flashV.push(dx ? {x1:X(ex),y1:X(p.y)+g.P*.08,x2:X(ex),y2:X(p.y+1)-g.P*.08,t0:t} : {x1:X(p.x)+g.P*.08,y1:X(ey),x2:X(p.x+1)-g.P*.08,y2:X(ey),t0:t});
+      tremM.push({x:X(p.x+.5+dx*.5),y:X(p.y+.5+dy*.5),t0:t,a:g.P*.05});
+      const el=els.get(p.id); if(el && !POUCO_MOV && typeof pos==='function'){ const a=pos(p.x,p.y), b=pos(p.x-dx*.07,p.y-dy*.07);
+        el.animate([{transform:a},{transform:b,offset:.4},{transform:a}],{duration:220,easing:'ease-out'}); } }
+    malhaParada=false; SFX.bate?.(); }, 110);
 }
 const corNivelRgb=t=>{ const h=corNivel(t); return [1,3,5].map(i=>parseInt(h.slice(i,i+2),16)).join(','); };
 // chamado no lugar do cenário da mina
