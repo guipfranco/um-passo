@@ -105,7 +105,8 @@ const cumpriu = m => metasDe(m).every(metaFeita);
 const violou = m => objsDe(m).find(o=>o.proibido && (S.maxForm||0)>=o.proibido);
 // fase livre (sem limite de arrastos): as estrelas vêm dos arrastos usados; tetoEst = máximo de arrastos para ★★ e para ★★★
 // O ★★★ fica entre 75% e 88% do ★★: nem quase igual a ele, nem apertado demais (a calibragem sozinha dava os dois extremos).
-const tetoEst = m => { const t2=m.arrastos-m.estrelas[0], t3=m.arrastos-m.estrelas[1];
+// (m.tetos: a fase diz os dois direto, sem esse ajuste; os Quebra-cabeças, quebra.js)
+const tetoEst = m => { if(m.tetos) return m.tetos; const t2=m.arrastos-m.estrelas[0], t3=m.arrastos-m.estrelas[1];
   return [t2, Math.min(Math.round(t2*.88), Math.max(Math.round(t2*.75), t3))]; };
 const estrelasPor = (m,sobra,usados) => m.livre ? 1 + (usados<=tetoEst(m)[0]) + (usados<=tetoEst(m)[1]) : 1 + (sobra>=m.estrelas[0]) + (sobra>=m.estrelas[1]);
 const arrastosTxt = m => m.livre ? 'sem limite de arrastos' : `${m.arrastos||'?'} arrastos`;

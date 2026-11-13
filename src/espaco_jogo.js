@@ -1047,7 +1047,7 @@ function entradaEsp(n){
   const chips=[tam, m.livre?'sem limite de arrastos':arrastosTxt(m)];
   if(m.regras?.spawns===0 && !JA.quebra) chips.push('quebra-cabeça'); if(charDe(m)==='passinho') chips.push('Passinho');
   // nos Quebra-cabeças as estrelas dizem em quantos arrastos (e embaixo, discreto, o melhor possível: a menor solução)
-  const est = JA.quebra ? qjTetos(m).map(t=>`em até ${t}`)
+  const est = JA.quebra ? (()=>{ const [,t2,t3]=qjTetos(m); return ['resolver',`em até ${t2}`,`em até ${t3}`]; })()
             : m.livre ? (()=>{ const [t2,t3]=tetoEst(m); return ['cumprir',`até ${t2} arrastos`,`até ${t3} arrastos`]; })()
                       : ['cumprir',`sobrando ${m.estrelas[0]}`,`sobrando ${m.estrelas[1]}`];
   const exp=explicaEsp(m), novas=exp.filter(t=>estreiaDe(t)===n), velhas=exp.filter(t=>estreiaDe(t)!==n);

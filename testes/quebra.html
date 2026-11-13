@@ -31,7 +31,7 @@ f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEven
   // a menor solução, pela busca (só formar: a meta da fase 1)
   ev(`window.__chave=ts=>ts.map(t=>t.x+'.'+t.y+'.'+t.t+'.'+(t.c??'')).sort().join('|');
     window.__sol=alvo=>{ let nivel=[{ts:S.tiles,cam:[]}], visto=new Set([__chave(S.tiles)]);
-      for(let p=1;p<=12;p++){ const prox=[]; for(const nd of nivel) for(const [dx,dy] of DIRS){ const r=slide(nd.ts,dx,dy); if(!r.moved) continue; const cam=[...nd.cam,[dx,dy]];
+      for(let p=1;p<=40;p++){ const prox=[]; for(const nd of nivel) for(const [dx,dy] of DIRS){ const r=slide(nd.ts,dx,dy); if(!r.moved) continue; const cam=[...nd.cam,[dx,dy]];
         if(r.merges.some(o=>o.t>=alvo)) return cam; const k=__chave(r.tiles); if(visto.has(k)) continue; visto.add(k); prox.push({ts:r.tiles,cam}); } nivel=prox; } return null; }`);
   const sol=JSON.parse(ev(`JSON.stringify(__sol(${m.obj.forme}))`)), ini=ev('__chave(S.tiles)'), n0=ev('S.tiles.length');
   confere(sol && sol.length===m.min, `menor solução: ${sol?.length} arrastos (min da fase ${m.min}) ${JSON.stringify(sol)}`);
@@ -55,21 +55,25 @@ f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEven
   confere(/Perfeito!/.test(q('#panel h2')?.textContent||'') && d.querySelectorAll('#panel .estr.grande i.on').length===3 && g[1]?.e===3 && g[1]?.a===m.min && !ev('localStorage.ptui_qj_save'),
     `vitória: ${res.slice(0,120)} · gravado=${JSON.stringify(g)}`);
   confere(ev('localStorage.mina_missoes')==='{"1":{"e":2,"t":10}}' && !ev('localStorage.mina_cla_save'), 'Jornada intocada: '+ev('localStorage.mina_missoes'));
-  // estrelas pelos arrastos, pela regra da própria fase (campo estrelas: quanto precisa sobrar para ★★ e ★★★)
-  const est=JSON.parse(ev(`JSON.stringify([0,1,2,3,4,5].map(k=>{ const m=QJ_FASES[0], u=m.min+k; return estrelasPor(m, m.arrastos-u, u); }))`));
-  const espera=[0,1,2,3,4,5].map(k=>{ const sobra=f1.arrastos-f1.min-k; return sobra>=f1.estrelas[1]?3:sobra>=f1.estrelas[0]?2:1; }).join('');
-  confere(est.join('')===espera, `estrelas com min..min+5 arrastos: ${est.join(' ')} (esperado ${espera.split('').join(' ')})`);
-  // próxima fase liberada; sem saída a fase fica parada até recomeçar
+  // estrelas pelos arrastos, sem limite: ★★★ até min+1, ★★ até min+max(3, metade de min), ★ resolvendo com quantos for
+  const est=JSON.parse(ev(`JSON.stringify([0,1,2,3,4,5,9,30].map(k=>{ const m=QJ_FASES[0], u=m.min+k; return estrelasPor(m, 0, u); }))`));
+  const t2=f1.min+Math.max(3,Math.ceil(f1.min/2)), espera=[0,1,2,3,4,5,9,30].map(k=>{ const u=f1.min+k; return u<=f1.min+1?3:u<=t2?2:1; }).join('');
+  confere(est.join('')===espera && ev('QJ_FASES.every(m=>m.livre && m.tetos[1]===m.min+1)'), `estrelas com min+0..5, 9 e 30 arrastos: ${est.join(' ')} (esperado ${espera.split('').join(' ')})`);
+  // próxima fase liberada; sem limite de arrastos (nunca acabam); sem saída a fase fica parada até recomeçar
   q('#mProx').click(); await wait(100);
   confere(q('.ent .num')?.textContent==='FASE 2' && ev('liberada(2)') && !ev('liberada(3)'), 'próxima: '+q('.ent .num')?.textContent);
   q('#mJoga').click(); await wait(200);
-  ev('S.energy=1; render()'); const ok1=JSON.parse(ev(`JSON.stringify(DIRS.find(([dx,dy])=>{ const r=slide(S.tiles,dx,dy); return r.moved && !r.merges.some(o=>o.t>=faseM().obj.forme); }))`));
-  ev(`move(${ok1})`); await wait(60);
-  const travou=ev('S.qj.trava'), mv=ev('S.moves'); ev(`move(${ok1[0]*-1},${ok1[1]*-1})`); await wait(30);
-  confere(/acabaram/.test(travou||'') && ev('S.phase')==='mine' && !ev('overlayOpen()') && ev('S.moves')===mv && q('#qjBar').classList.contains('chama'),
-    `sem arrastos: trava="${travou}" letreiro="${q('#bSub').textContent}" fase continua=${ev('S.phase')} arrasto bloqueado=${ev('S.moves')===mv}`);
+  const ok1=JSON.parse(ev(`JSON.stringify(DIRS.find(([dx,dy])=>{ const r=slide(S.tiles,dx,dy); return r.moved && !r.merges.some(o=>o.t>=faseM().obj.forme); }))`));
+  for(let k=0;k<ev('faseM().arrastos')+3;k++){ const dd=JSON.parse(ev(`JSON.stringify(DIRS.find(([dx,dy])=>{ const r=slide(S.tiles,dx,dy); return r.moved && !r.merges.some(o=>o.t>=faseM().obj.forme); })||null)`)); if(!dd) break; ev(`move(${dd})`); }
+  await wait(60);
+  confere(ev('S.semEnergia') && !(ev('S.qj.trava')||'').includes('acabaram') && ev('S.moves')>ev('faseM().arrastos') && /sem limite/.test(q('#cArr').nextElementSibling.textContent),
+    `sem limite: ${ev('S.moves')} arrastos (★★ até ${ev('faseM().arrastos')}) · trava=${ev('S.qj.trava')} · painel "${q('#cArr').textContent} ${q('#cArr').nextElementSibling.textContent}"`);
+  ev(`qjTravou('não cabe mais nada')`); await wait(30); const mv=ev('S.moves'), dd0=JSON.parse(ev('JSON.stringify(DIRS.find(([dx,dy])=>slide(S.tiles,dx,dy).moved)||[1,0])'));
+  ev(`move(${dd0})`); await wait(30);
+  confere(ev('S.phase')==='mine' && !ev('overlayOpen()') && ev('S.moves')===mv && q('#qjBar').classList.contains('chama') && /recomece/.test(q('#bSub').textContent),
+    `sem saída: letreiro="${q('#bSub').textContent}" fase continua=${ev('S.phase')} arrasto bloqueado=${ev('S.moves')===mv}`);
   q('#qjRecomeca').click(); await wait(60);
-  confere(!ev('S.qj.trava') && ev('S.energy')===ev('faseM().arrastos') && ev('S.moves')===0 && !q('#qjBar').classList.contains('chama'), `recomeçar destrava: sobra=${ev('S.energy')} arrastos=${ev('S.moves')}`);
+  confere(!ev('S.qj.trava') && ev('S.moves')===0 && !q('#qjBar').classList.contains('chama'), `recomeçar destrava: sobra=${ev('S.energy')} arrastos=${ev('S.moves')}`);
   // fase pela metade: salva à parte, continuada de onde parou
   ev('missaoJoga(2)'); await wait(100); ev(`move(${ok1})`); await wait(60);   // um arrasto que não forma a peça pedida: a fase segue
   const sv=JSON.parse(ev('localStorage.ptui_qj_save||"null"')), mv2=ev('S.moves');
@@ -100,7 +104,7 @@ f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEven
     `vitória com dica em ${ev('S.moves')} arrastos (a menor): "${q('#panel h2')?.textContent}" ${ne} estrelas · ${q('#panel .perf')?.textContent}`);
   // sem saída: a dica manda recomeçar, de graça (não gasta dica nem estrela). A referência é a busca do próprio teste
   // (__sol): um estado tem saída se a menor solução dele cabe nos arrastos que sobram
-  const temSaida=()=>{ const n=ev(`__sol(faseM().obj.forme)?.length`); return n!=null && n<=ev('S.energy'); };
+  const temSaida=()=>ev(`__sol(faseM().obj.forme)?.length`)!=null;   // sem limite de arrastos: basta haver solução
   ev('window.__volta=st=>qjVolta(JSON.parse(st))');
   const mata=()=>JSON.parse(ev('JSON.stringify(DIRS)')).find(dd=>{ if(!ev(`slide(S.tiles,${dd}).moved`)) return false;
     const st=ev('JSON.stringify(estadoFase())'); ev(`move(${dd})`); const ok=ev('S.phase')==='mine' && !temSaida(); w.__volta(st); return ok; });

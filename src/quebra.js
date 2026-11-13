@@ -4,8 +4,10 @@
 // (classico.js e espaco_jogo.js) com a jornada atual JA = QUEBRA: progresso em ptui_qj ({n: {e: estrelas, t: pontos,
 // a: menor número de arrastos}}) e a fase pela metade em ptui_qj_save (com o começo da fase, S.qj).
 // Na fase (desde 2026-11-13): sem desfazer; recomeçar e dica numa barra embaixo do tabuleiro, com o nome escrito; no
-// teclado, R e H. Acabaram os arrastos, não há saída ou formou o proibido: a fase não acaba, fica parada até recomeçar. Estrelas pelos arrastos: ★ dentro
-// do limite, ★★ até min+3, ★★★ até min+1 (ou o campo estrelas da fase); sem meta de pontos. Música: a Órbita, a da Jornada.
+// teclado, R e H. Não há saída ou formou o proibido: a fase não acaba, fica parada até recomeçar.
+// Estrelas (desde 2026-11-13): sem limite de arrastos (a fase nunca falha; resolver vale ★), ★★ até min+max(3, metade
+// de min) e ★★★ até min+1, pelo modo livre da Jornada (m.livre, com os tetos direto em m.tetos). Sem meta de pontos.
+// Música: a Órbita, a da Jornada.
 // Só aparece com ?quebra no endereço (fica gravado no aparelho; ?quebra=0 esconde), no menu do espaço, abaixo do Clássico.
 (()=>{ const m=location.search.match(/[?&]quebra(?:=(\d))?/); if(m) localStorage.ptui_quebra = m[1]==='0' ? '0' : '1'; })();
 const quebraLigado = () => localStorage.ptui_quebra!=='0' && espacoLigado();   // oficial desde 2026-11-11: aparece para todos (?quebra=0 esconde)
@@ -15,8 +17,8 @@ const quebraLigado = () => localStorage.ptui_quebra!=='0' && espacoLigado();   /
 QJ_FASES.forEach(m=>{
   m.regras={...(m.regras||{}), spawns:0};
   if(m.min==null) m.min=Math.max(1,(m.arrastos||10)-5);
-  if(!m.arrastos) m.arrastos=m.min+5;
-  if(!m.estrelas) m.estrelas=[Math.max(0,m.arrastos-m.min-3), Math.max(0,m.arrastos-m.min-1)];
+  const t3=m.min+1, t2=m.min+Math.max(3, Math.ceil(m.min/2));
+  m.livre=true; m.tetos=[t2,t3]; m.arrastos=t2; m.estrelas=[0, t2-t3];
   if(!m.fase){ const ps=m.pecas||[]; if(ps.some(p=>p[4]==='p')) m.fase='picareta'; else if(ps.some(p=>p[3]!=null)) m.fase='cores'; }
 });
 // desenho do mundo no mapa, quando o mundo não diz (icoMundoEsp): pela meta e pelo tabuleiro da primeira fase dele
@@ -30,12 +32,12 @@ QJ_MUNDOS.forEach((g,gi)=>{ g.tema=g.tema||1; g.fase=g.fase||'comum'; if(!g.ico)
 const QUEBRA = {id:'quebra', nome:'Quebra-cabeças', mundos:QJ_MUNDOS, fases:QJ_FASES, chave:'ptui_qj', salvo:'ptui_qj_save', quebra:true};
 // textos da entrada da fase que mudam neste modo (explicaEsp): cada um aparece como NOVO só na fase em que estreia
 const COMO_QJ = {
-  modo:'Quebra-cabeça: nenhuma peça nova nasce, o tabuleiro é só este. Ache a ordem certa dos arrastos. Recomece a fase quantas vezes quiser; a lâmpada dá 3 dicas por hora.',
+  modo:'Quebra-cabeça: nenhuma peça nova nasce, o tabuleiro é só este. Ache a ordem certa dos arrastos: não tem limite, mas quanto menos, mais estrelas. Recomece quantas vezes quiser; a lâmpada dá 3 dicas por hora.',
   passinho:'Passinho: tudo anda só uma casa por arrasto, como no Threes.',
   picareta:'Buraco negro: dois iguais se juntam num maior; quando encontra um planeta do mesmo nível, engole o planeta.',
 };
-// arrastos para ★, ★★ e ★★★; e a meta de perfeição (a menor solução), discreta, na entrada da fase
-const qjTetos = m => [m.arrastos, m.arrastos-m.estrelas[0], m.arrastos-m.estrelas[1]];
+// arrastos para ★★ e ★★★ (★ é resolver); e a meta de perfeição (a menor solução), discreta, na entrada da fase
+const qjTetos = m => [null, ...m.tetos];
 // (e, discreto também, o custo da dica: a partida com dica vale até ★★; sv: a partida salva, se já usou)
 const qjPerfeito = (m,b,sv) => `<div class="perf">melhor possível: <b>${m.min}</b> arrastos${b?.a!=null?` · seu melhor: ${b.a}`:''}<br>${sv?.qj?.dicas?'nesta partida você usou dica: vale até ★★':'com dica, a fase vale até ★★'}</div>`;
 const qjAtual = () => { const r=MISS(QUEBRA); return (QJ_FASES.findIndex((m,i)=>!(r[i+1]?.e)) + 1) || QJ_FASES.length; };
@@ -122,7 +124,7 @@ setInterval(()=>{ if(document.body.classList.contains('modoQj')) qjDicaRotulo();
 addEventListener('storage', e=>{ if(e.key==='ptui_qj_dicas') qjDicaRotulo(); });
 
 // ---------- dica ----------
-// A lâmpada procura, a partir do estado de agora, a menor solução que cabe nos arrastos que sobram e mostra o próximo
+// A lâmpada procura, a partir do estado de agora, a menor solução e mostra o próximo
 // arrasto: uma seta acesa sobre o tabuleiro e as peças ensaiando o movimento. A busca é em largura, com o slide() do
 // jogo e as metas conferidas pelo medidor das fases (testes/calibrar/quebra_medidor.js, montado no index.html pelo
 // build.py; ele confere como contaMissao, recolheCarro, violou e cumpriu). Sem solução daqui: manda recomeçar.
@@ -131,7 +133,7 @@ addEventListener('storage', e=>{ if(e.key==='ptui_qj_dicas') qjDicaRotulo(); });
 // quantos arrastos sobrando (a dica seguinte, seguindo a anterior, sai na hora).
 // Custo: a partida com dica vale no máximo ★★ e sem "Perfeito!" (S.qj.dicas, salvo com a fase; recomeçar não apaga,
 // começar a fase de novo apaga). 3 dicas por hora (a cota, acima). Na primeira, uma linha NOVO explica.
-const QJ_DICA={pedaco:8, pensa:150, estados:200000, tempo:8000};
+const QJ_DICA={pedaco:8, pensa:150, estados:200000, tempo:8000, fundo:99};   // fundo: sem limite de arrastos, até onde procurar
 let QJM=null, QJ_D=null, qjPensando=null, QJ_ANIS=[];
 // o medidor com o slide() do jogo: W, H e S trocados só durante cada pedaço da busca (qjBusca devolve os do jogo)
 const qjMed = () => QJM || (QJM=QM.QuebraMedidor({slide:(t,dx,dy)=>slide(t,dx,dy), ajusta:(w,h,walls,edges,ch)=>{ W=w; H=h; S={walls,edges,char:ch}; }}));
@@ -189,7 +191,7 @@ async function qjDica(){
   const D=qjDicaFase(), ver=qjVer, t0=performance.now(), bt=$('#qjDica');
   qjPensando=setTimeout(()=>{ bt.classList.add('pensa'); setBanner(null,'pensando…'); }, QJ_DICA.pensa);
   let r=null;
-  try{ r=await qjRoda(D, qjEstadoMed(S), Math.max(0,S.energy), ver); }
+  try{ r=await qjRoda(D, qjEstadoMed(S), QJ_DICA.fundo, ver); }
   finally { clearTimeout(qjPensando); qjPensando=null; bt.classList.remove('pensa'); }
   D.ultima={ms:Math.round(performance.now()-t0), estados:r.estados||0};   // para medir (testes/quebra.html)
   if(r.cancelou || qjVer!==ver || !qjPode()){   // a partida mudou enquanto pensava: a dica desiste (e o letreiro volta)
@@ -199,7 +201,7 @@ async function qjDica(){
   if(r.d==null){ qjMostraRecomeca(); return; }   // sem saída daqui: de graça, não gasta dica nem estrela
   S.qj.dicas=(S.qj.dicas||0)+1; salvaFase(); qjDicaGasta();
   qjMostraSeta(r.di, r.d);
-  if(!localStorage.ptui_qj_dica){ localStorage.ptui_qj_dica='1'; qjAviso(`<i>NOVO</i>A lâmpada mostra o próximo arrasto de uma solução que cabe nos arrastos que sobram. São ${QJ_COTA.n} dicas por hora, e com dica a fase vale até ★★.`, 'novo'); }
+  if(!localStorage.ptui_qj_dica){ localStorage.ptui_qj_dica='1'; qjAviso(`<i>NOVO</i>A lâmpada mostra o próximo arrasto da menor solução. São ${QJ_COTA.n} dicas por hora, e com dica a fase vale até ★★.`, 'novo'); }
 }
 const QJ_NOME_DIR=['para a direita','para a esquerda','para baixo','para cima'], QJ_GIRO=[0,180,90,-90];
 // a seta acesa no tabuleiro e o ensaio: as peças que o arrasto mexe vão um pouco na direção dele e voltam, duas vezes
