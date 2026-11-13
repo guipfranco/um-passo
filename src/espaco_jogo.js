@@ -463,17 +463,17 @@ function malhaQuadro(t){
   const tons=[0,1,2,3,4].map(k=>{ const m=k/4*vc; return base.map((c,i)=>Math.round(c+(VERM[i]-c)*m)).join(','); });
   const cortes=new Map(), corte=(lin,lado)=>{ const k=lin+lado; let c=cortes.get(k); if(c==null) cortes.set(k,c=.05+(sorteHash(k)-.5)*.5*(M.fio??.5)); return c; };
   const seg=(a,b,maior,lin)=>{ const f=(a.f+b.f)/2; if(f<.02) return; let t=0;
-    if(arr){ const sm=(a.s+b.s)/2; if(sm<1){ const ct=corte(lin,(lin[0]==='h'?a.ux+b.ux:a.uy+b.uy)>0?'+':'-'); if(sm<ct) return; t=suave(.5,ct,sm); } }
+    if(arr){ const sm=(a.s+b.s)/2; if(sm<1){ const ct=corte(lin,(lin[0]==='h'?a.ux+b.ux:a.uy+b.uy)>0?'+':'-'); if(sm<ct) return; t=suave(.6,ct,sm); } }
     const h=(a.h+b.h)/2, w=(a.w+b.w)/2, fundo=Math.min(.85,h*.32);
-    let al=Math.min(1,((maior?.17:.065)*(1-fundo)+w*.6)*f*ganho); if(t) al=Math.min(1,al+(maior?.16:.1)*vc*t*t);
-    if(al<.008) return; const k=Math.round(t*4)+'|'+Math.round(al*60)+'|'+Math.max(1,Math.round((maior?1.2:.75)*(1-fundo*.5)*4)); let p=potes.get(k); if(!p) potes.set(k,p=[]); p.push(a.x,a.y,b.x,b.y); };
+    let al=Math.min(1,((maior?.17:.065)*(1-fundo)+w*.6)*f*ganho); if(t) al=Math.min(1,al+(maior?.42:.3)*vc*t*t);
+    if(al<.008) return; const k=Math.round(t*4)+'|'+Math.round(al*60)+'|'+Math.max(1,Math.round((maior?1.2:.75)*(1-fundo*.5)*(1+.5*t*vc)*4)); let p=potes.get(k); if(!p) potes.set(k,p=[]); p.push(a.x,a.y,b.x,b.y); };
   for(let j=0;j<NJ;j++) for(let i=0;i<NI-1;i++) seg(no(i,j),no(i+1,j),j%MSUB===0,'h'+j);
   for(let i=0;i<NI;i++) for(let j=0;j<NJ-1;j++) seg(no(i,j),no(i,j+1),i%MSUB===0,'v'+i);
   // o vazio: um pouco mais claro que o céu em volta, esfumado; manchas redondas por casa que se somam (vãos juntos
   // viram um vazio só)
   if(arr && M.claro>0){ c.save(); c.globalCompositeOperation='lighter';
     for(let y=0;y<H;y++) for(let x=0;x<W;x++) if(!casaOk(x,y)){ const cx=g.O+g.g0+(x+.5)*pa, cy=g.O+g.g0+(y+.5)*pa, R=pa*.85, gr=c.createRadialGradient(cx,cy,0,cx,cy,R);
-      gr.addColorStop(0,`rgba(${rgb},${(.07*M.claro).toFixed(3)})`); gr.addColorStop(.6,`rgba(${rgb},${(.045*M.claro).toFixed(3)})`); gr.addColorStop(1,`rgba(${rgb},0)`);
+      gr.addColorStop(0,`rgba(${rgb},${(.13*M.claro).toFixed(3)})`); gr.addColorStop(.6,`rgba(${rgb},${(.08*M.claro).toFixed(3)})`); gr.addColorStop(1,`rgba(${rgb},0)`);
       c.fillStyle=gr; c.fillRect(cx-R,cy-R,2*R,2*R); }
     c.restore(); }
   c.lineCap='round';
