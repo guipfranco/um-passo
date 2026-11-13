@@ -2,10 +2,9 @@
 // Uma jornada inteira só de quebra-cabeças: nenhuma peça nova nasce, o pedido é só a ordem certa dos arrastos.
 // Mundos e fases em quebra_fases.js. O mapa, a entrada da fase, o jogo da fase e a gravação são os da Jornada
 // (classico.js e espaco_jogo.js) com a jornada atual JA = QUEBRA: progresso em ptui_qj ({n: {e: estrelas, t: pontos,
-// a: menor número de arrastos}}) e a fase pela metade em ptui_qj_save (com o começo da fase e a pilha do desfazer, S.qj).
-// Na fase: desfazer sem limite (volta o arrasto contado) e recomeçar na hora (que também se desfaz, por isso sem
-// confirmação), os dois sempre à vista no painel de cima; no teclado, Z (ou Backspace) e R. Acabaram os arrastos, não há
-// saída ou formou o proibido: a fase não acaba, fica parada até desfazer ou recomeçar. Estrelas pelos arrastos: ★ dentro
+// a: menor número de arrastos}}) e a fase pela metade em ptui_qj_save (com o começo da fase, S.qj).
+// Na fase (desde 2026-11-13): sem desfazer; recomeçar e dica numa barra embaixo do tabuleiro, com o nome escrito; no
+// teclado, R e H. Acabaram os arrastos, não há saída ou formou o proibido: a fase não acaba, fica parada até recomeçar. Estrelas pelos arrastos: ★ dentro
 // do limite, ★★ até min+3, ★★★ até min+1 (ou o campo estrelas da fase); sem meta de pontos. Música: a Órbita, a da Jornada.
 // Só aparece com ?quebra no endereço (fica gravado no aparelho; ?quebra=0 esconde), no menu do espaço, abaixo do Clássico.
 (()=>{ const m=location.search.match(/[?&]quebra(?:=(\d))?/); if(m) localStorage.ptui_quebra = m[1]==='0' ? '0' : '1'; })();
@@ -31,7 +30,7 @@ QJ_MUNDOS.forEach((g,gi)=>{ g.tema=g.tema||1; g.fase=g.fase||'comum'; if(!g.ico)
 const QUEBRA = {id:'quebra', nome:'Quebra-cabeças', mundos:QJ_MUNDOS, fases:QJ_FASES, chave:'ptui_qj', salvo:'ptui_qj_save', quebra:true};
 // textos da entrada da fase que mudam neste modo (explicaEsp): cada um aparece como NOVO só na fase em que estreia
 const COMO_QJ = {
-  modo:'Quebra-cabeça: nenhuma peça nova nasce, o tabuleiro é só este. Ache a ordem certa dos arrastos. ↶ desfaz o último arrasto e ↻ recomeça a fase, quantas vezes quiser.',
+  modo:'Quebra-cabeça: nenhuma peça nova nasce, o tabuleiro é só este. Ache a ordem certa dos arrastos. Recomece a fase quantas vezes quiser; a lâmpada dá 3 dicas por hora.',
   passinho:'Passinho: tudo anda só uma casa por arrasto, como no Threes.',
   picareta:'Buraco negro: dois iguais se juntam num maior; quando encontra um planeta do mesmo nível, engole o planeta.',
 };
@@ -59,18 +58,18 @@ function qjEntra(){ missoesLista(QUEBRA); missaoInfo(qjSalva()||qjAtual()); }
 // ---------- na fase ----------
 const qjFoto = () => JSON.parse(JSON.stringify(estadoFase()));
 let qjVer=0;   // muda a cada arrasto, desfazer, recomeçar e fase nova (a dica em andamento desiste)
-// chamado por missaoJoga: o começo da fase (para recomeçar) e a pilha do desfazer; continuando, os da fase salva
+// chamado por missaoJoga: o começo da fase (para recomeçar); continuando, o da fase salva (a pilha é do tempo do
+// desfazer: fica vazia, para o salvo continuar no mesmo formato)
 function qjComeca(sv){
-  S.qj = sv?.qj || {ini:qjFoto(), pilha:[], trava:null, dicas:0};
-  qjVer++; qjDicaLimpa(); document.body.classList.add('modoQj');
+  S.qj = sv?.qj || {ini:qjFoto(), pilha:[], trava:null, dicas:0}; S.qj.pilha=[];
+  qjVer++; qjDicaLimpa(); qjDicaRotulo(); document.body.classList.add('modoQj');
   if(S.qj.trava) setTimeout(()=>{ if(S.qj?.trava) qjTravou(S.qj.trava, true); });   // parou sem saída: continua parada
 }
-// antes de cada arrasto (move, jogo.js): o estado de agora vai para a pilha. Na memória, até 400 (cada recomeçar também
-// empilha); no salvo, as 60 últimas, para gravar a cada arrasto continuar barato
-function qjGuarda(){ qjVer++; qjDicaLimpa(); S.qj.pilha.push(qjFoto()); if(S.qj.pilha.length>400) S.qj.pilha.shift(); }
-const qjSalvo = () => ({...S.qj, pilha:S.qj.pilha.slice(-60)});
+// antes de cada arrasto (move, jogo.js): a dica em andamento desiste e a seta some
+function qjGuarda(){ qjVer++; qjDicaLimpa(); }
+const qjSalvo = () => ({...S.qj, pilha:[]});
 const qjPode = () => !!S?.qj && S.phase==='mine' && !overlayOpen() && $('#scrGame').classList.contains('on');
-// volta a um estado guardado. As peças que continuam (mesmo id) deslizam de volta para a casa de antes e só a que mudou
+// volta ao começo da fase. As peças que continuam (mesmo id) deslizam de volta para a casa de antes e só a que mudou
 // de nível é redesenhada; as que tinham sumido (juntadas, recolhidas pela nave) voltam; o lixo é refeito (a vida dele)
 function qjVolta(st){
   qjVer++; qjDicaLimpa();
@@ -80,50 +79,60 @@ function qjVolta(st){
   for(const [id,el] of els) if(!ids.has(id)){ el.remove(); els.delete(id); }
   render(); salvaFase(); SFX.arrastar();
 }
-function qjDesfaz(){
-  if(!qjPode() || !S.qj.pilha.length) return;
-  const falta=QJ_VOLTA;   // a dica mandou desfazer: o número no botão vai descontando
-  qjVolta(S.qj.pilha.pop()); setBanner(null, metaLetreiro(faseM()));
-  if(falta>1) qjMostraVolta(falta-1, true); else if(falta===1) setBanner(null, 'daqui tem saída · a lâmpada mostra o próximo');
-}
-// recomeçar vai para a pilha também: o desfazer volta para onde estava (nada se perde, então não pergunta)
+// recomeçar: sem confirmação (a fase é curta e o botão diz o que faz)
 function qjRecomeca(){
   if(!qjPode() || !(S.moves>0 || S.qj.trava)) return;
-  S.qj.pilha.push(qjFoto()); qjVolta(JSON.parse(JSON.stringify(S.qj.ini)));
-  setBanner(null, 'de volta ao começo · ↶ desfaz'); voltaMeta();
+  qjVolta(JSON.parse(JSON.stringify(S.qj.ini)));
+  setBanner(null, 'de volta ao começo'); voltaMeta();
 }
-// sem saída (acabaram os arrastos, não cabe mais nada, formou o proibido): a fase fica parada e os botões chamam
+// sem saída (acabaram os arrastos, não cabe mais nada, formou o proibido): a fase fica parada e o recomeçar chama
 // (quieto: ao continuar uma fase que já tinha parado assim)
 function qjTravou(txt, quieto){
-  S.qj.trava=txt; setBanner(null, `${txt} · ↶ desfaça`); salvaFase(); qjHud();
+  S.qj.trava=txt; setBanner(null, `${txt} · recomece`); salvaFase(); qjHud();
   if(quieto!==true) SFX.naoDeu();
 }
 function qjHud(){
-  const d=$('#qjDesfaz'), r=$('#qjRecomeca'), p=$('#qjP'); if(!d || !S?.qj) return;
-  const semD=!S.qj.pilha.length, semR=!(S.moves>0 || S.qj.trava), tr=!!S.qj.trava;
-  if(d.disabled!==semD) d.disabled=semD; if(r.disabled!==semR) r.disabled=semR;
+  const r=$('#qjRecomeca'), p=$('#qjBar'); if(!r || !S?.qj) return;
+  const semR=!(S.moves>0 || S.qj.trava), tr=!!S.qj.trava;
+  if(r.disabled!==semR) r.disabled=semR;
   if(p.classList.contains('chama')!==tr) p.classList.toggle('chama', tr);
 }
-$('#qjDesfaz').onclick=qjDesfaz; $('#qjRecomeca').onclick=qjRecomeca; $('#qjDica').onclick=qjDica;
+$('#qjRecomeca').onclick=qjRecomeca; $('#qjDica').onclick=qjDica;
 addEventListener('keydown',e=>{ if(!S?.qj || e.ctrlKey||e.metaKey||e.altKey||e.target.closest?.('input,textarea')) return;
-  const k=e.key.toLowerCase(); if(k==='z'||k==='backspace'){ e.preventDefault(); qjDesfaz(); } else if(k==='r'){ e.preventDefault(); qjRecomeca(); }
+  const k=e.key.toLowerCase(); if(k==='r'){ e.preventDefault(); qjRecomeca(); }
   else if(k==='h'){ e.preventDefault(); qjDica(); } });
 
+// ---------- cota de dicas: 3 por hora ----------
+// Janela corrida: cada dica dada guarda a hora em ptui_qj_dicas; valem as da última hora. Sem dica sobrando, o rótulo
+// diz em quanto tempo volta a próxima. A dica só gasta quando mostra a seta (sem saída, "recomece" sai de graça).
+const QJ_COTA={n:3, janela:3600e3};
+function qjDicasUsadas(){ let a=[]; try{ a=JSON.parse(localStorage.ptui_qj_dicas||'[]'); }catch(e){}
+  const t=Date.now(); return (Array.isArray(a)?a:[]).filter(x=>x>t-QJ_COTA.janela && x<=t+6e4).sort((x,y)=>x-y); }
+const qjDicasTem = () => Math.max(0, QJ_COTA.n-qjDicasUsadas().length);
+function qjDicaGasta(){ const a=qjDicasUsadas(); a.push(Date.now()); try{ localStorage.ptui_qj_dicas=JSON.stringify(a.slice(-QJ_COTA.n)); }catch(e){} qjDicaRotulo(); }
+// minutos até a próxima voltar (com dica sobrando, 0)
+function qjDicaEspera(){ const a=qjDicasUsadas(); if(a.length<QJ_COTA.n) return 0; return Math.max(1, Math.ceil((a[0]+QJ_COTA.janela-Date.now())/6e4)); }
+function qjDicaRotulo(){
+  const b=$('#qjDica'), s=$('#qjDicaN'); if(!b || !s) return;
+  const n=qjDicasTem(), txt = n ? `${n} de ${QJ_COTA.n}` : `volta em ${qjDicaEspera()} min`;
+  if(s.textContent!==txt) s.textContent=txt;
+  if(b.classList.contains('zero')!==!n) b.classList.toggle('zero', !n);
+}
+setInterval(()=>{ if(document.body.classList.contains('modoQj')) qjDicaRotulo(); }, 20e3);
+addEventListener('storage', e=>{ if(e.key==='ptui_qj_dicas') qjDicaRotulo(); });
 
 // ---------- dica ----------
 // A lâmpada procura, a partir do estado de agora, a menor solução que cabe nos arrastos que sobram e mostra o próximo
 // arrasto: uma seta acesa sobre o tabuleiro e as peças ensaiando o movimento. A busca é em largura, com o slide() do
 // jogo e as metas conferidas pelo medidor das fases (testes/calibrar/quebra_medidor.js, montado no index.html pelo
-// build.py; ele confere como contaMissao, recolheCarro, violou e cumpriu). Sem solução daqui: procura para trás na
-// pilha do desfazer o estado mais recente que ainda tem (com os arrastos que sobravam nele) e diz quantos desfazer; se
-// é o começo, ou nenhum deles tem, manda recomeçar.
+// build.py; ele confere como contaMissao, recolheCarro, violou e cumpriu). Sem solução daqui: manda recomeçar.
 // Não trava o jogo: anda em pedaços de 8 ms, com "pensando…" passados 150 ms, e para em 200 mil estados ou 8 s. O que
 // descobre fica guardado para a fase: a menor solução de cada estado do caminho achado e, dos estados sem saída, com
-// quantos arrastos sobrando (a dica seguinte, seguindo a anterior, sai na hora; a busca para trás pula o que já sabe).
+// quantos arrastos sobrando (a dica seguinte, seguindo a anterior, sai na hora).
 // Custo: a partida com dica vale no máximo ★★ e sem "Perfeito!" (S.qj.dicas, salvo com a fase; recomeçar não apaga,
-// começar a fase de novo apaga). Dicas sem limite. Na primeira, uma linha NOVO explica.
+// começar a fase de novo apaga). 3 dicas por hora (a cota, acima). Na primeira, uma linha NOVO explica.
 const QJ_DICA={pedaco:8, pensa:150, estados:200000, tempo:8000};
-let QJM=null, QJ_D=null, qjPensando=null, QJ_VOLTA=0, QJ_ANIS=[];
+let QJM=null, QJ_D=null, qjPensando=null, QJ_ANIS=[];
 // o medidor com o slide() do jogo: W, H e S trocados só durante cada pedaço da busca (qjBusca devolve os do jogo)
 const qjMed = () => QJM || (QJM=QM.QuebraMedidor({slide:(t,dx,dy)=>slide(t,dx,dy), ajusta:(w,h,walls,edges,ch)=>{ W=w; H=h; S={walls,edges,char:ch}; }}));
 function qjDicaFase(){ const m=faseM(); if(!QJ_D || QJ_D.m!==m) QJ_D={m, ctx:qjMed().contexto(m).ctx, sol:new Map(), morto:new Map()}; return QJ_D; }
@@ -174,28 +183,23 @@ function qjRoda(D, st, R, ver){ return new Promise(ok=>{ const b=qjBusca(D,st,R)
   const vai=()=>{ if(qjVer!==ver || !S?.qj) return ok({cancelou:true}); if(b.passo(performance.now()+QJ_DICA.pedaco)) ok(b.pronto); else qjDepois(vai); }; vai(); }); }
 async function qjDica(){
   if(!qjPode() || qjPensando) return;
-  qjDicaLimpa();
+  qjDicaLimpa(); qjDicaRotulo();
+  if(S.qj.trava){ qjMostraRecomeca(); return; }   // já parou: não precisa procurar (de graça)
+  if(!qjDicasTem()){ const m=qjDicaEspera(); qjAviso(`As dicas acabaram por agora: são ${QJ_COTA.n} por hora. A próxima volta em ${m} minuto${m===1?'':'s'}.`); SFX.naoDeu(); return; }
   const D=qjDicaFase(), ver=qjVer, t0=performance.now(), bt=$('#qjDica');
   qjPensando=setTimeout(()=>{ bt.classList.add('pensa'); setBanner(null,'pensando…'); }, QJ_DICA.pensa);
-  let r=null, volta=0, alvo=null, est=0;
-  try{
-    r=await qjRoda(D, qjEstadoMed(S), Math.max(0,S.energy), ver); est+=r.estados||0;
-    if(r.d==null && !r.cancelou && !r.estourou){   // sem saída daqui: o estado mais recente da pilha que ainda tem
-      // (o começo da fase, 0 arrastos, sempre tem: min cabe nos arrastos; não precisa procurar)
-      const P=S.qj.pilha;
-      for(let j=P.length-1;j>=0;j--){ const q=P[j].moves ? await qjRoda(D, qjEstadoMed(P[j]), P[j].energy, ver) : {d:faseM().min}; est+=q.estados||0;
-        if(q.cancelou||q.estourou){ r=q; break; } if(q.d!=null){ volta=P.length-j; alvo=P[j]; break; } } }
-  } finally { clearTimeout(qjPensando); qjPensando=null; bt.classList.remove('pensa'); }
-  D.ultima={ms:Math.round(performance.now()-t0), estados:est};   // para medir (testes/quebra.html)
+  let r=null;
+  try{ r=await qjRoda(D, qjEstadoMed(S), Math.max(0,S.energy), ver); }
+  finally { clearTimeout(qjPensando); qjPensando=null; bt.classList.remove('pensa'); }
+  D.ultima={ms:Math.round(performance.now()-t0), estados:r.estados||0};   // para medir (testes/quebra.html)
   if(r.cancelou || qjVer!==ver || !qjPode()){   // a partida mudou enquanto pensava: a dica desiste (e o letreiro volta)
-    if(S?.qj && S.phase==='mine' && $('#bSub').textContent==='pensando…') setBanner(null, S.qj.trava ? `${S.qj.trava} · ↶ desfaça` : metaLetreiro(faseM()));
+    if(S?.qj && S.phase==='mine' && $('#bSub').textContent==='pensando…') setBanner(null, S.qj.trava ? `${S.qj.trava} · recomece` : metaLetreiro(faseM()));
     return; }
-  if(r.estourou){ setBanner(null,'a dica não achou a tempo · tente desfazer'); return; }
-  S.qj.dicas=(S.qj.dicas||0)+1; salvaFase();
-  if(r.d!=null) qjMostraSeta(r.di, r.d);
-  else if(volta) qjMostraVolta(volta, false, !alvo.moves);   // voltando ao começo: desfazer tudo ou recomeçar, tanto faz
-  else qjMostraRecomeca();   // nenhum estado da pilha tem saída (a pilha guarda os 400 últimos; o salvo, os 60)
-  if(!localStorage.ptui_qj_dica){ localStorage.ptui_qj_dica='1'; qjAviso('<i>NOVO</i>A lâmpada mostra o próximo arrasto de uma solução que cabe nos arrastos que sobram. Com dica, a fase vale até ★★.', 'novo'); }
+  if(r.estourou){ setBanner(null,'a dica não achou a tempo · tente recomeçar'); return; }
+  if(r.d==null){ qjMostraRecomeca(); return; }   // sem saída daqui: de graça, não gasta dica nem estrela
+  S.qj.dicas=(S.qj.dicas||0)+1; salvaFase(); qjDicaGasta();
+  qjMostraSeta(r.di, r.d);
+  if(!localStorage.ptui_qj_dica){ localStorage.ptui_qj_dica='1'; qjAviso(`<i>NOVO</i>A lâmpada mostra o próximo arrasto de uma solução que cabe nos arrastos que sobram. São ${QJ_COTA.n} dicas por hora, e com dica a fase vale até ★★.`, 'novo'); }
 }
 const QJ_NOME_DIR=['para a direita','para a esquerda','para baixo','para cima'], QJ_GIRO=[0,180,90,-90];
 // a seta acesa no tabuleiro e o ensaio: as peças que o arrasto mexe vão um pouco na direção dele e voltam, duas vezes
@@ -210,14 +214,6 @@ function qjMostraSeta(di, d){
     const a=pos(t.x,t.y), b=pos(t.x+(q.x-t.x)*.4, t.y+(q.y-t.y)*.4);
     QJ_ANIS.push(e.animate([{transform:a},{transform:b,offset:.45},{transform:a}],{duration:1000,iterations:2,delay:200,easing:'ease-in-out'})); }
 }
-// sem saída daqui: o desfazer acende com quantos faltam (quieto: só o botão, descontando depois de um desfazer; tudo:
-// a volta é até o começo, então o recomeçar acende também)
-function qjMostraVolta(n, quieto, tudo){
-  QJ_VOLTA=n; const b=$('#qjDesfaz'); b.classList.add('chama'); b.dataset.n=n;
-  if(tudo && n>1) $('#qjRecomeca').classList.add('chama');
-  setBanner(null, `sem saída daqui · desfaça ${n}`);
-  if(!quieto) qjAviso(`Daqui não tem mais saída. Desfaça ${n===1?'o último arrasto':`${n} arrastos`}${tudo&&n>1?', ou recomece':''}.`);
-}
 function qjMostraRecomeca(){
   $('#qjRecomeca').classList.add('chama'); setBanner(null, 'sem saída daqui · recomece');
   qjAviso('Daqui não tem mais saída. Recomece a fase.');
@@ -230,9 +226,9 @@ function qjAviso(html, tipo=''){
   const b=board.getBoundingClientRect(), h=c.getBoundingClientRect().height, cabe=b.bottom+10+h<=innerHeight-6;
   c.style.top = cabe ? Math.round(b.bottom+10)+'px' : 'auto'; c.style.bottom = cabe ? 'auto' : '10px'; }
 function qjDicaLimpa(){
-  for(const a of QJ_ANIS) a.cancel(); QJ_ANIS=[]; QJ_VOLTA=0;
+  for(const a of QJ_ANIS) a.cancel(); QJ_ANIS=[];
   document.querySelectorAll('.qjSeta,.qjAvisos').forEach(e=>e.remove());
-  for(const b of [$('#qjDesfaz'), $('#qjRecomeca')]){ if(b.classList.contains('chama')) b.classList.remove('chama'); if(b.dataset.n) delete b.dataset.n; }
+  const b=$('#qjRecomeca'); if(b.classList.contains('chama')) b.classList.remove('chama');
 }
 
 // ---------- vitória ----------

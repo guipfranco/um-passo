@@ -167,7 +167,7 @@ let voltaMetaT=0;
 function voltaMeta(){ clearTimeout(voltaMetaT); const est=S;
   voltaMetaT=setTimeout(()=>{ if(S===est && S.missao && S.phase==='mine' && !S.qj?.trava) setBanner(null, metaLetreiro(faseM())); }, 1500); }
 // depois de cada arrasto: cumpriu, formou o proibido, acabaram os arrastos ou travou
-// (nos Quebra-cabeças não cumprir não acaba a fase: ela fica parada até desfazer ou recomeçar, qjTravou em quebra.js)
+// (nos Quebra-cabeças não cumprir não acaba a fase: ela fica parada até recomeçar, qjTravou em quebra.js)
 function checaMissao(){
   const m=faseM();
   const est=S, acaba=(ok,txt,motivo)=>{ if(!ok && JA.quebra) return qjTravou(txt,motivo);
@@ -218,7 +218,7 @@ function dadosPartidas(volta){
 // ---------- fase em andamento: salvar e continuar ----------
 const CAMPOS_SAVE = ['tiles','walls','edges','alvos','terraTot','carro','energy','moves','pontos','feitas','coresF','quebras','seqI','combos','soltas','presasTot','maxForm','next','rachados'];
 const estadoFase = () => { const st={}; for(const k of CAMPOS_SAVE) st[k]=S[k]; st.terra=[...(S.terra||[])]; return st; };
-// nos Quebra-cabeças vão junto o começo da fase e a pilha do desfazer (S.qj, quebra.js)
+// nos Quebra-cabeças vai junto o começo da fase (S.qj, quebra.js)
 function salvaFase(){ localStorage[JA.salvo]=JSON.stringify({n:S.missao, pass:!!S.medalha, st:estadoFase(), ...(S.qj?{qj:qjSalvo()}:{})}); }
 const faseSalva = n => { const sv=JSON.parse(localStorage[JA.salvo]||'null'); return sv && sv.n===n ? sv : null; };
 function restauraFase(st){
@@ -464,7 +464,7 @@ function missaoJoga(n, opt={}){
   applyAndar(); startDay(p);
   limpaMarcas(); montaPecasMissao(m);
   if(sv) restauraFase(sv.st);
-  if(JA.quebra) qjComeca(sv);   // começo da fase e pilha do desfazer (quebra.js)
+  if(JA.quebra) qjComeca(sv);   // começo da fase, para recomeçar (quebra.js)
   document.body.classList.add('modoCla'); $('#btnPause').textContent='☰'; $('#btnPause').title=''; montaMissaoHud(m); render();
   // o nome da fase vai sem o ícone de peça (no título, "Primeira rocha" é nome, não a meta)
   setBanner(`Fase ${n}: ${noIco(nomeFaseCla(n))}${S.medalha?' · Passinho':''}`, metaLetreiro(m));

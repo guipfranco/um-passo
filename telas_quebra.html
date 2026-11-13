@@ -165,6 +165,7 @@ function tela(mold){
 // botões: volta ao painel de cima como no jogo e então aplica o jeito (leva os botões de verdade para a barra e põe nome)
 function botoes(T,o){
   const d=T.d, p=d.getElementById('qjP'), ids=['qjDesfaz','qjRecomeca','qjDica'];
+  if(!p) return;   // desde 2026-11-13 o jogo já vem com a B (barra com recomeçar e dica): as variações antigas não se aplicam
   for(const id of ids){ const b=d.getElementById(id); b.querySelectorAll('span').forEach(s=>s.remove()); p.append(b); }
   d.getElementById('qjBar')?.remove();   // só depois de os botões voltarem para o painel
   T.st.textContent=o.css;

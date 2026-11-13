@@ -3,15 +3,15 @@
 <body style="margin:0"><iframe id="f" src="../index.html?quebra" width="390" height="760" style="border:0"></iframe><pre id="out" style="position:absolute;left:400px;top:0">x</pre>
 <script>
 // Quebra-cabeças (modo em teste, só com ?quebra): botão no menu abaixo do Clássico, mapa próprio, entrada da fase 1 com
-// a explicação do modo e o melhor possível, nenhuma peça nasce, desfazer (volta o arrasto contado), recomeçar (que também
-// se desfaz), a solução conhecida dá vitória com 3 estrelas, estrelas pelos arrastos, sem saída a fase fica parada até
-// desfazer, fase pela metade salva à parte e continuada com a pilha do desfazer, teclas Z e R, progresso separado da
+// a explicação do modo e o melhor possível, nenhuma peça nasce, sem desfazer: recomeçar (barra embaixo, tecla R), a
+// solução conhecida dá vitória com 3 estrelas, estrelas pelos arrastos, sem saída a fase fica parada até recomeçar, fase
+// pela metade salva à parte e continuada, a dica (3 por hora, com o rótulo de quantas sobram), progresso separado da
 // Jornada (que continua igual), a trilha e ?quebra=0 esconde.
 f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEventListener('error',e=>errs.push(e.message+' @'+e.lineno));w.addEventListener('unhandledrejection',e=>errs.push('rej '+e.reason));
  const wait=ms=>new Promise(r=>setTimeout(r,ms)); const q=s=>d.querySelector(s); const vis=s=>!!q(s) && w.getComputedStyle(q(s)).display!=='none';
  const confere=(ok,txt)=>{ log.push((ok?'ok  ':'ERRO ')+txt); if(!ok) errs.push(txt); };
  const ev=s=>w.eval(s);
- try{ ev('sound=false; music=false; localStorage.removeItem("ptui_qj"); localStorage.removeItem("ptui_qj_save"); localStorage.mina_missoes=JSON.stringify({1:{e:2,t:10}}); localStorage.removeItem("mina_cla_save"); showMenu()');
+ try{ ev('sound=false; music=false; localStorage.removeItem("ptui_qj_dicas"); localStorage.removeItem("ptui_qj"); localStorage.removeItem("ptui_qj_save"); localStorage.mina_missoes=JSON.stringify({1:{e:2,t:10}}); localStorage.removeItem("mina_cla_save"); showMenu()');
   // menu: o botão logo abaixo do Clássico
   const bts=[...d.querySelectorAll('.menuBtns > button')].filter(b=>w.getComputedStyle(b).display!=='none').map(b=>b.id);
   confere(vis('#mQj') && bts.indexOf('mQj')===bts.indexOf('mInf')+1, 'menu: '+bts.join(' '));
@@ -25,8 +25,8 @@ f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEven
   confere(/com dica, a fase vale até ★★/.test(ent), 'entrada diz o custo da dica');
   q('#mJoga').click(); await wait(300);
   const m=JSON.parse(ev('JSON.stringify(faseM())'));
-  confere(d.body.classList.contains('modoQj') && vis('#qjP') && !vis('#ptsP') && ev('S.path.spawns')===0 && q('#qjDesfaz').disabled && q('#qjRecomeca').disabled,
-    `jogo: modoQj=${d.body.classList.contains('modoQj')} botões=${vis('#qjP')} pontos=${vis('#ptsP')} nascem=${ev('S.path.spawns')} arrastos=${q('#cArr').textContent} música=${ev('qualTrilha("mina")')}`);
+  confere(d.body.classList.contains('modoQj') && vis('#qjBar') && !q('#qjDesfaz') && !vis('#ptsP') && ev('S.path.spawns')===0 && q('#qjRecomeca').disabled && q('#qjDicaN').textContent==='3 de 3',
+    `jogo: modoQj=${d.body.classList.contains('modoQj')} botões=${vis('#qjBar')} dica="${q('#qjDicaN').textContent}" pontos=${vis('#ptsP')} nascem=${ev('S.path.spawns')} arrastos=${q('#cArr').textContent} música=${ev('qualTrilha("mina")')}`);
   confere(ev('qualTrilha("mina")')==='orbita', 'trilha da fase: '+ev('qualTrilha("mina")'));
   // a menor solução, pela busca (só formar: a meta da fase 1)
   ev(`window.__chave=ts=>ts.map(t=>t.x+'.'+t.y+'.'+t.t+'.'+(t.c??'')).sort().join('|');
@@ -35,25 +35,19 @@ f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEven
         if(r.merges.some(o=>o.t>=alvo)) return cam; const k=__chave(r.tiles); if(visto.has(k)) continue; visto.add(k); prox.push({ts:r.tiles,cam}); } nivel=prox; } return null; }`);
   const sol=JSON.parse(ev(`JSON.stringify(__sol(${m.obj.forme}))`)), ini=ev('__chave(S.tiles)'), n0=ev('S.tiles.length');
   confere(sol && sol.length===m.min, `menor solução: ${sol?.length} arrastos (min da fase ${m.min}) ${JSON.stringify(sol)}`);
-  // um arrasto errado: nenhuma peça nasce; desfazer volta tudo, inclusive o arrasto contado
+  // um arrasto errado: nenhuma peça nasce; recomeçar volta tudo, inclusive os arrastos contados
   const errado=JSON.parse(ev(`JSON.stringify(DIRS.find(([dx,dy])=>{ const r=slide(S.tiles,dx,dy); return r.moved && !(dx===${sol[0][0]}&&dy===${sol[0][1]}); }))`));
   const funde=ev(`slide(S.tiles,${errado}).merges.length`);
   ev(`move(${errado})`); await wait(60);
-  confere(ev('S.moves')===1 && ev('S.tiles.length')===n0-funde && !q('#qjDesfaz').disabled, `arrasto errado ${errado}: arrastos=${ev('S.moves')} peças ${n0} → ${ev('S.tiles.length')} (juntou ${funde}, nenhuma nasceu) sobram=${q('#cArr').textContent}`);
-  q('#qjDesfaz').click(); await wait(60);
-  confere(ev('S.moves')===0 && ev('__chave(S.tiles)')===ini && ev('S.energy')===m.arrastos && q('#qjDesfaz').disabled && d.querySelectorAll('#board .tile[data-id]').length===n0,
-    `desfazer: arrastos=${ev('S.moves')} sobram=${ev('S.energy')} igual ao começo=${ev('__chave(S.tiles)')===ini} peças na tela=${d.querySelectorAll('#board .tile[data-id]').length}`);
-  // arrastos da solução (dois, ou um se a fase se resolve em dois), recomeçar (volta ao começo) e desfazer o recomeçar
-  // (volta a eles)
-  const k2=Math.min(2,sol.length-1); for(let i=0;i<k2;i++) ev(`move(${sol[i]})`); await wait(60); const dois=ev('__chave(S.tiles)');
+  confere(ev('S.moves')===1 && ev('S.tiles.length')===n0-funde && !q('#qjRecomeca').disabled, `arrasto errado ${errado}: arrastos=${ev('S.moves')} peças ${n0} → ${ev('S.tiles.length')} (juntou ${funde}, nenhuma nasceu) sobram=${q('#cArr').textContent}`);
   q('#qjRecomeca').click(); await wait(60);
-  confere(ev('S.moves')===0 && ev('__chave(S.tiles)')===ini && !q('#qjDesfaz').disabled, `recomeçar: arrastos=${ev('S.moves')} igual ao começo=${ev('__chave(S.tiles)')===ini} letreiro="${q('#bSub').textContent}"`);
-  q('#qjDesfaz').click(); await wait(60);
-  confere(ev('S.moves')===k2 && ev('__chave(S.tiles)')===dois, `desfazer o recomeçar: arrastos=${ev('S.moves')}`);
-  // teclas: Z desfaz, R recomeça
+  confere(ev('S.moves')===0 && ev('__chave(S.tiles)')===ini && ev('S.energy')===m.arrastos && q('#qjRecomeca').disabled && d.querySelectorAll('#board .tile[data-id]').length===n0,
+    `recomeçar: arrastos=${ev('S.moves')} sobram=${ev('S.energy')} igual ao começo=${ev('__chave(S.tiles)')===ini} peças na tela=${d.querySelectorAll('#board .tile[data-id]').length} letreiro="${q('#bSub').textContent}"`);
+  // teclas: Z não faz nada (não há desfazer), R recomeça
+  const k2=Math.min(2,sol.length-1); for(let i=0;i<k2;i++) ev(`move(${sol[i]})`); await wait(60);
   w.dispatchEvent(new w.KeyboardEvent('keydown',{key:'z'})); await wait(30); const z=ev('S.moves');
   w.dispatchEvent(new w.KeyboardEvent('keydown',{key:'r'})); await wait(30);
-  confere(z===k2-1 && ev('S.moves')===0, `teclas: Z → ${z} arrastos, R → ${ev('S.moves')}`);
+  confere(z===k2 && ev('S.moves')===0, `teclas: Z → ${z} arrastos, R → ${ev('S.moves')}`);
   // a solução: vitória, 3 estrelas, melhor possível, gravado à parte da Jornada
   for(const [dx,dy] of sol){ ev(`move(${dx},${dy})`); await wait(40); }
   for(let i=0;i<20 && !ev('overlayOpen()');i++) await wait(100);
@@ -65,32 +59,32 @@ f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEven
   const est=JSON.parse(ev(`JSON.stringify([0,1,2,3,4,5].map(k=>{ const m=QJ_FASES[0], u=m.min+k; return estrelasPor(m, m.arrastos-u, u); }))`));
   const espera=[0,1,2,3,4,5].map(k=>{ const sobra=f1.arrastos-f1.min-k; return sobra>=f1.estrelas[1]?3:sobra>=f1.estrelas[0]?2:1; }).join('');
   confere(est.join('')===espera, `estrelas com min..min+5 arrastos: ${est.join(' ')} (esperado ${espera.split('').join(' ')})`);
-  // próxima fase liberada; sem saída a fase fica parada até desfazer
+  // próxima fase liberada; sem saída a fase fica parada até recomeçar
   q('#mProx').click(); await wait(100);
   confere(q('.ent .num')?.textContent==='FASE 2' && ev('liberada(2)') && !ev('liberada(3)'), 'próxima: '+q('.ent .num')?.textContent);
   q('#mJoga').click(); await wait(200);
   ev('S.energy=1; render()'); const ok1=JSON.parse(ev(`JSON.stringify(DIRS.find(([dx,dy])=>{ const r=slide(S.tiles,dx,dy); return r.moved && !r.merges.some(o=>o.t>=faseM().obj.forme); }))`));
   ev(`move(${ok1})`); await wait(60);
   const travou=ev('S.qj.trava'), mv=ev('S.moves'); ev(`move(${ok1[0]*-1},${ok1[1]*-1})`); await wait(30);
-  confere(/acabaram/.test(travou||'') && ev('S.phase')==='mine' && !ev('overlayOpen()') && ev('S.moves')===mv && q('#qjP').classList.contains('chama'),
+  confere(/acabaram/.test(travou||'') && ev('S.phase')==='mine' && !ev('overlayOpen()') && ev('S.moves')===mv && q('#qjBar').classList.contains('chama'),
     `sem arrastos: trava="${travou}" letreiro="${q('#bSub').textContent}" fase continua=${ev('S.phase')} arrasto bloqueado=${ev('S.moves')===mv}`);
-  q('#qjDesfaz').click(); await wait(60);
-  confere(!ev('S.qj.trava') && ev('S.energy')===1 && ev('S.moves')===0 && !q('#qjP').classList.contains('chama'), `desfazer destrava: sobra=${ev('S.energy')} arrastos=${ev('S.moves')}`);
-  // fase pela metade: salva à parte (com a pilha), continuada de onde parou
+  q('#qjRecomeca').click(); await wait(60);
+  confere(!ev('S.qj.trava') && ev('S.energy')===ev('faseM().arrastos') && ev('S.moves')===0 && !q('#qjBar').classList.contains('chama'), `recomeçar destrava: sobra=${ev('S.energy')} arrastos=${ev('S.moves')}`);
+  // fase pela metade: salva à parte, continuada de onde parou
   ev('missaoJoga(2)'); await wait(100); ev(`move(${ok1})`); await wait(60);   // um arrasto que não forma a peça pedida: a fase segue
   const sv=JSON.parse(ev('localStorage.ptui_qj_save||"null"')), mv2=ev('S.moves');
-  confere(sv?.n===2 && sv.qj?.pilha?.length===mv2 && !ev('localStorage.mina_cla_save'), `salvo: fase ${sv?.n} pilha=${sv?.qj?.pilha?.length} arrastos=${mv2}`);
+  confere(sv?.n===2 && sv.st?.moves===mv2 && sv.qj?.ini && !ev('localStorage.mina_cla_save'), `salvo: fase ${sv?.n} arrastos=${sv?.st?.moves}/${mv2}`);
   ev('pauseMenu()'); await wait(30); q('#pExit').click(); await wait(100);
   confere(ev('JA.id')==='quebra' && !!q('.mNo[data-m="2"] .emAndamento'), 'voltou ao mapa: '+q('#bTitle').textContent+' · fase 2 pela metade='+!!q('.mNo[data-m="2"] .emAndamento'));
   q('.mNo[data-m="2"]').click(); await wait(50); q('#mCont').click(); await wait(200);
-  confere(ev('S.moves')===mv2 && ev('S.qj.pilha.length')===mv2, `continuou: arrastos=${ev('S.moves')} pilha=${ev('S.qj.pilha.length')}`);
-  q('#qjDesfaz').click(); await wait(60);
-  confere(ev('S.moves')===mv2-1, 'desfazer depois de continuar: '+ev('S.moves'));
+  confere(ev('S.moves')===mv2, `continuou: arrastos=${ev('S.moves')}`);
+  q('#qjRecomeca').click(); await wait(60);
+  confere(ev('S.moves')===0, 'recomeçar depois de continuar: '+ev('S.moves'));
   // ---- dica ----
   // no começo: aponta um arrasto de uma solução mínima (depois dele, a menor solução tem min-1); a primeira vem com a
   // linha NOVO; seguindo as dicas a fase é cumprida e vale no máximo ★★
   const DI=JSON.parse(ev('JSON.stringify(qjMed().DIRS)'));
-  const dica=async()=>{ q('#qjDica').click(); for(let i=0;i<100 && !(q('#board .qjSeta')||q('.qjAvisos .qjAviso:not(.novo)')); i++) await wait(50);
+  const dica=async(cota)=>{ if(!cota) ev('localStorage.removeItem("ptui_qj_dicas")'); q('#qjDica').click(); for(let i=0;i<100 && !(q('#board .qjSeta')||q('.qjAvisos .qjAviso:not(.novo)')); i++) await wait(50);
     return {di:q('#board .qjSeta')?.dataset.di, aviso:q('.qjAvisos .qjAviso:not(.novo)')?.textContent||'', banner:q('#bSub').textContent, ms:ev('QJ_D.ultima?.ms')}; };
   ev('localStorage.removeItem("ptui_qj_dica"); hideOverlay(); missaoJoga(1)'); await wait(150);
   const g1=JSON.parse(ev('JSON.stringify(faseM())'));
@@ -104,36 +98,31 @@ f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEven
   const ne=d.querySelectorAll('#panel .estr.grande i.on').length;
   confere(/com dica/.test(q('#panel h2')?.textContent||'') && ne<=2 && ev('S.res.e')<=2 && ev('S.moves')===g1.min && /até ★★/.test(q('#panel .perf')?.textContent||''),
     `vitória com dica em ${ev('S.moves')} arrastos (a menor): "${q('#panel h2')?.textContent}" ${ne} estrelas · ${q('#panel .perf')?.textContent}`);
-  // sem saída: quantos desfazer. A referência é a busca do próprio teste (__sol): um estado tem saída se a menor
-  // solução dele cabe nos arrastos que sobram
+  // sem saída: a dica manda recomeçar, de graça (não gasta dica nem estrela). A referência é a busca do próprio teste
+  // (__sol): um estado tem saída se a menor solução dele cabe nos arrastos que sobram
   const temSaida=()=>{ const n=ev(`__sol(faseM().obj.forme)?.length`); return n!=null && n<=ev('S.energy'); };
+  ev('window.__volta=st=>qjVolta(JSON.parse(st))');
   const mata=()=>JSON.parse(ev('JSON.stringify(DIRS)')).find(dd=>{ if(!ev(`slide(S.tiles,${dd}).moved`)) return false;
-    ev(`move(${dd})`); const ok=ev('S.phase')==='mine' && !temSaida(); ev('qjDesfaz()'); return ok; });
-  // um arrasto que ainda tem saída e um que não tem mais (procurados nas fases de formar do mundo 1): desfazer 1
-  let casoA=null; const DIRS0=JSON.parse(ev('JSON.stringify(DIRS)'));
-  for(let n=2;n<=40;n++){ ev(`hideOverlay(); missaoJoga(${n})`); await wait(60); if(!ev('faseM().obj?.forme')) continue;
-    for(const d1 of DIRS0){ if(!ev(`slide(S.tiles,${d1}).moved`)) continue; ev(`move(${d1})`);
-      if(ev('S.phase')==='mine' && temSaida()){ const d2=mata(); if(d2){ casoA={n,d1,d2}; break; } }
-      ev('qjDesfaz()'); }
-    if(casoA) break; }
-  if(!casoA) errs.push('não achei um arrasto bom seguido de um que deixa sem saída');
-  else { ev(`move(${casoA.d2})`); await wait(40); h=await dica();
-    confere(h.di==null && q('#qjDesfaz').dataset.n==='1' && q('#qjDesfaz').classList.contains('chama') && !q('#qjRecomeca').classList.contains('chama') && /Desfaça o último/.test(h.aviso),
-      `sem saída depois de um arrasto bom e um ruim (fase ${casoA.n}: ${casoA.d1} e ${casoA.d2}): "${h.aviso}" · ${h.banner} · botão=${q('#qjDesfaz').dataset.n} (${h.ms} ms)`);
-    q('#qjDesfaz').click(); await wait(40);
-    confere(temSaida() && !q('#qjDesfaz').dataset.n, 'desfeito: tem saída de novo · '+q('#bSub').textContent); }
-  // do começo: um arrasto que já deixa sem saída e mais dois; desfazer 3 é voltar ao começo (o recomeçar acende junto)
-  // (a primeira fase, da 2 em diante, que tem um primeiro arrasto sem saída: as do começo não têm armadilha)
+    const st=ev('JSON.stringify(estadoFase())'); ev(`move(${dd})`); const ok=ev('S.phase')==='mine' && !temSaida(); w.__volta(st); return ok; });
   let ruim0=null, nR=2; for(;nR<=60 && !ruim0;nR++){ ev(`hideOverlay(); missaoJoga(${nR})`); await wait(60); if(ev('faseM().obj?.forme')) ruim0=mata(); }
   if(ruim0){ ev(`move(${ruim0})`); await wait(30);
-    for(let k=0;k<2;k++){ const o=JSON.parse(ev(`JSON.stringify(DIRS.find(([dx,dy])=>slide(S.tiles,dx,dy).moved))`)); ev(`move(${o})`); await wait(30); }
-    const mv=ev('S.moves'); h=await dica();
-    confere(h.di==null && q('#qjDesfaz').dataset.n===String(mv) && q('#qjRecomeca').classList.contains('chama'), `sem saída desde o primeiro arrasto: "${h.aviso}" · ${mv} arrastos · botão=${q('#qjDesfaz').dataset.n} (${h.ms} ms)`);
-    for(let k=mv;k>1;k--){ q('#qjDesfaz').click(); await wait(30); }
-    confere(q('#qjDesfaz').dataset.n==='1', 'o número do desfazer desconta: '+q('#qjDesfaz').dataset.n);
-    q('#qjDesfaz').click(); await wait(30); h=await dica();
+    ev('localStorage.ptui_qj_dicas=JSON.stringify([Date.now()-1000])'); const d0=ev('S.qj.dicas||0');
+    h=await dica(true);
+    confere(h.di==null && /Recomece/.test(h.aviso) && q('#qjRecomeca').classList.contains('chama') && ev('(S.qj.dicas||0)')===d0 && q('#qjDicaN').textContent==='2 de 3',
+      `sem saída (fase ${nR-1}): "${h.aviso}" · ${h.banner} · dicas na partida=${ev('S.qj.dicas||0')} · rótulo="${q('#qjDicaN').textContent}" (${h.ms} ms)`);
+    q('#qjRecomeca').click(); await wait(30); h=await dica();
     confere(h.di!=null && ev('S.moves')===0, 'no começo de novo, a dica volta a apontar: '+h.banner); }
   else errs.push('não achei um primeiro arrasto que deixa sem saída nas fases 2 a 60');
+  // a cota: 3 por hora. Gasta uma por seta; sem nenhuma, o rótulo diz quando volta e a lâmpada só avisa
+  ev('hideOverlay(); localStorage.removeItem("ptui_qj_dicas"); missaoJoga(1)'); await wait(100);
+  const rot=[q('#qjDicaN').textContent]; h=await dica(true); rot.push(q('#qjDicaN').textContent);
+  ev('localStorage.ptui_qj_dicas=JSON.stringify([Date.now()-50*60e3,Date.now()-20*60e3,Date.now()-60e3]); qjDicaRotulo()');
+  rot.push(q('#qjDicaN').textContent); const zero=q('#qjDica').classList.contains('zero');
+  ev('qjDicaLimpa()'); h=await dica(true);
+  confere(rot.join('|')==='3 de 3|2 de 3|volta em 10 min' && zero && h.di==null && /3 por hora/.test(h.aviso),
+    `cota: rótulos ${rot.join(' → ')} · apagada=${zero} · sem dica: "${h.aviso}"`);
+  ev('localStorage.ptui_qj_dicas=JSON.stringify([Date.now()-61*60e3,Date.now()-20*60e3]); qjDicaRotulo()');
+  confere(q('#qjDicaN').textContent==='2 de 3' && !q('#qjDica').classList.contains('zero'), 'a de mais de uma hora volta: '+q('#qjDicaN').textContent);
   // em cada mundo (a primeira fase dele, uma meta diferente), seguir só as dicas desde o começo cumpre a fase no jogo de
   // verdade, com a menor solução
   const prims=JSON.parse(ev('JSON.stringify(QJ_MUNDOS.map((g,gi)=>QJ_FASES.findIndex(f=>f.g===gi)+1))')), segue=[];
@@ -152,12 +141,12 @@ f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEven
   q('[data-m="1"]').click(); await wait(50);
   confere(!q('.ent .perf') && /sobrando/.test(q('.ent .estr3')?.textContent||''), 'entrada da Jornada sem o melhor possível: '+q('.ent .estr3')?.textContent.replace(/\s+/g,' '));
   ev('hideOverlay(); missaoJoga(1)'); await wait(100);
-  confere(!d.body.classList.contains('modoQj') && vis('#ptsP') && !vis('#qjP') && !ev('S.qj') && ev('S.path.spawns')!==0, `fase da Jornada: botões=${vis('#qjP')} pontos=${vis('#ptsP')} nascem=${ev('S.path.spawns')}`);
+  confere(!d.body.classList.contains('modoQj') && vis('#ptsP') && !vis('#qjBar') && !ev('S.qj') && ev('S.path.spawns')!==0, `fase da Jornada: botões=${vis('#qjBar')} pontos=${vis('#ptsP')} nascem=${ev('S.path.spawns')}`);
   // ?quebra=0 esconde
   ev(`localStorage.ptui_quebra='0'; showMenu()`); await wait(50);
   confere(!vis('#mQj'), 'com ?quebra=0 o botão some: '+vis('#mQj'));
   ev(`localStorage.ptui_quebra='1'`);
-  for(const k of ['ptui_qj','ptui_qj_save','mina_missoes','mina_cla_save']) w.localStorage.removeItem(k);
+  for(const k of ['ptui_qj','ptui_qj_save','ptui_qj_dicas','mina_missoes','mina_cla_save']) w.localStorage.removeItem(k);
  }catch(e){errs.push('EXC '+e.message+' '+(e.stack||'').split('\n')[1])}
  out.textContent=JSON.stringify({log,errs},null,1);};
 </script></body>

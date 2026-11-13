@@ -888,7 +888,7 @@ function comoJogarEsp(p){
     `<h2>Os modos</h2>
      <p><b>Jornada:</b> fases com uma missão cada. Quanto menos arrastos você usar, mais estrelas. Cada novidade é explicada na fase em que aparece.</p>
      <p><b>Clássico:</b> o 4x4 sem fim. Junte até não caber mais nada e bata o seu recorde.</p>
-     ${quebraLigado()?'<p><b>Quebra-cabeças:</b> nenhuma peça nova nasce. Ache a ordem certa dos arrastos; dá para desfazer quantas vezes quiser.</p>':''}
+     ${quebraLigado()?'<p><b>Quebra-cabeças:</b> nenhuma peça nova nasce. Ache a ordem certa dos arrastos; dá para recomeçar quantas vezes quiser, e a lâmpada dá 3 dicas por hora.</p>':''}
      ${frenesiLigado()?'<p><b>Frenesi:</b> rodadas de 60 segundos com uma meta de pontos. Bateu a meta, escolha uma carta que muda o jogo.</p>':''}`,
   ];
   const pontos=telas.map((_,i)=>`<i class="${i===p?'on':''}"></i>`).join('');

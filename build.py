@@ -346,27 +346,27 @@ body.espaco .freRes{display:grid;grid-template-columns:1fr 1fr}
   .freApaga{animation-duration:1.2s;opacity:.3}
   .freBonus .icoFre,#freRelogio.pouco{animation:none}
 }
-/* ---- Quebra-cabeças (modo em teste, só com ?quebra): desfazer e recomeçar no painel, no lugar dos pontos (só o ícone:
-   com o nome embaixo, o painel apertava o dos arrastos nos celulares) ---- */
+/* ---- Quebra-cabeças: recomeçar e dica numa barra embaixo do tabuleiro (perto do polegar e com o nome escrito); sem
+   desfazer. A dica tem um rótulo com quantas sobram (3 por hora) ---- */
 #mQj{display:none}
 body.espaco #mQj{display:block;color:#8fe3a0 !important;border-color:#8fe3a0 !important;box-shadow:0 0 16px #8fe3a055,inset 0 0 14px #8fe3a022 !important;text-shadow:0 0 10px #8fe3a0}
-#qjP{display:none}
 body.modoQj .hudCla #ptsP{display:none !important}
-body.modoQj .hudCla #qjP{display:flex;flex:none;gap:5px;padding:4px 5px}
-.qjB{display:flex;align-items:center;justify-content:center;width:46px;height:46px;padding:0;border-radius:12px;border:1.5px solid rgba(111,224,255,.5);background:rgba(111,224,255,.08);color:#bfefff;cursor:pointer;touch-action:manipulation;transition:border-color .2s,box-shadow .2s,opacity .2s}
-.qjB svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
-.qjB:disabled{opacity:.3;cursor:default}
-.qjB:not(:disabled):active{transform:scale(.94)}
-#qjP.chama .qjB:not(:disabled){border-color:#ffd36e;color:#ffe9a8;box-shadow:0 0 12px #ffd36e66}   /* sem saída: os botões chamam */
+#qjBar{display:none}
+body.modoQj #qjBar{display:flex;gap:10px;justify-content:center;width:min(100%,420px);margin:10px auto 0;padding:0 12px;box-sizing:border-box}
+.qjB{position:relative;flex:1;display:flex;align-items:center;justify-content:center;gap:9px;min-height:56px;padding:6px 10px;border-radius:16px;border:1.5px solid rgba(111,224,255,.5);background:rgba(111,224,255,.08);color:#bfefff;font:700 15px/1.1 'Exo 2',sans-serif;cursor:pointer;touch-action:manipulation;transition:border-color .2s,box-shadow .2s,opacity .2s}
+.qjB svg{flex:none;width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.qjB span{display:flex;flex-direction:column;align-items:flex-start;text-align:left}
+.qjB small{font:600 11.5px/1.2 'Exo 2',sans-serif;opacity:.8;letter-spacing:.01em}
+.qjB:disabled{opacity:.35;cursor:default}
+.qjB:not(:disabled):active{transform:scale(.96)}
+#qjBar.chama #qjRecomeca:not(:disabled),.qjB.chama{border-color:#ffd36e !important;color:#ffe9a8 !important;box-shadow:0 0 12px #ffd36e66}   /* sem saída: o recomeçar chama */
 .perf{font-size:12.5px !important;color:#9f93c9 !important;letter-spacing:.02em;margin:0 !important}
 .perf b{color:#d8d0f0}
-/* dica: a lâmpada; o botão que a dica manda usar acende (com quantos desfazer); a seta acesa e o aviso sobre o tabuleiro */
-.qjB{position:relative}
+/* dica: a lâmpada (sem dica sobrando, apagada, com o tempo até a próxima); a seta acesa e o aviso sobre o tabuleiro */
 #qjDica{color:#ffe9a8;border-color:rgba(255,211,110,.55);background:rgba(255,211,110,.08)}
+#qjDica.zero{color:#a99fc8;border-color:rgba(169,159,200,.35);background:rgba(169,159,200,.05)}
 #qjDica.pensa{animation:qjPensa .7s ease-in-out infinite alternate}
 @keyframes qjPensa{to{opacity:.35}}
-.qjB.chama{border-color:#ffd36e !important;color:#ffe9a8 !important;box-shadow:0 0 12px #ffd36e66}
-.qjB[data-n]::after{content:attr(data-n);position:absolute;top:-7px;right:-7px;min-width:18px;height:18px;padding:0 4px;box-sizing:border-box;border-radius:9px;background:#ffd36e;color:#1a0f2a;font:800 11px/18px 'Exo 2',sans-serif;text-align:center}
 .qjSeta{position:absolute;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;pointer-events:none;will-change:opacity;animation:qjSetaIn .3s ease-out,qjSetaPulsa 1.1s ease-in-out .3s infinite alternate}
 .qjSeta svg{width:44%;height:44%;fill:none;stroke:#fff1c2;stroke-width:9;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 5px #ffd36e) drop-shadow(0 0 14px #ffa82e)}
 @keyframes qjSetaIn{from{opacity:0}}
@@ -377,9 +377,8 @@ body:not(.modoQj) .qjAvisos{display:none}
 .qjAviso.novo{border-color:rgba(110,230,255,.4);background:rgba(14,22,40,.94);color:#d8e6f2;font-size:13px;font-weight:500;text-align:left}
 .qjAviso.novo i{font:900 10px Orbitron,sans-serif;font-style:normal;letter-spacing:.12em;color:#0b0a18;background:#6fe0ff;border-radius:6px;padding:2px 6px;margin-right:6px}
 @media (prefers-reduced-motion: reduce){ .qjSeta{animation:none} #qjDica.pensa{animation:none;opacity:.5} }
-/* três botões: no celular estreito, um pouco menores, e o nome da meta no painel quebra em duas linhas */
 body.modoQj .hudCla .silhP small{white-space:normal;max-width:78px;line-height:1.05}
-@media (max-width:400px){ .qjB{width:40px;height:40px} .qjB svg{width:22px;height:22px} body.modoQj .hudCla #qjP{gap:4px;padding:4px} }
+@media (max-height:640px){ body.modoQj #qjBar{margin-top:6px} .qjB{min-height:46px} }
 #ovos button{width:30px;height:30px;padding:4px;border:0;background:none;color:rgba(207,198,255,.42);filter:drop-shadow(0 0 4px rgba(207,198,255,.35));cursor:pointer}
 #ovos svg{width:22px;height:22px;display:block}\n
 .logo{display:flex;align-items:flex-end;justify-content:center;height:130px}
@@ -670,7 +669,6 @@ body = '''<div id="cenario"></div>
       <div class="pill arrP"><span class="ic en">⚡</span><div class="arr"><div class="linha"><b id="cArr"></b><small>arrastos</small></div><div class="tr"><i id="cTr"></i><span id="cS3">★</span><span id="cS2">★</span><span id="cS1">★</span></div></div></div>
       <div class="pill silhP" id="cMis"></div>
       <div class="pill ptsP" id="ptsP"><div><b id="cPts">0</b><small>pontos</small></div></div>
-      <div class="pill qjP" id="qjP"><button class="qjB" id="qjDesfaz" aria-label="Desfazer" title="Desfazer (Z)"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button><button class="qjB" id="qjRecomeca" aria-label="Recomeçar" title="Recomeçar (R)"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button><button class="qjB" id="qjDica" aria-label="Dica" title="Dica (H)"><svg viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg></button></div>
     </div>
     <div class="top wide"><button class="icon" id="btnPause">☰</button><div class="banner"><div id="bTitle"></div><span id="bSub"></span></div><button class="icon musBtn" id="btnSound">♪</button><button class="icon" id="btnOpc" aria-label="Opções" title="Opções"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 6h9M19 6h1M4 12h3M13 12h7M4 18h11M21 18h-1"/><circle cx="16" cy="6" r="2.4"/><circle cx="10" cy="12" r="2.4"/><circle cx="18" cy="18" r="2.4"/></svg></button></div>
     <div class="items wide" id="items"></div>
@@ -680,6 +678,7 @@ body = '''<div id="cenario"></div>
 
   <section id="scrGame" class="screen">
     <div class="stage" id="stage"><div id="board"></div></div>
+    <div class="wide" id="qjBar"><button class="qjB" id="qjRecomeca" aria-label="Recomeçar a fase" title="Recomeçar (R)"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg><span>Recomeçar</span></button><button class="qjB" id="qjDica" aria-label="Dica" title="Dica (H)"><svg viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg><span>Dica<small id="qjDicaN">3 de 3</small></span></button></div>
     <div class="row wide" id="mineRow">
       <button class="btn dim" id="btnEdit" style="display:none">Editar</button>
       <button class="btn b" id="btnAssovio" style="display:none">Assovio</button>

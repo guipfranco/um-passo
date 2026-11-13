@@ -537,11 +537,11 @@ function move(dx,dy){
   if(!S || S.phase!=='mine' || overlayOpen() || coachBlock || S.editando || S.ferrAtiva || !$('#scrGame').classList.contains('on')) return;
   if(S.tut===1 && dy!==0){ coach('Para o <b>lado</b>! ↔', null, null, '#board'); return; }
   if(S.missao && !S.semEnergia && S.energy<=0) return; // acabaram os arrastos: a fase já vai terminar
-  if(S.qj?.trava) return;   // quebra-cabeça sem saída: só desfazendo ou recomeçando (quebra.js)
+  if(S.qj?.trava) return;   // quebra-cabeça sem saída: só recomeçando (quebra.js)
   const r=slide(S.tiles,dx,dy);
   if(!r.moved) return;
   S.undoSnap = foto();
-  if(S.qj) qjGuarda();   // quebra-cabeça: o estado de antes do arrasto vai para a pilha do desfazer
+  if(S.qj) qjGuarda();   // quebra-cabeça: a dica em andamento desiste
   for(const g of r.gone){ const el=els.get(g.id); els.delete(g.id); if(el){ el.style.zIndex=0; el.style.transform=pos(g.x,g.y); setTimeout(()=>el.remove(),120); } }
   for(const b of r.breaks) quebrar(b);
   S.tiles=r.tiles;
