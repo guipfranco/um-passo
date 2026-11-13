@@ -838,9 +838,12 @@ function comoJogarEsp(p){
      <p>Duas iguais que se encontram viram a próxima da escada. A cada arrasto nasce uma peça nova.</p>`,
     `<h2>A escada</h2><canvas id="cjCv" class="cjCv"></canvas>
      <p>Cada junção sobe um degrau. Quanto mais alto, mais pontos. O resto da escada você descobre jogando.</p>`,
-    `<h2>Dois modos</h2>
+    // os modos na ordem do menu (Quebra-cabeças e Frenesi só quando aparecem no menu deste aparelho)
+    `<h2>Os modos</h2>
+     <p><b>Jornada:</b> fases com uma missão cada. Quanto menos arrastos você usar, mais estrelas. Cada novidade é explicada na fase em que aparece.</p>
      <p><b>Clássico:</b> o 4x4 sem fim. Junte até não caber mais nada e bata o seu recorde.</p>
-     <p><b>Jornada:</b> fases com uma missão cada. Quanto menos arrastos você usar, mais estrelas. Algumas fases não têm limite de arrastos: só acabam se o tabuleiro encher. Cada novidade é explicada na fase em que aparece.</p>`,
+     ${quebraLigado()?'<p><b>Quebra-cabeças:</b> nenhuma peça nova nasce. Ache a ordem certa dos arrastos; dá para desfazer quantas vezes quiser.</p>':''}
+     ${frenesiLigado()?'<p><b>Frenesi:</b> rodadas de 60 segundos com uma meta de pontos. Bateu a meta, escolha uma carta que muda o jogo.</p>':''}`,
   ];
   const pontos=telas.map((_,i)=>`<i class="${i===p?'on':''}"></i>`).join('');
   showOverlay(telas[p]+`<div class="cjDots">${pontos}</div><div class="cjNav">
