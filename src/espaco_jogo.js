@@ -430,7 +430,7 @@ function malhaQuadro(t){
     const liga=malhaVaoLiga(), okP=liga?ok.concat(vaos):ok;
     for(let j=0;j<NJ;j++) for(let i=0;i<NI;i++){ const rx=g.O+g.g0+(i-MBORDA*MSUB)*g.P/MSUB, ry=g.O+g.g0+(j-MBORDA*MSUB)*g.P/MSUB, ci=i/MSUB-MBORDA, cj=j/MSUB-MBORDA;
       const n={i,j,rx,ry,x:rx,y:ry,vx:0,vy:0,h:0,w:0,v:0,vdx:0,vdy:0,f:liga?presencaM(ci,cj,okP):presencaM(ci,cj,ok)};
-      if(liga){ vaoM(n,ci,cj,vaos,ok,g.P); n.f*=1-.5*n.apaga; }   // dentro do vão a rede fica mais apagada
+      if(liga){ vaoM(n,ci,cj,vaos,ok,g.P); n.f*=1-.35*n.apaga; }   // dentro do vão a rede fica mais apagada
       MN.nos.push(n); }
     refaz=true; }
   if(S.espMax==null && S.tiles.length) S.espMax=Math.max(...S.tiles.map(k=>k.t));
@@ -459,9 +459,9 @@ function malhaQuadro(t){
   const ganho=S.frenesi?freMalhaGanho():1; if(S.frenesi) rgb=freMalhaCor(rgb);   // no Frenesi, na cor do degrau e mais acesa
   // o vão puxa a cor da linha para o vermelho aos poucos (5 tons, para as linhas parecidas continuarem num traço só)
   const potes=new Map(), vc=Math.max(0,Math.min(1,+MALHA_VAO.cor||0)), VERM=[232,92,96], base=rgb.split(',').map(Number);
-  const tons=[0,1,2,3,4].map(k=>{ const m=k/4*.75*vc; return base.map((c,i)=>Math.round(c+(VERM[i]-c)*m)).join(','); });
+  const tons=[0,1,2,3,4].map(k=>{ const m=k/4*vc; return base.map((c,i)=>Math.round(c+(VERM[i]-c)*m)).join(','); });
   const seg=(a,b,maior)=>{ const f=(a.f+b.f)/2; if(f<.02) return; const h=(a.h+b.h)/2, w=(a.w+b.w)/2, fundo=Math.min(.85,h*.32), v=vc?(a.v+b.v)/2:0;
-    let al=Math.min(1,((maior?.17:.065)*(1-fundo)+w*.6)*f*ganho); if(v) al=Math.min(1,al*(1+.5*vc*v*(1-v)*4));   // a beira acende de leve
+    let al=Math.min(1,((maior?.17:.065)*(1-fundo)+w*.6)*f*ganho); if(v) al=Math.min(1,al*(1+1.3*vc*v*(1-v)*4)+.05*vc*v);   // a beira acende de leve e o tom aparece
     if(al<.008) return; const k=Math.round(v*4)+'|'+Math.round(al*60)+'|'+Math.max(1,Math.round((maior?1.2:.75)*(1-fundo*.5)*4)); let p=potes.get(k); if(!p) potes.set(k,p=[]); p.push(a.x,a.y,b.x,b.y); };
   for(let j=0;j<NJ;j++) for(let i=0;i<NI-1;i++) seg(no(i,j),no(i+1,j),j%MSUB===0);
   for(let i=0;i<NI;i++) for(let j=0;j<NJ-1;j++) seg(no(i,j),no(i,j+1),i%MSUB===0);
