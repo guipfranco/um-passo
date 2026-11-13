@@ -158,8 +158,8 @@ function tela(mold){
 // botões: volta ao painel de cima como no jogo e então aplica o jeito (leva os botões de verdade para a barra e põe nome)
 function botoes(T,o){
   const d=T.d, p=d.getElementById('qjP'), ids=['qjDesfaz','qjRecomeca','qjDica'];
-  d.getElementById('qjBar')?.remove();
   for(const id of ids){ const b=d.getElementById(id); b.querySelectorAll('span').forEach(s=>s.remove()); p.append(b); }
+  d.getElementById('qjBar')?.remove();   // só depois de os botões voltarem para o painel
   T.st.textContent=o.css;
   for(const id in (o.rot||{})){ const s=d.createElement('span'); s.textContent=o.rot[id]; d.getElementById(id).append(s); }
   if(o.bar){ const bar=d.createElement('div'); bar.id='qjBar'; for(const id of o.bar) bar.append(d.getElementById(id)); d.getElementById('stage').after(bar); }
