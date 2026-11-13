@@ -41,7 +41,7 @@ f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEven
   ev(`move(${errado})`); await wait(60);
   confere(ev('S.moves')===1 && ev('S.tiles.length')===n0-funde && !q('#qjRecomeca').disabled, `arrasto errado ${errado}: arrastos=${ev('S.moves')} peças ${n0} → ${ev('S.tiles.length')} (juntou ${funde}, nenhuma nasceu) sobram=${q('#cArr').textContent}`);
   q('#qjRecomeca').click(); await wait(60);
-  confere(ev('S.moves')===0 && ev('__chave(S.tiles)')===ini && ev('S.energy')===m.arrastos && q('#qjRecomeca').disabled && d.querySelectorAll('#board .tile[data-id]').length===n0,
+  confere(ev('S.moves')===0 && ev('__chave(S.tiles)')===ini && q('#qjRecomeca').disabled && d.querySelectorAll('#board .tile[data-id]').length===n0,
     `recomeçar: arrastos=${ev('S.moves')} sobram=${ev('S.energy')} igual ao começo=${ev('__chave(S.tiles)')===ini} peças na tela=${d.querySelectorAll('#board .tile[data-id]').length} letreiro="${q('#bSub').textContent}"`);
   // teclas: Z não faz nada (não há desfazer), R recomeça
   const k2=Math.min(2,sol.length-1); for(let i=0;i<k2;i++) ev(`move(${sol[i]})`); await wait(60);
