@@ -30,7 +30,8 @@ document.addEventListener('visibilitychange',()=>{ if(AC && AC.state!=='closed')
 // Trilha por tela (todas sintetizadas, vindas do Gabinete). TRIM iguala o volume entre elas.
 const TRILHA = {menu:'lofi-prorroga', mapa:'armorial', mina:'lofi-espera', fiscal:'lofi-segredo', mercador:'bossa', fim:'sofrencia-lofi'};
 const TRIM = {'armorial':.55, 'bossa':.7, 'lofi-prorroga':.95, 'lofi-espera':.95, 'lofi-segredo':1, 'sofrencia-lofi':1.1, 'orbita':1.6, 'estacao':1.55, 'pulsar':1.45, 'frenesi':1};   // as eletrônicas medidas contra o lo-fi (a Frenesi já sai mais alta: tem compressor e camadas)
-let music = localStorage.mina_music !== '0', MUS=null, musName=null, musKey=null, musBus=null, musFila=Promise.resolve();
+let music = !/[?&]mudo(&|=|$)/.test(location.search) && localStorage.mina_music !== '0',   // ?mudo: sem música
+    MUS=null, musName=null, musKey=null, musBus=null, musFila=Promise.resolve();
 function trilha(k){ musKey=k; musFila=musFila.then(trocaMusica).catch(e=>console.warn(e)); }
 // no espaço (2048 Astros) as trilhas são eletrônicas: Estação no menu e na lista de fases, Órbita na Jornada, Pulsar no Clássico
 // e a Frenesi no Frenesi (em teste: a que tem camadas e lê a intensidade da corrente)

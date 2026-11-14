@@ -73,7 +73,7 @@ function abre(v){
   atual=v; auto=false;
   document.getElementById('tNome').textContent=v.nome; document.getElementById('tDesc').textContent=v.desc+' Arraste no tabuleiro.';
   document.querySelectorAll('#sw button').forEach(b=>b.classList.toggle('on',b.dataset.v===v.id));
-  const f=document.getElementById('f'); f.onload=()=>prepara(v); f.src='index.html?arrastar='+v.id+'&x='+Date.now();
+  const f=document.getElementById('f'); f.onload=()=>prepara(v); f.src='index.html?mudo&arrastar='+v.id+'&x='+Date.now();
   history.replaceState(null,'','#'+v.id);
 }
 function prepara(v){

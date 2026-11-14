@@ -2,7 +2,9 @@
 const $ = s => document.querySelector(s);
 const board = $('#board'), stage = $('#stage');
 const els = new Map();
-let S = null, nextId = 1, sound = localStorage.mina_sound !== '0';
+// ?mudo: abre sem som e sem música (os rascunhos que mostram o jogo num quadro), sem gravar nada no aparelho
+const MUDO = /[?&]mudo(&|=|$)/.test(location.search);
+let S = null, nextId = 1, sound = !MUDO && localStorage.mina_sound !== '0';
 const rnd = n => Math.floor(Math.random()*n);
 const pick = a => a[rnd(a.length)];
 const shuffle = a => a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);

@@ -809,7 +809,7 @@ body.rola #stage{touch-action:none}
 <div id="coach" class="hidden"><div class="cav" id="coachAv"></div><div><p id="coachText"></p><button class="btn b" id="coachOk">Ok</button></div></div>
 
 <script>
-const VERSAO="2f8cd1d2";
+const VERSAO="15670ef2";
 // ===================== CONFIG =====================
 let W = 4, H = 4, N = 4;      // largura e altura do tabuleiro (N = maior lado)
 const CFG = {
@@ -1428,7 +1428,9 @@ const svgOf = inner => `<svg viewBox="0 0 100 100">${inner}</svg>`;
 const $ = s => document.querySelector(s);
 const board = $('#board'), stage = $('#stage');
 const els = new Map();
-let S = null, nextId = 1, sound = localStorage.mina_sound !== '0';
+// ?mudo: abre sem som e sem música (os rascunhos que mostram o jogo num quadro), sem gravar nada no aparelho
+const MUDO = /[?&]mudo(&|=|$)/.test(location.search);
+let S = null, nextId = 1, sound = !MUDO && localStorage.mina_sound !== '0';
 const rnd = n => Math.floor(Math.random()*n);
 const pick = a => a[rnd(a.length)];
 const shuffle = a => a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(x=>x[1]);
@@ -6703,7 +6705,8 @@ document.addEventListener('visibilitychange',()=>{ if(AC && AC.state!=='closed')
 // Trilha por tela (todas sintetizadas, vindas do Gabinete). TRIM iguala o volume entre elas.
 const TRILHA = {menu:'lofi-prorroga', mapa:'armorial', mina:'lofi-espera', fiscal:'lofi-segredo', mercador:'bossa', fim:'sofrencia-lofi'};
 const TRIM = {'armorial':.55, 'bossa':.7, 'lofi-prorroga':.95, 'lofi-espera':.95, 'lofi-segredo':1, 'sofrencia-lofi':1.1, 'orbita':1.6, 'estacao':1.55, 'pulsar':1.45, 'frenesi':1};   // as eletrônicas medidas contra o lo-fi (a Frenesi já sai mais alta: tem compressor e camadas)
-let music = localStorage.mina_music !== '0', MUS=null, musName=null, musKey=null, musBus=null, musFila=Promise.resolve();
+let music = !/[?&]mudo(&|=|$)/.test(location.search) && localStorage.mina_music !== '0',   // ?mudo: sem música
+    MUS=null, musName=null, musKey=null, musBus=null, musFila=Promise.resolve();
 function trilha(k){ musKey=k; musFila=musFila.then(trocaMusica).catch(e=>console.warn(e)); }
 // no espaço (2048 Astros) as trilhas são eletrônicas: Estação no menu e na lista de fases, Órbita na Jornada, Pulsar no Clássico
 // e a Frenesi no Frenesi (em teste: a que tem camadas e lê a intensidade da corrente)

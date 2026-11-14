@@ -91,7 +91,7 @@ const SEM_QUADRADO=`${VAZIO}{display:none !important}`;
 const pausa=ms=>new Promise(r=>setTimeout(r,ms));
 async function espera(fn,ms){ const t=Date.now(); while(Date.now()-t<ms){ try{ if(fn()) return true; }catch(e){} await pausa(100); } return false; }
 function tela(mold){
-  const f=document.createElement('iframe'); f.src='index.html'; f.width=390; f.height=800; f.tabIndex=-1; mold.append(f);
+  const f=document.createElement('iframe'); f.src='index.html?mudo'; f.width=390; f.height=800; f.tabIndex=-1; mold.append(f);
   const ajusta=()=>{ const k=mold.clientWidth/390; f.style.transform=`scale(${k})`; mold.style.height=Math.round(800*k)+'px'; };
   ajusta(); addEventListener('resize',ajusta);
   // o jogo pode se recarregar sozinho dentro do quadro (na primeira visita o service worker instala a versão nova e
