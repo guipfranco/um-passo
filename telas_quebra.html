@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>2048 Astros · telas do Quebra-cabeças (rascunho)</title>
+<title>2048 Astros · o buraco (rascunho)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;700;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
@@ -66,34 +66,11 @@ code{font-size:.92em;background:#ffffff14;padding:1px 5px;border-radius:5px}
 </head>
 <body>
 <main>
-  <h1>TELAS DO QUEBRA-CABEÇAS</h1>
-  <p>O vão, as estrelas e os botões, com a fase de verdade. Toque num jeito para ver a tela mudar. A tela é só para ver: aqui não se joga, e nada mexe no seu progresso.</p>
-
-  <p class="nota">Já no jogo: as estrelas novas (★ resolver, sem limite), a barra com Recomeçar e Dica (3 por hora), a parede Beira com a reação na batida e o som Macio. As outras opções ficam aqui para comparar.</p>
-
-  <h2>1 · A PAREDE</h2>
-  <p>A casa que não existe (<code>#</code> no mapa): o que bate ali <b>não passa</b>. A malha do fundo diz isso de jeitos diferentes. Use as setas embaixo da tela para jogar e ver as peças baterem.</p>
-  <div class="rot">Jeito</div>
-  <div class="ops" id="opsV"></div>
-  <div class="ops"><button class="op on" id="bBate">Reação na batida: ligada<small>a beira acende, treme e a peça quica</small></button></div>
-  <div class="rot">Fase de exemplo</div>
-  <div class="ops fases" id="opsF"></div>
-  <div class="moldura" id="mV"><div class="carr">abrindo a fase…</div></div>
-  <div class="ctl" id="ctlV"><button data-d="-1,0">←</button><button data-d="0,-1">↑</button><button data-d="0,1">↓</button><button data-d="1,0">→</button><button data-a="bate" class="lg">Ver uma batida</button><button data-a="zero" class="lg">Recomeçar</button></div>
-  <p class="nota">O som toca quando você usa estes botões (o primeiro toque libera o áudio).</p>
-  <div id="cardsV" style="display:flex;flex-direction:column;gap:10px"></div>
-
-  <h2>2 · O BURACO</h2>
-  <p>A casa que <b>engole</b> o que cai nela, para uma mecânica futura: a malha arrebentada (a C que guardamos). A peça escorrega para o buraco, encolhe e some, com um assobio que desce e um baque lá no fundo. Ainda não é regra do jogo: aqui é só a animação e o som.</p>
+  <h1>O BURACO</h1>
+  <p>A casa que <b>engole</b> o que cai nela, para uma mecânica futura: a malha arrebentada que guardamos. A peça escorrega para o buraco, encolhe e some, com um assobio que desce e um baque lá no fundo. Ainda não é regra do jogo: aqui é só a animação e o som. Nada mexe no seu progresso.</p>
+  <p class="nota">Já no jogo (e por isso fora daqui): as estrelas novas, a barra com Recomeçar e Dica, a parede Beira com a reação na batida e o som de junção Macio.</p>
   <div class="moldura" id="mN"><div class="carr">abrindo a fase…</div></div>
   <div class="ctl"><button class="lg" id="bQueda">Ver uma peça cair</button></div>
-
-  <h2>3 · O SOM DA JUNÇÃO</h2>
-  <p>No som antigo, as miúdas (Poeira a Cometa) tilintam agudo, e quando duas junções saem no mesmo arrasto os dois sons se somam: é aí que fica alto e estridente. Toque para ouvir e compare.</p>
-  <div class="ops" id="opsS"></div>
-  <div class="ctl"><button class="lg" id="sEscada">Escada (Poeira a Gigante)</button><button class="lg" id="sDupla">Duas no mesmo arrasto</button><button class="lg" id="sMiuda">Só as miúdas, rápido</button></div>
-  <div id="cardsS" style="display:flex;flex-direction:column;gap:10px"></div>
-  <p class="nota">A escolhida aqui vale também para os arrastos da tela da parede, lá em cima.</p>
 </main>
 
 <script>
@@ -105,25 +82,10 @@ function devolve(){ try{ for(let i=localStorage.length-1;i>=0;i--){ const k=loca
   for(const k in FOTO) if(localStorage.getItem(k)!==FOTO[k]) localStorage.setItem(k,FOTO[k]); }catch(e){} }
 setInterval(devolve,1500); addEventListener('pagehide',devolve);
 
-// ---------- os jeitos ----------
+// ---------- o vão ----------
 const VAZIO='body.espaco.modoCla .slot.void::before';
-// o vão pela malha do fundo (MALHA_VAO em src/espaco_jogo.js); o quadrado escuro de hoje sai nessas
+// o vão pela malha do fundo (MALHA_VAO em src/espaco_jogo.js), sem o quadrado escuro
 const SEM_QUADRADO=`${VAZIO}{display:none !important}`;
-const VAO=[
-  {k:'hoje',i:'0',nome:'Antes',sub:'quadrado escuro',txt:'Um quadrado escuro, sem borda; a malha some ali.',mais:[],menos:['Some na nebulosa e no celular','Parece casa vazia, não parede'],css:'',malha:{forma:null}},
-  {k:'borda',i:'A',nome:'Beira',sub:'a borda do tabuleiro',rec:true,txt:'A malha termina numa beira acesa, a mesma linha que agora contorna o tabuleiro por fora. O vão vira "mais borda": onde tem essa linha, as peças param.',mais:['Uma regra só: a beira segura','Vãos vizinhos viram um recorte só','Firme, sem cara de rompido'],menos:['Mais uma linha acesa na tela'],
-    css:SEM_QUADRADO,malha:{forma:'borda'}},
-  {k:'relevo',i:'B',nome:'Relevo',sub:'um morro na malha',txt:'O contrário do poço dos planetas: a malha sobe num morro, os fios se apertam no pé, o alto clareia de um lado e faz sombra do outro.',mais:['Conversa com a gravidade que já existe','O mais "espacial"'],menos:['Lê melhor com a tela parada'],
-    css:SEM_QUADRADO,malha:{forma:'relevo'}},
-  {k:'membrana',i:'C',nome:'Membrana',sub:'campo de força',txt:'A malha passa inteira por cima do vão, mais densa, esticada e acesa: os planetas em volta não afundam ali.',mais:['Diz "tem algo aqui", não "não tem nada"'],menos:['Pode parecer uma casa especial para onde ir'],
-    css:SEM_QUADRADO,malha:{forma:'membrana'}},
-];
-const SONS=[
-  {k:'hoje',i:'0',nome:'Antes',sub:'o som antigo',txt:'Cada corpo com o seu material; as miúdas agudas; duas junções somam.',mais:[],menos:['Alto e estridente nas miúdas','Duas juntas dobram o volume'],},
-  {k:'macio',i:'A',nome:'Macio',sub:'o mesmo, mais baixo',rec:true,txt:'O mesmo desenho de hoje, com as miúdas uma oitava abaixo, sem os agudos de cima e mais baixo. A segunda junção do arrasto sai bem mais fraca.',mais:['Mantém a identidade de cada corpo','Some o chiado agudo'],menos:['Um pouco menos brilho nas miúdas']},
-  {k:'bolha',i:'B',nome:'Gota',sub:'redonda e curta',txt:'Uma gota redonda que desce de nota conforme o corpo cresce; dos planetas para cima, um brilho por cima. Do Sol para cima, o Macio.',mais:['O mais suave','Combina com repetir muitas vezes'],menos:['Os corpos soam mais parecidos entre si']},
-];
-const FASES=[[19,'Tabuleiro torto'],[18,'Serpentina'],[20,'Casas faltando'],[27,'Rosquinha com estações']];
 
 // ---------- a tela do jogo ----------
 const pausa=ms=>new Promise(r=>setTimeout(r,ms));
@@ -148,59 +110,20 @@ function tela(mold){
     devolve(); };
   return T;
 }
-// ---------- montagem ----------
-const cartao=o=>`<div class="card" data-k="${o.k}"><h3><i>${o.i}</i>${o.nome}${o.rec?'<em>no jogo</em>':''}</h3><p>${o.txt}</p>
-  <div class="pr">${o.mais.map(m=>`<div class="mais">+ ${m}</div>`).join('')}${o.menos.map(m=>`<div class="menos">− ${m}</div>`).join('')}</div></div>`;
-const chip=(o,on)=>`<button class="op ${on?'on':''}" data-k="${o.k}">${o.i==='0'?'Antes':o.i+' · '+o.nome}<small>${o.sub}</small></button>`;
-function grupo(opsId,cardsId,lista,muda){
-  const ops=document.getElementById(opsId), cards=document.getElementById(cardsId);
-  const ini=Math.max(0,lista.findIndex(o=>o.rec)); ops.innerHTML=lista.map((o,i)=>chip(o,i===ini)).join(''); cards.innerHTML=lista.map(cartao).join('');
-  const marca=k=>{ ops.querySelectorAll('.op').forEach(b=>b.classList.toggle('on',b.dataset.k===k)); cards.querySelectorAll('.card').forEach(c=>c.classList.toggle('on',c.dataset.k===k)); muda(lista.find(o=>o.k===k)); };
-  ops.onclick=e=>{ const b=e.target.closest('.op'); if(b) marca(b.dataset.k); };
-  cards.onclick=e=>{ const c=e.target.closest('.card'); if(c){ marca(c.dataset.k); ops.scrollIntoView({block:'start',behavior:'smooth'}); } };
-  cards.querySelectorAll('.card')[ini].classList.add('on');
-}
-const TV=tela(document.getElementById('mV')), TN=tela(document.getElementById('mN'));
-let jV=VAO[1], bate=true, faseV=19;
-const aplicaV=o=>{ TV.st.textContent=o.css; TV.w.eval('MALHA_VAO='+JSON.stringify({...(o.malha||{forma:null}),bate})); };
-grupo('opsV','cardsV',VAO,o=>{ jV=o; if(TV.ok) aplicaV(o); });
-document.querySelector('#opsV .op[data-k="borda"]').click();
-bBate.onclick=()=>{ bate=!bate; bBate.classList.toggle('on',bate); bBate.firstChild.textContent='Reação na batida: '+(bate?'ligada':'desligada'); if(TV.ok) aplicaV(jV); };
-const opsF=document.getElementById('opsF');
-opsF.innerHTML=FASES.map(([n,nome])=>`<button class="op ${n===faseV?'on':''}" data-n="${n}">Fase ${n}<small>${nome}</small></button>`).join('');
-opsF.onclick=async e=>{ const b=e.target.closest('.op'); if(!b||!TV.ok) return; opsF.querySelectorAll('.op').forEach(x=>x.classList.toggle('on',x===b)); faseV=+b.dataset.n; await TV.joga(faseV); };
-TV.refaz=async()=>{ await TV.joga(faseV); aplicaV(jV); };
+const TN=tela(document.getElementById('mN'));
 TN.refaz=async()=>{ await TN.joga(20); TN.st.textContent=SEM_QUADRADO; TN.w.eval(`MALHA_VAO={forma:'arrebenta',cor:.8,recuo:.9,fio:1,claro:.5}`); };
-(async()=>{ await TV.pronto; await TV.refaz(); TV.ok=true; await pausa(500); document.getElementById('mV').classList.add('pronto');
-  await TN.pronto; await TN.refaz(); TN.ok=true; await pausa(300); document.getElementById('mN').classList.add('pronto'); })();
+(async()=>{ await TN.pronto; await TN.refaz(); TN.ok=true; await pausa(300); document.getElementById('mN').classList.add('pronto'); })();
 // o som do quadro: liga na hora do toque (o toque aqui vale para o quadro, que é do mesmo endereço)
 const somLiga=T=>{ try{ T.w.eval('sound=true; ctxAudio()?.resume?.()'); }catch(e){} };
 const temVao=`((x,y)=>x>=0&&y>=0&&x<W&&y<H&&!casaOk(x,y))`;
-ctlV.onclick=async e=>{ const b=e.target.closest('button'); if(!b||!TV.ok) return; somLiga(TV);
-  if(b.dataset.d) TV.w.eval(`move(${b.dataset.d})`);
-  else if(b.dataset.a==='zero') TV.w.eval('qjRecomeca()');
-  else if(b.dataset.a==='bate'){   // um arrasto em que alguma peça anda e para encostada num vão; se não houver, recomeça e procura
-    const acha=()=>TV.w.eval(`(()=>{ const v=${temVao}; const d=DIRS.find(([dx,dy])=>{ const r=slide(S.tiles,dx,dy); if(!r.moved) return false;
-      const an=new Map(S.tiles.map(t=>[t.id,t.x+','+t.y])); return r.tiles.some(t=>an.get(t.id)!==t.x+','+t.y && v(t.x+dx,t.y+dy)); }); return d?d.join(','):''; })()`);
-    let d=acha(); if(!d){ TV.w.eval('qjRecomeca()'); await pausa(250); d=acha(); }
-    if(d) TV.w.eval(`move(${d})`); }
-  devolve(); };
 // o buraco: uma peça encostada num vão escorrega para dentro, encolhe e some (sem girar: o nome vai junto); depois volta, para ver de novo
 bQueda.onclick=()=>{ if(!TN.ok) return; somLiga(TN);
   TN.w.eval(`(()=>{ const v=${temVao}; let a=null;
     for(const t of S.tiles){ for(const [dx,dy] of DIRS) if(v(t.x+dx,t.y+dy)){ a={t,x:t.x+dx,y:t.y+dy}; break; } if(a) break; }
     if(!a) return; const el=els.get(a.t.id); if(!el) return;
     const p0=pos(a.t.x,a.t.y), p1=pos(a.x,a.y), an=el.animate([{transform:p0},{transform:p1,offset:.28,easing:'cubic-bezier(.5,0,.8,.6)'},{transform:p1+' scale(.22)',opacity:1,offset:.8,easing:'cubic-bezier(.4,0,.9,.7)'},{transform:p1+' scale(.03)',opacity:0}],{duration:1200,fill:'forwards'});
-    setTimeout(()=>{ SONS_ESP.engole(); const g=geoTab(), t=tQuadro||performance.now()/1000; tremM.push({x:g.O+g.g0+(a.x+.5)*g.P,y:g.O+g.g0+(a.y+.5)*g.P,t0:t+.55,a:g.P*.06}); malhaParada=false; }, 220);
+    setTimeout(()=>{ SONS_ESP.engole(); const g=geoTab(), t=tQuadro||performance.now()/1000; tremM.push({x:g.O+g.g0+(a.x+.5)*g.P,y:g.O+g.g0+(a.y+.5)*g.P,t0:t+.62,a:g.P*.06}); malhaParada=false; }, 400);   // o assobio quando a peça já entra no buraco; o baque (0,62 s depois) quando ela some
     setTimeout(()=>an.cancel(), 2200); })()`); };
-// o som da junção
-let jS=SONS[1];
-grupo('opsS','cardsS',SONS,o=>{ jS=o; for(const T of [TV,TN]) try{ T.w.eval(`SOM_JUNTA='${o.k}'`); }catch(e){} });
-const toca=(lista)=>{ const w=TV.w; if(!TV.ok) return; somLiga(TV); w.eval(`SOM_JUNTA='${jS.k}'`);
-  lista.forEach(([l,ms,seg])=>setTimeout(()=>w.eval(`SONS_ESP.fundir(${l},${!!seg})`),ms)); };
-sEscada.onclick=()=>toca([1,2,3,4,5,6,7,8,9,10,11,12,13,14].map((l,i)=>[l,i*520]));
-sDupla.onclick=()=>toca([[3,0],[3,45,1],[5,900],[4,945,1],[8,1900],[7,1945,1]]);
-sMiuda.onclick=()=>toca([1,2,1,3,2,4,3,5,2,1,3,4].map((l,i)=>[l,i*170]));
 </script>
 </body>
 </html>
