@@ -31,7 +31,71 @@ const somaCorrente = n => 2*n-1;   // junções no mesmo arrasto: 1, 3, 5, 7
 const carta = id => S?.rod?.cartas?.[id]||0;
 const minDe = k => Math.ceil(DEGRAUS[k].min*Math.pow(.75,carta('degraus')));
 const degrauDe = c => { let k=0; while(k<TOPO && c>=minDe(k+1)) k++; return k; };
-const janelaDe = k => DEGRAUS[k].jan*(1+.3*carta('barra'));
+const janelaDe = k => DEGRAUS[k].jan*(1+.3*carta('barra'))*(FRE_X.canto?2:1);
+
+// ---------- regras em teste (rascunho frenesi_regras.html) ----------
+// ?fregra=canto,toque,tudo no endereço; não fica gravado no aparelho. Sem elas, o Frenesi é o de sempre.
+// canto: a junção só soma na corrente com a maior peça (qualquer uma do nível mais alto) num dos quatro cantos; a barra
+//   dura o dobro. Fora do canto a corrente não sobe e a barra esvazia 3x mais rápido. Formou uma peça maior fora do canto:
+//   a regra espera 2 arrastos para ela chegar lá (a junção que a formou vale).
+// toque: a corrente chega ao degrau seguinte, mas o degrau não sobe sozinho: aparece um alvo numa casa e é preciso tocar
+//   nele (ou apertar espaço) em ALVO_VIDA segundos; com o alvo na tela a barra para. Arrastar com o alvo na tela, ou
+//   deixar o alvo apagar, volta a corrente ao começo do degrau. tudo: arrastar com o alvo na tela derruba a corrente.
+const FRE_X = (()=>{ const m=location.search.match(/[?&]fregra=([\w,]*)/), s=new Set((m?m[1]:'').split(','));
+  return {canto:s.has('canto'), toque:s.has('toque'), tudo:s.has('tudo')}; })();
+const ALVO_VIDA=2.5;
+// velocidade com que a barra esvazia: 3x com a maior peça fora do canto (fora da folga)
+const freVel = () => FRE_X.canto && S.fre.fora && !(S.fre.graca>0) ? 3 : 1;
+// regra do canto: a maior peça está num canto? (guarda em S.fre.fora e S.fre.canto); peça maior nova fora do canto ganha folga
+function freCanto(){
+  const F=S.fre; let M=0; for(const t of S.tiles) if(t.t>M) M=t.t;
+  const c=S.tiles.find(t=>t.t===M && (t.x===0||t.x===W-1) && (t.y===0||t.y===H-1));
+  F.fora = M>0 && !c; F.canto = c ? [c.x,c.y] : null;
+  if(M>(F.maxNivel||0)){ if(F.fora && F.maxNivel) F.graca=3; F.maxNivel=M; }
+}
+// os quatro cantos no tabuleiro: o da maior peça aceso na cor do degrau; fora do canto, os quatro piscam (amarelo na folga)
+function freCantoPinta(){
+  if(!FRE_X.canto || window.FRE_SIM || !S?.fre) return;
+  const F=S.fre, cs=[[0,0],[W-1,0],[0,H-1],[W-1,H-1]];
+  let el=board.querySelectorAll('.freCanto');
+  if(el.length!==4){ el.forEach(e=>e.remove()); for(let i=0;i<4;i++){ const d=document.createElement('div'); d.className='freCanto'; board.insertBefore(d, board.querySelector('.tile')); } el=board.querySelectorAll('.freCanto'); }
+  const est = !F.fora ? 'ok' : F.graca>0 ? 'graca' : 'fora';
+  el.forEach((e,i)=>{ const [x,y]=cs[i], on = est!=='ok' || (F.canto && F.canto[0]===x && F.canto[1]===y);
+    e.style.transform=pos(x,y); e.className='freCanto'+(on?' '+est:''); e.style.color=DEGRAUS[F.deg].cor; });
+}
+// regra do toque: o alvo do degrau seguinte numa casa qualquer
+function freAlvoPoe(k){
+  const F=S.fre, x=Math.floor(Math.random()*W), y=Math.floor(Math.random()*H);
+  const a=F.alvo={id:'a'+(FV.aId=(FV.aId||0)+1), k, x, y, vida:ALVO_VIDA};
+  freBarra(); SFX.nebulosa?.(); depois(()=>freAlvoDesenha(a));
+}
+function freAlvoDesenha(a){
+  if(window.FRE_SIM || S.fre.alvo!==a) return;
+  const b=document.createElement('button'); b.className='freAlvo'; b.dataset.a=a.id; b.style.transform=pos(a.x,a.y);
+  b.style.setProperty('--fc', DEGRAUS[a.k].cor); b.style.setProperty('--dur', a.vida+'s');
+  b.innerHTML=`<b>×${DEGRAUS[a.k].x}</b>`;
+  b.onpointerdown=e=>{ e.preventDefault(); e.stopPropagation(); freAlvoToca(a.id); };
+  board.appendChild(b);
+}
+function freAlvoTira(a,pego){ const el=board.querySelector(`.freAlvo[data-a="${a.id}"]`); if(!el) return; el.classList.add(pego?'pego':'some'); el.onpointerdown=null; setTimeout(()=>el.remove(),380); }
+function freAlvoLimpa(){ if(S?.fre) S.fre.alvo=null; for(const el of board.querySelectorAll('.freAlvo')) el.remove(); }
+// tocou: sobe o degrau
+function freAlvoToca(id){
+  const F=S?.fre, a=F?.alvo; if(!a || a.id!==id || S.phase!=='mine') return;
+  F.alvo=null; const t=tQuadro||performance.now()/1000;
+  F.deg=a.k; F.corr=Math.max(F.corr,minDe(a.k)); F.jan=janelaDe(a.k); F.resta=F.jan; F.maxMult=Math.max(F.maxMult,DEGRAUS[a.k].x);
+  freSobe(a.k,t); freTexto(); freBarra(); freAlvoTira(a,true); freGuardaRecordes();
+}
+// arrastou com o alvo na tela, ou o alvo apagou: a corrente volta ao começo do degrau (ou cai toda, com 'tudo')
+function freAlvoPerde(t,arrastou){
+  const F=S.fre, a=F.alvo; if(!a) return;
+  F.alvo=null; depois(()=>freAlvoTira(a,false));
+  if(arrastou && FRE_X.tudo){ freCai(t); freTexto('arrastou com o alvo · perdeu tudo'); return; }
+  F.corr=minDe(F.deg); F.resta=F.corr>0 ? F.jan : 0;
+  SFX.cai?.(Math.max(1,F.deg));
+  freTexto(arrastou ? 'arrastou com o alvo · o degrau escapou' : 'o alvo apagou'); freBarra();
+}
+addEventListener('keydown', e=>{ if(e.key===' ' && S?.frenesi && S.fre?.alvo){ e.preventDefault(); freAlvoToca(S.fre.alvo.id); } });
 
 // ---------- rodadas ----------
 // meta da rodada n: começa baixa (o 3x3 enche rápido) e cresce ×2,2 a cada rodada (200, 440, 970, 2.130, 4.690...).
@@ -149,14 +213,14 @@ function frenesiJoga(opt){
   S = {...freshState(), infinito:true, frenesi:true, missao:0, tema:1, char:'rola', moves:0, extra:0, pontos:0, feitas:{}, coresF:{}, quebras:[], seqI:0, combos:0, soltas:0, maxForm:0, rachados:0,
        recAntes: sv ? sv.recAntes : recFre()};
   const f=sv?.fre||{};
-  S.fre={corr:0, deg:0, resta:0, jan:3, maxCorr:f.maxCorr||0, maxMult:f.maxMult||1};
+  S.fre={corr:0, deg:0, resta:0, jan:3, maxCorr:f.maxCorr||0, maxMult:f.maxMult||1, fora:false, graca:0, maxNivel:0, alvo:null};
   S.rod = sv?.rod ? {...sv.rod, bonus:[]} : {n:1, meta:metaDe(1), pts:0, resta:FRE_REGRA.tempo, cartas:{}, valor:{}, bonus:[], prox:{}, escolhas:[]};
   S.fiscal=FISCAIS[0];
   applyAndar(); startDay({...PATHS.comum, forma:null, caverna:false, energy:999-CFG.energy, semEnergia:true, w:sv?.w||3, h:sv?.h||3});
   limpaMarcas(); if(sv) restauraFase(sv.st);
   document.body.classList.add('modoCla','modoInf','modoFre'); $('#btnPause').textContent='☰';
-  freMontaTela(); FV.mostra=S.rod.pts||0; FV.rastros=[]; FV.k=0; FV.caiT=-9; FV.fila=[]; FV.relS=-1; freTiraBonus(true);
-  montaFreHud(); render();
+  freMontaTela(); FV.mostra=S.rod.pts||0; FV.rastros=[]; FV.k=0; FV.caiT=-9; FV.fila=[]; FV.relS=-1; freTiraBonus(true); freAlvoLimpa();
+  montaFreHud(); render(); if(FRE_X.canto){ freCanto(); depois(freCantoPinta); }
   setBanner('Frenesi', 'rodadas'); pedeEncaixe();
   freVisual(0); freVisualPinta(0); freAquece();
   if(musName==='frenesi') MUS?.intensidade?.(0);
@@ -188,10 +252,17 @@ function mostraPontos(v){ FV.mostra=v; const el=$('#frePts'); if(!el) return; co
 function freJogada(r){
   const F=S.fre, R=S.rod, t=tQuadro||performance.now()/1000, js=r.merges.filter(o=>o.k!=='p'), n=js.length;
   freRastros(r,t);
-  if(!n) return;
+  if(F.alvo) freAlvoPerde(t,true);   // regra do toque: arrastou com o alvo na tela
+  if(FRE_X.canto){ if(F.graca>0) F.graca--; freCanto(); depois(freCantoPinta); freBarra(); }
+  if(!n){ if(FRE_X.canto) freTexto(); return; }
   const antes=F.deg;
-  F.corr = (F.corr>0 ? F.corr : 0) + somaCorrente(n);
-  F.deg = degrauDe(F.corr); F.jan = janelaDe(F.deg); F.resta = F.jan;
+  if(!FRE_X.canto || !F.fora || F.graca>0){   // regra do canto: fora do canto, a corrente não sobe
+    F.corr = (F.corr>0 ? F.corr : 0) + somaCorrente(n);
+    const k=degrauDe(F.corr);
+    if(FRE_X.toque && k>F.deg){ F.corr=minDe(F.deg+1); if(!F.alvo) freAlvoPoe(F.deg+1); }   // o degrau espera o toque
+    else F.deg=k;
+    F.jan = janelaDe(F.deg); F.resta = F.jan;
+  }
   const m=DEGRAUS[F.deg].x, simples=js.reduce((a,o)=>a+VAL(o.t),0), cheio=js.reduce((a,o)=>a+VAL(o.t)*(R.valor[o.t]||1),0)*m;
   S.pontos += cheio-simples; R.pts += cheio;   // contaMissao já somou o valor simples no total
   F.maxCorr=Math.max(F.maxCorr,F.corr); F.maxMult=Math.max(F.maxMult,m);
@@ -231,6 +302,7 @@ function freSalva(){ const R=S.rod;
 function freFim(motivo){
   localStorage.removeItem('ptui_fre_save');
   S.phase='fimI'; S.rod.motivo=motivo; setBanner(null,motivo);
+  freAlvoLimpa();
   if(S.fre.corr>0) freCai(tQuadro||performance.now()/1000, true);
   freTiraBonus();
   const est=S; setTimeout(()=>{ if(S===est && S.phase==='fimI') frenesiFim(); },650);
@@ -260,6 +332,7 @@ function freRodadaComeca(primeira){
   R.prox={}; for(const k of Object.keys(CARTAS)) if(CARTAS[k].bonus && carta(k)) R.prox[k]=4+Math.random()*5;
   // largada: a rodada já começa num degrau, com a barra cheia
   const L=carta('largada'); F.corr=L?minDe(L):0; F.deg=L; F.jan=janelaDe(L); F.resta=L?F.jan:0;
+  freAlvoLimpa(); if(FRE_X.canto){ F.fora=false; F.graca=0; freCanto(); depois(freCantoPinta); }
   freVisual(L); freTexto(); freHudRodada();
   S.phase='mine'; freSalva(); freGuardaRecordes();
   if(!primeira || R.n>1) SFX.degrau(Math.min(6,R.n));
@@ -270,7 +343,7 @@ function freRodadaFim(){
   const R=S.rod, F=S.fre, sobra=Math.max(0,Math.ceil(R.resta)), extra=sobra*10*R.n;
   S.pontos+=extra; R.sobra=sobra; R.extra=extra; freGuardaRecordes();
   S.phase='cartas';
-  F.corr=0; F.deg=0; F.resta=0; freVisual(0); freTiraBonus();
+  F.corr=0; F.deg=0; F.resta=0; freAlvoLimpa(); freVisual(0); freTiraBonus();
   R.oferta=freOferta(sobra>=20?4:3); freSalva();
   SFX.pagou();
   depois(()=>freFlash('rodada completa!', 3, 'rod', sobra?`sobraram ${sobra} s · +${fmtN(extra)}`:''));
@@ -310,7 +383,8 @@ function freCresce(dx,dy){
 // ---------- relógio e bônus (o tempo de jogo: chamado a cada quadro, ou pela simulação) ----------
 function freTempo(dt){
   const F=S.fre, R=S.rod; if(S.phase!=='mine') return;
-  if(F.corr>0){ F.resta-=dt; if(F.resta<=0) freCai(tQuadro||0); }
+  if(F.alvo){ F.alvo.vida-=dt; if(F.alvo.vida<=0) freAlvoPerde(tQuadro||0,false); }   // com o alvo na tela, a barra para
+  else if(F.corr>0){ F.resta-=dt*freVel(); if(F.resta<=0) freCai(tQuadro||0); }
   R.resta-=dt; if(R.resta<=0){ R.resta=0; freFim('acabou o tempo'); return; }
   // bônus: aparecem em casa vazia (no máximo 2 ao mesmo tempo) e somem depois de 12 s
   for(const k in R.prox){ R.prox[k]-=dt; if(R.prox[k]>0) continue; R.prox[k]=Math.max(6,15-3*(carta(k)-1))*(0.8+.4*Math.random());
@@ -396,12 +470,16 @@ function freBarra(){ FV.pedeBarra=true; }
 function freBarraPinta(){
   const i=$('#freTempo')?.firstChild, F=S?.fre; if(!i || !F) return;
   FV.barra?.cancel(); FV.barra=null;
-  if(F.corr>0 && F.resta>0){ FV.barra=i.animate([{transform:`scaleX(${Math.min(1,F.resta/F.jan)})`},{transform:'scaleX(0)'}],{duration:F.resta*1000, fill:'forwards'});
+  i.style.transform='';
+  if(F.corr>0 && F.resta>0 && F.alvo) i.style.transform=`scaleX(${Math.min(1,F.resta/F.jan)})`;   // parada esperando o toque
+  else if(F.corr>0 && F.resta>0){ FV.barra=i.animate([{transform:`scaleX(${Math.min(1,F.resta/F.jan)})`},{transform:'scaleX(0)'}],{duration:F.resta*1000/freVel(), fill:'forwards'});
     if(!FV.jogando) FV.barra.pause(); }
 }
 function freTexto(msg){
   const F=S.fre, el=$('#freTxt'); if(!el) return;
   if(msg){ el.textContent=msg; FV.msgAte=(tQuadro||0)+1.6; }
+  else if(F.alvo) el.textContent=`toque no alvo · ×${DEGRAUS[F.alvo.k].x}`;
+  else if(FRE_X.canto && F.fora && (tQuadro||0)>=(FV.msgAte||0)) el.textContent = F.graca>0 ? 'leve a maior ao canto' : F.corr>0 ? 'a maior fora do canto · a corrente escapa' : 'a maior no canto para acender';
   else if(F.corr<=0) el.textContent = (tQuadro||0)<(FV.msgAte||0) ? el.textContent : 'junte rápido para acender';
   else if(F.deg===TOPO) el.textContent=`frenesi · corrente ${F.corr}`;
   else { const p=DEGRAUS[F.deg+1]; el.textContent=`corrente ${F.corr} · ×${p.x} em ${minDe(F.deg+1)-F.corr}`; }

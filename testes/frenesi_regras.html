@@ -1,0 +1,56 @@
+<!-- tempo: 30000 -->
+<meta charset="utf-8">
+<body style="margin:0"><iframe id="f" src="../index.html?mudo&fregra=canto,toque" width="390" height="760" style="border:0"></iframe><iframe id="g" width="390" height="760" style="border:0"></iframe><pre id="out" style="position:absolute;left:800px;top:0">x</pre>
+<script>
+// Regras em teste do Frenesi (?fregra=..., rascunho frenesi_regras.html): a regra do canto (fora do canto a corrente não
+// sobe e a barra corre 3x; peça maior nova ganha folga; os cantos no tabuleiro) e a do toque (o degrau espera o alvo;
+// tocar sobe, arrastar ou deixar apagar volta ao começo do degrau; com 'tudo', arrastar derruba a corrente).
+const errs=[],log=[], wait=ms=>new Promise(r=>setTimeout(r,ms)), confere=(ok,txt)=>{ log.push((ok?'ok  ':'ERRO ')+txt); if(!ok) errs.push(txt); };
+const carrega=fr=>new Promise(r=>{ if(fr.contentDocument?.readyState==='complete' && fr.contentWindow.frenesiJoga) return r(); fr.onload=r; });
+(async()=>{ try{
+  await carrega(f); const w=f.contentWindow, d=w.document, q=s=>d.querySelector(s);
+  w.addEventListener('error',e=>errs.push(e.message+' @'+e.lineno));
+  w.eval('sound=false; music=false; frenesiJoga(); S.rod.meta=1e9'); await wait(100);
+  confere(w.eval('FRE_X.canto && FRE_X.toque && !FRE_X.tudo') && w.eval('S.fre.jan')===6, `regras ligadas: ${w.eval('JSON.stringify(FRE_X)')} · barra ${w.eval('S.fre.jan')} s`);
+  // canto: a maior (Gelo) no canto; a junção soma
+  w.eval(`S.tiles=[{id:'a0',x:0,y:0,t:2},{id:'a1',x:1,y:2,t:1},{id:'a2',x:2,y:2,t:1}]; S.fre.maxNivel=2; render(); move(-1,0); frePinta(tQuadro)`);
+  confere(w.eval('S.fre.corr')===1 && !w.eval('S.fre.fora'), `maior no canto: corrente ${w.eval('S.fre.corr')}`);
+  const cs=[...d.querySelectorAll('.freCanto')];
+  confere(cs.length===4 && cs.filter(e=>e.classList.contains('ok')).length===1, 'cantos no tabuleiro: '+cs.map(e=>e.className.replace('freCanto','').trim()||'-').join(' '));
+  // fora do canto: a corrente não sobe, a barra corre 3x
+  w.eval(`S.fre.maxNivel=3; S.tiles=[{id:'b0',x:1,y:1,t:3},{id:'b1',x:1,y:2,t:1},{id:'b2',x:2,y:2,t:1}]; render(); move(-1,0); frePinta(tQuadro)`);
+  confere(w.eval('S.fre.corr')===1 && w.eval('S.fre.fora') && w.eval('freVel()')===3, `fora do canto: corrente ${w.eval('S.fre.corr')} · barra ${w.eval('freVel()')}x · "${q('#freTxt').textContent}"`);
+  confere(d.querySelectorAll('.freCanto.fora').length===4, 'os quatro cantos piscam');
+  // peça maior nova fora do canto: a junção vale e há folga
+  w.eval(`S.tiles=[{id:'c0',x:0,y:0,t:3},{id:'c1',x:1,y:1,t:3},{id:'c2',x:2,y:1,t:3}]; render(); move(-1,0)`);
+  confere(w.eval('S.fre.corr')===2 && w.eval('S.fre.graca')===3 && w.eval('freVel()')===1, `peça maior nova fora do canto: corrente ${w.eval('S.fre.corr')} · folga ${w.eval('S.fre.graca')}`);
+  // toque: a corrente chega ao ×2 e o degrau espera o alvo; a barra para
+  w.eval(`S.fre.fora=false; S.fre.graca=0; S.fre.maxNivel=4; S.fre.corr=3; S.tiles=[{id:'d0',x:0,y:0,t:4},{id:'d1',x:1,y:2,t:1},{id:'d2',x:2,y:2,t:1}]; render(); move(-1,0); frePinta(tQuadro)`);
+  const al=q('.freAlvo');
+  confere(w.eval('S.fre.deg')===0 && !!w.eval('S.fre.alvo') && !!al && /×2/.test(al.textContent), `alvo: degrau ×${w.eval('DEGRAUS[S.fre.deg].x')} · "${q('#freTxt').textContent}"`);
+  const r0=w.eval('S.fre.resta'); w.eval('freQuadro(FV.t+.5)');
+  confere(w.eval('S.fre.resta')===r0 && w.eval('S.fre.alvo.vida')<2.5, `barra parada com o alvo (vida ${w.eval('S.fre.alvo.vida').toFixed(1)} s)`);
+  al.dispatchEvent(new w.PointerEvent('pointerdown',{bubbles:true}));
+  confere(w.eval('S.fre.deg')===1 && !w.eval('S.fre.alvo'), `tocou: ×${w.eval('DEGRAUS[S.fre.deg].x')}`);
+  // arrastar com o alvo: volta ao começo do degrau
+  w.eval(`S.fre.corr=9; S.tiles=[{id:'e0',x:0,y:0,t:3},{id:'e1',x:1,y:2,t:1},{id:'e2',x:2,y:2,t:1}]; render(); move(-1,0)`);
+  confere(!!w.eval('S.fre.alvo') && w.eval('S.fre.corr')===10, 'alvo do ×3');
+  w.eval(`S.tiles=[{id:'e3',x:0,y:0,t:3},{id:'e4',x:2,y:1,t:2}]; render(); move(-1,0)`);
+  confere(!w.eval('S.fre.alvo') && w.eval('S.fre.deg')===1 && w.eval('S.fre.corr')===4, `arrastou com o alvo: corrente ${w.eval('S.fre.corr')} · ×${w.eval('DEGRAUS[S.fre.deg].x')}`);
+  // o alvo apaga
+  w.eval('freAlvoPoe(2); freQuadro(FV.t+.1); S.fre.alvo.vida=.05; freQuadro(FV.t+.1)');
+  confere(!w.eval('S.fre.alvo') && w.eval('S.fre.deg')===1, 'o alvo apagou: '+q('#freTxt').textContent);
+  // tecla espaço toca no alvo
+  w.eval('freAlvoPoe(2)'); w.dispatchEvent(new w.KeyboardEvent('keydown',{key:' '}));
+  confere(w.eval('S.fre.deg')===2, 'espaço tocou no alvo');
+
+  // 'tudo': arrastar com o alvo derruba a corrente
+  g.src='../index.html?mudo&fregra=toque,tudo'; await carrega(g); const v=g.contentWindow;
+  v.addEventListener('error',e=>errs.push(e.message+' @'+e.lineno));
+  v.eval('sound=false; music=false; frenesiJoga(); S.rod.meta=1e9'); await wait(100);
+  v.eval(`S.fre.corr=12; S.fre.deg=2; S.fre.resta=2; freAlvoPoe(3); S.tiles=[{id:'t0',x:0,y:0,t:3},{id:'t1',x:2,y:1,t:2}]; render(); move(-1,0)`);
+  confere(v.eval('S.fre.corr')===0 && v.eval('S.fre.deg')===0 && v.eval('janelaDe(0)')===3, `perde tudo: corrente ${v.eval('S.fre.corr')} · barra ${v.eval('janelaDe(0)')} s sem a regra do canto`);
+}catch(e){ errs.push('exceção: '+e.message); }
+document.getElementById('out').textContent=JSON.stringify({log,errs});
+})();
+</script>

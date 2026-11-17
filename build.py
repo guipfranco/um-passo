@@ -329,6 +329,20 @@ span.icoFre.pl img.ico{width:46px;height:46px;margin:0;vertical-align:middle}
 @keyframes freBonusIn{from{scale:.3;opacity:0}}
 @keyframes freBonusPulsa{50%{scale:1.15}}
 .freBonus.some{transition:opacity .35s;opacity:0}
+/* regras em teste do Frenesi (?fregra): os cantos e o alvo de tocar */
+.freCanto{position:absolute;left:0;top:0;width:var(--cell);height:var(--cell);z-index:0;pointer-events:none;border-radius:24%;opacity:0;transition:opacity .25s}
+.freCanto.ok{opacity:.9;box-shadow:inset 0 0 0 2px currentColor,inset 0 0 calc(var(--cell)*.25) currentColor}
+.freCanto.fora,.freCanto.graca{opacity:.9;box-shadow:inset 0 0 0 2px #ff5a5a;animation:freCantoPisca .45s ease-in-out infinite alternate}
+.freCanto.graca{box-shadow:inset 0 0 0 2px #ffd84a;animation-duration:.8s}
+@keyframes freCantoPisca{from{opacity:.2}}
+.freAlvo{position:absolute;left:0;top:0;width:var(--cell);height:var(--cell);z-index:40;border:0;padding:0;margin:0;background:none;display:flex;align-items:center;justify-content:center;color:var(--fc);cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent}
+.freAlvo::before{content:'';position:absolute;inset:-10%;border-radius:50%;border:3px solid currentColor;background:radial-gradient(rgba(0,0,0,.55),rgba(0,0,0,.2));box-shadow:0 0 18px currentColor,inset 0 0 14px currentColor;animation:freAlvoPulsa .45s ease-in-out infinite alternate}
+.freAlvo::after{content:'';position:absolute;inset:-10%;border-radius:50%;border:2px solid currentColor;opacity:.7;animation:freAlvoFecha var(--dur) linear forwards}
+.freAlvo b{position:relative;font:900 calc(var(--cell)*.32) system-ui,sans-serif;color:#fff;text-shadow:0 0 10px var(--fc),0 0 3px #000}
+@keyframes freAlvoPulsa{to{scale:1.08}}
+@keyframes freAlvoFecha{from{scale:1.6}to{scale:.15;opacity:.15}}
+.freAlvo.pego{animation:freBonusPego .35s ease-out forwards;pointer-events:none}
+.freAlvo.some{transition:opacity .3s;opacity:0;pointer-events:none}
 .freBonus.pego{animation:freBonusPego .4s ease-out forwards}
 @keyframes freBonusPego{to{scale:1.9;opacity:0}}
 .freMotivo{color:#ffd36e !important;font-weight:700}
