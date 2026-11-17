@@ -117,12 +117,12 @@ function freOferta(n){
 }
 
 // ---------- menu ----------
-// botão abaixo do Clássico (só com ?frenesi); com partida salva, diz de onde continua
+// botão abaixo da Jornada (só com ?frenesi); com partida salva, diz de onde continua
 function freMenu(on){
   let b=$('#mFre');
   if(!frenesiLigado()){ if(b) b.style.display='none'; return; }
   if(!b){ b=document.createElement('button'); b.className='btn big'; b.id='mFre'; b.innerHTML='Frenesi<small>rodadas contra o relógio</small>'; b.onclick=freEntra; }
-  $('#mInf').after(b); b.style.display = on ? '' : 'none';
+  $('#mSegue').after(b); b.style.display = on ? '' : 'none';
   const sv=freSalvo(), sub=b.querySelector('small'); if(sub.dataset.txt==null) sub.dataset.txt=sub.textContent;
   sub.textContent = sv ? `continuar · rodada ${sv.rod?.n||1}` : sub.dataset.txt; b.classList.toggle('comSub', !!sv);
 }

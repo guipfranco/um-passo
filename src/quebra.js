@@ -43,12 +43,12 @@ const qjPerfeito = (m,b,sv) => `<div class="perf">melhor possível: <b>${m.min}<
 const qjAtual = () => { const r=MISS(QUEBRA); return (QJ_FASES.findIndex((m,i)=>!(r[i+1]?.e)) + 1) || QJ_FASES.length; };
 
 // ---------- menu ----------
-// botão logo abaixo do Clássico (só com ?quebra); com progresso, diz de onde continua
+// botão logo abaixo da Jornada (só com ?quebra); com progresso, diz de onde continua
 function qjMenu(on){
   let b=$('#mQj');
   if(!quebraLigado()){ if(b) b.style.display='none'; return; }
   if(!b){ b=document.createElement('button'); b.className='btn big'; b.id='mQj'; b.innerHTML='Quebra-cabeças<small></small>'; b.onclick=qjEntra; }
-  $('#mInf').after(b); b.style.display = on ? '' : 'none';
+  $('#mSegue').after(b); b.style.display = on ? '' : 'none';
   const est=Object.values(MISS(QUEBRA)).reduce((a,x)=>a+(x.e||0),0), tem=est>0 || !!localStorage[QUEBRA.salvo];
   b.querySelector('small').textContent = tem ? `fase ${qjSalva()||qjAtual()} · ${est} ${est===1?'estrela':'estrelas'}` : 'só a ordem certa dos arrastos';
   b.classList.toggle('comSub', tem);
