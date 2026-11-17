@@ -30,18 +30,24 @@ h1{margin:4px 4px 0;font:900 19px Orbitron,sans-serif;letter-spacing:.04em;color
 <body>
 <main>
   <h1>PRÉVIA NO WHATSAPP</h1>
-  <p class="intro">Rascunho: quatro opções de como o link aparece quando alguém manda no WhatsApp. Cada uma tem imagem, título e frase própria; dá para misturar (a imagem de uma com a frase de outra).</p>
+  <p class="intro">Rascunho: como o link aparece quando alguém manda no WhatsApp. E e F são novas e mostram o jogo de verdade (fotografado pelo <code>testes/previa.mjs</code>); D é a de hoje, já sem a mancha azul no Saturno; A, B e C são as primeiras ideias, desenhadas à mão antes do visual de agora.</p>
   <div id="ops"></div>
   <p class="nota">A imagem final sai em 1200x630, o tamanho que o WhatsApp mostra grande em cima do link.</p>
 </main>
 <script src="src/espaco.js?v=15"></script>
 <script>
 buildTextures();
+// imagem pronta (E, F e D saem do testes/previa.mjs)
+const foto = src => (c,W,H)=>{ const im=new Image(); im.onload=()=>c.drawImage(im,0,0,W,H); im.src=src+'?v='+Date.now(); };
+const FRASE='O 2048 no espaço: 80 fases, 110 quebra-cabeças e o Frenesi. De graça, no navegador ou instalado como app.';
 const OPS = [
+  {id:'E', nome:'E · Partida de verdade, céu da galáxia (nova)', titulo:'2048 Astros', frase:FRASE, desenha:foto('previas/E.jpg')},
+  {id:'F', nome:'F · Partida de verdade e a escada (nova)', titulo:'2048 Astros', frase:FRASE, desenha:foto('previas/F.jpg')},
+  {id:'D', nome:'D · Um planeta gigante (a de hoje, sem o azul)', titulo:'2048 Astros', frase:FRASE, desenha:foto('previas/D.jpg')},
   {id:'A', nome:'A · Logo com planetas em órbita', titulo:'2048 Astros', frase:'Junte poeira até virar galáxia. Um 2048 com planetas em 3D.', desenha:opA},
   {id:'B', nome:'B · Tabuleiro em jogo', titulo:'2048 Astros · jogue no navegador', frase:'Arraste, junte as iguais e veja a poeira virar planeta, estrela e galáxia.', desenha:opB},
   {id:'C', nome:'C · A escada inteira', titulo:'2048 Astros', frase:'Da poeira à galáxia em 18 degraus. Até onde você chega?', desenha:opC},
-  {id:'D', nome:'D · Um planeta gigante', titulo:'2048 Astros', frase:'O 2048 no espaço: 80 fases e um modo sem fim. De graça, sem instalar.', desenha:opD},
+  {id:'D0', nome:'D · desenhada aqui (a fonte do previas/D.jpg)', titulo:'2048 Astros', frase:FRASE, desenha:opD},
 ];
 // ---------- peças de desenho ----------
 function ceu(c,W,H,seed=3){
@@ -84,7 +90,7 @@ function opD(c,W,H){ ceu(c,W,H,2); drawPeca(c,'Saturno',2.2,W*.74,H*.52,H*1.05,1
   const k=W/360*.55, cx=W*.3; logo(c,cx,H*.42,k); texto(c,'O 2048 NO ESPAÇO',cx,H*.7,W*.03); }
 // ---------- monta a página ----------
 const ops=document.getElementById('ops');
-for(const o of OPS){ const d=document.createElement('div'); d.className='op';
+for(const o of OPS){ const d=document.createElement('div'); d.className='op'; if(o.id==='D0') d.hidden=true;   // só serve ao testes/previa.mjs
   d.innerHTML=`<h2>${o.nome}</h2><div class="chat"><div class="bolha"><div class="card"><canvas width="1200" height="630" id="cv${o.id}"></canvas><div class="tx"><b>${o.titulo}</b><p>${o.frase}</p><small>guipfranco.github.io</small></div></div><div class="link">https://guipfranco.github.io/um-passo/</div><div class="hora">21:04 ✓✓</div></div></div>`;
   ops.appendChild(d); }
 Promise.all([document.fonts.load("900 40px Orbitron"),document.fonts.load("700 20px 'Exo 2'")]).then(()=>{ for(const o of OPS){ const cv=document.getElementById('cv'+o.id); o.desenha(cv.getContext('2d'),1200,630); } });

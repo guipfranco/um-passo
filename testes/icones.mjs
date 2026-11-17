@@ -1,4 +1,4 @@
-// Gera os ícones do app com o motor do próprio jogo (Saturno sobre o céu). node icones.mjs
+// Gera os ícones do app com o motor do próprio jogo (Saturno sobre o céu, e um Saturno sem fundo). node testes/icones.mjs
 import {spawn} from 'child_process'; import fs from 'fs';
 const EDGE='C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 const port=9400+Math.floor(Math.random()*400), perfil=`E:/tmp/edge/ico${port}`;
@@ -17,9 +17,9 @@ const js=`(()=>{ sound=false; music=false;
       let s=7; const r=()=>(s=(s*16807)%2147483647)/2147483647; for(let i=0;i<70;i++){ c.globalAlpha=.25+.6*r(); c.fillStyle='#fff'; c.beginPath(); c.arc(r()*S,r()*S,(.4+r()*1.2)*S/512,0,7); c.fill(); } c.globalAlpha=1;
       const h=c.createRadialGradient(S*.5,S*.5,0,S*.5,S*.5,S*.42); h.addColorStop(0,'rgba(232,199,122,.28)'); h.addColorStop(1,'rgba(232,199,122,0)'); c.fillStyle=h; c.fillRect(0,0,S,S); }
     ESP.drawPeca(c,'Saturno',2.2,S/2,S/2,S*k,1,true,1); return cv.toDataURL('image/png'); };
-  return JSON.stringify({i512:faz(512,.92,true), i192:faz(192,.92,true), mask:faz(512,.74,true), apple:faz(180,.86,true)}); })()`;
+  return JSON.stringify({i512:faz(512,.92,true), i192:faz(192,.92,true), mask:faz(512,.74,true), apple:faz(180,.86,true), solto:faz(512,.92,false)}); })()`;
 const r=await cmd('Runtime.evaluate',{expression:js,returnByValue:true});
 const o=JSON.parse(r.result.result.value);
 const sai=(k,f)=>fs.writeFileSync('E:/repos/um-passo/icones/'+f,Buffer.from(o[k].split(',')[1],'base64'));
-sai('i512','icone-512.png'); sai('i192','icone-192.png'); sai('mask','icone-mascara-512.png'); sai('apple','apple-touch-icon.png');
+sai('i512','icone-512.png'); sai('i192','icone-192.png'); sai('mask','icone-mascara-512.png'); sai('apple','apple-touch-icon.png'); sai('solto','saturno-512.png');   // sem fundo: para a tela de abertura
 console.log('ícones ok'); sock.close(); p.kill(); process.exit(0);

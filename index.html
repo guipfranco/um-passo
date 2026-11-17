@@ -823,7 +823,7 @@ body.rola #stage{touch-action:none}
 <div id="coach" class="hidden"><div class="cav" id="coachAv"></div><div><p id="coachText"></p><button class="btn b" id="coachOk">Ok</button></div></div>
 
 <script>
-const VERSAO="352c0a3b";
+const VERSAO="95a23b18";
 // ===================== CONFIG =====================
 let W = 4, H = 4, N = 4;      // largura e altura do tabuleiro (N = maior lado)
 const CFG = {
@@ -3560,7 +3560,7 @@ function buildTextures(){
     c=shadeC(c,(fbm(x*6,y*12,z*6,3,8)-.5)*.3);
     c=mix(c,C('#fffaf0'),smooth(1,.3,spot(lon,lat,2.2,.5,.26,.09)));
     c=mix(c,C('#fff3dc'),smooth(1,.3,spot(lon,lat,-.6,.2,.16,.05)));
-    const p=Math.PI/2-lat;if(p<.5){const a=((lon%(Math.PI/3))+Math.PI/3)%(Math.PI/3)-Math.PI/6,rh=.34*Math.cos(Math.PI/6)/Math.cos(a);c=mix(c,C('#7f93a6'),smooth(rh+.02,rh-.02,p));}
+    // (o hexágono azul-acinzentado do polo norte saiu em 2026-11-17: no ícone e na prévia, com o polo virado para a câmera, parecia defeito)
     if(lat<-1.1)c=mix(c,C('#b8a47c'),smooth(1.1,1.35,-lat));return c;});
   TEX.estrela=makeTex((x,y,z)=>mix(C('#ff9a1a'),C('#fff3a6'),smooth(.33,.72,fbm(x*7,y*7,z*7,4,21))));
 }
