@@ -1,12 +1,19 @@
 // Gera as imagens da prévia do link (1200x630) com o jogo de verdade: abre o index.html no Edge sem janela, monta um
 // tabuleiro do Clássico, põe o logo por cima e fotografa. node testes/previa.mjs [E F D]
 //   E: tabuleiro em jogo com o céu da galáxia (mundo 8) e o logo
+//   E2, E3: o mesmo, com uma partida mais vazia e o Netuno como a maior peça (E3 também com a Terra)
 //   F: tabuleiro em jogo com o céu dos pilares (mundo 4), o logo e a escada de corpos (Poeira → Galáxia)
 //   D: a prévia publicada (Saturno gigante, desenhada em previa.html), refeita com a textura de hoje
 // Saída: previas/E.jpg, previas/F.jpg, previas/D.jpg (a escolhida é copiada à mão para previa.jpg, a do og:image)
 import {spawn} from 'child_process'; import fs from 'fs';
 const EDGE='C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', RAIZ='E:/repos/um-passo';
-const quais=process.argv.slice(2).length ? process.argv.slice(2) : ['E','F','D'];
+const quais=process.argv.slice(2).length ? process.argv.slice(2) : ['E','E2','E3','F','D'];
+// tabuleiros (t = degrau da escada + 1: 1 Poeira ... 11 Terra, 12 Netuno, 14 Saturno); 0 = casa vazia
+const TAB={
+  E:[[14,11,9,6],[12,10,7,3],[8,5,2,1],[4,0,1,0]],
+  E2:[[12,8,4,1],[9,5,2,0],[3,1,0,0],[1,0,0,1]],
+  E3:[[12,11,6,2],[7,3,1,0],[2,1,0,0],[0,0,0,1]],
+};
 const port=9400+Math.floor(Math.random()*400), perfil=`E:/tmp/edge/prev${port}`;
 const p=spawn(EDGE,['--headless','--no-sandbox','--allow-file-access-from-files','--enable-unsafe-swiftshader',`--remote-debugging-port=${port}`,`--user-data-dir=${perfil}`,'--window-size=1200,630','about:blank'],{stdio:'ignore'});
 const dorme=ms=>new Promise(r=>setTimeout(r,ms));
@@ -21,14 +28,14 @@ fs.mkdirSync(RAIZ+'/previas',{recursive:true});
 const foto=async(nome)=>{ const r=await cmd('Page.captureScreenshot',{format:'jpeg',quality:88,clip:{x:0,y:0,width:1200,height:630,scale:1}}); fs.writeFileSync(`${RAIZ}/previas/${nome}.jpg`,Buffer.from(r.result.data,'base64')); console.log('previas/'+nome+'.jpg'); };
 
 // ---------- E e F: o jogo ----------
-const MONTA=`(async()=>{
+const MONTA=lv=>`(async()=>{
   const espera=ms=>new Promise(r=>setTimeout(r,ms));
   for(let i=0;i<100 && typeof infinitoJoga!=='function';i++) await espera(100);
   await document.fonts.ready; sound=false; music=false;
   infinitoJoga(); await espera(1500); try{ hideOverlay(); hideCoach(); }catch(e){}
   for(const el of board.querySelectorAll('.tile')) el.remove(); els.clear();   // as peças do começo da partida saem
   // tabuleiro: os maiores no canto, descendo até a poeira (t = degrau da escada + 1)
-  const lv=[[14,11,9,6],[12,10,7,3],[8,5,2,1],[4,0,1,0]]; let i=0; S.tiles=[];
+  const lv=${JSON.stringify(lv)}; let i=0; S.tiles=[];
   lv.forEach((row,y)=>row.forEach((t,x)=>{ if(t) S.tiles.push({id:'pv'+(i++),x,y,t}); })); render(); await espera(800);
   const st=document.createElement('style'); st.textContent=\`
     #scrGame .hud, #btnPause, .pill, #topBar, .topo, #mineRow, #revealRow, #coach, .coach {visibility:hidden !important}
@@ -48,11 +55,12 @@ const LOGO_ESCADA=`(()=>{ const d=document.getElementById('pvLogo');
   let x=6; ns.forEach((n,i)=>{ const w=n==='Saturno'?sz[i]*1.7:sz[i]; ESP.drawPeca(c,n,2.2,x+w/2,80,w,1,true,1); x+=w;
     if(i<ns.length-1){ c.fillStyle='rgba(159,233,255,.65)'; c.beginPath(); const ax=x+12; c.moveTo(ax-6,72); c.lineTo(ax+6,80); c.lineTo(ax-6,88); c.fill(); x+=24; } });
   return 1; })()`;
-if(quais.includes('E') || quais.includes('F')){
+// cada imagem numa página nova (o tabuleiro e o estilo começam do zero)
+for(const q of quais.filter(q=>q!=='D')){
   await cmd('Page.navigate',{url:'http://localhost:8765/index.html?mudo'}); await dorme(4000);
-  await avalia(MONTA);
-  if(quais.includes('E')){ await avalia(LOGO_FRASE); await avalia(CEU(8)); await foto('E'); }
-  if(quais.includes('F')){ await avalia(LOGO_ESCADA); await avalia(CEU(4)); await foto('F'); }
+  await avalia(MONTA(TAB[q]||TAB.E));
+  if(q==='F'){ await avalia(LOGO_ESCADA); await avalia(CEU(4)); } else { await avalia(LOGO_FRASE); await avalia(CEU(8)); }
+  await foto(q);
 }
 // ---------- D: a de hoje, refeita ----------
 if(quais.includes('D')){

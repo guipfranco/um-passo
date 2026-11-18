@@ -30,7 +30,7 @@ h1{margin:4px 4px 0;font:900 19px Orbitron,sans-serif;letter-spacing:.04em;color
 <body>
 <main>
   <h1>PRÉVIA NO WHATSAPP</h1>
-  <p class="intro">Rascunho: como o link aparece quando alguém manda no WhatsApp. E e F são novas e mostram o jogo de verdade (fotografado pelo <code>testes/previa.mjs</code>); D é a de hoje, já sem a mancha azul no Saturno; A, B e C são as primeiras ideias, desenhadas à mão antes do visual de agora.</p>
+  <p class="intro">Rascunho: como o link aparece quando alguém manda no WhatsApp. E, E2, E3 e F são novas e mostram o jogo de verdade (fotografado pelo <code>testes/previa.mjs</code>); D é a de hoje, já sem a mancha azul no Saturno; A, B e C são as primeiras ideias, desenhadas à mão antes do visual de agora.</p>
   <div id="ops"></div>
   <p class="nota">A imagem final sai em 1200x630, o tamanho que o WhatsApp mostra grande em cima do link.</p>
 </main>
@@ -42,6 +42,8 @@ const foto = src => (c,W,H)=>{ const im=new Image(); im.onload=()=>c.drawImage(i
 const FRASE='O 2048 no espaço: 80 fases, 110 quebra-cabeças e o Frenesi. De graça, no navegador ou instalado como app.';
 const OPS = [
   {id:'E', nome:'E · Partida de verdade, céu da galáxia (nova)', titulo:'2048 Astros', frase:FRASE, desenha:foto('previas/E.jpg')},
+  {id:'E2', nome:'E2 · Como a E, com o Netuno e menos peças (nova)', titulo:'2048 Astros', frase:FRASE, desenha:foto('previas/E2.jpg')},
+  {id:'E3', nome:'E3 · Como a E, com o Netuno e a Terra (nova)', titulo:'2048 Astros', frase:FRASE, desenha:foto('previas/E3.jpg')},
   {id:'F', nome:'F · Partida de verdade e a escada (nova)', titulo:'2048 Astros', frase:FRASE, desenha:foto('previas/F.jpg')},
   {id:'D', nome:'D · Um planeta gigante (a de hoje, sem o azul)', titulo:'2048 Astros', frase:FRASE, desenha:foto('previas/D.jpg')},
   {id:'A', nome:'A · Logo com planetas em órbita', titulo:'2048 Astros', frase:'Junte poeira até virar galáxia. Um 2048 com planetas em 3D.', desenha:opA},

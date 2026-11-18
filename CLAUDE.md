@@ -27,6 +27,8 @@
 
 - O código fica em `src/` (`jogo.js` é a lógica; `config.js` os dados; `svg.js` a arte). O HTML e o CSS ficam em `build.py`.
 - `python build.py` monta o `index.html`. Não edite o `index.html` à mão.
+- Abertura (desde 2026-11-17, rascunho em `abertura.html`): uma tela só de HTML e CSS no topo do `<body>` (`#abertura`, `css_abertura` no `build.py`), com céu, Saturno sem fundo (`icones/saturno-512.png`), logo e a escada acendendo; some quando o menu já está pintado, nunca antes de ~1,4 s. Com `?mudo` ou dentro de um quadro, sai na hora.
+- Prévia do link: `previa.jpg` (og:image); as opções em `previa.html`, as com o jogo de verdade geradas por `node testes/previa.mjs` (precisa do servidor local na porta 8765).
 - Rascunhos que mostram o jogo num quadro abrem `index.html?mudo` (sem som e sem música, sem gravar a escolha); o som de efeito só liga quando a pessoa toca num botão do rascunho.
 - App instalável (PWA, desde 2026-11-11): `manifest.webmanifest` e `icones/` na raiz; o `build.py` também gera o `sw.js` da raiz a partir de `src/sw.js` (não edite o gerado). O service worker guarda a página, as músicas e os ícones (a página vem da rede quando chega em até 3 s; sem rede, a guardada) e as fontes do Google na primeira vez; só registra em https ou localhost. Ícones: `node testes/icones.mjs` (Saturno do próprio motor). "Instalar o app" fica nas Opções (no iPhone, explica o Compartilhar do Safari). Teste no servidor local (instalável, service worker e abrir sem internet): `node testes/pwa.mjs`.
 - Publicar é commit e push em `main`; o GitHub Pages atualiza em 1 a 2 minutos.

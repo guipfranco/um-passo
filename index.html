@@ -763,9 +763,43 @@ body.rola #stage{touch-action:none}
 .edge{position:absolute;z-index:4;background:#6b625a;border:2.5px solid #2e2219;border-radius:8px;box-shadow:0 3px 0 #0003}
 .edge.v{width:12px;height:calc(var(--cell) - 10px);left:calc((var(--ex) + 1)*(var(--cell) + var(--gap)) + var(--gap)/2 - 6px);top:calc(var(--ey)*(var(--cell) + var(--gap)) + var(--gap) + 5px)}
 .edge.h{height:12px;width:calc(var(--cell) - 10px);top:calc((var(--ey) + 1)*(var(--cell) + var(--gap)) + var(--gap)/2 - 6px);left:calc(var(--ex)*(var(--cell) + var(--gap)) + var(--gap) + 5px)}
+
+/* ---------- abertura (desde 2026-11-17; rascunho em abertura.html): só HTML e CSS, pinta antes de o código do jogo
+   rodar; some quando o menu já está pintado embaixo (fim do ui, no build.py). Céu andando, Saturno sem fundo
+   (icones/saturno-512.png, do testes/icones.mjs), o logo e a escada acendendo como barra de progresso. */
+#abertura{position:fixed;inset:0;z-index:9999;overflow:hidden;background:#0b0a18;pointer-events:none;transition:opacity .6s ease}
+#abertura.saiu{opacity:0}
+#abertura .neb{position:absolute;inset:-20%;background:
+   radial-gradient(40% 32% at 30% 64%, rgba(150,70,220,.42), transparent 70%),
+   radial-gradient(36% 26% at 76% 28%, rgba(40,110,200,.32), transparent 70%),
+   radial-gradient(30% 22% at 16% 16%, rgba(220,80,180,.22), transparent 70%);
+  animation:abNeb 14s ease-in-out infinite alternate}
+@keyframes abNeb{to{transform:translate(-4%,3%) scale(1.06)}}
+#abertura .est{position:absolute;inset:-50% 0 0 0;background-image:
+   radial-gradient(1.2px 1.2px at 12% 18%, #fff, transparent), radial-gradient(1px 1px at 68% 42%, #fffc, transparent),
+   radial-gradient(1.4px 1.4px at 36% 76%, #fff, transparent), radial-gradient(1px 1px at 88% 12%, #fffa, transparent),
+   radial-gradient(1px 1px at 52% 58%, #fff9, transparent), radial-gradient(1.6px 1.6px at 22% 92%, #fff, transparent);
+  background-size:180px 220px;animation:abEst 40s linear infinite;opacity:.8}
+#abertura .est.b{background-size:260px 300px;animation-duration:70s;opacity:.5}
+@keyframes abEst{to{transform:translateY(33%)}}
+#abertura .meio{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-bottom:40px}
+#abertura .sat{width:min(62vw,300px);aspect-ratio:1;animation:abFlut 5s ease-in-out infinite}
+#abertura .sat img{width:100%;height:100%;filter:drop-shadow(0 0 22px rgba(232,199,122,.3));animation:abEntra 1s cubic-bezier(.2,1.3,.4,1) both}
+@keyframes abFlut{50%{transform:translateY(-8px) rotate(-1.5deg)}}
+@keyframes abEntra{from{transform:scale(.55);opacity:0}}
+#abertura .logo{margin-top:-6px;text-align:center;font-family:Orbitron,'Arial Black',sans-serif;color:#f4fbff;animation:abSobe .8s .15s ease-out both}
+#abertura .logo b{display:block;font-weight:900;font-size:min(15vw,72px);line-height:1;text-shadow:0 0 12px rgba(110,230,255,.85),0 0 30px rgba(230,100,255,.45)}
+#abertura .logo i{display:block;font-style:normal;font-weight:700;font-size:min(5vw,24px);letter-spacing:.55em;margin:6px 0 0 .55em;text-shadow:0 0 10px rgba(110,230,255,.7)}
+@keyframes abSobe{from{transform:translateY(14px);opacity:0}}
+#abertura .esc{position:absolute;left:0;right:0;bottom:max(64px,9vh);display:flex;justify-content:center;align-items:center;gap:9px}
+#abertura .esc i{width:var(--s);height:var(--s);border-radius:50%;background:var(--c);opacity:.18;animation:abAcende 3.2s ease-in-out infinite;animation-delay:calc(var(--n) * .3s)}
+@keyframes abAcende{0%,8%{opacity:.18;box-shadow:0 0 0 transparent;transform:scale(.85)} 22%,70%{opacity:1;box-shadow:0 0 10px var(--c);transform:scale(1)} 92%,100%{opacity:.18;transform:scale(.85)}}
+#abertura small{position:absolute;left:0;right:0;bottom:max(36px,5.5vh);text-align:center;font:600 11.5px 'Exo 2',system-ui,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#9fe9ff;opacity:.75}
+@media (prefers-reduced-motion: reduce){ #abertura *{animation:none !important} #abertura .esc i{opacity:.7} }
 </style>
 </head>
 <body>
+<div id="abertura" aria-hidden="true"><div class="neb"></div><div class="est"></div><div class="est b"></div><div class="meio"><div class="sat"><img src="icones/saturno-512.png" alt=""></div><div class="logo"><b>2048</b><i>ASTROS</i></div></div><div class="esc"><i style="--c:#cdbb92;--s:6px;--n:0"></i><i style="--c:#9a8c7c;--s:7px;--n:1"></i><i style="--c:#a7c4d8;--s:8px;--n:2"></i><i style="--c:#d9d6cf;--s:9px;--n:3"></i><i style="--c:#4f9be0;--s:11px;--n:4"></i><i style="--c:#e6c98a;--s:12px;--n:5"></i><i style="--c:#ffbf3a;--s:13px;--n:6"></i><i style="--c:#c7a8ff;--s:14px;--n:7"></i></div><small>juntando poeira…</small></div>
 <div id="cenario"></div>
 <div id="app">
   <section id="scrMenu" class="screen on">
@@ -7132,6 +7166,12 @@ $('#logo').innerHTML = [[1,58],[3,84],[5,120],[2,70]].map(([t,s])=>`<svg viewBox
 $('#coachAv').innerHTML = svgOf(pedraInner(3,{face:['happy','big']}));
 
 if(/[?&]lab\b/.test(location.search)) labPainel(); else showMenu();
+// abertura: some depois que o menu foi pintado embaixo, e nunca antes de ~1,4 s desde que a página começou a abrir (para
+// não piscar). Nos rascunhos (?mudo) e dentro de quadros (testes), sai na hora.
+(()=>{ const ab=document.getElementById('abertura'); if(!ab) return;
+  if(MUDO || window.frameElement) return ab.remove();
+  const tira=()=>{ ab.classList.add('saiu'); setTimeout(()=>ab.remove(),700); };
+  requestAnimationFrame(()=>requestAnimationFrame(()=>setTimeout(tira, Math.max(0, 1400-performance.now())))); })();
 </script>
 <script>
 // app instalável: o service worker guarda o jogo no aparelho (só no site de verdade; aberto do disco, nos testes, não)
