@@ -41,7 +41,7 @@ button.g{background:#ffc861;color:#241a00}
 <body>
 <main>
 <h1>Ritmo: você toca</h1>
-<p>Como no Guitar Hero: o arrasto é a nota. No ×1 você toca o bumbo; a cada multiplicador o seu instrumento ganha uma voz e a banda entra com mais gente. No ×4 a música está completa. Errou: o seu instrumento cala e volta ao ×1.</p>
+<p>A música do Clássico, como no Guitar Hero: cada arrasto toca o arpejo daquele tempo. No ×1 só o baixo te acompanha; a cada multiplicador a banda ganha uma parte, e no ×4 a música está completa. Perdeu a nota: o arpejo falha e volta ao ×1.</p>
 <div id="degraus"></div>
 <div id="hud"><div id="mult" class="x1">×1</div><div id="info"><div id="txt">toque em começar</div><div id="casas"><i></i><i></i><i></i></div></div></div>
 <div id="area">
@@ -52,114 +52,78 @@ button.g{background:#ffc861;color:#241a00}
 </div>
 <div class="bts"><button class="g" id="vai">▶ Começar</button><button id="cal">Calibrar</button></div>
 </main>
-<script>
-// Versão "você toca" do treino de ritmo (a outra é ritmo.html, com a trilha musica/ritmo.js). Aqui a música é feita na
-// página e a parte de quem joga NÃO toca sozinha: cada nota só soa se a pessoa arrastar nela (o som sai na hora da
-// nota, encaixado, se o arrasto veio antes; na hora, se veio depois). A música cresce só com o multiplicador, em 4
-// degraus claros, e para de crescer no ×4:
-//   ×1  você: bumbo                        banda: chimbal no contratempo (baixinho, só para guiar)
-//   ×2  você: bumbo + baixo                banda: + palma nos tempos 2 e 4, chimbal mais cheio
-//   ×3  você: bumbo + baixo + acorde       banda: + arpejo
-//   ×4  você: + melodia                    banda: + fundo de acordes, chimbal aberto e prato
-// Mesmas notas e regras do Frenesi de ritmo (RITMO em src/frenesi.js): 3 acertos por multiplicador, fora da nota ou
-// nota perdida volta ao ×1. Calibração gravada em ptui_ritmo_atraso (a mesma do jogo).
-const BPM=100, SEG=60/BPM, P=SEG/4, BAR=4*SEG, JANELA=.13, VER=1.7;
-const MIN=[0,3,6,9];   // combo de cada multiplicador
-const NOTAS=[[[0,4,8,12]], [[0,4,8,12],[0,4,8,12],[0,4,8]], [[0,4,8,12],[0,4,8],[0,4,10],[0,6,8,12]], [[0,4,8,12],[0,4,10],[0,6,8,12],[0,4,8,14]]];
+<script type="module">
+// Versão "você toca" do treino de ritmo: a música é a Pulsar (a do Clássico, musica/pulsar.js), tocada pelo mesmo motor
+// do jogo (musica/eletronica.js), com as camadas ligadas e desligadas ao vivo (opc.mudo). O arpejo dela NÃO toca
+// sozinho: cada arrasto na nota (uma por tempo) toca o pedaço de arpejo daquele tempo (as 4 semicolcheias), com o
+// desenho, o timbre e o acorde da própria Pulsar. Perdeu a nota: aquele tempo fica sem arpejo. A banda entra aos poucos,
+// presa ao multiplicador, e para no ×4:
+//   ×1  baixo (discreto, marca o tempo)   ×2  + bateria   ×3  + acordes de fundo   ×4  + melodia
+// O arranjo é fixo, em roda de 16 compassos (8 com o tema "Pulso" e 8 com uma frase sorteada), para ter melodia sempre.
+// Mesmas regras do Frenesi de ritmo: 3 acertos por multiplicador; fora da nota ou nota perdida volta ao ×1.
+// Calibração gravada em ptui_ritmo_atraso (a mesma do jogo).
+import * as PUL from './musica/pulsar.js';
+import { sorteio } from './musica/eletronica.js';
+const JANELA=.13, VER=1.7, MIN=[0,3,6,9];
 const COR=['#a9b8ff','#4fe3ff','#5dffa2','#ffd84a'];
-const VOCE=['bumbo','bumbo + baixo','bumbo + baixo + acorde','bumbo + baixo + acorde + melodia'];
-const BANDA=['chimbal','+ palma','+ arpejo','+ fundo e prato'];
-// acordes (4 notas, MIDI) e baixo: Am F C G | F G Em Am
-const AC=[[[57,60,64,69],45],[[57,60,65,69],41],[[55,60,64,67],48],[[55,59,62,67],43],[[57,60,65,69],41],[[55,59,62,67],43],[[55,59,64,67],40],[[57,60,64,69],45]];
+const BANDA=['baixo','+ bateria','+ acordes','+ melodia'];
 const mtof=m=>440*Math.pow(2,(m-69)/12);
 let atraso=.03; try{ if(localStorage.ptui_ritmo_atraso) atraso=+localStorage.ptui_ritmo_atraso; }catch(e){}
 const $=s=>document.querySelector(s);
-let ac=null, sai=null, eco=null, ruido=null, rodando=false, calib=null;
-let t0=0, prox=0, passo=0, notas=[], combo=0, k=0, maior=0, acertos=0, erros=0, fb=null, idT=null;
+let ac=null, dest=null, eco=null, rodando=false, calib=null, ult=null, P=60/112/4;
+let passos=new Map(), notas=[], combo=0, k=0, maior=0, acertos=0, erros=0, fb=null;
+const mudo={arpejo:true, bateria:true, acordes:true, melodia:true};
+const camadas=()=>{ mudo.bateria=k<1; mudo.acordes=k<2; mudo.melodia=k<3; dest.gain.setTargetAtTime([1.15,1.3,1.4,1.45][k], ac.currentTime, .3); };
 
-// ---------- som ----------
+// a roda de compassos: o tema "Pulso" (8) e uma frase sorteada sobre a sequência B (8)
+const rnd=sorteio(7);
+const RODA=[...PUL.montaParte('A',{tema:PUL.TEMAS[0]},0,rnd), ...PUL.montaParte('B',{seq:PUL.OPCOES.SEQ_B[0], arp:3, mot:PUL.motivo(rnd)},0,rnd)];
+
 function monta(){
   ac=new (window.AudioContext||window.webkitAudioContext)();
-  const cp=ac.createDynamicsCompressor(); cp.threshold.value=-16; cp.ratio.value=3; cp.connect(ac.destination);
-  sai=ac.createGain(); sai.gain.value=.55; sai.connect(cp);
-  eco=ac.createDelay(1); eco.delayTime.value=SEG*.75; const fbk=ac.createGain(), lp=ac.createBiquadFilter(), ret=ac.createGain();
-  fbk.gain.value=.3; lp.type='lowpass'; lp.frequency.value=2400; ret.gain.value=.35; eco.connect(lp); lp.connect(fbk); fbk.connect(eco); lp.connect(ret); ret.connect(sai);
-  ruido=ac.createBuffer(1,ac.sampleRate,ac.sampleRate); const d=ruido.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+  dest=ac.createGain(); dest.gain.value=1.15; dest.connect(ac.destination);
+  eco=ac.createDelay(1); eco.delayTime.value=60/112*.75; const fbk=ac.createGain(), lp=ac.createBiquadFilter(), ret=ac.createGain();
+  fbk.gain.value=.34; lp.type='lowpass'; lp.frequency.value=2400; ret.gain.value=.45; eco.connect(lp); lp.connect(fbk); fbk.connect(eco); lp.connect(ret); ret.connect(dest);
 }
-const fechado=()=>{ const g=ac.createGain(); g.gain.setValueAtTime(0,0); return g; };
-const env=(g,T,a,v,d)=>{ g.gain.setValueAtTime(.0001,T); g.gain.exponentialRampToValueAtTime(Math.max(.0002,v),T+a); g.gain.exponentialRampToValueAtTime(.0001,T+a+d); };
-function tom(T,f,{type='sine',a=.005,d=.2,v=.1,lp=null,to=null,dly=0}={}){ const o=ac.createOscillator(), g=fechado(); o.type=type; o.frequency.setValueAtTime(f,T); if(to) o.frequency.exponentialRampToValueAtTime(to,T+a+d);
-  env(g,T,a,v,d); let n=o; if(lp){ const fl=ac.createBiquadFilter(); fl.frequency.value=lp; o.connect(fl); n=fl; } n.connect(g); g.connect(sai); if(dly){ const s=ac.createGain(); s.gain.value=dly; g.connect(s); s.connect(eco); } o.start(T); o.stop(T+a+d+.1); }
-function chiado(T,{f=8000,type='highpass',d=.04,v=.03,q=1}={}){ const s=ac.createBufferSource(), fl=ac.createBiquadFilter(), g=fechado(); s.buffer=ruido; fl.type=type; fl.frequency.value=f; fl.Q.value=q;
-  env(g,T,.002,v,d); s.connect(fl); fl.connect(g); g.connect(sai); s.start(T,Math.random()*.5); s.stop(T+d+.1); }
-// instrumentos
-const bumbo=(T,v=.5)=>tom(T,140,{to:42,d:.26,v});
-const baixo=(T,m)=>tom(T,mtof(m),{type:'sawtooth',d:.22,v:.11,lp:520});
-function acorde(T,ch){ const g=fechado(), fl=ac.createBiquadFilter(); fl.type='lowpass'; fl.frequency.setValueAtTime(2600,T); fl.frequency.exponentialRampToValueAtTime(700,T+.2);
-  env(g,T,.004,.05,.22); fl.connect(g); g.connect(sai); const s=ac.createGain(); s.gain.value=.25; g.connect(s); s.connect(eco);
-  for(const m of ch) for(const dt of [-10,10]){ const o=ac.createOscillator(); o.type='sawtooth'; o.frequency.value=mtof(m); o.detune.value=dt; o.connect(fl); o.start(T); o.stop(T+.3); } }
-const melodia=(T,m)=>{ tom(T,mtof(m),{type:'square',a:.006,d:.32,v:.045,lp:3200,dly:.35}); tom(T,mtof(m+12),{type:'triangle',d:.4,v:.025}); };
-function fundo(T,ch,dur){ for(const m of ch){ const g=fechado(), fl=ac.createBiquadFilter(); fl.type='lowpass'; fl.frequency.value=1100;
-  g.gain.setValueAtTime(0,T); g.gain.linearRampToValueAtTime(.012,T+dur*.3); g.gain.linearRampToValueAtTime(0,T+dur); fl.connect(g); g.connect(sai);
-  for(const dt of [-8,8]){ const o=ac.createOscillator(); o.type='sawtooth'; o.frequency.value=mtof(m-12); o.detune.value=dt; o.connect(fl); o.start(T); o.stop(T+dur+.05); } } }
-const erroSom=()=>{ const T=ac.currentTime; chiado(T,{f:700,type:'bandpass',q:2,d:.08,v:.04}); tom(T,90,{type:'triangle',d:.1,v:.06,lp:400}); };
+// uma nota do arpejo, como o motor toca (eletronica.js), um pouco mais alta: é o instrumento de quem joga
+function notaArp(T,s,B){
+  const ch=B.ch, st=s%16; if(!B.arp || st%(B.arpCada||1)) return;
+  const kk=(st/(B.arpCada||1))%B.arp.length, idx=B.arp[kk]; let m=ch[idx%4]+12*Math.floor(idx/4); if(B.arpOit) m+=12*B.arpOit;
+  const o=ac.createOscillator(), fl=ac.createBiquadFilter(), g=ac.createGain(), pan=ac.createStereoPanner?.();
+  o.type=B.arpOnda||'square'; o.frequency.value=mtof(m); fl.frequency.value=(B.arpLp||1500)+800*Math.sin(s/40); fl.Q.value=2;
+  const v=(B.arpV||.024)*1.6, d=B.arpDur||.13; g.gain.setValueAtTime(0,0); g.gain.setValueAtTime(.0001,T); g.gain.exponentialRampToValueAtTime(v,T+.004); g.gain.exponentialRampToValueAtTime(.0001,T+.004+d);
+  o.connect(fl); fl.connect(g); let n=g; if(pan){ pan.pan.value=Math.sin(s*.4)*.35; g.connect(pan); n=pan; }
+  n.connect(dest); const e=ac.createGain(); e.gain.value=.22; n.connect(e); e.connect(eco); o.start(T); o.stop(T+d+.1);
+}
 
-// o que a pessoa toca numa nota (st = passo no compasso, c = compasso), conforme o multiplicador de agora
-function voce(T,st,c,kk){
-  const [ch,r]=AC[c%8];
-  bumbo(T);
-  if(kk>=1) baixo(T, r+(st%8===0?0:12));
-  if(kk>=2) acorde(T,ch);
-  if(kk>=3) melodia(T, ch[(st/4+c)%4|0]+12);
-}
-// a banda, em cada semicolcheia (st 0 a 15)
-function banda(T,st,c,kk){
-  const [ch]=AC[c%8];
-  if(calib){ if(st%4===0) bumbo(T,.45); return; }
-  if(st%4===2) chiado(T,{v:kk?.03:.02});
-  if(kk>=1){ if(st===4||st===12) chiado(T,{f:1700,type:'bandpass',q:.8,d:.11,v:.07}); if(st%2) chiado(T,{d:.025,v:.012}); }
-  if(kk>=2 && st%2===0) tom(T,mtof(ch[(st/2)%4]+12),{type:'square',a:.004,d:.12,v:.016,lp:1800,dly:.25});
-  if(kk>=3){ if(st===0) fundo(T,ch,BAR*1.05); if(st===2||st===10) chiado(T,{f:7000,d:.15,v:.02}); if(st===0 && c%2===0) chiado(T,{f:5200,d:1.1,v:.025}); }
-}
-function agenda(){
-  if(!rodando) return;
-  while(prox<ac.currentTime+.3){
-    const c=Math.floor(passo/16), st=passo%16;
-    if(st===0){   // notas do compasso seguinte, pelo multiplicador de agora
-      const pd=NOTAS[k], p=pd[(c*7919)%pd.length], ini=prox+BAR;
-      if(!calib) for(const s of p) notas.push({T:ini+s*P, st:s, c:c+1});
-    }
-    banda(prox,st,c,k);
-    prox+=P; passo++;
-  }
-  idT=setTimeout(agenda,40);
-}
-// o volume geral sobe junto com o multiplicador (e só com ele)
-const volume=()=>sai.gain.setTargetAtTime([.55,.7,.85,1][k], ac.currentTime, .25);
-
-// ---------- jogo ----------
 async function comeca(){
   if(!ac) monta(); await ac.resume();
-  rodando=true; notas=[]; combo=0; k=0; acertos=erros=0; t0=prox=ac.currentTime+.4; passo=0; volume(); agenda(); pinta(); texto('arraste quando os traços chegarem no coração');
-  $('#vai').textContent='■ Parar';
+  rodando=true; passos=new Map(); notas=[]; ult=null; combo=0; k=0; acertos=erros=0; camadas();
+  PUL.iniciarMusica(ac,dest,{mudo, compasso:n=>RODA[n%RODA.length], aoPasso:(T,s,B)=>{ ult=[T,s]; passos.set(s,B); if(passos.size>80) passos.delete(passos.keys().next().value); }});
+  pinta(); texto('arraste quando os traços chegarem no coração'); $('#vai').textContent='■ Parar';
 }
-function para(){ rodando=false; calib=null; clearTimeout(idT); $('#vai').textContent='▶ Começar'; texto('parado'); }
+function para(){ rodando=false; calib=null; PUL.pararMusica(.6); $('#vai').textContent='▶ Começar'; texto('parado'); pinta(); }
 $('#vai').onclick=()=> rodando ? para() : comeca();
 const lat=()=>ac?(ac.outputLatency||ac.baseLatency||0):0;
-const ouvidoAgora=()=>ac.currentTime-lat();   // a parte da música que está chegando no ouvido agora
+const ouvido=()=>ac.currentTime-lat();
+// as notas: uma em cada tempo (passo múltiplo de 4), previstas pelo último passo agendado (o andamento é fixo)
+function geraNotas(){
+  if(!ult) return; const [T0,s0]=ult, fim=ac.currentTime+VER+.3;
+  for(let s=Math.ceil((s0-8)/4)*4; T0+(s-s0)*P<fim; s+=4){ if(s<0 || notas.some(n=>n.s===s)) continue; notas.push({s, T:T0+(s-s0)*P}); }
+  notas=notas.filter(n=>n.T>ouvido()-2).sort((a,b)=>a.T-b.T);
+}
 function arrasto(){
-  if(!rodando) return; const agora=ac.currentTime;
-  if(calib){ const ph=((ouvidoAgora()-t0)/SEG%1+1)%1; calib.push(ph<.5?ph*SEG:(ph-1)*SEG); fb={t:performance.now()/1000,ok:true}; return fimCalib(); }
-  const t=ouvidoAgora()-atraso; let m=null, e=9;
-  for(const n of notas) if(!n.ok && !n.perdida && Math.abs(n.T-t)<e){ e=Math.abs(n.T-t); m=n; }
+  if(!rodando || !ult) return; const agora=ac.currentTime, t=ouvido()-atraso;
+  let m=null, e=9; for(const n of notas) if(!n.ok && !n.perdida && Math.abs(n.T-t)<e){ e=Math.abs(n.T-t); m=n; }
+  if(calib){ if(m){ calib.push(t-m.T); m.ok=true; } fb={t:performance.now()/1000,ok:true}; return fimCalib(); }
   if(m && e<=JANELA){ m.ok=true; acertos++; combo++; maior=Math.max(maior,combo);
-    voce(Math.max(agora,m.T), m.st, m.c, k);   // a nota soa na hora dela (se o arrasto veio antes) ou já
-    const k0=k; k=[...MIN].reverse().findIndex(x=>combo>=x); k=3-k; if(k!==k0){ volume(); texto('×'+(k+1)+'! você toca '+VOCE[k]); } else texto(e<=JANELA*.45?'na nota!':'ok');
+    const B=passos.get(m.s); if(B) for(let i=0;i<4;i++){ const Ti=m.T+i*P; if(Ti>=agora-.02) notaArp(Math.max(Ti,agora),m.s+i,B); }   // o arpejo daquele tempo
+    const k0=k; k=combo>=9?3:combo>=6?2:combo>=3?1:0; if(k!==k0){ camadas(); texto('×'+(k+1)+'! entra '+BANDA[k].replace('+ ','')); } else texto(e<=JANELA*.45?'na nota!':'ok');
     fb={t:performance.now()/1000,ok:true}; }
-  else { erros++; quebra(m && t<m.T ? 'cedo demais' : 'atrasou'); erroSom(); }
+  else { erros++; quebra(m && t<m.T ? 'cedo demais' : 'atrasou'); }
   pinta();
 }
-function quebra(msg){ if(combo>0){ combo=0; k=0; volume(); } fb={t:performance.now()/1000,ok:false}; texto(msg); pinta(); }
+function quebra(msg){ if(combo>0){ combo=0; k=0; camadas(); } fb={t:performance.now()/1000,ok:false}; texto(msg); pinta(); }
 function texto(s){ $('#txt').textContent=s; }
 function pinta(){
   document.body.style.setProperty('--fc',COR[k]);
@@ -167,17 +131,17 @@ function pinta(){
   const f = k===3 ? 3 : combo-MIN[k]; document.querySelectorAll('#casas i').forEach((c,i)=>c.classList.toggle('on',i<f));
   $('#combo').firstChild.textContent=combo;
   document.querySelectorAll('#degraus div').forEach((d,i)=>d.classList.toggle('on',i<=k && rodando));
-  $('#toca').innerHTML = rodando ? `você toca <b>${VOCE[k]}</b>` : '';
+  $('#toca').innerHTML = rodando ? (calib ? 'calibrando: arraste junto com cada traço' : 'você toca <b>o arpejo</b>') : '';
   $('#placar').textContent = calib ? `calibrando: ${calib.length} de 10` : acertos+erros ? `${acertos} na nota · ${erros} fora · maior combo ${maior} · calibração ${Math.round(atraso*1000)} ms` : '';
 }
 $('#degraus').innerHTML=COR.map((c,i)=>`<div style="--c:${c}"><b>×${i+1}</b><small>${BANDA[i]}</small></div>`).join('');
 
-// calibração: 10 arrastos junto com o bumbo (a banda toca o bumbo sozinha); o meio-termo do desvio, sem os 2 primeiros
-$('#cal').onclick=async()=>{ if(!rodando) await comeca(); calib=[]; combo=0; k=0; notas=[]; volume(); texto('arraste junto com cada bumbo'); pinta(); };
+// calibração: 10 arrastos junto com os traços (o baixo e a bateria tocam para guiar); o meio-termo do desvio, sem os 2 primeiros
+$('#cal').onclick=async()=>{ if(!rodando) await comeca(); calib=[]; combo=0; k=0; mudo.bateria=false; texto('arraste junto com cada batida'); pinta(); };
 function fimCalib(){ pinta(); if(calib.length<10) return;
-  const v=calib.slice(2).sort((a,b)=>a-b); atraso=Math.max(-.2,Math.min(.35,v[Math.floor(v.length/2)]));
+  const v=calib.map(x=>x+atraso).slice(2).sort((a,b)=>a-b); atraso=Math.max(-.2,Math.min(.35,v[Math.floor(v.length/2)]));
   try{ localStorage.ptui_ritmo_atraso=atraso.toFixed(3); }catch(e){}
-  calib=null; notas=[]; texto(`calibrado: ${Math.round(Math.abs(atraso)*1000)} ms ${atraso>=0?'depois':'antes'} da batida`); pinta(); }
+  calib=null; camadas(); texto(`calibrado: ${Math.round(Math.abs(atraso)*1000)} ms ${atraso>=0?'depois':'antes'} da batida`); pinta(); }
 
 // entrada: arrasto (vale quando o dedo anda uns 18 px, como no jogo) ou setas e espaço
 let p0=null;
@@ -193,14 +157,12 @@ function quadro(){
   g.clearRect(0,0,W,H);
   const cx=W/2, cy=H/2, meio=W/2-22, agora=performance.now()/1000;
   let pul=0;
-  if(rodando && ac){ const ouv=ouvidoAgora();
+  if(rodando && ac && ult){ geraNotas(); const ouv=ouvido();
     if(!calib) for(const n of notas) if(!n.ok && !n.perdida && n.T<ouv-atraso-JANELA){ n.perdida=true; if(combo>0){ erros++; quebra('perdeu a nota'); } }
-    notas=notas.filter(n=>n.T>ouv-2);
-    pul=Math.pow(1-(((ouv-t0)/SEG)%1+1)%1,4);
+    const ant=notas.filter(n=>n.T<=ouv).pop(); if(ant) pul=Math.pow(Math.max(0,1-(ouv-ant.T)/(4*P)),4);
     const gr=g.createLinearGradient(0,0,W,0); gr.addColorStop(0,'rgba(255,255,255,0)'); gr.addColorStop(.5,'rgba(255,255,255,.16)'); gr.addColorStop(1,'rgba(255,255,255,0)');
     g.fillStyle=gr; g.fillRect(0,cy-2,W,4);
-    const vis = calib ? Array.from({length:6},(_,i)=>({T:t0+Math.ceil((ouv-t0)/SEG+i-1)*SEG})) : notas.filter(n=>!n.ok&&!n.perdida);
-    for(const n of vis){ const d=n.T-ouv; if(d<-.05||d>VER) continue; const x=Math.max(0,d)/VER*meio;
+    for(const n of notas){ if(n.ok||n.perdida) continue; const d=n.T-ouv; if(d<-.05||d>VER) continue; const x=Math.max(0,d)/VER*meio;
       g.globalAlpha=Math.min(1,(1-d/VER)*2.2); g.fillStyle=calib?'#fff':COR[k]; for(const s of [-1,1]) g.fillRect(cx+s*(x+22)-3.5,cy-19,7,38); }
     g.globalAlpha=1; }
   const fa=fb?agora-fb.t:9, acende=fa<.25, treme=fb&&!fb.ok&&acende?Math.sin(fa*80)*5*(1-fa/.25):0, s=1+.22*pul+(acende&&fb.ok?.28*(1-fa/.25):0);
@@ -208,6 +170,7 @@ function quadro(){
   g.fillStyle=acende?(fb.ok?'#5dffa2':'#ff5a5a'):'#ff6b8a'; g.shadowColor=g.fillStyle; g.shadowBlur=acende?16:7*pul;
   g.beginPath(); g.moveTo(0,10); g.bezierCurveTo(-24,-7,-11,-24,0,-11); g.bezierCurveTo(11,-24,24,-7,0,10); g.fill(); g.restore();
 }
+window.__r={ estado:()=>({combo, k, atraso, ouvido:ac?ouvido():0, notas:notas.filter(n=>!n.ok&&!n.perdida).map(n=>n.T), mudo:{...mudo}}) };   // para os testes conferirem
 pinta(); quadro();
 </script>
 </body>
