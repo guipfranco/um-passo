@@ -1,0 +1,44 @@
+<meta charset="utf-8">
+<body style="margin:0"><script src="robo.js"></script><iframe id="f" src="../../index.html?frenesi&fregra=ritmo&mudo" width="400" height="800" style="border:0"></iframe><pre id="out" style="position:absolute;left:410px;top:0">x</pre>
+<script>
+// Calibra as metas do Frenesi de ritmo (?fregra=ritmo; RITMO.meta1 e RITMO.fator em src/frenesi.js).
+// O robô bom de 2048 (robo.js, ROBO.escolhe) joga em vários perfis: acerta a batida com probabilidade p e arrasta a
+// cada `cada` tempos (120 bpm: um tempo = 0,5 s). O relógio é simulado (sem esperar de verdade); as cartas seguem uma
+// ordem fixa (espaço até o 5x5, depois tempo, largada, valor...). Mostra a rodada alcançada e os pontos por rodada.
+// #N:meta1:fator  ex.: #8:120:1.9  (8 partidas por perfil; meta1 e fator opcionais, para testar outras metas)
+const [N, M1, FT] = (location.hash.slice(1)||'8').split(':').map(Number);
+const PERFIS=[{nome:'iniciante', p:.6, cada:2}, {nome:'médio', p:.8, cada:1}, {nome:'bom', p:.92, cada:1}, {nome:'craque', p:.98, cada:1}];
+const ORDEM=['col','lin','tempo','largada','valor','degraus','barra','maior','relogio','coringa','supernova','buraco'];
+f.onload=async()=>{ const w=f.contentWindow, log=[], res={};
+ w.eval('sound=false; music=false; window.FRE_SIM=true; window.SIMF=0; freBatidaAgora=()=>({fase:SIMF, bpm:120})');
+ if(M1) w.eval(`RITMO.meta1=${M1}`); if(FT) w.eval(`RITMO.fator=${FT}`);
+ w.eval(ROBO);
+ const pausa=()=>new Promise(r=>setTimeout(r,0));
+ for(const pf of PERFIS){ res[pf.nome]=[];
+  for(let g=0; g<N; g++){
+   w.eval('localStorage.removeItem("ptui_fre_save"); frenesiJoga()');
+   const porRod=[]; let passos=0;
+   while(passos<4000){ passos++;
+    const ph=w.eval('S.phase');
+    if(ph==='cartas'){ porRod.push(w.eval('S.rod.pts'));
+      w.eval(`(()=>{ const of=S.rod.oferta||[], ord=${JSON.stringify(ORDEM)}; let c=null;
+        for(const id of ord){ c=of.find(o=>o.id===id && !((id==='col'||id==='lin') && W*H>=25)); if(c) break; }
+        freEscolhe(c||of[0]); })()`); continue; }
+    if(ph!=='mine') break;
+    const ok=Math.random()<pf.p;
+    const fim=w.eval(`(()=>{ SIMF=${ok?0:.4}; const b=ROBO.escolhe(S.tiles); if(!b) return 1; move(b.dir[0],b.dir[1]); return 0; })()`);
+    if(fim) break;
+    if(w.eval('S.phase')==='mine') w.eval(`freTempo(${.5*pf.cada})`);
+    if(passos%25===0) await pausa();
+   }
+   const r={rod:w.eval('S.rod.n'), pts:w.eval('S.pontos'), mult:w.eval('S.fre.maxMult'), lado:w.eval('W+"x"+H'), porRod};
+   res[pf.nome].push(r);
+   out.textContent=JSON.stringify({perfil:pf.nome, partida:g+1, ...r});
+  }
+  const rs=res[pf.nome].map(r=>r.rod).sort((a,b)=>a-b);
+  log.push(`${pf.nome} (acerta ${pf.p*100}%, a cada ${pf.cada} tempo${pf.cada>1?'s':''}): rodada ${rs[Math.floor(rs.length/2)]} (${rs[0]} a ${rs[rs.length-1]}) · pontos por rodada ${JSON.stringify(res[pf.nome][0].porRod)}`);
+ }
+ const metas=w.eval('[1,2,3,4,5,6,7,8,9,10].map(metaDe)');
+ out.textContent=JSON.stringify({log, metas, errs:[]},null,1);
+};
+</script>

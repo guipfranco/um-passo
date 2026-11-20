@@ -29,7 +29,7 @@ document.addEventListener('visibilitychange',()=>{ if(AC && AC.state!=='closed')
 // ===================== MÚSICA =====================
 // Trilha por tela (todas sintetizadas, vindas do Gabinete). TRIM iguala o volume entre elas.
 const TRILHA = {menu:'lofi-prorroga', mapa:'armorial', mina:'lofi-espera', fiscal:'lofi-segredo', mercador:'bossa', fim:'sofrencia-lofi'};
-const TRIM = {'armorial':.55, 'bossa':.7, 'lofi-prorroga':.95, 'lofi-espera':.95, 'lofi-segredo':1, 'sofrencia-lofi':1.1, 'orbita':1.6, 'estacao':1.55, 'pulsar':1.45, 'frenesi':1};   // as eletrônicas medidas contra o lo-fi (a Frenesi já sai mais alta: tem compressor e camadas)
+const TRIM = {'armorial':.55, 'bossa':.7, 'lofi-prorroga':.95, 'lofi-espera':.95, 'lofi-segredo':1, 'sofrencia-lofi':1.1, 'orbita':1.6, 'estacao':1.55, 'pulsar':1.45, 'frenesi':1, 'ritmo':1.1};   // as eletrônicas medidas contra o lo-fi (a Frenesi já sai mais alta: tem compressor e camadas)
 let music = !/[?&]mudo(&|=|$)/.test(location.search) && localStorage.mina_music !== '0',   // ?mudo: sem música
     MUS=null, musName=null, musKey=null, musBus=null, musFila=Promise.resolve();
 function trilha(k){ musKey=k; musFila=musFila.then(trocaMusica).catch(e=>console.warn(e)); }
@@ -38,7 +38,7 @@ function trilha(k){ musKey=k; musFila=musFila.then(trocaMusica).catch(e=>console
 function qualTrilha(k){
   if(typeof espacoLigado==='function' && espacoLigado()){
     if(k==='menu' && (S?.phase==='lista' || document.getElementById('scrMenu')?.classList.contains('on'))) return 'estacao';   // a troca roda depois que a tela já mudou
-    if(k==='mina' && S && (S.missao||S.infinito)) return S.infinito ? (S.frenesi ? 'frenesi' : 'pulsar') : 'orbita';
+    if(k==='mina' && S && (S.missao||S.infinito)) return S.infinito ? (S.frenesi ? (typeof FRE_X!=='undefined' && FRE_X.ritmo ? 'ritmo' : 'frenesi') : 'pulsar') : 'orbita';
   }
   return TRILHA[k];
 }
@@ -222,6 +222,13 @@ const junta={
 };
 // parede (em teste): a peça bate e para, um baque abafado. Buraco (em teste, a casa que engole): a peça cai girando,
 // um assobio que desce e, longe, um baque surdo
+// ritmo do Frenesi (?fregra=ritmo): o acerto na batida sobe de nota na pentatônica de Lá menor (o tom da trilha do
+// Frenesi), na batida certinha com um brilho a mais; o erro é um "tum" abafado; sem música, um tique marca o tempo
+const notaLa=g=>{ const P=[0,3,5,7,10], k=((g%5)+5)%5; return 440*Math.pow(2,Math.floor(g/5)+P[k]/12); };
+SONS_ESP.acerto=(n,perf)=>{ const g=Math.min(n,14), p=ladoE(); sinoE({f:notaLa(g),d:.3,v:.045,ratio:2,idx:.6,pan:p,rev:.3});
+  if(perf) sinoE({t:.02,f:notaLa(g+5),d:.4,v:.025,ratio:2,idx:.4,pan:-p,rev:.45}); };
+SONS_ESP.erro=()=>{ tomE({f:130,to:80,a:.004,d:.12,v:.07,type:'triangle',lp:500}); };
+SONS_ESP.tique=forte=>{ tomE({f:forte?1760:1320,d:.035,v:forte?.05:.03,type:'square',lp:4000}); };
 SONS_ESP.bate=()=>{ const p=ladoE(); tomE({f:150,to:70,a:.003,d:.12,v:.11,type:'triangle',lp:600,pan:p}); ruidoE({f:500,d:.05,v:.04,type:'lowpass',pan:p}); };
 SONS_ESP.engole=()=>{ const p=ladoE(), f=notaE(1,6);
   tomE({f,to:f/6,a:.01,d:.7,v:.06,type:'triangle',lp:2400,lpTo:260,pan:p,rev:.45,dly:.2});
@@ -229,7 +236,10 @@ SONS_ESP.engole=()=>{ const p=ladoE(), f=notaE(1,6);
   tomE({t:.62,f:85,to:36,d:.4,v:.07,lp:300,rev:.7}); };
 // no espaço (fases da Jornada e Clássico) os sons de sempre viram os do espaço; a mina segue com os dela
 const somEsp = () => typeof espacoLigado==='function' && espacoLigado() && typeof S!=='undefined' && !!S && !!(S.missao||S.infinito);
-for(const [k,e] of [['arrastar','arrastar'],['fundir','fundir'],['pagou','vitoria'],['naoDeu','derrota']]){ const velho=SFX[k]; SFX[k]=(...a)=>somEsp()?SONS_ESP[e](...a):velho(...a); }
-for(const k of ['nasce','poucos','racha','nebulosa','estrelas','corrente','degrau','frenesi','cai','acelera','bate','engole']) SFX[k]=(...a)=>{ if(somEsp()) SONS_ESP[k](...a); };
+// Frenesi de ritmo com a trilha tocando: o arrasto, a junção e a peça nova não soam por aqui (a junção toca dentro da
+// música, pela frenesi.js; os sinos em Ré brigariam com o Lá menor da trilha)
+const ritmoMusical = () => typeof FRE_X!=='undefined' && FRE_X.ritmo && !!S?.frenesi && musName==='ritmo' && !!MUS?.toca;
+for(const [k,e] of [['arrastar','arrastar'],['fundir','fundir'],['pagou','vitoria'],['naoDeu','derrota']]){ const velho=SFX[k]; SFX[k]=(...a)=>somEsp()?((k==='arrastar'||k==='fundir')&&ritmoMusical()?undefined:SONS_ESP[e](...a)):velho(...a); }
+for(const k of ['nasce','poucos','racha','nebulosa','estrelas','corrente','degrau','frenesi','cai','acelera','bate','engole','acerto','erro','tique']) SFX[k]=(...a)=>{ if(somEsp() && !(ritmoMusical() && (k==='nasce'||k==='degrau'||k==='frenesi'||k==='acerto'||k==='erro'))) SONS_ESP[k](...a); };
 SFX.botao=()=>{ if(typeof espTela==='function' && espTela()) SONS_ESP.botao(); };
 

@@ -1,0 +1,42 @@
+<!-- tempo: 30000 -->
+<meta charset="utf-8">
+<body style="margin:0"><iframe id="f" src="../index.html?melodia=ode" width="390" height="760" style="border:0"></iframe><pre id="out" style="position:absolute;left:400px;top:0">x</pre>
+<script>
+// Melodia por jogada (em teste, ?melodia): cada arrasto toca a próxima nota; a partida nova volta ao começo; a trilha
+// das fases fica muda; ?melgat=junta toca a nota na junção; todas as músicas montam sem erro; ?melodia=0 desliga.
+f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEventListener('error',e=>errs.push(e.message+' @'+e.lineno));w.addEventListener('unhandledrejection',e=>errs.push('rej '+e.reason));
+ const wait=ms=>new Promise(r=>setTimeout(r,ms));
+ const confere=(ok,txt)=>{ log.push((ok?'ok  ':'ERRO ')+txt); if(!ok) errs.push(txt); };
+ try{
+  confere(w.eval('localStorage.ptui_melodia')==='ode' && w.eval('!!melAtual()'), 'ligou pela URL: '+w.eval('localStorage.ptui_melodia'));
+  // todas as músicas: notas válidas, soma das notas igual à dos acordes
+  for(const [id,mu] of Object.entries(w.eval('MELODIAS'))){
+    const sn=mu.notas.reduce((a,n)=>a+n[1],0), sa=mu.acordes.reduce((a,n)=>a+n[1],0), q=w.eval(`melToques(${JSON.stringify(id)})`);
+    const ok=mu.notas.every(n=>(n[0]==null||(n[0]>=48&&n[0]<=96)) && n[1]>0) && Math.abs(sn-sa)<.01 && q.t.length>8 && mu.bpm>30;
+    confere(ok, `${id}: ${q.t.length} notas, ${sn.toFixed(2)} tempos (acordes ${sa.toFixed(2)}), ${mu.bpm} bpm`);
+  }
+  w.eval('sound=true; music=false');
+  // Clássico: cada arrasto avança uma nota
+  d.querySelector('#mInf')?.click(); await wait(300);
+  w.eval(`S.tiles=[{id:'a1',x:0,y:0,t:1},{id:'a2',x:2,y:0,t:1}]; S.moves=0; render(); move(-1,0)`);
+  const i1=w.eval('MEL.i'); w.eval('move(1,0)'); const i2=w.eval('MEL.i');
+  confere(i1===1 && i2===2, `arrastos tocam a nota 1 e 2: ${i1}, ${i2} · rótulo "${d.getElementById('melTag')?.textContent}"`);
+  confere(w.eval('qualTrilha("mina")')===null, 'trilha da fase muda com a melodia');
+  // partida nova volta ao começo
+  w.eval(`S={...S}; S.moves=0; S.tiles=[{id:'b1',x:0,y:0,t:1},{id:'b2',x:2,y:0,t:1}]; render(); move(-1,0)`);
+  confere(w.eval('MEL.i')===1, 'partida nova: nota 1 de novo ('+w.eval('MEL.i')+')');
+  // fim da música: volta ao começo
+  w.eval(`MEL.i=melToques('ode').t.length; S.tiles=[{id:'c1',x:0,y:0,t:1}]; render(); move(1,0)`);
+  confere(w.eval('MEL.i')===1, 'fim da música recomeça: '+w.eval('MEL.i'));
+  // na junção
+  w.eval(`localStorage.ptui_melgat='junta'; const a=MEL.i; S.tiles=[{id:'d1',x:0,y:0,t:1},{id:'d2',x:3,y:2,t:1}]; render(); move(1,0); window._a=a`);
+  const sem=w.eval('MEL.i')===w.eval('_a');
+  w.eval(`S.tiles=[{id:'e1',x:0,y:1,t:1},{id:'e2',x:1,y:1,t:1}]; render(); move(-1,0)`);
+  confere(sem && w.eval('MEL.i')===w.eval('_a')+1, `na junção: arrasto sem junção não toca, com junção toca (${w.eval('_a')} → ${w.eval('MEL.i')})`);
+  w.eval(`localStorage.ptui_melgat='arrasto'; localStorage.ptui_melodia=''`);
+  confere(!w.eval('melLigada()') && w.eval('qualTrilha("mina")')!==null, 'desligada: a trilha volta ('+w.eval('qualTrilha("mina")')+')');
+ }catch(e){ errs.push('exc '+e.message); }
+ finally{ try{ w.eval(`localStorage.ptui_melodia=''; localStorage.ptui_melgat='arrasto'`); }catch(e){} }   // não vaza para os outros testes
+ out.textContent=JSON.stringify({log,errs},null,1);
+};
+</script>

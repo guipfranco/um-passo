@@ -14,9 +14,10 @@ medidor = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'testes'
 quebra = rd('quebra_fases.js') + medidor + rd('quebra.js')
 cfg, svg, logic, helpers, sfx, css, autoupd = rd('config.js'), rd('svg.js'), rd('jogo.js'), rd('helpers.js'), rd('sfx.js'), rd('css.css'), rd('autoupd.html')
 gi = rd('gi.js')
+melodia = rd('melodias.js') + rd('melodia.js')   # em teste: uma nota da música a cada jogada (?melodia)
 # versão do jogo nos relatos de bug: um resumo do código-fonte (muda só quando o código muda)
 import hashlib
-VERSAO = hashlib.sha1((cfg + missoes + gi + svg + logic + classico + espaco + frenesi + quebra + helpers + sfx).encode('utf-8')).hexdigest()[:8]
+VERSAO = hashlib.sha1((cfg + missoes + gi + svg + logic + classico + espaco + frenesi + quebra + helpers + sfx + melodia).encode('utf-8')).hexdigest()[:8]
 css = css.replace('width:calc(4*var(--cell) + 5*var(--gap));height:calc(4*var(--cell) + 5*var(--gap))', 'width:calc(var(--w,4)*var(--cell) + (var(--w,4) + 1)*var(--gap));height:calc(var(--h,4)*var(--cell) + (var(--h,4) + 1)*var(--gap))')
 css = css.replace('touch-action:none;user-select:none;-webkit-user-select:none;overscroll-behavior:none;overflow:hidden}', 'user-select:none;-webkit-user-select:none;overscroll-behavior:none;overflow-x:hidden}\nbody.lock{overflow:hidden}\n#scrGame{touch-action:none}')
 
@@ -364,6 +365,15 @@ span.icoFre.pl img.ico{width:46px;height:46px;margin:0;vertical-align:middle}
 @keyframes freBonusPulsa{50%{scale:1.15}}
 .freBonus.some{transition:opacity .35s;opacity:0}
 /* regras em teste do Frenesi (?fregra): os cantos e o alvo de tocar */
+/* ritmo (?fregra=ritmo): o anel que fecha sobre o multiplicador e chega nele na batida */
+#freRit,#freRitC{display:none}
+body.freRitmo #freRit,body.freRitmo #freRitC{display:block;position:absolute;left:47px;top:50%;width:66px;height:66px;margin:-33px 0 0 -33px;border-radius:50%;pointer-events:none}
+body.freRitmo #freRitC{border:2px solid rgba(255,255,255,.85);opacity:.55;box-shadow:0 0 6px rgba(255,255,255,.4),inset 0 0 6px rgba(255,255,255,.25)}
+body.freRitmo #freRit{border:3px solid var(--fc,#a9b8ff);box-shadow:0 0 12px var(--fc,#a9b8ff);opacity:0;will-change:transform,opacity}
+/* ritmo: a barra é a do Guitar Hero, em 10 casas, e enche um acerto por vez */
+body.freRitmo #freTempo{position:relative;height:12px}
+body.freRitmo #freTempo::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 2px),rgba(10,8,25,.85) calc(10% - 2px) 10%)}
+body.freRitmo #freTempo i{transition:transform .18s ease-out}
 .freCanto{position:absolute;left:0;top:0;width:var(--cell);height:var(--cell);z-index:0;pointer-events:none;border-radius:24%;opacity:0;transition:opacity .25s}
 .freCanto.ok{opacity:.9;box-shadow:inset 0 0 0 2px currentColor,inset 0 0 calc(var(--cell)*.25) currentColor}
 .freCanto.fora,.freCanto.graca{opacity:.9;box-shadow:inset 0 0 0 2px #ff5a5a;animation:freCantoPisca .45s ease-in-out infinite alternate}
@@ -925,7 +935,7 @@ html = '''<!doctype html>
 ''' + body + '''
 <script>
 const VERSAO="''' + VERSAO + '''";
-''' + cfg + missoes + gi + svg + logic + classico + espaco + frenesi + quebra + helpers + sfx + ui + '''</script>
+''' + cfg + missoes + gi + svg + logic + classico + espaco + frenesi + quebra + helpers + sfx + melodia + ui + '''</script>
 <script>
 // app instalável: o service worker guarda o jogo no aparelho (só no site de verdade; aberto do disco, nos testes, não)
 if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')) addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));

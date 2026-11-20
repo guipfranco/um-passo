@@ -1,0 +1,40 @@
+<!-- tempo: 30000 -->
+<meta charset="utf-8">
+<body style="margin:0"><iframe id="f" src="../index.html?frenesi&fregra=ritmo" width="390" height="760" style="border:0"></iframe><pre id="out" style="position:absolute;left:400px;top:0">x</pre>
+<script>
+// Frenesi de ritmo (?fregra=ritmo), estilo Guitar Hero: o arrasto na batida soma 1 no combo (junte ou não) e enche a
+// barra; 10 acertos sobem o multiplicador (×1, ×2, ×3, ×4, e para no ×4); fora do tempo, o combo zera e volta ao ×1;
+// ficar parado não quebra; a trilha é a do ritmo e a intensidade segue o combo; o círculo fixo e o anel aparecem; as
+// metas são as do ritmo; a melodia por jogada fica de fora.
+f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEventListener('error',e=>errs.push(e.message+' @'+e.lineno));w.addEventListener('unhandledrejection',e=>errs.push('rej '+e.reason));
+ const wait=ms=>new Promise(r=>setTimeout(r,ms));
+ const confere=(ok,txt)=>{ log.push((ok?'ok  ':'ERRO ')+txt); if(!ok) errs.push(txt); };
+ const arrasta=(n,fase)=>w.eval(`SIMF=${fase}; for(let i=0;i<${n};i++){ S.tiles=[{id:'z'+(++window.__z),x:i%2?2:0,y:0,t:1}]; render(); move(i%2?-1:1,0); }`);
+ try{ w.eval('sound=false; music=false; window.__z=0; localStorage.ptui_fre_vi2="1"; localStorage.removeItem("ptui_fre_save"); localStorage.ptui_melodia="ode"');
+  confere(w.eval('FRE_X.ritmo'), 'regra ligada pela URL');
+  w.eval('window.SIMF=0; freBatidaAgora=()=>({fase:SIMF, bpm:120}); RITMO.atraso=0; frenesiJoga()'); await wait(150);
+  confere(w.eval('qualTrilha("mina")')==='ritmo', 'trilha do ritmo: '+w.eval('qualTrilha("mina")'));
+  confere(w.eval('S.rod.meta')===w.eval('RITMO.meta1') && d.body.classList.contains('freRitmo') && !!d.getElementById('freRit') && !!d.getElementById('freRitC'), `começa: meta ${w.eval('S.rod.meta')}, círculo e anel`);
+  confere(!w.eval('melLigada()'), 'melodia por jogada fica de fora');
+  arrasta(1,0);
+  confere(w.eval('S.fre.corr')===1 && w.eval('multDe(S.fre.deg)')===1, 'arrasto na batida sem juntar: combo '+w.eval('S.fre.corr'));
+  arrasta(8,.02); w.eval('frePinta(tQuadro)');
+  const fr=d.querySelector('#freTempo i').style.transform;
+  confere(w.eval('S.fre.corr')===9 && w.eval('multDe(S.fre.deg)')===1 && /0\.9/.test(fr), `9 acertos: ainda ×1, barra ${fr}`);
+  arrasta(1,.98);
+  confere(w.eval('multDe(S.fre.deg)')===2 && w.eval('freIntens()')===10/40, `10 acertos: ${w.eval('xTxt(S.fre.deg)')}, intensidade ${w.eval('freIntens()')}`);
+  w.eval(`S.rod.pts=0; SIMF=0; S.tiles=[{id:'d1',x:0,y:1,t:2},{id:'d2',x:1,y:1,t:2}]; render(); move(-1,0)`);
+  confere(w.eval('S.rod.pts')===w.eval('VAL(3)')*2, `junção no ×2 vale o dobro: ${w.eval('S.rod.pts')}`);
+  w.eval('freTempo(8)');
+  confere(w.eval('S.fre.corr')===11, 'parado 8 s não quebra o combo: '+w.eval('S.fre.corr'));
+  arrasta(1,.4);
+  confere(w.eval('S.fre.corr')===0 && w.eval('multDe(S.fre.deg)')===1, 'fora do tempo: combo zera e volta ao ×1 · '+d.getElementById('freTxt').textContent);
+  arrasta(35,0); w.eval('frePinta(tQuadro)');
+  confere(w.eval('multDe(S.fre.deg)')===4 && w.eval('S.fre.deg')===w.eval('TOPO') && /scaleX\(1\)/.test(d.querySelector('#freTempo i').style.transform), `35 acertos: ${w.eval('xTxt(S.fre.deg)')} (para no ×4, barra cheia)`);
+  confere(d.getElementById('freMult').textContent==='×4', 'número na tela: '+d.getElementById('freMult').textContent);
+  confere(['acerto','erro','tique'].every(k=>typeof w.eval('SONS_ESP')[k]==='function'), 'sons de acerto, erro e tique (sem a trilha)');
+ }catch(e){ errs.push('exc '+e.message); }
+ finally{ try{ w.eval('localStorage.ptui_melodia=""; localStorage.removeItem("ptui_fre_save")'); }catch(e){} }
+ out.textContent=JSON.stringify({log,errs},null,1);
+};
+</script>

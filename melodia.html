@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Melodia por jogada</title>
+<style>
+:root{--bg:#0d0b1c;--card:#191530;--tx:#ece8ff;--mut:#9d96c4;--ac:#ffc861;--ln:#2c2650}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:760px;margin:0 auto;padding:24px 16px 60px}
+h1{font-size:24px;margin:0 0 6px}
+p{color:var(--mut);margin:0 0 14px}
+.musica{background:var(--card);border:1px solid var(--ln);border-radius:14px;padding:14px 16px;margin:12px 0}
+.musica.on{border-color:var(--ac)}
+.musica h2{font-size:17px;margin:0}
+.musica small{color:var(--mut);display:block;margin:2px 0 10px}
+.bts{display:flex;flex-wrap:wrap;gap:8px}
+button,a.bt{font:inherit;font-weight:600;background:#2a2450;color:var(--tx);border:0;border-radius:99px;padding:8px 14px;cursor:pointer;text-decoration:none}
+button:hover,a.bt:hover{background:#3a3270}
+a.bt.joga{background:var(--ac);color:#241a00}
+.trilho{display:flex;gap:3px;flex-wrap:wrap;margin-top:12px}
+.trilho i{display:block;width:8px;height:8px;border-radius:2px;background:#2c2650}
+.trilho i.foi{background:#6d5fd0}
+.trilho i.agora{background:var(--ac);transform:scale(1.4)}
+.dica{font-size:13px;color:var(--mut);margin-top:22px;border-top:1px solid var(--ln);padding-top:12px}
+kbd{background:#2a2450;border-radius:4px;padding:1px 6px;font:12px ui-monospace,monospace}
+</style>
+</head>
+<body>
+<main>
+<h1>Uma nota por jogada</h1>
+<p>Rascunho do modo em teste: cada arrasto toca a próxima nota de uma música em domínio público, com a harmonia entrando por baixo quando o acorde muda. Escolha uma música, toque nota a nota (botão ou setas do teclado, como se fossem arrastos) e, se gostar, jogue com ela.</p>
+<div id="lista"></div>
+<div class="dica">
+No jogo: <kbd>?melodia=&lt;id&gt;</kbd> liga (fica gravado no aparelho), <kbd>?melodia=0</kbd> desliga.
+<kbd>?melgat=junta</kbd> faz a nota tocar na junção em vez do arrasto (<kbd>?melgat=arrasto</kbd> volta).
+Com a melodia ligada, a trilha de fundo das fases fica muda.
+</div>
+</main>
+<script src="src/melodias.js"></script>
+<script>
+// a mesma voz do jogo (src/melodia.js), simplificada: sino FM no ataque, corpo de triângulo, baixo no acorde
+let C=null, BUS=null, REV=null;
+function audio(){
+  if(C){ if(C.state!=='running') C.resume(); return C; }
+  C=new (window.AudioContext||window.webkitAudioContext)(); BUS=C.createGain(); BUS.gain.value=.9; BUS.connect(C.destination);
+  REV=C.createConvolver(); const n=Math.round(C.sampleRate*2.6), b=C.createBuffer(2,n,C.sampleRate);
+  for(let ch=0;ch<2;ch++){ const d=b.getChannelData(ch); for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/n,3.2); }
+  REV.buffer=b; const rg=C.createGain(); rg.gain.value=.45; REV.connect(rg); rg.connect(BUS); return C;
+}
+const F=m=>440*Math.pow(2,(m-69)/12);
+function sai(g,rev){ g.connect(BUS); if(rev){ const s=C.createGain(); s.gain.value=rev; g.connect(s); s.connect(REV); } }
+function sino(f,T,d,v){ const cr=C.createOscillator(), m=C.createOscillator(), mg=C.createGain(), g=C.createGain();
+  cr.frequency.value=f; m.frequency.value=f*2; mg.gain.setValueAtTime(f*1.1,T); mg.gain.exponentialRampToValueAtTime(Math.max(1,f*.01),T+d);
+  m.connect(mg); mg.connect(cr.frequency); g.gain.setValueAtTime(.0001,T); g.gain.exponentialRampToValueAtTime(v,T+.003); g.gain.exponentialRampToValueAtTime(.0001,T+d);
+  cr.connect(g); sai(g,.35); cr.start(T); m.start(T); cr.stop(T+d+.1); m.stop(T+d+.1); }
+function tom(f,T,d,v,a){ const o=C.createOscillator(), lp=C.createBiquadFilter(), g=C.createGain(); o.type='triangle'; o.frequency.value=f; lp.frequency.value=800;
+  g.gain.setValueAtTime(.0001,T); g.gain.exponentialRampToValueAtTime(v,T+a); g.gain.exponentialRampToValueAtTime(.0001,T+a+d); o.connect(lp); lp.connect(g); sai(g,.3); o.start(T); o.stop(T+a+d+.1); }
+let voz=null;
+function nota(m,seg,T){
+  T=T??C.currentTime; const f=F(m), dur=Math.max(.35,Math.min(2.4,seg)), v=.075;
+  sino(f,T,Math.min(1.6,dur+.5),.06);
+  const o=C.createOscillator(), o2=C.createOscillator(), g2=C.createGain(), lp=C.createBiquadFilter(), g=C.createGain();
+  o.type='triangle'; o.frequency.value=f; o2.frequency.value=f*2; g2.gain.value=.25; lp.frequency.value=2600;
+  g.gain.setValueAtTime(.0001,T); g.gain.exponentialRampToValueAtTime(v,T+.012); g.gain.exponentialRampToValueAtTime(v*.5,T+.3); g.gain.setTargetAtTime(.0001,T+dur,.25);
+  o.connect(lp); o2.connect(g2); g2.connect(lp); lp.connect(g); sai(g,.3); o.start(T); o2.start(T); o.stop(T+dur+2); o2.stop(T+dur+2);
+  return { solta(t){ t=t??C.currentTime; g.gain.cancelScheduledValues(t); g.gain.setTargetAtTime(.0001,t,.07); } };
+}
+function baixo(a,bpm,T){ T=T??C.currentTime; const seg=Math.max(.8,Math.min(5,a.d*60/bpm)), f=F(a.r<40?a.r+12:a.r>52?a.r-12:a.r);
+  tom(f,T,seg,.055,.06); tom(f*1.5,T,seg*.9,.022,.08); }
+function toques(mu){ const ac=[]; let b=0; for(const [r,d,q] of mu.acordes){ ac.push({b,r,d,q}); b+=d; }
+  const t=[]; b=0; for(const [m,d] of mu.notas){ if(m==null){ if(t.length) t[t.length-1].d+=d; } else { let k=0; while(k+1<ac.length && ac[k+1].b<=b+1e-6) k++; t.push({m,d,b,k}); } b+=d; }
+  return {t,ac}; }
+
+const ESTADO={}; let atual=null, tocando=null;
+function card(id){ return document.getElementById('m-'+id); }
+function pinta(id){ const e=ESTADO[id], tr=card(id).querySelector('.trilho'); [...tr.children].forEach((x,i)=>x.className=i<e.i-1?'foi':i===e.i-1?'agora':''); }
+function escolhe(id){ atual=id; document.querySelectorAll('.musica').forEach(x=>x.classList.toggle('on',x.id==='m-'+id)); }
+function proxima(id){
+  audio(); para(); escolhe(id); const mu=MELODIAS[id], e=ESTADO[id], {t,ac}=e.q;
+  if(e.i>=t.length){ e.i=0; e.k=-1; }
+  const n=t[e.i++]; voz?.solta(); voz=nota(n.m,n.d*60/mu.bpm);
+  if(n.k!==e.k){ e.k=n.k; baixo(ac[n.k],mu.bpm); } pinta(id);
+}
+function toca(id){
+  audio(); para(); escolhe(id); const mu=MELODIAS[id], {t,ac}=ESTADO[id].q, s=60/mu.bpm; let T=C.currentTime+.1, k=-1; const ids=[];
+  t.forEach((n,i)=>{ const v=nota(n.m,n.d*s,T); v.solta(T+n.d*s); if(n.k!==k){ k=n.k; baixo(ac[k],mu.bpm,T); }
+    ids.push(setTimeout(()=>{ ESTADO[id].i=i+1; pinta(id); },(T-C.currentTime)*1000)); T+=n.d*s; });
+  tocando={ids, fim:()=>{ BUS.gain.setTargetAtTime(0,C.currentTime,.05); setTimeout(()=>{ BUS.disconnect(); BUS=C.createGain(); BUS.gain.value=.9; BUS.connect(C.destination); REV.disconnect(); const rg=C.createGain(); rg.gain.value=.45; REV.connect(rg); rg.connect(BUS); },120); }};
+}
+function para(){ if(!tocando) return; tocando.ids.forEach(clearTimeout); tocando.fim(); tocando=null; }
+function recomeca(id){ para(); ESTADO[id].i=0; ESTADO[id].k=-1; voz?.solta(); pinta(id); }
+
+const L=document.getElementById('lista');
+for(const [id,mu] of Object.entries(MELODIAS)){
+  ESTADO[id]={i:0,k:-1,q:toques(mu)};
+  const d=document.createElement('div'); d.className='musica'; d.id='m-'+id;
+  d.innerHTML=`<h2>${mu.titulo}</h2><small>${mu.compositor} · ${ESTADO[id].q.t.length} notas · <code>?melodia=${id}</code></small>
+    <div class="bts"><button data-a="nota">♪ Próxima nota</button><button data-a="toca">▶ Ouvir inteira</button><button data-a="zera">↺ Do começo</button><a class="bt joga" href="index.html?melodia=${id}">Jogar com esta</a></div>
+    <div class="trilho">${'<i></i>'.repeat(ESTADO[id].q.t.length)}</div>`;
+  d.querySelector('[data-a=nota]').onclick=()=>proxima(id);
+  d.querySelector('[data-a=toca]').onclick=()=>toca(id);
+  d.querySelector('[data-a=zera]').onclick=()=>recomeca(id);
+  L.appendChild(d);
+}
+escolhe(Object.keys(MELODIAS)[0]);
+addEventListener('keydown',e=>{ if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)){ e.preventDefault(); proxima(atual); } });
+</script>
+</body>
+</html>

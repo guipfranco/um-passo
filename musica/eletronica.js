@@ -50,11 +50,12 @@ export function cria(cfg) {
     I = 0;
     const sai = ctx.createGain(); sai.gain.value = 0.0001; sai.gain.setTargetAtTime(1, ctx.currentTime, 0.8);
     // trilha com camadas: filtro geral (fecha quando a intensidade despenca) e compressor (as camadas somam volume)
-    let mf = null;
+    let mf = null, vol = null;
     if (cfg.camadas) {
       mf = ctx.createBiquadFilter(); mf.type = 'lowpass'; mf.frequency.value = 18000; mf.Q.value = 0.9;
       const cp = ctx.createDynamicsCompressor(); cp.threshold.value = -18; cp.knee.value = 8; cp.ratio.value = 3; cp.attack.value = 0.005; cp.release.value = 0.18;
-      sai.connect(mf); mf.connect(cp); cp.connect(destino);
+      vol = ctx.createGain(); vol.gain.value = cfg.volume ? cfg.volume(0) : 1;
+      sai.connect(mf); mf.connect(cp); cp.connect(vol); vol.connect(destino);
     } else sai.connect(destino);
     const rev = sala(ctx), rg = ctx.createGain(); rg.gain.value = 0.5; rev.connect(rg); rg.connect(sai);
     const dly = ctx.createDelay(1); dly.delayTime.value = 60 / cfg.bpm * 0.75;   // eco em colcheia pontuada
@@ -156,7 +157,28 @@ export function cria(cfg) {
       const frente = (typeof document !== 'undefined' && document.hidden) ? 1.2 : 0.3;   // em segundo plano o relógio só acorda 1 vez por segundo
       while (prox < agora + frente) prox = passo(prox);
     }, 40);
-    E = { ctx, sai, rg, id, mf, est };
+    // toca(o): uma nota tocada pelo jogo (a junção do Frenesi de ritmo) DENTRO da música: no acorde do compasso que está
+    // soando e encaixada na grade (na próxima semicolcheia; se a última acabou de passar, na hora).
+    //   o.tipo 'passo' (arrasto no tempo, sem junção): a fundamental grave, abafada
+    //   o.tipo 'junta' (o.nivel da peça formada, o.n junções no arrasto): nota do acorde que sobe com o nível; duas ou
+    //     mais junções viram um acorde arpejado
+    //   o.tipo 'sobe' (multiplicador novo): arpejo rápido subindo o acorde, com o prato
+    //   o.tipo 'erra': corda abafada raspando (fora do tempo)
+    const toca = o => {
+      const agora = ctx.currentTime; let m = null; for (let i = est.marcas.length - 1; i >= 0; i--) if (est.marcas[i][0] <= agora) { m = est.marcas[i]; break; }   // o último passo que já soou (os outros estão agendados à frente)
+      let T = agora; if (m) { const [t0, , p] = m; const k = Math.ceil((agora - t0 - 0.03) / p); T = Math.max(agora, t0 + Math.max(0, k) * p); }
+      const ch = (B || Bb || cfg).ch || [57, 60, 64, 69], raiz = (B || Bb || cfg).raiz || 45;
+      const tons = []; for (let oi = 0; oi < 4; oi++) for (const n of ch) tons.push(n + 12 * oi - 12);   // do grave ao agudo
+      const pluck = (T, mi, v, d = 0.32) => { tom({ T, f: mtof(mi), type: 'square', a: 0.003, d, v: v * 0.55, lp: 2400, q: 3, dly: 0.25, rev: 0.18 });
+        tom({ T, f: mtof(mi + 12), type: 'triangle', a: 0.003, d: d * 1.4, v: v * 0.45, rev: 0.3 }); };
+      if (o.tipo === 'passo') tom({ T, f: mtof(raiz + 12), type: 'triangle', a: 0.004, d: 0.12, v: 0.05, lp: 900 });
+      else if (o.tipo === 'junta') { const base = 4 + Math.min(10, Math.max(0, (o.nivel | 0) - 1)), v = 0.07 + 0.006 * Math.min(10, o.nivel | 0);
+        for (let i = 0; i < Math.min(3, o.n || 1); i++) pluck(T + i * P, tons[Math.min(tons.length - 1, base + i * 2)], v * (i ? 0.7 : 1)); }
+      else if (o.tipo === 'sobe') { for (let i = 0; i < 6; i++) pluck(T + i * P * 0.5, tons[6 + i], 0.06, 0.25); chiado({ T, f: 5200, type: 'highpass', d: 1.2, v: 0.03, rev: 0.4 }); }
+      else if (o.tipo === 'erra') { chiado({ T: agora, f: 900, q: 2, d: 0.09, v: 0.06 }); tom({ T: agora, f: mtof(raiz) * 1.06, type: 'sawtooth', a: 0.003, d: 0.08, v: 0.05, lp: 500 }); }
+      return T - agora;
+    };
+    E = { ctx, sai, rg, id, mf, est, vol, toca };
   }
   function pararMusica(fade = 1.5) {
     if (!E) return; const e = E; E = null; clearInterval(e.id);
@@ -169,6 +191,7 @@ export function cria(cfg) {
     if (E && E.mf && v < I - 0.15) { const f = E.mf.frequency, T = E.ctx.currentTime;
       f.cancelScheduledValues(T); f.setValueAtTime(18000, T); f.exponentialRampToValueAtTime(240, T + 0.25); f.setValueAtTime(240, T + 0.4); f.exponentialRampToValueAtTime(18000, T + 1.6); }
     I = v;
+    if (E && E.vol && cfg.volume) E.vol.gain.setTargetAtTime(cfg.volume(v), E.ctx.currentTime, 0.35);
   }
   function acento(v = 1) { if (E) E.est.acento = v; }
   // onde a música está agora: fase dentro do tempo (0 a 1), dentro do compasso, e o andamento
@@ -178,5 +201,6 @@ export function cria(cfg) {
       return { fase: (((s % 4) + d) / 4) % 1, compasso: (((s % 16) + d) / 16) % 1, bpm: 15 / p }; }
     return null;
   }
-  return { iniciarMusica, pararMusica, intensidade, acento, batida };
+  const toca = o => E ? E.toca(o) : 0;
+  return { iniciarMusica, pararMusica, intensidade, acento, batida, toca };
 }
