@@ -100,12 +100,12 @@ addEventListener('keydown', e=>{ if(e.key===' ' && S?.frenesi && S.fre?.alvo){ e
 // ritmo (rascunho, ?fregra=ritmo), como no Guitar Hero: a música traz notas, espaçadas (no ×1 uma por compasso, às vezes
 // duas; mais densas a cada multiplicador: RITMO.notas). Embaixo do tabuleiro, traços saem das pontas e chegam num
 // coração no meio na hora da nota (as barras do Crypt of the NecroDancer; os outros formatos em marcacao.html). Cada arrasto na nota (dentro de
-// RITMO.janela segundos) soma 1 no combo, junte ou não, e enche a barra; cheia (10 acertos), o multiplicador pula de um em
-// um: ×1, ×2, ×3, ×4 (com 10, 20 e 30). Arrastar fora da nota, ou deixar uma nota passar, zera o combo e volta ao ×1.
+// RITMO.janela segundos) soma 1 no combo, junte ou não, e enche a barra; cheia (3 acertos), o multiplicador pula de um em
+// um: ×1, ×2, ×3, ×4 (com 3, 6 e 9). A música segue crescendo com o combo até 30. Arrastar fora da nota, ou deixar uma nota passar, zera o combo e volta ao ×1.
 // A trilha (musica/ritmo.js) começa quase muda e cresce com o combo, em volume e instrumentos (cheia no ×4); as junções
 // tocam dentro dela (no acorde e na grade). Sem música, um tique marca o tempo (120 bpm).
 // As metas da rodada são outras (RITMO.meta1, RITMO.fator; testes/calibrar/frenesi_ritmo.html).
-const RITMO={min:[0,10,10,20,20,30,30], x:[1,2,2,3,3,4,4], cheia:30, janela:.13, atraso:+(localStorage.ptui_ritmo_atraso||.03), meta1:120, fator:1.9,
+const RITMO={min:[0,3,3,6,6,9,9], x:[1,2,2,3,3,4,4], cheia:30, janela:.13, atraso:+(localStorage.ptui_ritmo_atraso||.03), meta1:120, fator:1.9,
   // as notas de cada compasso (passos de semicolcheia, 16 por compasso), sorteadas compasso a compasso conforme o
   // multiplicador: no ×1 uma em cada bumbo (os 4 tempos, 0,6 s a 100 bpm); depois com pausas e contratempos
   notas:{0:[[0,4,8,12]], 2:[[0,4,8,12],[0,4,8,12],[0,4,8]], 4:[[0,4,8,12],[0,4,8],[0,4,10],[0,6,8,12]], 6:[[0,4,8,12],[0,4,10],[0,6,8,12],[0,4,8,14]]}};
@@ -565,7 +565,7 @@ function freTiraBonus(agora){ if(S.rod) S.rod.bonus=[]; for(const el of board.qu
 function freSobe(k,t){
   FV.sobeT=t; freVisual(k);
   if(k===TOPO) SFX.frenesi(); else SFX.degrau(k);
-  musFre()?.acento?.(k===TOPO?1.5:1); if(FRE_X.ritmo) musFre()?.toca?.({tipo:'sobe'});
+  if(!FRE_X.ritmo) musFre()?.acento?.(k===TOPO?1.5:1); if(FRE_X.ritmo) musFre()?.toca?.({tipo:'sobe'});
   depois(g=>{ freFlash(k===TOPO?(FRE_X.ritmo?'×4!':'FRENESI!'):xTxt(k), k); if(!g.r.width) return;
   // anel saindo do tabuleiro (céu) e onda na malha
   aneisE.push({x:g.r.left+g.r.width/2, y:g.r.top+g.r.height/2, t0:tQuadro, v:g.r.width*(1.1+.1*k), rgb:txtRgb(COR_DEG[k]), a:.5, w:10});

@@ -3,7 +3,7 @@
 <body style="margin:0"><iframe id="f" src="../index.html?frenesi&fregra=ritmo" width="390" height="760" style="border:0"></iframe><pre id="out" style="position:absolute;left:400px;top:0">x</pre>
 <script>
 // Frenesi de ritmo (?fregra=ritmo), estilo Guitar Hero: o arrasto na batida soma 1 no combo (junte ou não) e enche a
-// barra; 10 acertos sobem o multiplicador (×1, ×2, ×3, ×4, e para no ×4); fora do tempo, o combo zera e volta ao ×1;
+// barra; 3 acertos sobem o multiplicador (×1, ×2, ×3, ×4, e para no ×4); fora do tempo, o combo zera e volta ao ×1;
 // nota que passa sem arrasto também zera; as notas são geradas um compasso à frente; a trilha é a do ritmo e a intensidade segue o combo; o círculo fixo e o anel aparecem; as
 // metas são as do ritmo; a melodia por jogada fica de fora.
 f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEventListener('error',e=>errs.push(e.message+' @'+e.lineno));w.addEventListener('unhandledrejection',e=>errs.push('rej '+e.reason));
@@ -18,23 +18,23 @@ f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEven
   confere(!w.eval('melLigada()'), 'melodia por jogada fica de fora');
   arrasta(1,0);
   confere(w.eval('S.fre.corr')===1 && w.eval('multDe(S.fre.deg)')===1, 'arrasto na batida sem juntar: combo '+w.eval('S.fre.corr'));
-  arrasta(8,.02); w.eval('frePinta(tQuadro)');
+  arrasta(1,.02); w.eval('frePinta(tQuadro)');
   const fr=d.querySelector('#freTempo i').style.transform;
-  confere(w.eval('S.fre.corr')===9 && w.eval('multDe(S.fre.deg)')===1 && /0\.9/.test(fr), `9 acertos: ainda ×1, barra ${fr}`);
+  confere(w.eval('S.fre.corr')===2 && w.eval('multDe(S.fre.deg)')===1 && /0\.66/.test(fr), `2 acertos: ainda ×1, barra ${fr}`);
   arrasta(1,.98);
-  confere(w.eval('multDe(S.fre.deg)')===2 && w.eval('freIntens()')===10/30, `10 acertos: ${w.eval('xTxt(S.fre.deg)')}, intensidade ${w.eval('freIntens()')}`);
+  confere(w.eval('multDe(S.fre.deg)')===2 && w.eval('freIntens()')===3/30, `3 acertos: ${w.eval('xTxt(S.fre.deg)')}, intensidade ${w.eval('freIntens()')}`);
   w.eval(`S.rod.pts=0; SIMF=0; S.tiles=[{id:'d1',x:0,y:1,t:2},{id:'d2',x:1,y:1,t:2}]; render(); move(-1,0)`);
   confere(w.eval('S.rod.pts')===w.eval('VAL(3)')*2, `junção no ×2 vale o dobro: ${w.eval('S.rod.pts')}`);
   w.eval('freTempo(8)');
-  confere(w.eval('S.fre.corr')===11, 'o relógio andando sozinho não quebra o combo: '+w.eval('S.fre.corr'));
+  confere(w.eval('S.fre.corr')===4, 'o relógio andando sozinho não quebra o combo: '+w.eval('S.fre.corr'));
   w.eval('FV.notas=[{c:-9, t:performance.now()/1000-1}]; freRitmoQuadro(tQuadro||performance.now()/1000)');
   confere(w.eval('S.fre.corr')===0 && w.eval('multDe(S.fre.deg)')===1, 'nota que passou sem arrasto: combo zera · '+d.getElementById('freTxt').textContent);
   confere(w.eval('FV.notas.length')>0 && w.eval('FV.notas.every(n=>n.t>performance.now()/1000-3)'), 'notas geradas à frente: '+w.eval('FV.notas.length'));
   arrasta(11,0);
   arrasta(1,.4);
   confere(w.eval('S.fre.corr')===0 && w.eval('multDe(S.fre.deg)')===1, 'fora do tempo: combo zera e volta ao ×1 · '+d.getElementById('freTxt').textContent);
-  arrasta(35,0); w.eval('frePinta(tQuadro)');
-  confere(w.eval('multDe(S.fre.deg)')===4 && w.eval('S.fre.deg')===w.eval('TOPO') && /scaleX\(1\)/.test(d.querySelector('#freTempo i').style.transform), `35 acertos: ${w.eval('xTxt(S.fre.deg)')} (para no ×4, barra cheia)`);
+  arrasta(12,0); w.eval('frePinta(tQuadro)');
+  confere(w.eval('multDe(S.fre.deg)')===4 && w.eval('S.fre.deg')===w.eval('TOPO') && /scaleX\(1\)/.test(d.querySelector('#freTempo i').style.transform), `12 acertos: ${w.eval('xTxt(S.fre.deg)')} (para no ×4, barra cheia)`);
   confere(d.getElementById('freMult').textContent==='×4', 'número na tela: '+d.getElementById('freMult').textContent);
   confere(['acerto','erro','tique'].every(k=>typeof w.eval('SONS_ESP')[k]==='function'), 'sons de acerto, erro e tique (sem a trilha)');
  }catch(e){ errs.push('exc '+e.message); }

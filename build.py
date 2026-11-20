@@ -368,9 +368,9 @@ span.icoFre.pl img.ico{width:46px;height:46px;margin:0;vertical-align:middle}
 /* ritmo (?fregra=ritmo): o anel que fecha sobre o multiplicador e chega nele na batida */
 #freRitBar{display:none}
 body.modoFre.freRitmo #freRitBar{display:block;width:0;min-width:100%;height:auto;aspect-ratio:440/56;margin-top:10px;pointer-events:none}
-/* ritmo: a barra é a do Guitar Hero, em 10 casas, e enche um acerto por vez */
+/* ritmo: a barra é a do Guitar Hero, em 3 casas, e enche um acerto por vez */
 body.freRitmo #freTempo{position:relative;height:12px}
-body.freRitmo #freTempo::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 2px),rgba(10,8,25,.85) calc(10% - 2px) 10%)}
+body.freRitmo #freTempo::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 calc(33.333% - 3px),rgba(10,8,25,.85) calc(33.333% - 3px) 33.333%)}
 body.freRitmo #freTempo i{transition:transform .18s ease-out}
 .freCanto{position:absolute;left:0;top:0;width:var(--cell);height:var(--cell);z-index:0;pointer-events:none;border-radius:24%;opacity:0;transition:opacity .25s}
 .freCanto.ok{opacity:.9;box-shadow:inset 0 0 0 2px currentColor,inset 0 0 calc(var(--cell)*.25) currentColor}

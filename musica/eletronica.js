@@ -171,11 +171,11 @@ export function cria(cfg) {
       const tons = []; for (let oi = 0; oi < 4; oi++) for (const n of ch) tons.push(n + 12 * oi - 12);   // do grave ao agudo
       const pluck = (T, mi, v, d = 0.32) => { tom({ T, f: mtof(mi), type: 'square', a: 0.003, d, v: v * 0.55, lp: 2400, q: 3, dly: 0.25, rev: 0.18 });
         tom({ T, f: mtof(mi + 12), type: 'triangle', a: 0.003, d: d * 1.4, v: v * 0.45, rev: 0.3 }); };
-      if (o.tipo === 'passo') tom({ T, f: mtof(raiz + 12), type: 'triangle', a: 0.004, d: 0.12, v: 0.05, lp: 900 });
-      else if (o.tipo === 'junta') { const base = 4 + Math.min(10, Math.max(0, (o.nivel | 0) - 1)), v = 0.07 + 0.006 * Math.min(10, o.nivel | 0);
+      if (o.tipo === 'passo') tom({ T, f: mtof(raiz + 12), type: 'triangle', a: 0.004, d: 0.12, v: 0.018, lp: 900 });
+      else if (o.tipo === 'junta') { const base = 4 + Math.min(10, Math.max(0, (o.nivel | 0) - 1)), v = 0.026 + 0.002 * Math.min(10, o.nivel | 0);
         for (let i = 0; i < Math.min(3, o.n || 1); i++) pluck(T + i * P, tons[Math.min(tons.length - 1, base + i * 2)], v * (i ? 0.7 : 1)); }
-      else if (o.tipo === 'sobe') { for (let i = 0; i < 6; i++) pluck(T + i * P * 0.5, tons[6 + i], 0.06, 0.25); chiado({ T, f: 5200, type: 'highpass', d: 1.2, v: 0.03, rev: 0.4 }); }
-      else if (o.tipo === 'erra') { chiado({ T: agora, f: 900, q: 2, d: 0.09, v: 0.06 }); tom({ T: agora, f: mtof(raiz) * 1.06, type: 'sawtooth', a: 0.003, d: 0.08, v: 0.05, lp: 500 }); }
+      else if (o.tipo === 'sobe') { for (let i = 0; i < 4; i++) pluck(T + i * P, tons[6 + i], 0.022, 0.25); chiado({ T, f: 5200, type: 'highpass', d: 1, v: 0.012, rev: 0.4 }); }
+      else if (o.tipo === 'erra') { chiado({ T: agora, f: 900, q: 2, d: 0.08, v: 0.03 }); tom({ T: agora, f: mtof(raiz) * 1.06, type: 'sawtooth', a: 0.003, d: 0.08, v: 0.025, lp: 500 }); }   // o erro sai na hora (não espera a grade), baixinho
       return T - agora;
     };
     E = { ctx, sai, rg, id, mf, est, vol, toca };

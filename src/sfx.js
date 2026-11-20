@@ -236,10 +236,10 @@ SONS_ESP.engole=()=>{ const p=ladoE(), f=notaE(1,6);
   tomE({t:.62,f:85,to:36,d:.4,v:.07,lp:300,rev:.7}); };
 // no espaço (fases da Jornada e Clássico) os sons de sempre viram os do espaço; a mina segue com os dela
 const somEsp = () => typeof espacoLigado==='function' && espacoLigado() && typeof S!=='undefined' && !!S && !!(S.missao||S.infinito);
-// Frenesi de ritmo com a trilha tocando: o arrasto, a junção e a peça nova não soam por aqui (a junção toca dentro da
-// música, pela frenesi.js; os sinos em Ré brigariam com o Lá menor da trilha)
+// Frenesi de ritmo com a trilha tocando: nenhum efeito soa por aqui (o arrasto, a junção, o degrau e o erro tocam dentro
+// da música, baixinho e na grade, pela frenesi.js; os sinos em Ré brigariam com o Lá menor da trilha)
 const ritmoMusical = () => typeof FRE_X!=='undefined' && FRE_X.ritmo && !!S?.frenesi && musName==='ritmo' && !!MUS?.toca;
-for(const [k,e] of [['arrastar','arrastar'],['fundir','fundir'],['pagou','vitoria'],['naoDeu','derrota']]){ const velho=SFX[k]; SFX[k]=(...a)=>somEsp()?((k==='arrastar'||k==='fundir')&&ritmoMusical()?undefined:SONS_ESP[e](...a)):velho(...a); }
-for(const k of ['nasce','poucos','racha','nebulosa','estrelas','corrente','degrau','frenesi','cai','acelera','bate','engole','acerto','erro','tique']) SFX[k]=(...a)=>{ if(somEsp() && !(ritmoMusical() && (k==='nasce'||k==='degrau'||k==='frenesi'||k==='acerto'||k==='erro'))) SONS_ESP[k](...a); };
+for(const [k,e] of [['arrastar','arrastar'],['fundir','fundir'],['pagou','vitoria'],['naoDeu','derrota']]){ const velho=SFX[k]; SFX[k]=(...a)=>somEsp()?(ritmoMusical()?undefined:SONS_ESP[e](...a)):velho(...a); }
+for(const k of ['nasce','poucos','racha','nebulosa','estrelas','corrente','degrau','frenesi','cai','acelera','bate','engole','acerto','erro','tique']) SFX[k]=(...a)=>{ if(somEsp() && !ritmoMusical()) SONS_ESP[k](...a); };   // no ritmo, todo som é da música (toca() em eletronica.js)
 SFX.botao=()=>{ if(typeof espTela==='function' && espTela()) SONS_ESP.botao(); };
 

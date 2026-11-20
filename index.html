@@ -442,9 +442,9 @@ span.icoFre.pl img.ico{width:46px;height:46px;margin:0;vertical-align:middle}
 /* ritmo (?fregra=ritmo): o anel que fecha sobre o multiplicador e chega nele na batida */
 #freRitBar{display:none}
 body.modoFre.freRitmo #freRitBar{display:block;width:0;min-width:100%;height:auto;aspect-ratio:440/56;margin-top:10px;pointer-events:none}
-/* ritmo: a barra é a do Guitar Hero, em 10 casas, e enche um acerto por vez */
+/* ritmo: a barra é a do Guitar Hero, em 3 casas, e enche um acerto por vez */
 body.freRitmo #freTempo{position:relative;height:12px}
-body.freRitmo #freTempo::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 2px),rgba(10,8,25,.85) calc(10% - 2px) 10%)}
+body.freRitmo #freTempo::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 calc(33.333% - 3px),rgba(10,8,25,.85) calc(33.333% - 3px) 33.333%)}
 body.freRitmo #freTempo i{transition:transform .18s ease-out}
 .freCanto{position:absolute;left:0;top:0;width:var(--cell);height:var(--cell);z-index:0;pointer-events:none;border-radius:24%;opacity:0;transition:opacity .25s}
 .freCanto.ok{opacity:.9;box-shadow:inset 0 0 0 2px currentColor,inset 0 0 calc(var(--cell)*.25) currentColor}
@@ -864,7 +864,7 @@ body.rola #stage{touch-action:none}
 <div id="coach" class="hidden"><div class="cav" id="coachAv"></div><div><p id="coachText"></p><button class="btn b" id="coachOk">Ok</button></div></div>
 
 <script>
-const VERSAO="1e4378b5";
+const VERSAO="7348cf75";
 // ===================== CONFIG =====================
 let W = 4, H = 4, N = 4;      // largura e altura do tabuleiro (N = maior lado)
 const CFG = {
@@ -5450,12 +5450,12 @@ addEventListener('keydown', e=>{ if(e.key===' ' && S?.frenesi && S.fre?.alvo){ e
 // ritmo (rascunho, ?fregra=ritmo), como no Guitar Hero: a música traz notas, espaçadas (no ×1 uma por compasso, às vezes
 // duas; mais densas a cada multiplicador: RITMO.notas). Embaixo do tabuleiro, traços saem das pontas e chegam num
 // coração no meio na hora da nota (as barras do Crypt of the NecroDancer; os outros formatos em marcacao.html). Cada arrasto na nota (dentro de
-// RITMO.janela segundos) soma 1 no combo, junte ou não, e enche a barra; cheia (10 acertos), o multiplicador pula de um em
-// um: ×1, ×2, ×3, ×4 (com 10, 20 e 30). Arrastar fora da nota, ou deixar uma nota passar, zera o combo e volta ao ×1.
+// RITMO.janela segundos) soma 1 no combo, junte ou não, e enche a barra; cheia (3 acertos), o multiplicador pula de um em
+// um: ×1, ×2, ×3, ×4 (com 3, 6 e 9). A música segue crescendo com o combo até 30. Arrastar fora da nota, ou deixar uma nota passar, zera o combo e volta ao ×1.
 // A trilha (musica/ritmo.js) começa quase muda e cresce com o combo, em volume e instrumentos (cheia no ×4); as junções
 // tocam dentro dela (no acorde e na grade). Sem música, um tique marca o tempo (120 bpm).
 // As metas da rodada são outras (RITMO.meta1, RITMO.fator; testes/calibrar/frenesi_ritmo.html).
-const RITMO={min:[0,10,10,20,20,30,30], x:[1,2,2,3,3,4,4], cheia:30, janela:.13, atraso:+(localStorage.ptui_ritmo_atraso||.03), meta1:120, fator:1.9,
+const RITMO={min:[0,3,3,6,6,9,9], x:[1,2,2,3,3,4,4], cheia:30, janela:.13, atraso:+(localStorage.ptui_ritmo_atraso||.03), meta1:120, fator:1.9,
   // as notas de cada compasso (passos de semicolcheia, 16 por compasso), sorteadas compasso a compasso conforme o
   // multiplicador: no ×1 uma em cada bumbo (os 4 tempos, 0,6 s a 100 bpm); depois com pausas e contratempos
   notas:{0:[[0,4,8,12]], 2:[[0,4,8,12],[0,4,8,12],[0,4,8]], 4:[[0,4,8,12],[0,4,8],[0,4,10],[0,6,8,12]], 6:[[0,4,8,12],[0,4,10],[0,6,8,12],[0,4,8,14]]}};
@@ -5915,7 +5915,7 @@ function freTiraBonus(agora){ if(S.rod) S.rod.bonus=[]; for(const el of board.qu
 function freSobe(k,t){
   FV.sobeT=t; freVisual(k);
   if(k===TOPO) SFX.frenesi(); else SFX.degrau(k);
-  musFre()?.acento?.(k===TOPO?1.5:1); if(FRE_X.ritmo) musFre()?.toca?.({tipo:'sobe'});
+  if(!FRE_X.ritmo) musFre()?.acento?.(k===TOPO?1.5:1); if(FRE_X.ritmo) musFre()?.toca?.({tipo:'sobe'});
   depois(g=>{ freFlash(k===TOPO?(FRE_X.ritmo?'×4!':'FRENESI!'):xTxt(k), k); if(!g.r.width) return;
   // anel saindo do tabuleiro (céu) e onda na malha
   aneisE.push({x:g.r.left+g.r.width/2, y:g.r.top+g.r.height/2, t0:tQuadro, v:g.r.width*(1.1+.1*k), rgb:txtRgb(COR_DEG[k]), a:.5, w:10});
@@ -7193,11 +7193,11 @@ SONS_ESP.engole=()=>{ const p=ladoE(), f=notaE(1,6);
   tomE({t:.62,f:85,to:36,d:.4,v:.07,lp:300,rev:.7}); };
 // no espaço (fases da Jornada e Clássico) os sons de sempre viram os do espaço; a mina segue com os dela
 const somEsp = () => typeof espacoLigado==='function' && espacoLigado() && typeof S!=='undefined' && !!S && !!(S.missao||S.infinito);
-// Frenesi de ritmo com a trilha tocando: o arrasto, a junção e a peça nova não soam por aqui (a junção toca dentro da
-// música, pela frenesi.js; os sinos em Ré brigariam com o Lá menor da trilha)
+// Frenesi de ritmo com a trilha tocando: nenhum efeito soa por aqui (o arrasto, a junção, o degrau e o erro tocam dentro
+// da música, baixinho e na grade, pela frenesi.js; os sinos em Ré brigariam com o Lá menor da trilha)
 const ritmoMusical = () => typeof FRE_X!=='undefined' && FRE_X.ritmo && !!S?.frenesi && musName==='ritmo' && !!MUS?.toca;
-for(const [k,e] of [['arrastar','arrastar'],['fundir','fundir'],['pagou','vitoria'],['naoDeu','derrota']]){ const velho=SFX[k]; SFX[k]=(...a)=>somEsp()?((k==='arrastar'||k==='fundir')&&ritmoMusical()?undefined:SONS_ESP[e](...a)):velho(...a); }
-for(const k of ['nasce','poucos','racha','nebulosa','estrelas','corrente','degrau','frenesi','cai','acelera','bate','engole','acerto','erro','tique']) SFX[k]=(...a)=>{ if(somEsp() && !(ritmoMusical() && (k==='nasce'||k==='degrau'||k==='frenesi'||k==='acerto'||k==='erro'))) SONS_ESP[k](...a); };
+for(const [k,e] of [['arrastar','arrastar'],['fundir','fundir'],['pagou','vitoria'],['naoDeu','derrota']]){ const velho=SFX[k]; SFX[k]=(...a)=>somEsp()?(ritmoMusical()?undefined:SONS_ESP[e](...a)):velho(...a); }
+for(const k of ['nasce','poucos','racha','nebulosa','estrelas','corrente','degrau','frenesi','cai','acelera','bate','engole','acerto','erro','tique']) SFX[k]=(...a)=>{ if(somEsp() && !ritmoMusical()) SONS_ESP[k](...a); };   // no ritmo, todo som é da música (toca() em eletronica.js)
 SFX.botao=()=>{ if(typeof espTela==='function' && espTela()) SONS_ESP.botao(); };
 
 // Músicas do modo melodia (src/melodia.js): em domínio público, transcritas de memória e conferidas por um segundo
