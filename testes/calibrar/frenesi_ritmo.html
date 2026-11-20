@@ -10,7 +10,7 @@ const [N, M1, FT] = (location.hash.slice(1)||'8').split(':').map(Number);
 const PERFIS=[{nome:'iniciante', p:.6}, {nome:'médio', p:.8}, {nome:'bom', p:.92}, {nome:'craque', p:.98}];
 const ORDEM=['col','lin','tempo','largada','valor','degraus','barra','maior','relogio','coringa','supernova','buraco'];
 f.onload=async()=>{ const w=f.contentWindow, log=[], res={};
- w.eval('sound=false; music=false; window.FRE_SIM=true; window.SIMF=0; freNoTempo=()=>({ok:SIMF===0})');
+ w.eval('sound=false; music=false; localStorage.ptui_ritmo_atraso="0.03"; window.FRE_SIM=true; window.SIMF=0; freNoTempo=()=>({ok:SIMF===0})');
  if(M1) w.eval(`RITMO.meta1=${M1}`); if(FT) w.eval(`RITMO.fator=${FT}`);
  w.eval(ROBO);
  const pausa=()=>new Promise(r=>setTimeout(r,0));
@@ -29,7 +29,7 @@ f.onload=async()=>{ const w=f.contentWindow, log=[], res={};
     const fim=w.eval(`(()=>{ SIMF=${ok?0:.4}; const b=ROBO.escolhe(S.tiles); if(!b) return 1; move(b.dir[0],b.dir[1]); return 0; })()`);
     if(fim) break;
     // o tempo até a próxima nota: a média das notas por compasso do multiplicador atual (112 bpm: compasso de 2,14 s)
-    if(w.eval('S.phase')==='mine') w.eval(`(()=>{ const op=RITMO.notas[S.fre.deg]||RITMO.notas[0], m=op.reduce((a,p)=>a+p.length,0)/op.length; freTempo(240/112/m); })()`);
+    if(w.eval('S.phase')==='mine') w.eval(`(()=>{ const op=RITMO.notas[S.fre.deg]||RITMO.notas[0], m=op.reduce((a,p)=>a+p.length,0)/op.length; freTempo(240/100/m); })()`);
     if(passos%25===0) await pausa();
    }
    const r={rod:w.eval('S.rod.n'), pts:w.eval('S.pontos'), mult:w.eval('S.fre.maxMult'), lado:w.eval('W+"x"+H'), porRod};

@@ -1,4 +1,4 @@
-// Ritmo: a trilha do Frenesi de ritmo (?fregra=ritmo). Lá menor, 112 bpm FIXO (andamento que acelera atrapalha acertar
+// Ritmo: a trilha do Frenesi de ritmo (?fregra=ritmo). Lá menor, 100 bpm FIXO (andamento que acelera atrapalha acertar
 // a batida). A música é do tamanho do combo: começa quase só com o bumbo, bem baixinho, e a cada acerto na batida o jogo
 // manda a intensidade (o combo / 40) e ela ganha volume e instrumentos, um degrau por vez:
 //   0  bumbo nos quatro tempos e um fundo de acordes quase inaudível (só para ouvir onde está o tempo)
@@ -51,7 +51,7 @@ function camadas(B, I, n) {
 }
 
 export const { iniciarMusica, pararMusica, intensidade, acento, batida, toca } = cria({
-  bpm: 112, arranjo, camadas,
+  bpm: 100, arranjo, camadas,
   volume: I => 0.15 + 0.85 * Math.pow(I, 0.8),
   pad: 0.004, padLp: 900,
   arp: ARP[0], arpCada: 1, arpV: 0.02, arpLp: 900,

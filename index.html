@@ -866,7 +866,7 @@ body.rola #stage{touch-action:none}
 <div id="coach" class="hidden"><div class="cav" id="coachAv"></div><div><p id="coachText"></p><button class="btn b" id="coachOk">Ok</button></div></div>
 
 <script>
-const VERSAO="663cfca8";
+const VERSAO="29b438a9";
 // ===================== CONFIG =====================
 let W = 4, H = 4, N = 4;      // largura e altura do tabuleiro (N = maior lado)
 const CFG = {
@@ -5457,10 +5457,10 @@ addEventListener('keydown', e=>{ if(e.key===' ' && S?.frenesi && S.fre?.alvo){ e
 // A trilha (musica/ritmo.js) começa quase muda e cresce com o combo, em volume e instrumentos (cheia no ×4); as junções
 // tocam dentro dela (no acorde e na grade). Sem música, um tique marca o tempo (120 bpm).
 // As metas da rodada são outras (RITMO.meta1, RITMO.fator; testes/calibrar/frenesi_ritmo.html).
-const RITMO={min:[0,10,10,20,20,30,30], x:[1,2,2,3,3,4,4], cheia:30, janela:.13, atraso:.03, meta1:100, fator:1.6,
+const RITMO={min:[0,10,10,20,20,30,30], x:[1,2,2,3,3,4,4], cheia:30, janela:.13, atraso:+(localStorage.ptui_ritmo_atraso||.03), meta1:120, fator:1.9,
   // as notas de cada compasso (passos de semicolcheia, 16 por compasso), sorteadas compasso a compasso conforme o
-  // multiplicador: no ×1 uma nota por compasso (às vezes duas, na metade); depois mais, mas nunca em todo tempo
-  notas:{0:[[0],[0],[0],[0,8]], 2:[[0,8],[0,8],[0],[0,8,12],[0,12]], 4:[[0,8],[0,4,8],[0,8,12],[0,4,12]], 6:[[0,4,8],[0,8,12],[0,4,12],[0,8]]}};
+  // multiplicador: no ×1 uma em cada bumbo (os 4 tempos, 0,6 s a 100 bpm); depois com pausas e contratempos
+  notas:{0:[[0,4,8,12]], 2:[[0,4,8,12],[0,4,8,12],[0,4,8]], 4:[[0,4,8,12],[0,4,8],[0,4,10],[0,6,8,12]], 6:[[0,4,8,12],[0,4,10],[0,6,8,12],[0,4,8,14]]}};
 // a trilha que lê a intensidade (frenesi ou ritmo) e o quanto ela está acesa: no ritmo, o combo (cheia no ×4)
 const musFre = () => (musName==='frenesi' || musName==='ritmo') ? MUS : null;
 const freIntens = k => FRE_X.ritmo ? Math.min(1,(S?.fre?.corr||0)/RITMO.cheia) : k/TOPO;
@@ -5503,6 +5503,43 @@ function freRitmoQuadro(t){
     depois(()=>{ const r=$('#freRit'); if(!r) return; r.getAnimations?.().forEach(a=>a.cancel());
       const fim=Math.max(.05, p.t-(performance.now()/1000-RITMO.atraso)), a=r.animate([{transform:'scale(2.6)',opacity:0},{transform:'scale(1.6)',opacity:.65,offset:.6},{transform:'scale(1)',opacity:1},{transform:'scale(.9)',opacity:0}],{duration:(dur+.15)*1000,easing:'linear'});
       a.currentTime=Math.max(0,(dur-fim))*1000; }); }
+}
+// calibração (ritmo): cada aparelho e cada pessoa têm um atraso entre o som que sai e o arrasto que o jogo lê (o som
+// demora para sair, o dedo arrasta depois de ouvir, o arrasto só vale depois de andar um pouco). Como nos jogos de ritmo
+// (osu!, Crypt of the NecroDancer, Rock Band), a pessoa arrasta junto com 10 batidas do bumbo; o meio-termo dos
+// desvios (sem as 2 primeiras) vira o RITMO.atraso, gravado no aparelho (ptui_ritmo_atraso). Roda sozinha na primeira
+// partida de ritmo; o botão "calibrar" na explicação e ?calibra no endereço repetem.
+const CALIB_N=10;
+function freCalibra(depoisF){
+  const est=S; S.phase='calib'; const d=[];
+  showOverlay(`<h2>Calibrar o tempo</h2><p>Arraste para qualquer lado junto com cada batida do bumbo, como se fosse jogar.</p>
+    <div id="calBola" style="width:84px;height:84px;margin:18px auto;border-radius:50%;border:3px solid #fff;opacity:.35"></div>
+    <p id="calTxt" style="text-align:center;font-weight:700">0 de ${CALIB_N}</p><button class="btn dim" id="calPula">Pular</button>`);
+  FORA=null; abaixar(false);
+  const mus=musFre(); mus?.intensidade?.(.09); if(musBus) musBus.gain.setTargetAtTime((TRIM.ritmo||1)*2.5, AC.currentTime, .1);
+  // o desvio do arrasto de agora para a batida mais próxima (positivo: atrasado)
+  const desvio=()=>{ const b=freBatidaAgora(), seg=60/b.bpm, lat=(AC?.outputLatency||AC?.baseLatency||0), f=((b.fase-lat/seg)%1+1)%1; return (f<.5?f:f-1)*seg; };
+  let p0=null, vivo=true;
+  const conta=()=>{ if(!vivo) return; d.push(desvio()); const t=$('#calTxt'); if(t) t.textContent=`${d.length} de ${CALIB_N}`;
+    $('#calBola')?.animate([{transform:'scale(1.25)',opacity:1},{transform:'scale(1)',opacity:.35}],{duration:200}); if(d.length>=CALIB_N) fim(true); };
+  const dn=e=>{ p0=[e.clientX,e.clientY]; }, mv=e=>{ if(p0 && Math.hypot(e.clientX-p0[0],e.clientY-p0[1])>18){ p0=null; conta(); } }, up=()=>{ p0=null; };
+  const kd=e=>{ if(/^Arrow| /.test(e.key)){ e.preventDefault(); e.stopPropagation(); conta(); } };
+  addEventListener('pointerdown',dn,true); addEventListener('pointermove',mv,true); addEventListener('pointerup',up,true); addEventListener('keydown',kd,true);
+  // a bola pisca em cada batida
+  const pisca=()=>{ if(!vivo) return; const b=freBatidaAgora(); if(b.fase<(pisca.f??1)) $('#calBola')?.animate([{opacity:.9},{opacity:.35}],{duration:180}); pisca.f=b.fase; requestAnimationFrame(pisca); }; pisca();
+  function fim(ok){ vivo=false;
+    removeEventListener('pointerdown',dn,true); removeEventListener('pointermove',mv,true); removeEventListener('pointerup',up,true); removeEventListener('keydown',kd,true);
+    if(musBus) musBus.gain.setTargetAtTime(TRIM.ritmo||1, AC.currentTime, .3);
+    if(ok){ const v=d.slice(2).sort((a,b)=>a-b), m=v[Math.floor(v.length/2)], a=Math.max(-.2,Math.min(.35,m));
+      RITMO.atraso=a; try{ localStorage.ptui_ritmo_atraso=a.toFixed(3); }catch(e){}
+      const disp=v[v.length-2]-v[1];
+      $('#panel').innerHTML=`<h2>Pronto</h2><p>Seu arrasto chega ${Math.abs(Math.round(a*1000))} ms ${a>=0?'depois':'antes'} da batida; o jogo já conta isso.</p>
+        <p style="opacity:.7">${disp<.12?'Bem no ritmo!':disp<.22?'Um pouco solto: tudo bem.':'Bem espalhado: se quiser, calibre de novo.'}</p>
+        <button class="btn g" id="calOk">Jogar</button><button class="btn dim" id="calDe">Calibrar de novo</button>`;
+      $('#calOk').onclick=sai; $('#calDe').onclick=()=>freCalibra(depoisF); }
+    else sai(); }
+  function sai(){ hideOverlay(); if(S===est){ musFre()?.intensidade?.(freIntens()); depoisF(); } }
+  $('#calPula').onclick=e=>{ e.stopPropagation(); fim(false); };
 }
 function freJogadaRitmo(js,t){
   const F=S.fre, R=S.rod, n=js.length, antes=F.deg, b=freNoTempo(), mus=musFre();
@@ -5632,8 +5669,9 @@ function freEntra(){
     <p>Rodadas contra o relógio: faça a meta de pontos antes de o tempo acabar. O tabuleiro começa pequeno e continua de uma rodada para a outra.</p>
     ${FRE_X.ritmo ? '<p>Arraste na batida: quando o anel encontra o círculo. Cada arrasto no tempo enche a barra; cheia, o multiplicador sobe (×2, ×3, ×4). Fora do tempo, volta ao ×1. Quanto maior o combo, mais a música cresce.</p>' : '<p>Junte rápido: cada junção logo depois da outra sobe a corrente, e a corrente multiplica os pontos (×2, ×3, ×5... até ×20).</p>'}
     <p>Bateu a meta: escolha uma carta (tabuleiro maior, mais tempo, bônus...). Acabou o tempo ou encheu o tabuleiro: fim.</p>
-    <button class="btn g" id="frJoga">Jogar</button><button class="btn dim" id="frVolta">Voltar</button>`);
+    <button class="btn g" id="frJoga">Jogar</button>${FRE_X.ritmo?'<button class="btn" id="frCal">Calibrar o tempo</button>':''}<button class="btn dim" id="frVolta">Voltar</button>`);
   $('#frJoga').onclick=()=>{ localStorage.ptui_fre_vi2='1'; frenesiJoga({retoma:true}); };
+  if($('#frCal')) $('#frCal').onclick=()=>{ localStorage.ptui_fre_vi2='1'; localStorage.removeItem('ptui_ritmo_atraso'); frenesiJoga(); };
   $('#frVolta').onclick=fechaJanelaMenu; FORA=fechaJanelaMenu;
 }
 
@@ -5660,6 +5698,7 @@ function frenesiJoga(opt){
   musFre()?.intensidade?.(0);
   if(S.rod.oferta){ S.phase='cartas'; freMostraCartas(); }   // fechou o jogo na escolha das cartas: volta nela
   else if(sv){ freHudRodada(); freTexto(); }                  // continua a rodada de onde parou
+  else if(FRE_X.ritmo && (!localStorage.ptui_ritmo_atraso || /[?&]calibra/.test(location.search))) freCalibra(()=>freRodadaComeca(true));   // primeira vez no ritmo: calibra antes
   else freRodadaComeca(true);
 }
 function freMontaTela(){

@@ -10,7 +10,7 @@ f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEven
  const wait=ms=>new Promise(r=>setTimeout(r,ms));
  const confere=(ok,txt)=>{ log.push((ok?'ok  ':'ERRO ')+txt); if(!ok) errs.push(txt); };
  const arrasta=(n,fase)=>w.eval(`SIMF=${fase}; for(let i=0;i<${n};i++){ S.tiles=[{id:'z'+(++window.__z),x:i%2?2:0,y:0,t:1}]; render(); move(i%2?-1:1,0); }`);
- try{ w.eval('sound=false; music=false; window.__z=0; localStorage.ptui_fre_vi2="1"; localStorage.removeItem("ptui_fre_save"); localStorage.ptui_melodia="ode"');
+ try{ w.eval('sound=false; music=false; window.__z=0; localStorage.ptui_fre_vi2="1"; localStorage.ptui_ritmo_atraso="0.03"; localStorage.removeItem("ptui_fre_save"); localStorage.ptui_melodia="ode"');
   confere(w.eval('FRE_X.ritmo'), 'regra ligada pela URL');
   w.eval('window.SIMF=0; frenesiJoga(); freNoTempo=()=>({ok:SIMF<.11||SIMF>.89, perfeito:false, cedo:SIMF>.5})'); await wait(150);
   confere(w.eval('qualTrilha("mina")')==='ritmo', 'trilha do ritmo: '+w.eval('qualTrilha("mina")'));

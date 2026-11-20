@@ -1,7 +1,7 @@
 // Service worker do 2048 Astros: guarda o jogo no aparelho para ele abrir sem internet e mais rápido, e deixa a página
 // ser instalada como app. Montado pelo build.py, que põe aqui a versão e a lista de arquivos (o sw.js da raiz é gerado: não
 // edite lá). Cada versão nova do jogo muda este arquivo, e o navegador instala o service worker novo, que guarda a versão nova.
-const VERSAO = 'b82c5a9803', CACHE = 'astros-' + VERSAO, FONTES_CACHE = 'astros-fontes';
+const VERSAO = '8a71f4d437', CACHE = 'astros-' + VERSAO, FONTES_CACHE = 'astros-fontes';
 const ARQUIVOS = ["./", "manifest.webmanifest", "icones/icone-192.png", "icones/icone-512.png", "icones/icone-mascara-512.png", "icones/apple-touch-icon.png", "icones/saturno-512.png", "musica/armorial.js", "musica/bossa.js", "musica/eletronica.js", "musica/estacao.js", "musica/frenesi.js", "musica/lofi-espera.js", "musica/lofi-prorroga.js", "musica/lofi-segredo.js", "musica/orbita.js", "musica/pulsar.js", "musica/ritmo.js", "musica/sofrencia-lofi.js"];
 const ESCOPO = new URL(self.registration.scope).pathname;
 const RAIZ = new URL('./', self.registration.scope).href;

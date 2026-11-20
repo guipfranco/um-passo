@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Marcação do ritmo</title>
+<style>
+:root{--bg:#0d0b1c;--card:#171330;--tx:#ece8ff;--mut:#9d96c4;--ac:#ffc861;--ln:#2c2650;--ok:#5dffa2;--erro:#ff5a5a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;touch-action:none;user-select:none}
+main{max-width:520px;margin:0 auto;padding:18px 16px 40px}
+h1{font-size:21px;margin:0 0 4px}
+p{color:var(--mut);margin:0 0 10px}
+.abas{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
+.abas button,.ctl button{font:inherit;font-weight:700;background:#2a2450;color:var(--tx);border:0;border-radius:99px;padding:7px 13px;cursor:pointer}
+.abas button.on{background:var(--ac);color:#241a00}
+canvas{display:block;width:100%;aspect-ratio:9/11;background:#120f26;border-radius:16px;border:1px solid var(--ln)}
+.ctl{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.ctl button.on{outline:2px solid var(--ac)}
+#sobre{background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:12px 14px;margin-top:12px}
+#sobre b{color:var(--ac)}
+#placar{font-weight:700;text-align:center;margin-top:8px;min-height:22px}
+</style>
+</head>
+<body>
+<main>
+<h1>Onde marcar a batida</h1>
+<p>Rascunho do Frenesi de ritmo: o mesmo bumbo a 100 bpm, cinco jeitos de mostrar a hora de arrastar. Toque <b>Tocar</b>, depois arraste (ou use as setas) junto com as notas: o placar diz se foi no tempo. Usa a calibração do jogo, se já tiver feito.</p>
+<div class="abas" id="abas"></div>
+<canvas id="c" width="540" height="660"></canvas>
+<div id="placar"></div>
+<div class="ctl"><button id="toca">▶ Tocar</button><button data-p="1" class="on">×1: todo bumbo</button><button data-p="4">×4: com pausas</button></div>
+<div id="sobre"></div>
+</main>
+<script>
+// as notas de cada compasso, iguais às do jogo (RITMO.notas em src/frenesi.js): passos de semicolcheia
+const PADROES={1:[[0,4,8,12]], 4:[[0,4,8,12],[0,4,10],[0,6,8,12],[0,4,8,14]]};
+const BPM=100, SEG=60/BPM, BAR=4*SEG, JANELA=.13;
+let ATRASO=.03; try{ const a=+localStorage.ptui_ritmo_atraso; if(isFinite(a) && localStorage.ptui_ritmo_atraso) ATRASO=a; }catch(e){}
+const FORMATOS=[
+ {id:'anel', nome:'Anel', de:'osu!', txt:'<b>O de agora.</b> Um anel fecha sobre um círculo fixo e acerta na hora da nota. Dá a hora exata, mas mostra uma nota de cada vez: a pausa e o contratempo só aparecem quando chegam, e o olho sai do tabuleiro para o canto do multiplicador.'},
+ {id:'trilha', nome:'Trilha', de:'Taiko, Guitar Hero', txt:'<b>Notas correndo numa faixa</b> acima do tabuleiro até um alvo. Mostra as próximas notas (umas 2 s à frente): a pausa e o contratempo aparecem antes de chegar, como no Guitar Hero. É o formato mais conhecido; custa uma faixa a mais na tela.'},
+ {id:'barras', nome:'Barras', de:'Crypt of the NecroDancer, Hi-Fi Rush', txt:'<b>Traços vindo dos dois lados</b> até um coração no meio, embaixo do tabuleiro. Mostra várias notas à frente e o coração pulsa no tempo. Simétrico e discreto: é o que o NecroDancer usa para um jogo de mover peças numa grade, o mais perto do nosso.'},
+ {id:'borda', nome:'Borda', de:'(nosso)', txt:'<b>A luz corre pela borda do tabuleiro</b> e fecha a volta na hora da nota (cada nota é uma luz). O olho fica no tabuleiro, onde a jogada acontece. Mais difícil de ler a hora exata do que o anel ou a trilha.'},
+ {id:'pulso', nome:'Pulso', de:'Hi-Fi Rush, Patapon', txt:'<b>O próprio tabuleiro respira:</b> as casas encolhem e voltam na batida, e a nota que vem acende as casas de fora para dentro. Bonito e sem nada a mais na tela, mas a antecipação é fraca: serve melhor como reforço de outro formato do que sozinho.'},
+];
+let atual='trilha', padrao=1, ac=null, t0=0, notas=[], tocando=false, fb=[], acertos=0, erros=0;
+const cv=document.getElementById('c'), g=cv.getContext('2d'), W=cv.width, H=cv.height;
+// som: bumbo em todo tempo e um chimbal baixinho no contratempo; a nota acertada toca um sino
+function bumbo(T){ const o=ac.createOscillator(), v=ac.createGain(); o.frequency.setValueAtTime(130,T); o.frequency.exponentialRampToValueAtTime(44,T+.22);
+  v.gain.setValueAtTime(.0001,T); v.gain.exponentialRampToValueAtTime(.5,T+.005); v.gain.exponentialRampToValueAtTime(.0001,T+.25); o.connect(v); v.connect(ac.destination); o.start(T); o.stop(T+.3); }
+function sino(f,v=.12){ const T=ac.currentTime, o=ac.createOscillator(), m=ac.createOscillator(), mg=ac.createGain(), gg=ac.createGain(); o.frequency.value=f; m.frequency.value=f*2; mg.gain.value=f;
+  m.connect(mg); mg.connect(o.frequency); gg.gain.setValueAtTime(.0001,T); gg.gain.exponentialRampToValueAtTime(v,T+.004); gg.gain.exponentialRampToValueAtTime(.0001,T+.35); o.connect(gg); gg.connect(ac.destination); o.start(T); m.start(T); o.stop(T+.4); m.stop(T+.4); }
+let prox=0, compasso=0;
+function agenda(){ if(!tocando) return; const fim=ac.currentTime+.4;
+  while(prox<fim){ bumbo(prox); const k=Math.round((prox-t0)/SEG);
+    if(k%4===0){ const op=PADROES[padrao], p=op[(compasso++*7919)%op.length]; for(const st of p) notas.push({t:prox+st/16*BAR}); }
+    prox+=SEG; }
+  setTimeout(agenda,60); }
+function toca(){
+  if(!ac) ac=new (window.AudioContext||window.webkitAudioContext)(); ac.resume();
+  if(tocando){ tocando=false; document.getElementById('toca').textContent='▶ Tocar'; return; }
+  tocando=true; t0=prox=ac.currentTime+.6; compasso=0; notas=[]; acertos=erros=0; agenda(); document.getElementById('toca').textContent='■ Parar';
+}
+// "agora" no relógio do som, como se ouve (desconta a saída do som)
+const ouvido=()=>ac ? ac.currentTime-(ac.outputLatency||ac.baseLatency||0) : 0;
+function arrasto(){
+  if(!tocando) return; const t=ouvido()-ATRASO; let m=null, e=9;
+  for(const n of notas) if(!n.ok && !n.perdida && Math.abs(n.t-t)<e){ e=Math.abs(n.t-t); m=n; }
+  if(m && e<=JANELA){ m.ok=true; acertos++; fb.push({t:ouvido(), ok:true, txt:e<.05?'na nota!':'ok'}); sino(880); }
+  else { erros++; fb.push({t:ouvido(), ok:false, txt:m&&t<m.t?'cedo':'atrasou'}); }
+  placar();
+}
+function placar(){ document.getElementById('placar').textContent = tocando||acertos+erros ? `${acertos} no tempo · ${erros} fora · calibração ${Math.round(ATRASO*1000)} ms` : ''; }
+// arrasto: como no jogo, vale quando o dedo anda uns 18 px
+let p0=null;
+cv.addEventListener('pointerdown',e=>{ p0=[e.clientX,e.clientY]; });
+addEventListener('pointermove',e=>{ if(p0 && Math.hypot(e.clientX-p0[0],e.clientY-p0[1])>18){ p0=null; arrasto(); } });
+addEventListener('pointerup',()=>{ p0=null; });
+addEventListener('keydown',e=>{ if(/^Arrow| /.test(e.key)){ e.preventDefault(); arrasto(); } });
+
+// ---------- desenho ----------
+const COR='#5dffa2', BR='rgba(255,255,255,';
+const TAB={x:W*.17, y:H*.28, l:W*.66};   // o tabuleiro 3x3 de mentira
+function tabuleiro(enc=0, acesas=null){
+  const {x,y,l}=TAB, c=l/3;
+  g.fillStyle='rgba(255,255,255,.04)'; g.fillRect(x,y,l,l);
+  for(let i=0;i<3;i++) for(let j=0;j<3;j++){ const s=c*.84*(1-enc), cx=x+c*(i+.5), cy=y+c*(j+.5);
+    g.fillStyle = acesas && acesas(i,j) ? 'rgba(93,255,162,.25)' : 'rgba(255,255,255,.06)'; rr(cx-s/2,cy-s/2,s,s,s*.18); g.fill(); }
+  const pecas=[[0,0,'#c9b38a'],[1,0,'#9fd8ff'],[2,1,'#c9b38a'],[0,2,'#e08a4a'],[1,2,'#9fd8ff']];
+  for(const [i,j,cor] of pecas){ g.fillStyle=cor; g.beginPath(); g.arc(x+c*(i+.5),y+c*(j+.5),c*.17*(1-enc*.5),0,7); g.fill(); }
+}
+function rr(x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); }
+function hud(){ g.fillStyle='#fff'; g.font='900 44px system-ui'; g.textAlign='left'; g.fillText('×1',W*.08,H*.16); }
+const vindo=t=>notas.filter(n=>!n.ok && !n.perdida && n.t>t-.08 && n.t<t+2.2);
+function quadro(){
+  requestAnimationFrame(quadro);
+  const t=ouvido();
+  for(const n of notas) if(!n.ok && !n.perdida && n.t<t-ATRASO-JANELA){ n.perdida=true; if(tocando){ erros++; fb.push({t, ok:false, txt:'perdeu'}); placar(); } }
+  notas=notas.filter(n=>n.t>t-3);
+  g.clearRect(0,0,W,H);
+  const fase=tocando?(((t-t0)/SEG)%1+1)%1:.5, batida=Math.pow(1-fase,4);
+  FORM[atual](t,batida);
+  const f=fb[fb.length-1]; if(f && t-f.t<.5){ g.globalAlpha=1-(t-f.t)/.5; g.fillStyle=f.ok?COR:'#ff5a5a'; g.font='800 30px system-ui'; g.textAlign='center'; g.fillText(f.txt,W*.7,H*.15); g.globalAlpha=1; }
+  if(!tocando){ g.fillStyle='rgba(255,255,255,.5)'; g.font='600 20px system-ui'; g.textAlign='center'; g.fillText('toque em ▶ Tocar',W/2,H*.98); }
+}
+const FORM={
+  anel(t,b){ tabuleiro(); hud(); const cx=W*.17, cy=H*.145, r=44;
+    g.lineWidth=3; g.strokeStyle=BR+(.45+.5*b)+')'; g.beginPath(); g.arc(cx,cy,r,0,7); g.stroke();
+    const n=vindo(t)[0]; if(n){ const d=n.t-t, ant=Math.max(SEG*.9,.3), k=Math.max(0,d/ant);
+      if(k<1){ g.strokeStyle=COR; g.globalAlpha=Math.min(1,(1-k)*1.6); g.lineWidth=4; g.beginPath(); g.arc(cx,cy,r*(1+1.6*k),0,7); g.stroke(); g.globalAlpha=1; } } },
+  trilha(t,b){ tabuleiro(); hud(); const y=H*.215, x0=W*.12, x1=W*.92, vel=(x1-x0)/2;
+    g.strokeStyle=BR+'.12)'; g.lineWidth=26; g.lineCap='round'; g.beginPath(); g.moveTo(x0,y); g.lineTo(x1,y); g.stroke();
+    g.lineWidth=3; g.strokeStyle=BR+(.5+.5*b)+')'; g.beginPath(); g.arc(x0,y,20+4*b,0,7); g.stroke();
+    for(const n of vindo(t)){ const x=x0+(n.t-t)*vel; if(x>x1) continue; g.fillStyle=COR; g.beginPath(); g.arc(Math.max(x0-8,x),y,12,0,7); g.fill(); } },
+  barras(t,b){ tabuleiro(); hud(); const y=H*.9, cx=W/2, vel=W*.42/1.6;
+    for(const n of vindo(t)){ const d=(n.t-t)*vel; if(d>W*.44) continue; g.fillStyle=COR; g.globalAlpha=Math.min(1,1.3-d/(W*.44));
+      for(const s of [-1,1]) { g.fillRect(cx+s*Math.max(0,d)-4,y-18,8,36); } g.globalAlpha=1; }
+    const s=1+.25*b; g.fillStyle='#ff6b8a'; g.save(); g.translate(cx,y); g.scale(s,s); g.beginPath(); g.moveTo(0,10); g.bezierCurveTo(-26,-8,-12,-26,0,-12); g.bezierCurveTo(12,-26,26,-8,0,10); g.fill(); g.restore(); },
+  borda(t,b){ tabuleiro(); hud(); const {x,y,l}=TAB, per=4*l, pt=s=>{ s=((s%per)+per)%per; if(s<l) return [x+s,y]; if(s<2*l) return [x+l,y+s-l]; if(s<3*l) return [x+3*l-s,y+l]; return [x,y+4*l-s]; };
+    g.strokeStyle=BR+(.15+.5*b)+')'; g.lineWidth=3; g.strokeRect(x,y,l,l);
+    const n=vindo(t)[0]; if(n){ const d=Math.max(0,n.t-t), ant=Math.max(SEG*.9,.3), k=Math.min(1,d/ant);
+      g.strokeStyle=COR; g.lineWidth=6; g.lineCap='round'; g.globalAlpha=Math.min(1,(1-k)*1.5); g.beginPath(); const s0=per*(1-k);
+      for(let s=0;s<=per*(1-k);s+=8){ const [px,py]=pt(s); s?g.lineTo(px,py):g.moveTo(px,py); } g.stroke(); g.globalAlpha=1; } },
+  pulso(t,b){ const n=vindo(t)[0], d=n?Math.max(0,n.t-t):9, k=Math.min(1,d/(SEG*.9));
+    tabuleiro(.12*b, (i,j)=>{ const anel=Math.max(Math.abs(i-1),Math.abs(j-1)); return d<SEG*.9 && (anel===1 ? k<.66 : k<.2); }); hud(); },
+};
+// abas e botões
+const abas=document.getElementById('abas');
+for(const f of FORMATOS){ const b=document.createElement('button'); b.textContent=f.nome; b.dataset.f=f.id; b.onclick=()=>escolhe(f.id); abas.appendChild(b); }
+function escolhe(id){ atual=id; const f=FORMATOS.find(x=>x.id===id); document.querySelectorAll('#abas button').forEach(b=>b.classList.toggle('on',b.dataset.f===id));
+  document.getElementById('sobre').innerHTML=`<div style="opacity:.7;font-size:13px">como em ${f.de}</div>${f.txt}`; }
+document.getElementById('toca').onclick=toca;
+document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{ padrao=+b.dataset.p; document.querySelectorAll('[data-p]').forEach(x=>x.classList.toggle('on',x===b)); });
+escolhe('trilha'); quadro();
+</script>
+</body>
+</html>
