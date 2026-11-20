@@ -4,7 +4,7 @@
 <script>
 // Frenesi de ritmo (?fregra=ritmo), estilo Guitar Hero: o arrasto na batida soma 1 no combo (junte ou não) e enche a
 // barra; 10 acertos sobem o multiplicador (×1, ×2, ×3, ×4, e para no ×4); fora do tempo, o combo zera e volta ao ×1;
-// ficar parado não quebra; a trilha é a do ritmo e a intensidade segue o combo; o círculo fixo e o anel aparecem; as
+// nota que passa sem arrasto também zera; as notas são geradas um compasso à frente; a trilha é a do ritmo e a intensidade segue o combo; o círculo fixo e o anel aparecem; as
 // metas são as do ritmo; a melodia por jogada fica de fora.
 f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEventListener('error',e=>errs.push(e.message+' @'+e.lineno));w.addEventListener('unhandledrejection',e=>errs.push('rej '+e.reason));
  const wait=ms=>new Promise(r=>setTimeout(r,ms));
@@ -12,7 +12,7 @@ f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEven
  const arrasta=(n,fase)=>w.eval(`SIMF=${fase}; for(let i=0;i<${n};i++){ S.tiles=[{id:'z'+(++window.__z),x:i%2?2:0,y:0,t:1}]; render(); move(i%2?-1:1,0); }`);
  try{ w.eval('sound=false; music=false; window.__z=0; localStorage.ptui_fre_vi2="1"; localStorage.removeItem("ptui_fre_save"); localStorage.ptui_melodia="ode"');
   confere(w.eval('FRE_X.ritmo'), 'regra ligada pela URL');
-  w.eval('window.SIMF=0; freBatidaAgora=()=>({fase:SIMF, bpm:120}); RITMO.atraso=0; frenesiJoga()'); await wait(150);
+  w.eval('window.SIMF=0; frenesiJoga(); freNoTempo=()=>({ok:SIMF<.11||SIMF>.89, perfeito:false, cedo:SIMF>.5})'); await wait(150);
   confere(w.eval('qualTrilha("mina")')==='ritmo', 'trilha do ritmo: '+w.eval('qualTrilha("mina")'));
   confere(w.eval('S.rod.meta')===w.eval('RITMO.meta1') && d.body.classList.contains('freRitmo') && !!d.getElementById('freRit') && !!d.getElementById('freRitC'), `começa: meta ${w.eval('S.rod.meta')}, círculo e anel`);
   confere(!w.eval('melLigada()'), 'melodia por jogada fica de fora');
@@ -22,11 +22,15 @@ f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEven
   const fr=d.querySelector('#freTempo i').style.transform;
   confere(w.eval('S.fre.corr')===9 && w.eval('multDe(S.fre.deg)')===1 && /0\.9/.test(fr), `9 acertos: ainda ×1, barra ${fr}`);
   arrasta(1,.98);
-  confere(w.eval('multDe(S.fre.deg)')===2 && w.eval('freIntens()')===10/40, `10 acertos: ${w.eval('xTxt(S.fre.deg)')}, intensidade ${w.eval('freIntens()')}`);
+  confere(w.eval('multDe(S.fre.deg)')===2 && w.eval('freIntens()')===10/30, `10 acertos: ${w.eval('xTxt(S.fre.deg)')}, intensidade ${w.eval('freIntens()')}`);
   w.eval(`S.rod.pts=0; SIMF=0; S.tiles=[{id:'d1',x:0,y:1,t:2},{id:'d2',x:1,y:1,t:2}]; render(); move(-1,0)`);
   confere(w.eval('S.rod.pts')===w.eval('VAL(3)')*2, `junção no ×2 vale o dobro: ${w.eval('S.rod.pts')}`);
   w.eval('freTempo(8)');
-  confere(w.eval('S.fre.corr')===11, 'parado 8 s não quebra o combo: '+w.eval('S.fre.corr'));
+  confere(w.eval('S.fre.corr')===11, 'o relógio andando sozinho não quebra o combo: '+w.eval('S.fre.corr'));
+  w.eval('FV.notas=[{c:-9, t:performance.now()/1000-1}]; freRitmoQuadro(tQuadro||performance.now()/1000)');
+  confere(w.eval('S.fre.corr')===0 && w.eval('multDe(S.fre.deg)')===1, 'nota que passou sem arrasto: combo zera · '+d.getElementById('freTxt').textContent);
+  confere(w.eval('FV.notas.length')>0 && w.eval('FV.notas.every(n=>n.t>performance.now()/1000-3)'), 'notas geradas à frente: '+w.eval('FV.notas.length'));
+  arrasta(11,0);
   arrasta(1,.4);
   confere(w.eval('S.fre.corr')===0 && w.eval('multDe(S.fre.deg)')===1, 'fora do tempo: combo zera e volta ao ×1 · '+d.getElementById('freTxt').textContent);
   arrasta(35,0); w.eval('frePinta(tQuadro)');
