@@ -41,7 +41,7 @@ button.g{background:#ffc861;color:#241a00}
 <body>
 <main>
 <h1>Ritmo: você toca</h1>
-<p>A música do Clássico, como no Guitar Hero: cada toque é uma nota do baixo, no ritmo dele. Toque (ou aperte qualquer tecla) quando os traços encostarem na barra do meio. No ×1 só os acordes de fundo te acompanham; a cada multiplicador a banda ganha uma parte, e no ×4 a música está completa.</p>
+<p>A música do Clássico, como no Guitar Hero: você toca a melodia (o tema lento da Pulsar, de notas longas). Toque (ou aperte qualquer tecla) quando os traços encostarem na barra do meio; o rastro mostra quanto a nota dura. No ×1 só os acordes de fundo te acompanham; a cada multiplicador a banda ganha uma parte, e no ×4 a música está completa.</p>
 <div id="degraus"></div>
 <div id="hud"><div id="mult" class="x1">×1</div><div id="info"><div id="txt">toque em começar</div><div id="casas"><i></i><i></i><i></i></div></div></div>
 <div id="area">
@@ -54,37 +54,36 @@ button.g{background:#ffc861;color:#241a00}
 </main>
 <script type="module">
 // Versão "você toca" do treino de ritmo: a música é a Pulsar (a do Clássico, musica/pulsar.js), tocada pelo mesmo motor
-// do jogo (musica/eletronica.js), com as camadas ligadas e desligadas ao vivo (opc.mudo). O baixo dela NÃO toca
-// sozinho: cada toque na nota é uma nota do baixo (o ritmo 3+3+2 da Pulsar, com as notas e o timbre dela). Perdeu a
-// nota: ela falta na música. (Antes era o arpejo, em semicolcheias: frenético demais.) A banda entra aos poucos, presa
-// ao multiplicador, e para no ×4:
-//   ×1  acordes de fundo (discretos)   ×2  + bateria   ×3  + arpejo   ×4  + melodia
+// do jogo (musica/eletronica.js), com as camadas ligadas e desligadas ao vivo (opc.mudo). A melodia dela NÃO toca
+// sozinho: cada toque na nota é uma nota da melodia, com a altura, a duração e o timbre da Pulsar. Perdeu a nota: ela
+// falta na música. O tema é o "Órbita lenta" (TEMAS[1] de musica/pulsar.js: poucas notas, longas, 2 ou 3 por
+// compasso), em roda de 8 compassos. (Já foi o arpejo, frenético demais, e o baixo, difícil de ouvir.) A banda entra
+// aos poucos, presa ao multiplicador, e para no ×4:
+//   ×1  acordes de fundo (discretos)   ×2  + bateria   ×3  + baixo   ×4  + arpejo
 // Na barra, os traços vêm das pontas até uma barra fixa no meio, do mesmo formato: a hora é quando encostam nela.
-// O arranjo é fixo, em roda de 16 compassos (8 com o tema "Pulso" e 8 com uma frase sorteada), para ter melodia sempre.
 // Mesmas regras do Frenesi de ritmo: 3 acertos por multiplicador; fora da nota ou nota perdida volta ao ×1.
 // Calibração gravada em ptui_ritmo_atraso (a mesma do jogo).
 import * as PUL from './musica/pulsar.js';
 import { sorteio } from './musica/eletronica.js';
 const JANELA=.1, VER=1.7, MIN=[0,3,6,9];
 const COR=['#a9b8ff','#4fe3ff','#5dffa2','#ffd84a'];
-const BANDA=['acordes','+ bateria','+ arpejo','+ melodia'];
+const BANDA=['acordes','+ bateria','+ baixo','+ arpejo'];
 const mtof=m=>440*Math.pow(2,(m-69)/12);
 let atraso=.03; try{ if(localStorage.ptui_ritmo_atraso) atraso=+localStorage.ptui_ritmo_atraso; }catch(e){}
 const $=s=>document.querySelector(s);
 let ac=null, dest=null, eco=null, rodando=false, calib=null, ult=null, P=60/112/4;
 let passos=new Map(), notas=[], combo=0, k=0, maior=0, acertos=0, erros=0, fb=null;
-const mudo={baixo:true, arpejo:true, bateria:true, acordes:false, melodia:true};
-const camadas=()=>{ mudo.bateria=k<1; mudo.arpejo=k<2; mudo.melodia=k<3; dest.gain.setTargetAtTime([1.15,1.3,1.4,1.45][k], ac.currentTime, .3); };
+const mudo={baixo:true, arpejo:true, bateria:true, acordes:false, melodia:true};   // a melodia é de quem joga
+const camadas=()=>{ mudo.bateria=k<1; mudo.baixo=k<2; mudo.arpejo=k<3; dest.gain.setTargetAtTime([1.15,1.3,1.4,1.45][k], ac.currentTime, .3); };
 
-// a roda de compassos: o tema "Pulso" (8) e uma frase sorteada sobre a sequência B (8)
+// a roda de compassos: o tema lento "Órbita lenta", 8 compassos
 const rnd=sorteio(7);
-const RODA=[...PUL.montaParte('A',{tema:PUL.TEMAS[0]},0,rnd), ...PUL.montaParte('B',{seq:PUL.OPCOES.SEQ_B[0], arp:3, mot:PUL.motivo(rnd)},0,rnd)];
+const RODA=PUL.montaParte('A',{tema:PUL.TEMAS[1]},0,rnd);
 
 const barraDe = s => ({...PUL.PADRAO, ...RODA[Math.floor(s/16)%RODA.length]});
 function notaDe(s){
-  const B=barraDe(s), st=s%16; if(B.corte!=null && st>=B.corte) return null;
-  const kb=(B.baixo||[]).indexOf(st); if(kb<0) return null;   // passo sem nota de baixo
-  return {m:B.raiz+(B.baixoNotas?B.baixoNotas[kb]:0), B};
+  const B=barraDe(s), nm=B.mel&&B.mel[s%16]; if(!nm) return null;   // passo sem nota de melodia
+  return {m:nm[0], dur:nm[1], B};
 }
 function monta(){
   ac=new (window.AudioContext||window.webkitAudioContext)();
@@ -92,12 +91,12 @@ function monta(){
   eco=ac.createDelay(1); eco.delayTime.value=60/112*.75; const fbk=ac.createGain(), lp=ac.createBiquadFilter(), ret=ac.createGain();
   fbk.gain.value=.34; lp.type='lowpass'; lp.frequency.value=2400; ret.gain.value=.45; eco.connect(lp); lp.connect(fbk); fbk.connect(eco); lp.connect(ret); ret.connect(dest);
 }
-// uma nota do baixo, como o motor toca (eletronica.js), um pouco mais alta: é o instrumento de quem joga
-function notaBaixo(T,B,m){
-  const o=ac.createOscillator(), fl=ac.createBiquadFilter(), g=ac.createGain(), d=B.baixoDur||.26, v=(B.baixoV||.07)*1.4;
-  o.type='sawtooth'; o.frequency.value=mtof(m); fl.frequency.value=420;
-  g.gain.setValueAtTime(0,0); g.gain.setValueAtTime(.0001,T); g.gain.exponentialRampToValueAtTime(v,T+.005); g.gain.exponentialRampToValueAtTime(.0001,T+.005+d);
-  o.connect(fl); fl.connect(g); g.connect(dest); o.start(T); o.stop(T+d+.1);
+// uma nota da melodia, como o motor toca (eletronica.js), um pouco mais alta: é o instrumento de quem joga
+function notaMel(T,B,m,dur){
+  const o=ac.createOscillator(), fl=ac.createBiquadFilter(), g=ac.createGain(), d=dur*P*.9, v=(B.melV||.04)*1.3;
+  o.type=B.melOnda||'triangle'; o.frequency.value=mtof(m); fl.frequency.value=B.melLp||3600;
+  g.gain.setValueAtTime(0,0); g.gain.setValueAtTime(.0001,T); g.gain.exponentialRampToValueAtTime(v,T+.012); g.gain.exponentialRampToValueAtTime(.0001,T+.012+d);
+  o.connect(fl); fl.connect(g); g.connect(dest); const e=ac.createGain(); e.gain.value=.3; g.connect(e); e.connect(eco); o.start(T); o.stop(T+d+.1);
 }
 
 async function comeca(){
@@ -121,7 +120,7 @@ function arrasto(){
   let m=null, e=9; for(const n of notas) if(!n.ok && !n.perdida && Math.abs(n.T-t)<e){ e=Math.abs(n.T-t); m=n; }
   if(calib){ if(m){ calib.push(t-m.T); m.ok=true; } fb={t:performance.now()/1000,ok:true}; return fimCalib(); }
     if(m && e<=JANELA){ m.ok=true; acertos++; combo++; maior=Math.max(maior,combo);
-    if(m.B) notaBaixo(Math.max(m.T,agora),m.B,m.m);   // a nota do baixo, na hora dela (ou já, se o toque veio depois)
+    if(m.B) notaMel(Math.max(m.T,agora),m.B,m.m,m.dur);   // a nota da melodia, na hora dela (ou já, se o toque veio depois)
     const k0=k; k=combo>=9?3:combo>=6?2:combo>=3?1:0; if(k!==k0){ camadas(); texto('×'+(k+1)+'! entra '+BANDA[k].replace('+ ','')); } else texto(e<=JANELA*.45?'na nota!':'ok');
     fb={t:performance.now()/1000,ok:true}; }
   else { erros++; quebra(m && t<m.T ? 'cedo demais' : 'atrasou'); }
@@ -135,7 +134,7 @@ function pinta(){
   const f = k===3 ? 3 : combo-MIN[k]; document.querySelectorAll('#casas i').forEach((c,i)=>c.classList.toggle('on',i<f));
   $('#combo').firstChild.textContent=combo;
   document.querySelectorAll('#degraus div').forEach((d,i)=>d.classList.toggle('on',i<=k && rodando));
-  $('#toca').innerHTML = rodando ? (calib ? 'calibrando: toque junto com cada traço' : 'você toca <b>o baixo</b>: cada traço é uma nota') : '';
+  $('#toca').innerHTML = rodando ? (calib ? 'calibrando: toque junto com cada traço' : 'você toca <b>a melodia</b>: cada traço é uma nota') : '';
   $('#placar').textContent = calib ? `calibrando: ${calib.length} de 10` : acertos+erros ? `${acertos} na nota · ${erros} fora · maior combo ${maior} · calibração ${Math.round(atraso*1000)} ms` : '';
 }
 $('#degraus').innerHTML=COR.map((c,i)=>`<div style="--c:${c}"><b>×${i+1}</b><small>${BANDA[i]}</small></div>`).join('');
@@ -164,7 +163,8 @@ function quadro(){
     const gr=g.createLinearGradient(0,0,W,0); gr.addColorStop(0,'rgba(255,255,255,0)'); gr.addColorStop(.5,'rgba(255,255,255,.16)'); gr.addColorStop(1,'rgba(255,255,255,0)');
     g.fillStyle=gr; g.fillRect(0,cy-2,W,4);
     for(const n of notas){ if(n.ok||n.perdida) continue; const d=n.T-ouv; if(d<-.05||d>VER) continue; const x=Math.max(0,d)/VER*meio;
-      g.globalAlpha=Math.min(1,(1-d/VER)*2.2); g.fillStyle=calib?'#fff':COR[k]; for(const s of [-1,1]) g.fillRect(cx+s*x-4,cy-22,8,44); }
+      g.globalAlpha=Math.min(1,(1-d/VER)*2.2); g.fillStyle=calib?'#fff':COR[k]; const rab=Math.min(W/2,(n.dur||1)*P/VER*meio); g.globalAlpha*=.35; for(const s of [-1,1]) g.fillRect(s<0?cx-x-rab:cx+x,cy-5,rab,10); g.globalAlpha/=.35;
+      for(const s of [-1,1]) g.fillRect(cx+s*x-4,cy-22,8,44); }
     g.globalAlpha=1; }
   // a barra do meio: o alvo, do mesmo formato dos traços; pulsa no tempo, acende verde no acerto e vermelha no erro
   const fa=fb?agora-fb.t:9, acende=fa<.22, cor=acende?(fb.ok?'#5dffa2':'#ff5a5a'):'#ffffff';
