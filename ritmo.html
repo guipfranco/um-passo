@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Treino de ritmo</title>
+<style>
+:root{--bg:#0b0a18;--tx:#ece8ff;--mut:#9d96c4;--fc:#a9b8ff}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:radial-gradient(80% 60% at 50% 35%,#1d1640,var(--bg));color:var(--tx);font:15px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden}
+main{max-width:460px;height:100%;margin:0 auto;padding:18px 16px;display:flex;flex-direction:column}
+h1{font-size:19px;margin:0}
+p{color:var(--mut);margin:4px 0 0;font-size:14px}
+#hud{display:flex;align-items:center;gap:14px;margin-top:22px}
+#mult{min-width:86px;text-align:center;font:900 44px/1 system-ui,sans-serif;color:#fff;text-shadow:0 0 10px var(--fc),0 0 26px var(--fc)}
+#mult.x1{color:#b9b4e0;text-shadow:none;opacity:.6}
+#info{flex:1}
+#txt{font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:13px;min-height:18px}
+#casas{display:flex;gap:4px;margin-top:6px}
+#casas i{flex:1;height:12px;border-radius:4px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);transition:background .15s}
+#casas i.on{background:var(--fc);box-shadow:0 0 10px var(--fc)}
+#area{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px}
+#combo{font:900 64px/1 system-ui,sans-serif;opacity:.9}
+#combo small{display:block;text-align:center;font-size:13px;font-weight:700;color:var(--mut);letter-spacing:.1em}
+canvas{width:100%;height:auto;aspect-ratio:440/70}
+#placar{text-align:center;color:var(--mut);font-size:13px;min-height:18px}
+.bts{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:6px}
+button{font:inherit;font-weight:700;background:#2a2450;color:var(--tx);border:0;border-radius:99px;padding:9px 16px;cursor:pointer}
+button.g{background:#ffc861;color:#241a00}
+</style>
+</head>
+<body>
+<main>
+<h1>Treino de ritmo</h1>
+<p>Só a música, a barra e o arrasto do Frenesi de ritmo. Arraste para qualquer lado (ou aperte uma seta) quando os traços chegarem no coração. Qualquer arrasto conta.</p>
+<div id="hud"><div id="mult" class="x1">×1</div><div id="info"><div id="txt">toque em começar</div><div id="casas"><i></i><i></i><i></i></div></div></div>
+<div id="area">
+  <div id="combo">0<small>COMBO</small></div>
+  <canvas id="bar" width="440" height="70"></canvas>
+  <div id="placar"></div>
+</div>
+<div class="bts"><button class="g" id="vai">▶ Começar</button><button id="cal">Calibrar</button></div>
+</main>
+<script type="module">
+// As mesmas regras do Frenesi de ritmo (RITMO em src/frenesi.js) e a mesma trilha (musica/ritmo.js), sem o tabuleiro:
+// notas em cada bumbo no ×1, pausas e contratempos acima; 3 acertos por multiplicador; fora da nota, ou nota perdida,
+// volta ao ×1; a música cresce com o combo (cheia em 30); o arrasto toca dentro da música. Usa a calibração do jogo
+// (ptui_ritmo_atraso, do mesmo endereço) e o botão Calibrar refaz aqui mesmo.
+const RITMO={min:[0,3,3,6,6,9,9], x:[1,2,2,3,3,4,4], cheia:30, janela:.13,
+  notas:{0:[[0,4,8,12]], 2:[[0,4,8,12],[0,4,8,12],[0,4,8]], 4:[[0,4,8,12],[0,4,8],[0,4,10],[0,6,8,12]], 6:[[0,4,8,12],[0,4,10],[0,6,8,12],[0,4,8,14]]}};
+const COR=['#a9b8ff','#4fe3ff','#5dffa2','#ffd84a','#ff8f2e','#ff4fc8','#d9a8ff'];
+let atraso=.03; try{ if(localStorage.ptui_ritmo_atraso) atraso=+localStorage.ptui_ritmo_atraso; }catch(e){}
+const $=s=>document.querySelector(s);
+let ac=null, M=null, rodando=false, notas=[], combo=0, deg=0, maior=0, acertos=0, erros=0, fb=null, calib=null;
+const lat=()=>ac?(ac.outputLatency||ac.baseLatency||0):0;
+const degDe=c=>{ let k=0; while(k<6 && c>=RITMO.min[k+1]) k++; return k; };
+const hash=k=>{ let h=(k*2654435761)>>>0; h^=h>>>15; return Math.imul(h,2246822519)>>>0; };
+
+async function comeca(){
+  if(!ac) ac=new (window.AudioContext||window.webkitAudioContext)(); await ac.resume();
+  if(!M){ M=await import('./musica/ritmo.js'); const g=ac.createGain(); g.gain.value=1.1; g.connect(ac.destination); M.iniciarMusica(ac,g); }
+  rodando=true; notas=[]; combo=0; deg=0; acertos=erros=0; M.intensidade(0); pinta(); texto('arraste quando os traços chegarem no coração');
+  $('#vai').textContent='■ Parar';
+}
+function para(){ rodando=false; M?.pararMusica(.6); M=null; $('#vai').textContent='▶ Começar'; texto('parado'); }
+$('#vai').onclick=()=> rodando||calib ? (calib=null, para()) : comeca();
+
+// as notas: um compasso à frente, no relógio da página, na hora em que se ouvem (igual a freNotas)
+function geraNotas(t){
+  const b=M?.batida(); if(!b) return; const bar=240/b.bpm, ini=t-b.compasso*bar+lat(), id=Math.round(ini/bar);
+  for(const k of [id,id+1]){ if(notas.some(n=>n.c===k)) continue;
+    const op=calib ? [[0,4,8,12]] : (RITMO.notas[deg]||RITMO.notas[0]), p=op[hash(k)%op.length];
+    for(const st of p) notas.push({c:k, t:ini+(k-id)*bar+st/16*bar}); }
+  notas=notas.filter(n=>n.t>t-2).sort((a,b)=>a.t-b.t);
+}
+function arrasto(){
+  if(!rodando) return; const agora=performance.now()/1000;
+  if(calib){ const b=M.batida(), seg=60/b.bpm, f=((b.fase-lat()/seg)%1+1)%1; calib.push(f<.5?f*seg:(f-1)*seg); fb={t:agora,ok:true}; return fimCalib(); }
+  const t=agora-atraso; let m=null, e=9;
+  for(const n of notas) if(!n.ok && !n.perdida && Math.abs(n.t-t)<e){ e=Math.abs(n.t-t); m=n; }
+  if(m && e<=RITMO.janela){ m.ok=true; acertos++; combo++; const d0=deg; deg=degDe(combo); maior=Math.max(maior,combo);
+    M.intensidade(Math.min(1,combo/RITMO.cheia)); M.toca(combo%4 ? {tipo:'passo'} : {tipo:'junta', nivel:Math.min(12,2+deg*2), n:1});
+    if(deg>d0) M.toca({tipo:'sobe'}); fb={t:agora,ok:true}; texto(e<=RITMO.janela*.45?'na nota!':'ok'); }
+  else { erros++; quebra(m && t<m.t ? 'cedo demais' : 'atrasou'); M.toca({tipo:'erra'}); fb={t:agora,ok:false}; }
+  pinta();
+}
+function quebra(msg){ if(combo>0){ combo=0; deg=0; M.intensidade(0); } texto(msg); pinta(); }
+function texto(s){ $('#txt').textContent=s; }
+function pinta(){
+  const k=deg, cor=COR[k]; document.body.style.setProperty('--fc',cor);
+  $('#mult').textContent='×'+RITMO.x[k]; $('#mult').classList.toggle('x1',k===0);
+  const f = k===6 ? 3 : combo-RITMO.min[k]; document.querySelectorAll('#casas i').forEach((c,i)=>c.classList.toggle('on',i<f));
+  $('#combo').firstChild.textContent=combo;
+  $('#placar').textContent = calib ? `calibrando: ${calib.length} de 10` : acertos+erros ? `${acertos} na nota · ${erros} fora · maior combo ${maior} · calibração ${Math.round(atraso*1000)} ms` : '';
+}
+
+// calibração: 10 arrastos junto com o bumbo (só notas nos 4 tempos); o meio-termo do desvio, sem os 2 primeiros
+$('#cal').onclick=async()=>{ if(!rodando) await comeca(); calib=[]; combo=0; deg=0; M.intensidade(0); notas=[]; texto('arraste junto com cada bumbo'); pinta(); };
+function fimCalib(){ pinta(); if(calib.length<10) return;
+  const v=calib.slice(2).sort((a,b)=>a-b); atraso=Math.max(-.2,Math.min(.35,v[Math.floor(v.length/2)]));
+  try{ localStorage.ptui_ritmo_atraso=atraso.toFixed(3); }catch(e){}
+  calib=null; notas=[]; texto(`calibrado: ${Math.round(Math.abs(atraso)*1000)} ms ${atraso>=0?'depois':'antes'} da batida`); pinta(); }
+
+// entrada: arrasto (vale quando o dedo anda uns 18 px, como no jogo) ou setas e espaço
+let p0=null;
+addEventListener('pointerdown',e=>{ if(e.target.closest('button')) return; p0=[e.clientX,e.clientY]; });
+addEventListener('pointermove',e=>{ if(p0 && Math.hypot(e.clientX-p0[0],e.clientY-p0[1])>18){ p0=null; arrasto(); } });
+addEventListener('pointerup',()=>{ p0=null; });
+addEventListener('keydown',e=>{ if(/^Arrow| /.test(e.key)){ e.preventDefault(); if(!e.repeat) arrasto(); } });
+
+// as barras (as do jogo: freRitBarra)
+const cv=$('#bar'), g=cv.getContext('2d'), W=cv.width, H=cv.height, VER=1.7;
+function quadro(){
+  requestAnimationFrame(quadro);
+  const agora=performance.now()/1000;
+  if(rodando && M){ geraNotas(agora);
+    if(!calib) for(const n of notas) if(!n.ok && !n.perdida && n.t<agora-atraso-RITMO.janela){ n.perdida=true; if(combo>0){ erros++; quebra('perdeu a nota'); fb={t:agora,ok:false}; } } }
+  const b=M?.batida(), pul=b?Math.pow(1-((b.fase-lat()*b.bpm/60)%1+1)%1,4):0, cor=COR[deg], cx=W/2, cy=H/2, meio=W/2-22;
+  g.clearRect(0,0,W,H);
+  const gr=g.createLinearGradient(0,0,W,0); gr.addColorStop(0,'rgba(255,255,255,0)'); gr.addColorStop(.5,'rgba(255,255,255,.16)'); gr.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle=gr; g.fillRect(0,cy-2,W,4);
+  if(rodando) for(const n of notas){ if(n.ok||n.perdida) continue; const d=n.t-agora; if(d<-.05||d>VER) continue;
+    const x=Math.max(0,d)/VER*meio; g.globalAlpha=Math.min(1,(1-d/VER)*2.2); g.fillStyle=calib?'#fff':cor;
+    for(const s of [-1,1]) g.fillRect(cx+s*(x+22)-3.5,cy-19,7,38); }
+  g.globalAlpha=1;
+  const fa=fb?agora-fb.t:9, acende=fa<.25, treme=fb&&!fb.ok&&acende?Math.sin(fa*80)*5*(1-fa/.25):0, k=1+.22*pul+(acende&&fb.ok?.28*(1-fa/.25):0);
+  g.save(); g.translate(cx+treme,cy+2); g.scale(k*1.25,k*1.25);
+  g.fillStyle=acende?(fb.ok?'#5dffa2':'#ff5a5a'):'#ff6b8a'; g.shadowColor=g.fillStyle; g.shadowBlur=acende?16:7*pul;
+  g.beginPath(); g.moveTo(0,10); g.bezierCurveTo(-24,-7,-11,-24,0,-11); g.bezierCurveTo(11,-24,24,-7,0,10); g.fill(); g.restore();
+}
+pinta(); quadro();
+</script>
+</body>
+</html>
