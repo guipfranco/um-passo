@@ -65,7 +65,7 @@ button.g{background:#ffc861;color:#241a00}
 // Calibração gravada em ptui_ritmo_atraso (a mesma do jogo).
 import * as PUL from './musica/pulsar.js';
 import { sorteio } from './musica/eletronica.js';
-const JANELA=.1, VER=1.7, MIN=[0,3,6,9];
+const JANELA=.2, VER=1.7, MIN=[0,3,6,9];   // janela larga (±0,2 s), para testar com folga; a nota mais perto do toque é a que conta
 const COR=['#a9b8ff','#4fe3ff','#5dffa2','#ffd84a'];
 const BANDA=['acordes','+ bateria','+ baixo','+ arpejo'];
 const mtof=m=>440*Math.pow(2,(m-69)/12);
