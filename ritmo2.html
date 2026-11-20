@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Ritmo: você toca</title>
+<style>
+:root{--bg:#0b0a18;--tx:#ece8ff;--mut:#9d96c4;--fc:#a9b8ff}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:radial-gradient(80% 60% at 50% 35%,#1d1640,var(--bg));color:var(--tx);font:15px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;touch-action:none;user-select:none;-webkit-user-select:none;overflow:hidden}
+main{max-width:460px;height:100%;margin:0 auto;padding:18px 16px;display:flex;flex-direction:column}
+h1{font-size:19px;margin:0}
+p{color:var(--mut);margin:4px 0 0;font-size:14px}
+#hud{display:flex;align-items:center;gap:14px;margin-top:20px}
+#mult{min-width:86px;text-align:center;font:900 44px/1 system-ui,sans-serif;color:#fff;text-shadow:0 0 10px var(--fc),0 0 26px var(--fc)}
+#mult.x1{color:#b9b4e0;text-shadow:none;opacity:.6}
+#info{flex:1}
+#txt{font-weight:800;letter-spacing:.06em;text-transform:uppercase;font-size:13px;min-height:18px}
+#casas{display:flex;gap:4px;margin-top:6px}
+#casas i{flex:1;height:12px;border-radius:4px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);transition:background .15s}
+#casas i.on{background:var(--fc);box-shadow:0 0 10px var(--fc)}
+#degraus{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:16px}
+#degraus div{border-radius:10px;padding:7px 6px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);text-align:center;transition:all .2s}
+#degraus div b{display:block;font-size:18px}
+#degraus div small{display:block;font-size:11px;color:var(--mut);line-height:1.25}
+#degraus div.on{background:color-mix(in srgb,var(--c) 22%,transparent);border-color:var(--c);box-shadow:0 0 14px color-mix(in srgb,var(--c) 45%,transparent)}
+#degraus div.on b{color:var(--c)}
+#area{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px}
+#combo{font:900 60px/1 system-ui,sans-serif;opacity:.9}
+#combo small{display:block;text-align:center;font-size:13px;font-weight:700;color:var(--mut);letter-spacing:.1em}
+#toca{font-size:13px;color:var(--mut);min-height:18px;text-align:center}
+#toca b{color:var(--fc)}
+canvas{width:100%;height:auto;aspect-ratio:440/70}
+#placar{text-align:center;color:var(--mut);font-size:13px;min-height:18px}
+.bts{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:6px}
+button{font:inherit;font-weight:700;background:#2a2450;color:var(--tx);border:0;border-radius:99px;padding:9px 16px;cursor:pointer}
+button.g{background:#ffc861;color:#241a00}
+</style>
+</head>
+<body>
+<main>
+<h1>Ritmo: você toca</h1>
+<p>Como no Guitar Hero: o arrasto é a nota. No ×1 você toca o bumbo; a cada multiplicador o seu instrumento ganha uma voz e a banda entra com mais gente. No ×4 a música está completa. Errou: o seu instrumento cala e volta ao ×1.</p>
+<div id="degraus"></div>
+<div id="hud"><div id="mult" class="x1">×1</div><div id="info"><div id="txt">toque em começar</div><div id="casas"><i></i><i></i><i></i></div></div></div>
+<div id="area">
+  <div id="combo">0<small>COMBO</small></div>
+  <div id="toca"></div>
+  <canvas id="bar" width="440" height="70"></canvas>
+  <div id="placar"></div>
+</div>
+<div class="bts"><button class="g" id="vai">▶ Começar</button><button id="cal">Calibrar</button></div>
+</main>
+<script>
+// Versão "você toca" do treino de ritmo (a outra é ritmo.html, com a trilha musica/ritmo.js). Aqui a música é feita na
+// página e a parte de quem joga NÃO toca sozinha: cada nota só soa se a pessoa arrastar nela (o som sai na hora da
+// nota, encaixado, se o arrasto veio antes; na hora, se veio depois). A música cresce só com o multiplicador, em 4
+// degraus claros, e para de crescer no ×4:
+//   ×1  você: bumbo                        banda: chimbal no contratempo (baixinho, só para guiar)
+//   ×2  você: bumbo + baixo                banda: + palma nos tempos 2 e 4, chimbal mais cheio
+//   ×3  você: bumbo + baixo + acorde       banda: + arpejo
+//   ×4  você: + melodia                    banda: + fundo de acordes, chimbal aberto e prato
+// Mesmas notas e regras do Frenesi de ritmo (RITMO em src/frenesi.js): 3 acertos por multiplicador, fora da nota ou
+// nota perdida volta ao ×1. Calibração gravada em ptui_ritmo_atraso (a mesma do jogo).
+const BPM=100, SEG=60/BPM, P=SEG/4, BAR=4*SEG, JANELA=.13, VER=1.7;
+const MIN=[0,3,6,9];   // combo de cada multiplicador
+const NOTAS=[[[0,4,8,12]], [[0,4,8,12],[0,4,8,12],[0,4,8]], [[0,4,8,12],[0,4,8],[0,4,10],[0,6,8,12]], [[0,4,8,12],[0,4,10],[0,6,8,12],[0,4,8,14]]];
+const COR=['#a9b8ff','#4fe3ff','#5dffa2','#ffd84a'];
+const VOCE=['bumbo','bumbo + baixo','bumbo + baixo + acorde','bumbo + baixo + acorde + melodia'];
+const BANDA=['chimbal','+ palma','+ arpejo','+ fundo e prato'];
+// acordes (4 notas, MIDI) e baixo: Am F C G | F G Em Am
+const AC=[[[57,60,64,69],45],[[57,60,65,69],41],[[55,60,64,67],48],[[55,59,62,67],43],[[57,60,65,69],41],[[55,59,62,67],43],[[55,59,64,67],40],[[57,60,64,69],45]];
+const mtof=m=>440*Math.pow(2,(m-69)/12);
+let atraso=.03; try{ if(localStorage.ptui_ritmo_atraso) atraso=+localStorage.ptui_ritmo_atraso; }catch(e){}
+const $=s=>document.querySelector(s);
+let ac=null, sai=null, eco=null, ruido=null, rodando=false, calib=null;
+let t0=0, prox=0, passo=0, notas=[], combo=0, k=0, maior=0, acertos=0, erros=0, fb=null, idT=null;
+
+// ---------- som ----------
+function monta(){
+  ac=new (window.AudioContext||window.webkitAudioContext)();
+  const cp=ac.createDynamicsCompressor(); cp.threshold.value=-16; cp.ratio.value=3; cp.connect(ac.destination);
+  sai=ac.createGain(); sai.gain.value=.55; sai.connect(cp);
+  eco=ac.createDelay(1); eco.delayTime.value=SEG*.75; const fbk=ac.createGain(), lp=ac.createBiquadFilter(), ret=ac.createGain();
+  fbk.gain.value=.3; lp.type='lowpass'; lp.frequency.value=2400; ret.gain.value=.35; eco.connect(lp); lp.connect(fbk); fbk.connect(eco); lp.connect(ret); ret.connect(sai);
+  ruido=ac.createBuffer(1,ac.sampleRate,ac.sampleRate); const d=ruido.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1;
+}
+const fechado=()=>{ const g=ac.createGain(); g.gain.setValueAtTime(0,0); return g; };
+const env=(g,T,a,v,d)=>{ g.gain.setValueAtTime(.0001,T); g.gain.exponentialRampToValueAtTime(Math.max(.0002,v),T+a); g.gain.exponentialRampToValueAtTime(.0001,T+a+d); };
+function tom(T,f,{type='sine',a=.005,d=.2,v=.1,lp=null,to=null,dly=0}={}){ const o=ac.createOscillator(), g=fechado(); o.type=type; o.frequency.setValueAtTime(f,T); if(to) o.frequency.exponentialRampToValueAtTime(to,T+a+d);
+  env(g,T,a,v,d); let n=o; if(lp){ const fl=ac.createBiquadFilter(); fl.frequency.value=lp; o.connect(fl); n=fl; } n.connect(g); g.connect(sai); if(dly){ const s=ac.createGain(); s.gain.value=dly; g.connect(s); s.connect(eco); } o.start(T); o.stop(T+a+d+.1); }
+function chiado(T,{f=8000,type='highpass',d=.04,v=.03,q=1}={}){ const s=ac.createBufferSource(), fl=ac.createBiquadFilter(), g=fechado(); s.buffer=ruido; fl.type=type; fl.frequency.value=f; fl.Q.value=q;
+  env(g,T,.002,v,d); s.connect(fl); fl.connect(g); g.connect(sai); s.start(T,Math.random()*.5); s.stop(T+d+.1); }
+// instrumentos
+const bumbo=(T,v=.5)=>tom(T,140,{to:42,d:.26,v});
+const baixo=(T,m)=>tom(T,mtof(m),{type:'sawtooth',d:.22,v:.11,lp:520});
+function acorde(T,ch){ const g=fechado(), fl=ac.createBiquadFilter(); fl.type='lowpass'; fl.frequency.setValueAtTime(2600,T); fl.frequency.exponentialRampToValueAtTime(700,T+.2);
+  env(g,T,.004,.05,.22); fl.connect(g); g.connect(sai); const s=ac.createGain(); s.gain.value=.25; g.connect(s); s.connect(eco);
+  for(const m of ch) for(const dt of [-10,10]){ const o=ac.createOscillator(); o.type='sawtooth'; o.frequency.value=mtof(m); o.detune.value=dt; o.connect(fl); o.start(T); o.stop(T+.3); } }
+const melodia=(T,m)=>{ tom(T,mtof(m),{type:'square',a:.006,d:.32,v:.045,lp:3200,dly:.35}); tom(T,mtof(m+12),{type:'triangle',d:.4,v:.025}); };
+function fundo(T,ch,dur){ for(const m of ch){ const g=fechado(), fl=ac.createBiquadFilter(); fl.type='lowpass'; fl.frequency.value=1100;
+  g.gain.setValueAtTime(0,T); g.gain.linearRampToValueAtTime(.012,T+dur*.3); g.gain.linearRampToValueAtTime(0,T+dur); fl.connect(g); g.connect(sai);
+  for(const dt of [-8,8]){ const o=ac.createOscillator(); o.type='sawtooth'; o.frequency.value=mtof(m-12); o.detune.value=dt; o.connect(fl); o.start(T); o.stop(T+dur+.05); } } }
+const erroSom=()=>{ const T=ac.currentTime; chiado(T,{f:700,type:'bandpass',q:2,d:.08,v:.04}); tom(T,90,{type:'triangle',d:.1,v:.06,lp:400}); };
+
+// o que a pessoa toca numa nota (st = passo no compasso, c = compasso), conforme o multiplicador de agora
+function voce(T,st,c,kk){
+  const [ch,r]=AC[c%8];
+  bumbo(T);
+  if(kk>=1) baixo(T, r+(st%8===0?0:12));
+  if(kk>=2) acorde(T,ch);
+  if(kk>=3) melodia(T, ch[(st/4+c)%4|0]+12);
+}
+// a banda, em cada semicolcheia (st 0 a 15)
+function banda(T,st,c,kk){
+  const [ch]=AC[c%8];
+  if(calib){ if(st%4===0) bumbo(T,.45); return; }
+  if(st%4===2) chiado(T,{v:kk?.03:.02});
+  if(kk>=1){ if(st===4||st===12) chiado(T,{f:1700,type:'bandpass',q:.8,d:.11,v:.07}); if(st%2) chiado(T,{d:.025,v:.012}); }
+  if(kk>=2 && st%2===0) tom(T,mtof(ch[(st/2)%4]+12),{type:'square',a:.004,d:.12,v:.016,lp:1800,dly:.25});
+  if(kk>=3){ if(st===0) fundo(T,ch,BAR*1.05); if(st===2||st===10) chiado(T,{f:7000,d:.15,v:.02}); if(st===0 && c%2===0) chiado(T,{f:5200,d:1.1,v:.025}); }
+}
+function agenda(){
+  if(!rodando) return;
+  while(prox<ac.currentTime+.3){
+    const c=Math.floor(passo/16), st=passo%16;
+    if(st===0){   // notas do compasso seguinte, pelo multiplicador de agora
+      const pd=NOTAS[k], p=pd[(c*7919)%pd.length], ini=prox+BAR;
+      if(!calib) for(const s of p) notas.push({T:ini+s*P, st:s, c:c+1});
+    }
+    banda(prox,st,c,k);
+    prox+=P; passo++;
+  }
+  idT=setTimeout(agenda,40);
+}
+// o volume geral sobe junto com o multiplicador (e só com ele)
+const volume=()=>sai.gain.setTargetAtTime([.55,.7,.85,1][k], ac.currentTime, .25);
+
+// ---------- jogo ----------
+async function comeca(){
+  if(!ac) monta(); await ac.resume();
+  rodando=true; notas=[]; combo=0; k=0; acertos=erros=0; t0=prox=ac.currentTime+.4; passo=0; volume(); agenda(); pinta(); texto('arraste quando os traços chegarem no coração');
+  $('#vai').textContent='■ Parar';
+}
+function para(){ rodando=false; calib=null; clearTimeout(idT); $('#vai').textContent='▶ Começar'; texto('parado'); }
+$('#vai').onclick=()=> rodando ? para() : comeca();
+const lat=()=>ac?(ac.outputLatency||ac.baseLatency||0):0;
+const ouvidoAgora=()=>ac.currentTime-lat();   // a parte da música que está chegando no ouvido agora
+function arrasto(){
+  if(!rodando) return; const agora=ac.currentTime;
+  if(calib){ const ph=((ouvidoAgora()-t0)/SEG%1+1)%1; calib.push(ph<.5?ph*SEG:(ph-1)*SEG); fb={t:performance.now()/1000,ok:true}; return fimCalib(); }
+  const t=ouvidoAgora()-atraso; let m=null, e=9;
+  for(const n of notas) if(!n.ok && !n.perdida && Math.abs(n.T-t)<e){ e=Math.abs(n.T-t); m=n; }
+  if(m && e<=JANELA){ m.ok=true; acertos++; combo++; maior=Math.max(maior,combo);
+    voce(Math.max(agora,m.T), m.st, m.c, k);   // a nota soa na hora dela (se o arrasto veio antes) ou já
+    const k0=k; k=[...MIN].reverse().findIndex(x=>combo>=x); k=3-k; if(k!==k0){ volume(); texto('×'+(k+1)+'! você toca '+VOCE[k]); } else texto(e<=JANELA*.45?'na nota!':'ok');
+    fb={t:performance.now()/1000,ok:true}; }
+  else { erros++; quebra(m && t<m.T ? 'cedo demais' : 'atrasou'); erroSom(); }
+  pinta();
+}
+function quebra(msg){ if(combo>0){ combo=0; k=0; volume(); } fb={t:performance.now()/1000,ok:false}; texto(msg); pinta(); }
+function texto(s){ $('#txt').textContent=s; }
+function pinta(){
+  document.body.style.setProperty('--fc',COR[k]);
+  $('#mult').textContent='×'+(k+1); $('#mult').classList.toggle('x1',k===0);
+  const f = k===3 ? 3 : combo-MIN[k]; document.querySelectorAll('#casas i').forEach((c,i)=>c.classList.toggle('on',i<f));
+  $('#combo').firstChild.textContent=combo;
+  document.querySelectorAll('#degraus div').forEach((d,i)=>d.classList.toggle('on',i<=k && rodando));
+  $('#toca').innerHTML = rodando ? `você toca <b>${VOCE[k]}</b>` : '';
+  $('#placar').textContent = calib ? `calibrando: ${calib.length} de 10` : acertos+erros ? `${acertos} na nota · ${erros} fora · maior combo ${maior} · calibração ${Math.round(atraso*1000)} ms` : '';
+}
+$('#degraus').innerHTML=COR.map((c,i)=>`<div style="--c:${c}"><b>×${i+1}</b><small>${BANDA[i]}</small></div>`).join('');
+
+// calibração: 10 arrastos junto com o bumbo (a banda toca o bumbo sozinha); o meio-termo do desvio, sem os 2 primeiros
+$('#cal').onclick=async()=>{ if(!rodando) await comeca(); calib=[]; combo=0; k=0; notas=[]; volume(); texto('arraste junto com cada bumbo'); pinta(); };
+function fimCalib(){ pinta(); if(calib.length<10) return;
+  const v=calib.slice(2).sort((a,b)=>a-b); atraso=Math.max(-.2,Math.min(.35,v[Math.floor(v.length/2)]));
+  try{ localStorage.ptui_ritmo_atraso=atraso.toFixed(3); }catch(e){}
+  calib=null; notas=[]; texto(`calibrado: ${Math.round(Math.abs(atraso)*1000)} ms ${atraso>=0?'depois':'antes'} da batida`); pinta(); }
+
+// entrada: arrasto (vale quando o dedo anda uns 18 px, como no jogo) ou setas e espaço
+let p0=null;
+addEventListener('pointerdown',e=>{ if(e.target.closest('button')) return; p0=[e.clientX,e.clientY]; });
+addEventListener('pointermove',e=>{ if(p0 && Math.hypot(e.clientX-p0[0],e.clientY-p0[1])>18){ p0=null; arrasto(); } });
+addEventListener('pointerup',()=>{ p0=null; });
+addEventListener('keydown',e=>{ if(/^Arrow| /.test(e.key)){ e.preventDefault(); if(!e.repeat) arrasto(); } });
+
+// ---------- barras ----------
+const cv=$('#bar'), g=cv.getContext('2d'), W=cv.width, H=cv.height;
+function quadro(){
+  requestAnimationFrame(quadro);
+  g.clearRect(0,0,W,H);
+  const cx=W/2, cy=H/2, meio=W/2-22, agora=performance.now()/1000;
+  let pul=0;
+  if(rodando && ac){ const ouv=ouvidoAgora();
+    if(!calib) for(const n of notas) if(!n.ok && !n.perdida && n.T<ouv-atraso-JANELA){ n.perdida=true; if(combo>0){ erros++; quebra('perdeu a nota'); } }
+    notas=notas.filter(n=>n.T>ouv-2);
+    pul=Math.pow(1-(((ouv-t0)/SEG)%1+1)%1,4);
+    const gr=g.createLinearGradient(0,0,W,0); gr.addColorStop(0,'rgba(255,255,255,0)'); gr.addColorStop(.5,'rgba(255,255,255,.16)'); gr.addColorStop(1,'rgba(255,255,255,0)');
+    g.fillStyle=gr; g.fillRect(0,cy-2,W,4);
+    const vis = calib ? Array.from({length:6},(_,i)=>({T:t0+Math.ceil((ouv-t0)/SEG+i-1)*SEG})) : notas.filter(n=>!n.ok&&!n.perdida);
+    for(const n of vis){ const d=n.T-ouv; if(d<-.05||d>VER) continue; const x=Math.max(0,d)/VER*meio;
+      g.globalAlpha=Math.min(1,(1-d/VER)*2.2); g.fillStyle=calib?'#fff':COR[k]; for(const s of [-1,1]) g.fillRect(cx+s*(x+22)-3.5,cy-19,7,38); }
+    g.globalAlpha=1; }
+  const fa=fb?agora-fb.t:9, acende=fa<.25, treme=fb&&!fb.ok&&acende?Math.sin(fa*80)*5*(1-fa/.25):0, s=1+.22*pul+(acende&&fb.ok?.28*(1-fa/.25):0);
+  g.save(); g.translate(cx+treme,cy+2); g.scale(s*1.25,s*1.25);
+  g.fillStyle=acende?(fb.ok?'#5dffa2':'#ff5a5a'):'#ff6b8a'; g.shadowColor=g.fillStyle; g.shadowBlur=acende?16:7*pul;
+  g.beginPath(); g.moveTo(0,10); g.bezierCurveTo(-24,-7,-11,-24,0,-11); g.bezierCurveTo(11,-24,24,-7,0,10); g.fill(); g.restore();
+}
+pinta(); quadro();
+</script>
+</body>
+</html>
