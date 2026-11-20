@@ -14,7 +14,7 @@ f.onload=async()=>{const w=f.contentWindow,d=w.document,errs=[],log=[];w.addEven
   confere(w.eval('FRE_X.ritmo'), 'regra ligada pela URL');
   w.eval('window.SIMF=0; frenesiJoga(); freNoTempo=()=>({ok:SIMF<.11||SIMF>.89, perfeito:false, cedo:SIMF>.5})'); await wait(150);
   confere(w.eval('qualTrilha("mina")')==='ritmo', 'trilha do ritmo: '+w.eval('qualTrilha("mina")'));
-  confere(w.eval('S.rod.meta')===w.eval('RITMO.meta1') && d.body.classList.contains('freRitmo') && !!d.getElementById('freRit') && !!d.getElementById('freRitC'), `começa: meta ${w.eval('S.rod.meta')}, círculo e anel`);
+  confere(w.eval('S.rod.meta')===w.eval('RITMO.meta1') && d.body.classList.contains('freRitmo') && !!d.getElementById('freRitBar'), `começa: meta ${w.eval('S.rod.meta')}, barras embaixo do tabuleiro`);
   confere(!w.eval('melLigada()'), 'melodia por jogada fica de fora');
   arrasta(1,0);
   confere(w.eval('S.fre.corr')===1 && w.eval('multDe(S.fre.deg)')===1, 'arrasto na batida sem juntar: combo '+w.eval('S.fre.corr'));

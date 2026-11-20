@@ -366,10 +366,8 @@ span.icoFre.pl img.ico{width:46px;height:46px;margin:0;vertical-align:middle}
 .freBonus.some{transition:opacity .35s;opacity:0}
 /* regras em teste do Frenesi (?fregra): os cantos e o alvo de tocar */
 /* ritmo (?fregra=ritmo): o anel que fecha sobre o multiplicador e chega nele na batida */
-#freRit,#freRitC{display:none}
-body.freRitmo #freRit,body.freRitmo #freRitC{display:block;position:absolute;left:47px;top:50%;width:66px;height:66px;margin:-33px 0 0 -33px;border-radius:50%;pointer-events:none}
-body.freRitmo #freRitC{border:2px solid rgba(255,255,255,.85);opacity:.55;box-shadow:0 0 6px rgba(255,255,255,.4),inset 0 0 6px rgba(255,255,255,.25)}
-body.freRitmo #freRit{border:3px solid var(--fc,#a9b8ff);box-shadow:0 0 12px var(--fc,#a9b8ff);opacity:0;will-change:transform,opacity}
+#freRitBar{display:none}
+body.modoFre.freRitmo #freRitBar{display:block;width:0;min-width:100%;height:auto;aspect-ratio:440/56;margin-top:10px;pointer-events:none}
 /* ritmo: a barra é a do Guitar Hero, em 10 casas, e enche um acerto por vez */
 body.freRitmo #freTempo{position:relative;height:12px}
 body.freRitmo #freTempo::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 calc(10% - 2px),rgba(10,8,25,.85) calc(10% - 2px) 10%)}

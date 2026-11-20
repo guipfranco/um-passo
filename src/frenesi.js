@@ -98,8 +98,8 @@ function freAlvoPerde(t,arrastou){
 addEventListener('keydown', e=>{ if(e.key===' ' && S?.frenesi && S.fre?.alvo){ e.preventDefault(); freAlvoToca(S.fre.alvo.id); } });
 
 // ritmo (rascunho, ?fregra=ritmo), como no Guitar Hero: a música traz notas, espaçadas (no ×1 uma por compasso, às vezes
-// duas, na metade; mais densas a cada multiplicador, mas nunca em todo tempo: RITMO.notas). Um círculo fixo marca a nota
-// e um anel fecha sobre ele: a hora de arrastar é quando os dois se encontram. Cada arrasto na nota (dentro de
+// duas; mais densas a cada multiplicador: RITMO.notas). Embaixo do tabuleiro, traços saem das pontas e chegam num
+// coração no meio na hora da nota (as barras do Crypt of the NecroDancer; os outros formatos em marcacao.html). Cada arrasto na nota (dentro de
 // RITMO.janela segundos) soma 1 no combo, junte ou não, e enche a barra; cheia (10 acertos), o multiplicador pula de um em
 // um: ×1, ×2, ×3, ×4 (com 10, 20 e 30). Arrastar fora da nota, ou deixar uma nota passar, zera o combo e volta ao ×1.
 // A trilha (musica/ritmo.js) começa quase muda e cresce com o combo, em volume e instrumentos (cheia no ×4); as junções
@@ -143,14 +143,9 @@ function freRitmoQuadro(t){
   freNotas(t);
   const agora=performance.now()/1000-RITMO.atraso, F=S.fre;
   for(const n of FV.notas){
-    if(!n.pisca && n.t<=agora+RITMO.atraso){ n.pisca=true; depois(()=>$('#freRitC')?.animate([{transform:'scale(1.14)',opacity:1,boxShadow:'0 0 18px #fff'},{transform:'scale(1)',opacity:.55}],{duration:240,easing:'ease-out'})); }
     if(!n.feita && !n.perdida && n.t<agora-RITMO.janela){ n.perdida=true; if(F.corr>0){ freCai(t); freTexto('perdeu a nota · volta ao ×1'); } }
   }
-  const p=FV.notas.find(n=>!n.feita && !n.perdida && n.t>agora-RITMO.janela*.5);
-  if(p && p!==FV.anelDe){ FV.anelDe=p; const ant=FV.notas.filter(n=>n.t<p.t).pop(), dur=Math.max(.25, p.t-Math.max(agora, ant?ant.t:agora-1));
-    depois(()=>{ const r=$('#freRit'); if(!r) return; r.getAnimations?.().forEach(a=>a.cancel());
-      const fim=Math.max(.05, p.t-(performance.now()/1000-RITMO.atraso)), a=r.animate([{transform:'scale(2.6)',opacity:0},{transform:'scale(1.6)',opacity:.65,offset:.6},{transform:'scale(1)',opacity:1},{transform:'scale(.9)',opacity:0}],{duration:(dur+.15)*1000,easing:'linear'});
-      a.currentTime=Math.max(0,(dur-fim))*1000; }); }
+  // (o desenho das barras fica no fim do quadro: freRitBarra, pelo frePinta)
 }
 // calibração (ritmo): cada aparelho e cada pessoa têm um atraso entre o som que sai e o arrasto que o jogo lê (o som
 // demora para sair, o dedo arrasta depois de ouvir, o arrasto só vale depois de andar um pouco). Como nos jogos de ritmo
@@ -204,6 +199,31 @@ function freJogadaRitmo(js,t){
   freTexto(b.ok ? (b.perfeito ? 'na nota!' : null) : (b.cedo ? 'cedo demais' : 'atrasou')+(antes>0?' · volta ao ×1':''));
   freBarra(); depois(()=>freRitmoMarca(b.ok, b.perfeito));
 }
+// as barras (como no Crypt of the NecroDancer): embaixo do tabuleiro, cada nota que vem é um par de traços que sai das
+// pontas e chega no coração do meio na hora em que se ouve a nota; o coração pulsa no tempo, acende verde no acerto e
+// treme vermelho no erro. Um canvas pequeno, redesenhado a cada quadro só enquanto o ritmo está na tela.
+const RB={ver:1.7};   // segundos de antecedência (o traço anda da ponta ao meio nesse tempo)
+function freRitBarra(){
+  const c=$('#freRitBar'); if(!c || !FRE_X.ritmo || window.FRE_SIM) return;
+  const g=c.getContext('2d'), W=c.width, H=c.height, cx=W/2, cy=H/2, agora=performance.now()/1000, F=S.fre;
+  const b=freBatidaAgora(), pul=FV.jogando ? Math.pow(1-((b.fase%1)+1)%1,4) : 0, cor=DEGRAUS[F.deg]?.cor||'#a9b8ff';
+  g.clearRect(0,0,W,H);
+  // trilho
+  const gr=g.createLinearGradient(0,0,W,0); gr.addColorStop(0,'rgba(255,255,255,0)'); gr.addColorStop(.5,'rgba(255,255,255,.14)'); gr.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle=gr; g.fillRect(0,cy-2,W,4);
+  // traços das notas que vêm
+  const meio=W/2-20;
+  if(FV.jogando) for(const n of FV.notas||[]){ if(n.feita || n.perdida) continue; const d=n.t-agora; if(d<-.05 || d>RB.ver) continue;
+    const x=Math.max(0,d)/RB.ver*meio; g.globalAlpha=Math.min(1,(1-d/RB.ver)*2.2); g.fillStyle=cor;
+    for(const s of [-1,1]) g.fillRect(cx+s*(x+20)-3,cy-15,6,30); }
+  g.globalAlpha=1;
+  // coração
+  const fb=FV.ritFb, fa=fb ? agora-fb.t : 9, acende=fa<.25, treme=fb && !fb.ok && fa<.25 ? Math.sin(fa*80)*4*(1-fa/.25) : 0;
+  const k=1+.22*pul+(acende && fb.ok ? .25*(1-fa/.25) : 0);
+  g.save(); g.translate(cx+treme,cy+2); g.scale(k,k);
+  g.fillStyle = acende ? (fb.ok ? '#5dffa2' : '#ff5a5a') : '#ff6b8a'; g.shadowColor=g.fillStyle; g.shadowBlur=acende?14:6*pul;
+  g.beginPath(); g.moveTo(0,10); g.bezierCurveTo(-24,-7,-11,-24,0,-11); g.bezierCurveTo(11,-24,24,-7,0,10); g.fill(); g.restore();
+}
 // a cada tempo, sem a trilha: um tique (o tempo forte mais alto)
 function freRitmoBate(t){
   if(S.phase!=='mine' || !FV.jogando) return;
@@ -211,6 +231,7 @@ function freRitmoBate(t){
 }
 // acertou: o número dá um pulo e o anel brilha; errou: o número treme em vermelho
 function freRitmoMarca(ok,perf){
+  FV.ritFb={t:performance.now()/1000, ok, perf};
   const m=$('#freMult'); if(!m || POUCO_MOV && !ok) return;
   if(ok) m.animate([{transform:`scale(${perf?1.3:1.15})`, filter:'brightness(1.8)'},{transform:'scale(1)', filter:'none'}],{duration:260,easing:'ease-out'});
   else m.animate([{transform:'translateX(-6px)',color:'#ff5a5a'},{transform:'translateX(6px)',color:'#ff5a5a'},{transform:'translateX(0)'}],{duration:220});
@@ -315,7 +336,7 @@ function freEntra(){
   janelaMenu();
   showOverlay(`<h2>Frenesi</h2>
     <p>Rodadas contra o relógio: faça a meta de pontos antes de o tempo acabar. O tabuleiro começa pequeno e continua de uma rodada para a outra.</p>
-    ${FRE_X.ritmo ? '<p>Arraste na batida: quando o anel encontra o círculo. Cada arrasto no tempo enche a barra; cheia, o multiplicador sobe (×2, ×3, ×4). Fora do tempo, volta ao ×1. Quanto maior o combo, mais a música cresce.</p>' : '<p>Junte rápido: cada junção logo depois da outra sobe a corrente, e a corrente multiplica os pontos (×2, ×3, ×5... até ×20).</p>'}
+    ${FRE_X.ritmo ? '<p>Arraste na batida: quando os traços chegam no coração, embaixo do tabuleiro. Cada arrasto no tempo enche a barra; cheia, o multiplicador sobe (×2, ×3, ×4). Fora do tempo, volta ao ×1. Quanto maior o combo, mais a música cresce.</p>' : '<p>Junte rápido: cada junção logo depois da outra sobe a corrente, e a corrente multiplica os pontos (×2, ×3, ×5... até ×20).</p>'}
     <p>Bateu a meta: escolha uma carta (tabuleiro maior, mais tempo, bônus...). Acabou o tempo ou encheu o tabuleiro: fim.</p>
     <button class="btn g" id="frJoga">Jogar</button>${FRE_X.ritmo?'<button class="btn" id="frCal">Calibrar o tempo</button>':''}<button class="btn dim" id="frVolta">Voltar</button>`);
   $('#frJoga').onclick=()=>{ localStorage.ptui_fre_vi2='1'; frenesiJoga({retoma:true}); };
@@ -351,8 +372,9 @@ function frenesiJoga(opt){
 }
 function freMontaTela(){
   if(!$('#freBar')){ const b=document.createElement('div'); b.id='freBar';
-    b.innerHTML='<i id="freRitC"></i><i id="freRit"></i><div id="freMult">×1</div><div id="freInfo"><div id="freLinha"><span id="freTxt"></span><span id="freVel"></span></div><div id="freTempo"><i></i></div></div>';
+    b.innerHTML='<div id="freMult">×1</div><div id="freInfo"><div id="freLinha"><span id="freTxt"></span><span id="freVel"></span></div><div id="freTempo"><i></i></div></div>';
     $('#stage').insertBefore(b, board); }
+  if(!$('#freRitBar')){ const c=document.createElement('canvas'); c.id='freRitBar'; c.width=440; c.height=56; board.after(c); }
   if(!$('#freBorda')){ const o=document.createElement('div'); o.id='freBorda'; o.innerHTML='<i></i><i></i><i></i>'; document.body.appendChild(o); }
   // painel de cima: relógio e rodada no lugar do recorde; pontos da rodada e meta (com a barrinha) no lugar dos pontos
   if(!$('#freMetaP')){ const p=document.createElement('div'); p.className='pill'; p.id='freMetaP';
@@ -603,7 +625,7 @@ function freTexto(msg){
   if(msg){ el.textContent=msg; FV.msgAte=(tQuadro||0)+1.6; }
   else if(F.alvo) el.textContent=`toque no alvo · ${xTxt(F.alvo.k)}`;
   else if(FRE_X.canto && F.fora && (tQuadro||0)>=(FV.msgAte||0)) el.textContent = F.graca>0 ? 'leve a maior ao canto' : F.corr>0 ? 'a maior fora do canto · a corrente escapa' : 'a maior no canto para acender';
-  else if(F.corr<=0) el.textContent = (tQuadro||0)<(FV.msgAte||0) ? el.textContent : FRE_X.ritmo ? 'arraste quando o anel encontrar o círculo' : 'junte rápido para acender';
+  else if(F.corr<=0) el.textContent = (tQuadro||0)<(FV.msgAte||0) ? el.textContent : FRE_X.ritmo ? 'arraste quando os traços chegarem no coração' : 'junte rápido para acender';
   else if(F.deg===TOPO && FRE_X.ritmo) el.textContent=`×4 · combo ${F.corr}`;
   else if(F.deg===TOPO) el.textContent=`frenesi · corrente ${F.corr}`;
   else { el.textContent=`${FRE_X.ritmo?'combo':'corrente'} ${F.corr} · ${xTxt(degrauDe(minDe(F.deg+1)))} em ${minDe(F.deg+1)-F.corr}`; }
@@ -642,6 +664,7 @@ function freQuadro(t){
 function frePinta(t){
   if(!S || !S.frenesi || !S.fre) return;
   const F=S.fre;
+  if(FRE_X.ritmo) freRitBarra();
   // o que ficou pendente do arrasto (degrau novo, queda): primeiro a leitura do tabuleiro, depois as escritas
   if(FV.fila.length || FV.pedeVisual || FV.pedeBarra){ const g=geoTab();
     if(FV.pedeVisual){ FV.pedeVisual=false; freVisualPinta(FV.grau); }
